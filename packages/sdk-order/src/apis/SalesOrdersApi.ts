@@ -23,6 +23,7 @@ import type {
   OrderDiscountRequest,
   SalesOrderLineResponse,
   SalesOrderResponse,
+  SetCartCustomerRequest,
   UpdateItemRequest,
   VoidOrderRequest,
 } from '../models/index';
@@ -43,6 +44,8 @@ import {
     SalesOrderLineResponseToJSON,
     SalesOrderResponseFromJSON,
     SalesOrderResponseToJSON,
+    SetCartCustomerRequestFromJSON,
+    SetCartCustomerRequestToJSON,
     UpdateItemRequestFromJSON,
     UpdateItemRequestToJSON,
     VoidOrderRequestFromJSON,
@@ -102,6 +105,11 @@ export interface RemoveCartItemRequest {
 
 export interface ReopenQuoteRequest {
     orderId: string;
+}
+
+export interface SetCartCustomerOperationRequest {
+    orderId: string;
+    setCartCustomerRequest: SetCartCustomerRequest;
 }
 
 export interface UpdateCartItemQuantityRequest {
@@ -227,7 +235,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Freezes a DRAFT or QUOTED cart into PENDING_PAYMENT: revalidates availability and serial capture, runs the final reprice and tax computation, and synchronously creates the fronting invoice at pos-invoice, rolling the whole checkout back if invoice creation fails. Use this tool when the customer is ready to pay; do not use quoteCart, which produces a resumable quote, and do not use voidOrder, which abandons an order already in PENDING_PAYMENT. Preconditions: the cart must be non-empty with customer validation not PENDING, every line must have sufficient inventory, serial-tracked lines must carry one serial per unit (lot-tracked at least one), and ON_ACCOUNT additionally requires the order:order:charge_on_account permission and a VALIDATED commercial customer with payment terms and no credit hold. Required inputs: the Idempotency-Key header; the body is optional with tenderType DEFAULT or ON_ACCOUNT — DEFAULT settles asynchronously via payment events that complete the order when the balance reaches zero, while ON_ACCOUNT settles against the AR invoice and completes the order immediately. Emits an ORDER_CHECKOUT event; an ON_ACCOUNT checkout also records a settled ON_ACCOUNT ledger entry and publishes an order-completed fact. Returns 201 on checkout, 200 when the same Idempotency-Key replays the checked-out order, 400 when the Idempotency-Key header is blank or tenderType is unsupported, 409 when the key belongs to a different order or the status does not allow checkout, 422 when the cart is empty, customer validation is pending, availability or serial capture is insufficient, or on-account eligibility fails, and 503 when the tax or invoicing service is unreachable. 
+     * Freezes a DRAFT or QUOTED cart into PENDING_PAYMENT: revalidates availability and serial capture, runs the final reprice and tax computation, and synchronously creates the fronting invoice at pos-invoice, rolling the whole checkout back if invoice creation fails. Use this tool when the customer is ready to pay; do not use quoteCart, which produces a resumable quote, and do not use voidOrder, which abandons an order already in PENDING_PAYMENT. Preconditions: the cart must be non-empty and name a customer (set at creation or with setCartCustomer) whose validation is not PENDING, every line must have sufficient inventory, serial-tracked lines must carry one serial per unit (lot-tracked at least one), and ON_ACCOUNT additionally requires the order:order:charge_on_account permission and a VALIDATED commercial customer with payment terms and no credit hold. A walk-in cart (its customer is the business\'s Walk-in customer) must be paid in full now: it is never ON_ACCOUNT, a deposit take or workorder-linked, and tenderedAmount must cover the final grand total. Required inputs: the Idempotency-Key header; the body is optional with tenderType DEFAULT or ON_ACCOUNT — DEFAULT settles asynchronously via payment events that complete the order when the balance reaches zero, while ON_ACCOUNT settles against the AR invoice and completes the order immediately — and tenderedAmount, the cash and card being taken now, which is required for a walk-in cart and ignored otherwise. Emits an ORDER_CHECKOUT event; an ON_ACCOUNT checkout also records a settled ON_ACCOUNT ledger entry and publishes an order-completed fact. Returns 201 on checkout, 200 when the same Idempotency-Key replays the checked-out order (the stored result, with no rule re-evaluated), 400 when the Idempotency-Key header is blank, tenderType is unsupported or tenderedAmount is negative, 409 when the key belongs to a different order or the status does not allow checkout, 422 when the cart is empty, has no customer (ORDER_CUSTOMER_REQUIRED), customer validation is pending, a walk-in cart is not eligible (ORDER_WALK_IN_NOT_ALLOWED) or not paid in full (ORDER_WALK_IN_NOT_PAID_IN_FULL), serial capture is insufficient, or on-account eligibility fails, and 503 when the tax or invoicing service is unreachable. 
      * Check Out a Sales Order
      */
     async checkoutOrderRaw(requestParameters: CheckoutOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
@@ -275,7 +283,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Freezes a DRAFT or QUOTED cart into PENDING_PAYMENT: revalidates availability and serial capture, runs the final reprice and tax computation, and synchronously creates the fronting invoice at pos-invoice, rolling the whole checkout back if invoice creation fails. Use this tool when the customer is ready to pay; do not use quoteCart, which produces a resumable quote, and do not use voidOrder, which abandons an order already in PENDING_PAYMENT. Preconditions: the cart must be non-empty with customer validation not PENDING, every line must have sufficient inventory, serial-tracked lines must carry one serial per unit (lot-tracked at least one), and ON_ACCOUNT additionally requires the order:order:charge_on_account permission and a VALIDATED commercial customer with payment terms and no credit hold. Required inputs: the Idempotency-Key header; the body is optional with tenderType DEFAULT or ON_ACCOUNT — DEFAULT settles asynchronously via payment events that complete the order when the balance reaches zero, while ON_ACCOUNT settles against the AR invoice and completes the order immediately. Emits an ORDER_CHECKOUT event; an ON_ACCOUNT checkout also records a settled ON_ACCOUNT ledger entry and publishes an order-completed fact. Returns 201 on checkout, 200 when the same Idempotency-Key replays the checked-out order, 400 when the Idempotency-Key header is blank or tenderType is unsupported, 409 when the key belongs to a different order or the status does not allow checkout, 422 when the cart is empty, customer validation is pending, availability or serial capture is insufficient, or on-account eligibility fails, and 503 when the tax or invoicing service is unreachable. 
+     * Freezes a DRAFT or QUOTED cart into PENDING_PAYMENT: revalidates availability and serial capture, runs the final reprice and tax computation, and synchronously creates the fronting invoice at pos-invoice, rolling the whole checkout back if invoice creation fails. Use this tool when the customer is ready to pay; do not use quoteCart, which produces a resumable quote, and do not use voidOrder, which abandons an order already in PENDING_PAYMENT. Preconditions: the cart must be non-empty and name a customer (set at creation or with setCartCustomer) whose validation is not PENDING, every line must have sufficient inventory, serial-tracked lines must carry one serial per unit (lot-tracked at least one), and ON_ACCOUNT additionally requires the order:order:charge_on_account permission and a VALIDATED commercial customer with payment terms and no credit hold. A walk-in cart (its customer is the business\'s Walk-in customer) must be paid in full now: it is never ON_ACCOUNT, a deposit take or workorder-linked, and tenderedAmount must cover the final grand total. Required inputs: the Idempotency-Key header; the body is optional with tenderType DEFAULT or ON_ACCOUNT — DEFAULT settles asynchronously via payment events that complete the order when the balance reaches zero, while ON_ACCOUNT settles against the AR invoice and completes the order immediately — and tenderedAmount, the cash and card being taken now, which is required for a walk-in cart and ignored otherwise. Emits an ORDER_CHECKOUT event; an ON_ACCOUNT checkout also records a settled ON_ACCOUNT ledger entry and publishes an order-completed fact. Returns 201 on checkout, 200 when the same Idempotency-Key replays the checked-out order (the stored result, with no rule re-evaluated), 400 when the Idempotency-Key header is blank, tenderType is unsupported or tenderedAmount is negative, 409 when the key belongs to a different order or the status does not allow checkout, 422 when the cart is empty, has no customer (ORDER_CUSTOMER_REQUIRED), customer validation is pending, a walk-in cart is not eligible (ORDER_WALK_IN_NOT_ALLOWED) or not paid in full (ORDER_WALK_IN_NOT_PAID_IN_FULL), serial capture is insufficient, or on-account eligibility fails, and 503 when the tax or invoicing service is unreachable. 
      * Check Out a Sales Order
      */
     async checkoutOrder(requestParameters: CheckoutOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
@@ -420,7 +428,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Imports the line items of a source document (an ESTIMATE or WORKORDER) into a DRAFT cart, merging into same-SKU same-price lines where possible; imported source prices are contractual and are never repriced. Use this tool to pull approved estimate or workorder lines onto a sale; do not use addCartItem, which adds individually priced counter lines. Preconditions: the order must be DRAFT, a WORKORDER source requires a customer already on the cart, and source lines already linked to the cart are skipped, making the call replay-safe. Required inputs: sourceType (ESTIMATE or WORKORDER) and sourceId, both in the body. Emits an ORDER_LINK_SOURCE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 400 when sourceType is unknown or sourceId is not a UUID, 409 when the order is not DRAFT, and 422 when a WORKORDER link is attempted without a customer on the cart or when the source document does not resolve in the replica. 
+     * Imports the line items of a source document (an ESTIMATE or WORKORDER) into a DRAFT cart, merging into same-SKU same-price lines where possible; imported source prices are contractual and are never repriced. Use this tool to pull approved estimate or workorder lines onto a sale; do not use addCartItem, which adds individually priced counter lines. Preconditions: the order must be DRAFT, a WORKORDER source requires a registered customer already on the cart (never the Walk-in customer), and source lines already linked to the cart are skipped, making the call replay-safe. Required inputs: sourceType (ESTIMATE or WORKORDER) and sourceId, both in the body. Emits an ORDER_LINK_SOURCE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 400 when sourceType is unknown or sourceId is not a UUID, 409 when the order is not DRAFT, and 422 when a WORKORDER link is attempted without a customer on the cart or on a walk-in cart (ORDER_WALK_IN_NOT_ALLOWED), or when the source document does not resolve in the replica. 
      * Link a Source Document to an Order
      */
     async linkOrderSourceRaw(requestParameters: LinkOrderSourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
@@ -464,7 +472,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Imports the line items of a source document (an ESTIMATE or WORKORDER) into a DRAFT cart, merging into same-SKU same-price lines where possible; imported source prices are contractual and are never repriced. Use this tool to pull approved estimate or workorder lines onto a sale; do not use addCartItem, which adds individually priced counter lines. Preconditions: the order must be DRAFT, a WORKORDER source requires a customer already on the cart, and source lines already linked to the cart are skipped, making the call replay-safe. Required inputs: sourceType (ESTIMATE or WORKORDER) and sourceId, both in the body. Emits an ORDER_LINK_SOURCE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 400 when sourceType is unknown or sourceId is not a UUID, 409 when the order is not DRAFT, and 422 when a WORKORDER link is attempted without a customer on the cart or when the source document does not resolve in the replica. 
+     * Imports the line items of a source document (an ESTIMATE or WORKORDER) into a DRAFT cart, merging into same-SKU same-price lines where possible; imported source prices are contractual and are never repriced. Use this tool to pull approved estimate or workorder lines onto a sale; do not use addCartItem, which adds individually priced counter lines. Preconditions: the order must be DRAFT, a WORKORDER source requires a registered customer already on the cart (never the Walk-in customer), and source lines already linked to the cart are skipped, making the call replay-safe. Required inputs: sourceType (ESTIMATE or WORKORDER) and sourceId, both in the body. Emits an ORDER_LINK_SOURCE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 400 when sourceType is unknown or sourceId is not a UUID, 409 when the order is not DRAFT, and 422 when a WORKORDER link is attempted without a customer on the cart or on a walk-in cart (ORDER_WALK_IN_NOT_ALLOWED), or when the source document does not resolve in the replica. 
      * Link a Source Document to an Order
      */
     async linkOrderSource(requestParameters: LinkOrderSourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
@@ -660,6 +668,59 @@ export class SalesOrdersApi extends runtime.BaseAPI {
      */
     async reopenQuote(requestParameters: ReopenQuoteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
         const response = await this.reopenQuoteRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sets or changes the customer on a DRAFT sales order cart — either a registered customer, optionally with one of that customer\'s vehicles, or the business\'s Walk-in customer (the CASH house account) by an explicit walkIn choice — which is how a cart created without a customer becomes payable, since checkout refuses a cart with none. Use this tool to name who a sale is for after the cart exists; do not use createCart, which only sets the customer when the cart is first created, and do not expect Walk-in to be applied by default, because it is only ever this explicit choice. Preconditions: the order must exist and be DRAFT; a registered customer and its vehicle must exist in CRM; Walk-in needs the Walk-in customer to be set up for the business and is refused on a deposit-take cart or a cart with a linked workorder; and a cart with a linked WORKORDER source keeps its customer. Required inputs: orderId (UUID) as a path parameter, and a body with exactly one of customerId (UUID) or walkIn set to true; vehicleId (UUID) is optional with customerId, clears the cart\'s vehicle when omitted, and is not allowed with walkIn. Emits an ORDER_CART_CUSTOMER_SET event and marks tax stale; the response carries walkIn and customerDisplayName, and a walk-in sale must then be paid in full at checkout. Returns 200 with the cart, 400 when the body names both or neither of customerId and walkIn or combines vehicleId with walkIn, 404 when the order does not exist, 409 when the order is not DRAFT, and 422 when the customer or vehicle cannot be validated (ORDER_INVALID_CUSTOMER), no Walk-in customer is set up (ORDER_WALK_IN_UNAVAILABLE), the cart is not walk-in eligible (ORDER_WALK_IN_NOT_ALLOWED) or the cart\'s workorder link fixes its customer (ORDER_UNPROCESSABLE). 
+     * Set or Change a Cart\'s Customer
+     */
+    async setCartCustomerRaw(requestParameters: SetCartCustomerOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling setCartCustomer().'
+            );
+        }
+
+        if (requestParameters['setCartCustomerRequest'] == null) {
+            throw new runtime.RequiredError(
+                'setCartCustomerRequest',
+                'Required parameter "setCartCustomerRequest" was null or undefined when calling setCartCustomer().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/customer`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SetCartCustomerRequestToJSON(requestParameters['setCartCustomerRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SalesOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Sets or changes the customer on a DRAFT sales order cart — either a registered customer, optionally with one of that customer\'s vehicles, or the business\'s Walk-in customer (the CASH house account) by an explicit walkIn choice — which is how a cart created without a customer becomes payable, since checkout refuses a cart with none. Use this tool to name who a sale is for after the cart exists; do not use createCart, which only sets the customer when the cart is first created, and do not expect Walk-in to be applied by default, because it is only ever this explicit choice. Preconditions: the order must exist and be DRAFT; a registered customer and its vehicle must exist in CRM; Walk-in needs the Walk-in customer to be set up for the business and is refused on a deposit-take cart or a cart with a linked workorder; and a cart with a linked WORKORDER source keeps its customer. Required inputs: orderId (UUID) as a path parameter, and a body with exactly one of customerId (UUID) or walkIn set to true; vehicleId (UUID) is optional with customerId, clears the cart\'s vehicle when omitted, and is not allowed with walkIn. Emits an ORDER_CART_CUSTOMER_SET event and marks tax stale; the response carries walkIn and customerDisplayName, and a walk-in sale must then be paid in full at checkout. Returns 200 with the cart, 400 when the body names both or neither of customerId and walkIn or combines vehicleId with walkIn, 404 when the order does not exist, 409 when the order is not DRAFT, and 422 when the customer or vehicle cannot be validated (ORDER_INVALID_CUSTOMER), no Walk-in customer is set up (ORDER_WALK_IN_UNAVAILABLE), the cart is not walk-in eligible (ORDER_WALK_IN_NOT_ALLOWED) or the cart\'s workorder link fixes its customer (ORDER_UNPROCESSABLE). 
+     * Set or Change a Cart\'s Customer
+     */
+    async setCartCustomer(requestParameters: SetCartCustomerOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.setCartCustomerRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
