@@ -45,6 +45,20 @@ describe('AcceleratedJournal', () => {
     expect(onDisk.days.map((d) => d.dayNumber)).toEqual([1, 2]);
   });
 
+  it('sums jobs started per site over every day it holds, a resumed run\'s earlier days included (#157)', () => {
+    const path = freshPath();
+    const first = AcceleratedJournal.open(path, identity).journal;
+    first.recordDay(day({ dayNumber: 1, jobsStartedBySite: { MAIN: 3, RIV: 1 } }));
+    // A day journalled before #157 carries no counts and must not break the sum.
+    first.recordDay(day({ dayNumber: 2, virtualDate: '2025-09-19' }));
+    first.flush();
+
+    const { journal } = AcceleratedJournal.open(path, identity);
+    journal.recordDay(day({ dayNumber: 3, virtualDate: '2025-09-20', jobsStartedBySite: { MAIN: 2, SOUTH: 2 } }));
+
+    expect(journal.jobsStartedBySite()).toEqual({ MAIN: 5, RIV: 1, SOUTH: 2 });
+  });
+
   it('keeps the year\'s cycle-count adjustments across a resume, once each', () => {
     const path = freshPath();
     const first = AcceleratedJournal.open(path, identity).journal;

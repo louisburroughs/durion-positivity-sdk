@@ -45,6 +45,13 @@ async function main(): Promise<void> {
       `${result.totals.cycleCounts} cycle count(s), ${result.totals.restocks} restock(s)`,
   );
   log(`${result.totals.openDaysWorked} open day(s) worked of ${result.daysAttempted} attempted`);
+  log(
+    `jobs started per site: ${
+      Object.entries(result.totals.jobsStartedBySite)
+        .map(([code, count]) => `${code}=${count}`)
+        .join(', ') || 'none'
+    }`,
+  );
 
   const overlaps = result.ledger.overlaps();
   if (overlaps.length > 0) {

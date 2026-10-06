@@ -16,6 +16,7 @@ import type { ShopCalendar } from './shopCalendar';
 import { clampToGrace, daySchedule, type DaySchedule } from './daySchedule';
 import type { Claim, ResourceLedger } from './resourceLedger';
 import type { PositionKind, SiteRoster } from '../runs/shopFloorPlan';
+import { siteClaimOrder } from './siteShare';
 import type { JobOutcome } from './acceleratedJob';
 import { ClockConvergedError } from './virtualClock';
 
@@ -174,6 +175,11 @@ export interface DayReport {
   invoiceIds: string[];
   /** Cycle-count adjustments approved today, for the year-end GL reconciliation. */
   cycleCountAdjustmentIds: string[];
+  /**
+   * Jobs started today per site, by site code (#157). Carried-in jobs are not counted:
+   * they were started, and counted, on the day they began.
+   */
+  jobsStartedBySite: Record<string, number>;
 }
 
 interface ActiveJob {
@@ -204,6 +210,7 @@ const EMPTY_REPORT = (dayNumber: number, virtualDate: string): DayReport => ({
   workorderKinds: {},
   invoiceIds: [],
   cycleCountAdjustmentIds: [],
+  jobsStartedBySite: {},
 });
 
 export class AcceleratedDayRunner {
@@ -255,6 +262,13 @@ export class AcceleratedDayRunner {
     }
   }
 
+  /**
+   * Jobs started today per site, by locationId, for the share {@link nextClaim} keeps
+   * (#157): every kind under {@code ANY}, and each kind under its own name, so a
+   * kind-limited intake is measured against that kind's share.
+   */
+  private startedToday = new Map<PositionKind | 'ANY', Map<string, number>>();
+
   constructor(private readonly deps: DayRunnerDeps) {}
 
   get carriedCount(): number {
@@ -283,6 +297,7 @@ export class AcceleratedDayRunner {
     let schedule = daySchedule(await this.deps.now(), this.deps.calendar);
     const report = EMPTY_REPORT(dayNumber, schedule.observedAt.toISOString().slice(0, 10));
     report.carriedIn = this.carried.length;
+    this.startedToday = new Map();
 
     // A day with no bay window is not skipped silently. The bays are shut, but mobile
     // units take work at any hour, so such a day still *starts* mobile jobs as well as
@@ -744,6 +759,13 @@ export class AcceleratedDayRunner {
         }
         active.push({ job, claim });
         started += 1;
+        for (const key of ['ANY', claim.position.kind] as const) {
+          const counts = this.startedToday.get(key) ?? new Map<string, number>();
+          counts.set(claim.locationId, (counts.get(claim.locationId) ?? 0) + 1);
+          this.startedToday.set(key, counts);
+        }
+        const siteCode = rosters.find((roster) => roster.locationId === claim.locationId)?.code ?? claim.locationId;
+        report.jobsStartedBySite[siteCode] = (report.jobsStartedBySite[siteCode] ?? 0) + 1;
       }
 
       if (active.length === 0) {
@@ -911,14 +933,18 @@ export class AcceleratedDayRunner {
   }
 
   /**
-   * The next claim from any site that has one.
+   * The next claim from any site that has one, offered first to the site furthest below
+   * its share of today's jobs — its share being in proportion to how much work it can
+   * take at once (see siteShare.ts, #157). A site with nothing free is passed over, not
+   * waited on.
    *
-   * Sites are taken in order and each is drained before the next, because a claim
-   * is per-site by construction — a spare technician at one site cannot cover a
-   * gap at another (the same rule planFloor keeps).
+   * Each claim still comes from one site's ledger, because a claim is per-site by
+   * construction — a spare technician at one site cannot cover a gap at another (the
+   * same rule planFloor keeps).
    */
   private nextClaim(rosters: SiteRoster[], now: Date, kind?: PositionKind): Claim | null {
-    for (const roster of rosters) {
+    const counts = this.startedToday.get(kind ?? 'ANY') ?? new Map<string, number>();
+    for (const roster of siteClaimOrder(rosters, counts, kind)) {
       const claim = this.deps.ledger.claim(roster.locationId, now, kind);
       if (claim) {
         return claim;

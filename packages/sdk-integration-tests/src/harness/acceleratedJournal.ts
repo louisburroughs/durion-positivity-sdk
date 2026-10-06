@@ -44,6 +44,8 @@ export interface JournalDay {
   restock?: boolean;
   /** Optional so a journal written before write-offs were run still loads. */
   scrap?: boolean;
+  /** Jobs started per site, by site code (#157). Optional: journals before #157 have none. */
+  jobsStartedBySite?: Record<string, number>;
 }
 
 export interface JournalState {
@@ -220,6 +222,20 @@ export class AcceleratedJournal {
       appointments: this.state.days.reduce((sum, day) => sum + day.appointmentsBooked, 0),
       openDays: this.state.days.filter((day) => day.skipped === undefined).length,
     };
+  }
+
+  /**
+   * Jobs started per site over every day this journal holds (#157) — a resumed run's
+   * earlier days included, which the current process's own reports do not cover.
+   */
+  jobsStartedBySite(): Record<string, number> {
+    const totals: Record<string, number> = {};
+    for (const day of this.state.days) {
+      for (const [code, count] of Object.entries(day.jobsStartedBySite ?? {})) {
+        totals[code] = (totals[code] ?? 0) + count;
+      }
+    }
+    return totals;
   }
 
   recordDay(day: JournalDay): void {
