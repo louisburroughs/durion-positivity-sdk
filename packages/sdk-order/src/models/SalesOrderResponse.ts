@@ -57,6 +57,12 @@ export interface SalesOrderResponse {
      */
     createdBy?: string;
     /**
+     * Display name of the order's customer; null when the order has no customer or the customer is not known yet
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    customerDisplayName?: string;
+    /**
      * Identifier of the customer associated with the order
      * @type {string}
      * @memberof SalesOrderResponse
@@ -200,6 +206,12 @@ export interface SalesOrderResponse {
      * @memberof SalesOrderResponse
      */
     vehicleId?: string;
+    /**
+     * True when the order's customer is the business's Walk-in customer (the CASH house account): the sale must be paid in full at checkout
+     * @type {boolean}
+     * @memberof SalesOrderResponse
+     */
+    walkIn?: boolean;
 }
 
 /**
@@ -226,6 +238,7 @@ export function SalesOrderResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'clerkId': json['clerkId'] == null ? undefined : json['clerkId'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'customerDisplayName': json['customerDisplayName'] == null ? undefined : json['customerDisplayName'],
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'customerValidationStatus': json['customerValidationStatus'] == null ? undefined : json['customerValidationStatus'],
         'discountTotal': json['discountTotal'] == null ? undefined : json['discountTotal'],
@@ -250,6 +263,7 @@ export function SalesOrderResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
         'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
+        'walkIn': json['walkIn'] == null ? undefined : json['walkIn'],
     };
 }
 
@@ -264,6 +278,7 @@ export function SalesOrderResponseToJSON(value?: SalesOrderResponse | null): any
         'clerkId': value['clerkId'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'customerDisplayName': value['customerDisplayName'],
         'customerId': value['customerId'],
         'customerValidationStatus': value['customerValidationStatus'],
         'discountTotal': value['discountTotal'],
@@ -288,6 +303,7 @@ export function SalesOrderResponseToJSON(value?: SalesOrderResponse | null): any
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
         'updatedBy': value['updatedBy'],
         'vehicleId': value['vehicleId'],
+        'walkIn': value['walkIn'],
     };
 }
 

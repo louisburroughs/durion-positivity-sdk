@@ -19,6 +19,12 @@ import {
     CashMovementResponseFromJSONTyped,
     CashMovementResponseToJSON,
 } from './CashMovementResponse';
+import type { ClerkWalkInShare } from './ClerkWalkInShare';
+import {
+    ClerkWalkInShareFromJSON,
+    ClerkWalkInShareFromJSONTyped,
+    ClerkWalkInShareToJSON,
+} from './ClerkWalkInShare';
 import type { TenderTotal } from './TenderTotal';
 import {
     TenderTotalFromJSON,
@@ -128,6 +134,12 @@ export interface SessionReportResponse {
      * @memberof SessionReportResponse
      */
     theoreticalCash?: number;
+    /**
+     * Walk-in share per cashier over the session's orders that left DRAFT
+     * @type {Array<ClerkWalkInShare>}
+     * @memberof SessionReportResponse
+     */
+    walkInByClerk?: Array<ClerkWalkInShare>;
 }
 
 /**
@@ -163,6 +175,7 @@ export function SessionReportResponseFromJSONTyped(json: any, ignoreDiscriminato
         'tenderTotals': json['tenderTotals'] == null ? undefined : ((json['tenderTotals'] as Array<any>).map(TenderTotalFromJSON)),
         'terminalId': json['terminalId'] == null ? undefined : json['terminalId'],
         'theoreticalCash': json['theoreticalCash'] == null ? undefined : json['theoreticalCash'],
+        'walkInByClerk': json['walkInByClerk'] == null ? undefined : ((json['walkInByClerk'] as Array<any>).map(ClerkWalkInShareFromJSON)),
     };
 }
 
@@ -188,6 +201,7 @@ export function SessionReportResponseToJSON(value?: SessionReportResponse | null
         'tenderTotals': value['tenderTotals'] == null ? undefined : ((value['tenderTotals'] as Array<any>).map(TenderTotalToJSON)),
         'terminalId': value['terminalId'],
         'theoreticalCash': value['theoreticalCash'],
+        'walkInByClerk': value['walkInByClerk'] == null ? undefined : ((value['walkInByClerk'] as Array<any>).map(ClerkWalkInShareToJSON)),
     };
 }
 

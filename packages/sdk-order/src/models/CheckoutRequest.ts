@@ -25,6 +25,12 @@ export interface CheckoutRequest {
      * @memberof CheckoutRequest
      */
     tenderType?: string;
+    /**
+     * Total of cash and card the cashier is taking now. Required for a walk-in cart (the customer is the business's Walk-in customer), where it must cover the final grand total computed at checkout; ignored for any other cart. Never negative
+     * @type {number}
+     * @memberof CheckoutRequest
+     */
+    tenderedAmount?: number;
 }
 
 /**
@@ -45,6 +51,7 @@ export function CheckoutRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'tenderType': json['tenderType'] == null ? undefined : json['tenderType'],
+        'tenderedAmount': json['tenderedAmount'] == null ? undefined : json['tenderedAmount'],
     };
 }
 
@@ -55,6 +62,7 @@ export function CheckoutRequestToJSON(value?: CheckoutRequest | null): any {
     return {
         
         'tenderType': value['tenderType'],
+        'tenderedAmount': value['tenderedAmount'],
     };
 }
 
