@@ -26,6 +26,12 @@ export interface RegisterFloatResponse {
      */
     amount: number;
     /**
+     * The ISO 4217 code of previousAmount and amount: the currency the register's float is held in, the tenant's functional currency (ADR-0067)
+     * @type {string}
+     * @memberof RegisterFloatResponse
+     */
+    currencyCode: string;
+    /**
      * The date the entry is dated on
      * @type {Date}
      * @memberof RegisterFloatResponse
@@ -92,6 +98,7 @@ export enum RegisterFloatResponseKindEnum {
  */
 export function instanceOfRegisterFloatResponse(value: object): boolean {
     if (!('amount' in value)) return false;
+    if (!('currencyCode' in value)) return false;
     if (!('effectiveDate' in value)) return false;
     if (!('kind' in value)) return false;
     if (!('locationId' in value)) return false;
@@ -111,6 +118,7 @@ export function RegisterFloatResponseFromJSONTyped(json: any, ignoreDiscriminato
     return {
         
         'amount': json['amount'],
+        'currencyCode': json['currencyCode'],
         'effectiveDate': (new Date(json['effectiveDate'])),
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'journalEntryNumber': json['journalEntryNumber'] == null ? undefined : json['journalEntryNumber'],
@@ -129,6 +137,7 @@ export function RegisterFloatResponseToJSON(value?: RegisterFloatResponse | null
     return {
         
         'amount': value['amount'],
+        'currencyCode': value['currencyCode'],
         'effectiveDate': ((value['effectiveDate']).toISOString().substring(0,10)),
         'journalEntryId': value['journalEntryId'],
         'journalEntryNumber': value['journalEntryNumber'],
