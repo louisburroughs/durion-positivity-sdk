@@ -26,6 +26,12 @@ export interface RegisterFloatGoLiveRequest {
      */
     amount: number;
     /**
+     * The ISO 4217 code of amount (ADR-0067); it must be the tenant's functional currency, else 422 CURRENCY_NOT_SUPPORTED
+     * @type {string}
+     * @memberof RegisterFloatGoLiveRequest
+     */
+    currencyCode: string;
+    /**
      * The go-live date the entry is dated on; it must fall in an open period
      * @type {Date}
      * @memberof RegisterFloatGoLiveRequest
@@ -56,6 +62,7 @@ export interface RegisterFloatGoLiveRequest {
  */
 export function instanceOfRegisterFloatGoLiveRequest(value: object): boolean {
     if (!('amount' in value)) return false;
+    if (!('currencyCode' in value)) return false;
     if (!('goLiveDate' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('locationId' in value)) return false;
@@ -74,6 +81,7 @@ export function RegisterFloatGoLiveRequestFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'amount': json['amount'],
+        'currencyCode': json['currencyCode'],
         'goLiveDate': (new Date(json['goLiveDate'])),
         'justification': json['justification'],
         'locationId': json['locationId'],
@@ -88,6 +96,7 @@ export function RegisterFloatGoLiveRequestToJSON(value?: RegisterFloatGoLiveRequ
     return {
         
         'amount': value['amount'],
+        'currencyCode': value['currencyCode'],
         'goLiveDate': ((value['goLiveDate']).toISOString().substring(0,10)),
         'justification': value['justification'],
         'locationId': value['locationId'],

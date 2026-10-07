@@ -32,6 +32,12 @@ export interface RegisterFloatChangeRequest {
      */
     bankGlAccountId: string;
     /**
+     * The ISO 4217 code of amount (ADR-0067); it must be the tenant's functional currency, else 422 CURRENCY_NOT_SUPPORTED
+     * @type {string}
+     * @memberof RegisterFloatChangeRequest
+     */
+    currencyCode: string;
+    /**
      * The date the change is posted on; today in the tenant's accounting time zone when omitted
      * @type {Date}
      * @memberof RegisterFloatChangeRequest
@@ -69,6 +75,7 @@ export interface RegisterFloatChangeRequest {
 export function instanceOfRegisterFloatChangeRequest(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('bankGlAccountId' in value)) return false;
+    if (!('currencyCode' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('requestId' in value)) return false;
@@ -87,6 +94,7 @@ export function RegisterFloatChangeRequestFromJSONTyped(json: any, ignoreDiscrim
         
         'amount': json['amount'],
         'bankGlAccountId': json['bankGlAccountId'],
+        'currencyCode': json['currencyCode'],
         'effectiveDate': json['effectiveDate'] == null ? undefined : (new Date(json['effectiveDate'])),
         'justification': json['justification'],
         'locationId': json['locationId'],
@@ -103,6 +111,7 @@ export function RegisterFloatChangeRequestToJSON(value?: RegisterFloatChangeRequ
         
         'amount': value['amount'],
         'bankGlAccountId': value['bankGlAccountId'],
+        'currencyCode': value['currencyCode'],
         'effectiveDate': value['effectiveDate'] == null ? undefined : ((value['effectiveDate']).toISOString().substring(0,10)),
         'justification': value['justification'],
         'locationId': value['locationId'],
