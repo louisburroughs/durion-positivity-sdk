@@ -7,6 +7,8 @@ export * from './AccountingEventSubmitRequest';
 export * from './AccountingEventTypeResponse';
 export * from './AccountingPeriodReopenRequest';
 export * from './AccountingPeriodResponse';
+export * from './AccountingTimeZoneResponse';
+export * from './AccountingTimeZoneUpdateRequest';
 export * from './AdjustmentReverseRequest';
 export * from './AdjustmentTypeResponse';
 export * from './AgedPayablesReport';
