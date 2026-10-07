@@ -44,6 +44,12 @@ export interface RegisterSessionResponse {
      */
     countedCash?: number;
     /**
+     * ISO 4217 code of every amount on the drawer, stamped from the functional currency when it opened (ADR-0067); a configuration change applies only to drawers opened later
+     * @type {string}
+     * @memberof RegisterSessionResponse
+     */
+    currencyCode?: string;
+    /**
      * 
      * @type {string}
      * @memberof RegisterSessionResponse
@@ -126,6 +132,7 @@ export function RegisterSessionResponseFromJSONTyped(json: any, ignoreDiscrimina
         'closedByClerkId': json['closedByClerkId'] == null ? undefined : json['closedByClerkId'],
         'closingStartedAt': json['closingStartedAt'] == null ? undefined : (new Date(json['closingStartedAt'])),
         'countedCash': json['countedCash'] == null ? undefined : json['countedCash'],
+        'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'openedAt': json['openedAt'] == null ? undefined : (new Date(json['openedAt'])),
         'openedByClerkId': json['openedByClerkId'] == null ? undefined : json['openedByClerkId'],
@@ -149,6 +156,7 @@ export function RegisterSessionResponseToJSON(value?: RegisterSessionResponse | 
         'closedByClerkId': value['closedByClerkId'],
         'closingStartedAt': value['closingStartedAt'] == null ? undefined : ((value['closingStartedAt']).toISOString()),
         'countedCash': value['countedCash'],
+        'currencyCode': value['currencyCode'],
         'locationId': value['locationId'],
         'openedAt': value['openedAt'] == null ? undefined : ((value['openedAt']).toISOString()),
         'openedByClerkId': value['openedByClerkId'],

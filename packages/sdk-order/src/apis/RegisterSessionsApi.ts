@@ -17,17 +17,28 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   BeginCloseRequest,
+  CashMovementApprovalRequest,
+  CashMovementApprovalResponse,
+  CashMovementOptionsResponse,
   CashMovementRequest,
   CashMovementResponse,
   OpenSessionRequest,
   RegisterSessionResponse,
+  SessionPolicyResponse,
   SessionReportResponse,
+  UpdateSessionPolicyRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
     BeginCloseRequestFromJSON,
     BeginCloseRequestToJSON,
+    CashMovementApprovalRequestFromJSON,
+    CashMovementApprovalRequestToJSON,
+    CashMovementApprovalResponseFromJSON,
+    CashMovementApprovalResponseToJSON,
+    CashMovementOptionsResponseFromJSON,
+    CashMovementOptionsResponseToJSON,
     CashMovementRequestFromJSON,
     CashMovementRequestToJSON,
     CashMovementResponseFromJSON,
@@ -36,8 +47,12 @@ import {
     OpenSessionRequestToJSON,
     RegisterSessionResponseFromJSON,
     RegisterSessionResponseToJSON,
+    SessionPolicyResponseFromJSON,
+    SessionPolicyResponseToJSON,
     SessionReportResponseFromJSON,
     SessionReportResponseToJSON,
+    UpdateSessionPolicyRequestFromJSON,
+    UpdateSessionPolicyRequestToJSON,
 } from '../models/index';
 
 export interface BeginSessionCloseRequest {
@@ -46,6 +61,10 @@ export interface BeginSessionCloseRequest {
 }
 
 export interface ConfirmSessionCloseRequest {
+    sessionId: string;
+}
+
+export interface GetCashMovementOptionsRequest {
     sessionId: string;
 }
 
@@ -76,6 +95,15 @@ export interface OpenRegisterSessionRequest {
 export interface RecordCashMovementRequest {
     sessionId: string;
     cashMovementRequest: CashMovementRequest;
+}
+
+export interface RequestCashMovementApprovalRequest {
+    sessionId: string;
+    cashMovementApprovalRequest: CashMovementApprovalRequest;
+}
+
+export interface UpdateSessionPolicyOperationRequest {
+    updateSessionPolicyRequest: UpdateSessionPolicyRequest;
 }
 
 /**
@@ -137,7 +165,7 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Finalizes a CLOSING register session: snapshots theoretical cash (opening float plus net CASH settlements plus signed cash movements), computes the over/short against the counted drawer, and moves the session to CLOSED. Use this tool to finish the close after the count; do not use beginSessionClose, which records the count and must run first. Preconditions: the session must be in CLOSING, and no order on the session may have re-entered PENDING_PAYMENT since the count began. Required inputs: sessionId (UUID) as a path parameter; there is no request body — an over/short beyond the authorized difference limit (default 5.00, configurable via pos.order.session.authorized-difference-limit) additionally requires the order:session:approve_variance permission. Emits an ORDER_SESSION_CONFIRM_CLOSE event and publishes a register-session-closed fact carrying per-tender totals and the reconciliation figures. Returns 200 with the CLOSED session, 403 when the variance exceeds the limit without the approval permission, 404 when the session does not exist, and 409 when the session is not in CLOSING or an order is still awaiting payment. 
+     * Finalizes a CLOSING register session: snapshots theoretical cash (opening float plus net CASH settlements plus signed cash movements), computes the over/short against the counted drawer, and moves the session to CLOSED. Use this tool to finish the close after the count; do not use beginSessionClose, which records the count and must run first. Preconditions: the session must be in CLOSING, and no order on the session may have re-entered PENDING_PAYMENT since the count began. Required inputs: sessionId (UUID) as a path parameter; there is no request body — an over/short beyond the tenant\'s over/short tolerance (drawer policy, default 5.00) additionally requires the order:session:approve_variance permission. Emits an ORDER_SESSION_CONFIRM_CLOSE event and publishes a register-session-closed fact (schema version 2) carrying per-tender totals, the reconciliation figures and every cash movement with its reason, amount, details, cashier and approver. Returns 200 with the CLOSED session, 403 when the variance exceeds the tolerance without the approval permission, 404 when the session does not exist, and 409 when the session is not in CLOSING or an order is still awaiting payment. 
      * Confirm a Register Session Close
      */
     async confirmSessionCloseRaw(requestParameters: ConfirmSessionCloseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterSessionResponse>> {
@@ -171,11 +199,54 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Finalizes a CLOSING register session: snapshots theoretical cash (opening float plus net CASH settlements plus signed cash movements), computes the over/short against the counted drawer, and moves the session to CLOSED. Use this tool to finish the close after the count; do not use beginSessionClose, which records the count and must run first. Preconditions: the session must be in CLOSING, and no order on the session may have re-entered PENDING_PAYMENT since the count began. Required inputs: sessionId (UUID) as a path parameter; there is no request body — an over/short beyond the authorized difference limit (default 5.00, configurable via pos.order.session.authorized-difference-limit) additionally requires the order:session:approve_variance permission. Emits an ORDER_SESSION_CONFIRM_CLOSE event and publishes a register-session-closed fact carrying per-tender totals and the reconciliation figures. Returns 200 with the CLOSED session, 403 when the variance exceeds the limit without the approval permission, 404 when the session does not exist, and 409 when the session is not in CLOSING or an order is still awaiting payment. 
+     * Finalizes a CLOSING register session: snapshots theoretical cash (opening float plus net CASH settlements plus signed cash movements), computes the over/short against the counted drawer, and moves the session to CLOSED. Use this tool to finish the close after the count; do not use beginSessionClose, which records the count and must run first. Preconditions: the session must be in CLOSING, and no order on the session may have re-entered PENDING_PAYMENT since the count began. Required inputs: sessionId (UUID) as a path parameter; there is no request body — an over/short beyond the tenant\'s over/short tolerance (drawer policy, default 5.00) additionally requires the order:session:approve_variance permission. Emits an ORDER_SESSION_CONFIRM_CLOSE event and publishes a register-session-closed fact (schema version 2) carrying per-tender totals, the reconciliation figures and every cash movement with its reason, amount, details, cashier and approver. Returns 200 with the CLOSED session, 403 when the variance exceeds the tolerance without the approval permission, 404 when the session does not exist, and 409 when the session is not in CLOSING or an order is still awaiting payment. 
      * Confirm a Register Session Close
      */
     async confirmSessionClose(requestParameters: ConfirmSessionCloseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterSessionResponse> {
         const response = await this.confirmSessionCloseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns what the register may offer the cashier for a session: per fixed reason whether it is allowed now, its cashier limit, the session\'s running total, whether a manager is always needed and the fields it requires; and the ACTIVE petty-expense categories (code, label, examples). Use this tool to build the drawer cash in/out screen; use getSessionPolicy instead to read or manage the tenant\'s policy. Amounts are in the functional currency, stated as currencyCode. Preconditions: the session must exist, within the caller\'s location scope (ADR-0061). Required inputs: sessionId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no register session exists for the supplied id, and 403 LOCATION_SCOPE_DENIED when its location is outside the caller\'s scope. 
+     * Cash Movement Options for a Session
+     */
+    async getCashMovementOptionsRaw(requestParameters: GetCashMovementOptionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CashMovementOptionsResponse>> {
+        if (requestParameters['sessionId'] == null) {
+            throw new runtime.RequiredError(
+                'sessionId',
+                'Required parameter "sessionId" was null or undefined when calling getCashMovementOptions().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/sessions/{sessionId}/cash-movement-options`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CashMovementOptionsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns what the register may offer the cashier for a session: per fixed reason whether it is allowed now, its cashier limit, the session\'s running total, whether a manager is always needed and the fields it requires; and the ACTIVE petty-expense categories (code, label, examples). Use this tool to build the drawer cash in/out screen; use getSessionPolicy instead to read or manage the tenant\'s policy. Amounts are in the functional currency, stated as currencyCode. Preconditions: the session must exist, within the caller\'s location scope (ADR-0061). Required inputs: sessionId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no register session exists for the supplied id, and 403 LOCATION_SCOPE_DENIED when its location is outside the caller\'s scope. 
+     * Cash Movement Options for a Session
+     */
+    async getCashMovementOptions(requestParameters: GetCashMovementOptionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CashMovementOptionsResponse> {
+        const response = await this.getCashMovementOptionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -270,7 +341,43 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns an interim X-report for a register session: opening float, per-tender totals, cash settlements, cash movements, theoretical cash, and over/short when a count has been recorded. Use this tool for mid-shift figures while the session is open; use getSessionZReport instead for the end-of-session close summary. Preconditions: the session must exist; figures are computed live from the session\'s current ledger. Required inputs: sessionId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only report projection. Returns 404 when no register session exists for the supplied id. 
+     * Returns the tenant\'s drawer policy and its change history: per movement type (petty expenses, vendor cash on delivery, bank drop, float change) whether cashiers may record it, the cashier limit on a session\'s running total and whether a manager is always needed; the over/short tolerance above which a close needs order:session:approve_variance; and every change, newest first. Bank drop and float change are read-only rows. Use this tool to read the policy before changing it; use getCashMovementOptions instead for what one register session may record now. Preconditions: none — a tenant that never changed the policy gets the defaults (petty expenses on at 50.00, vendor cash on delivery off, tolerance 5.00). Required inputs: none; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the policy. 
+     * Get the Drawer Policy
+     */
+    async getSessionPolicyRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SessionPolicyResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/session-policy`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SessionPolicyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the tenant\'s drawer policy and its change history: per movement type (petty expenses, vendor cash on delivery, bank drop, float change) whether cashiers may record it, the cashier limit on a session\'s running total and whether a manager is always needed; the over/short tolerance above which a close needs order:session:approve_variance; and every change, newest first. Bank drop and float change are read-only rows. Use this tool to read the policy before changing it; use getCashMovementOptions instead for what one register session may record now. Preconditions: none — a tenant that never changed the policy gets the defaults (petty expenses on at 50.00, vendor cash on delivery off, tolerance 5.00). Required inputs: none; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the policy. 
+     * Get the Drawer Policy
+     */
+    async getSessionPolicy(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SessionPolicyResponse> {
+        const response = await this.getSessionPolicyRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns an interim X-report for a register session: opening float, per-tender totals, cash settlements, cash movements with their reason and details, theoretical cash, and over/short when a count has been recorded. Use this tool for mid-shift figures while the session is open; use getSessionZReport instead for the end-of-session close summary. Preconditions: the session must exist; figures are computed live from the session\'s current ledger. Required inputs: sessionId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only report projection. Returns 404 when no register session exists for the supplied id. 
      * X-Report for a Register Session
      */
     async getSessionXReportRaw(requestParameters: GetSessionXReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SessionReportResponse>> {
@@ -304,7 +411,7 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns an interim X-report for a register session: opening float, per-tender totals, cash settlements, cash movements, theoretical cash, and over/short when a count has been recorded. Use this tool for mid-shift figures while the session is open; use getSessionZReport instead for the end-of-session close summary. Preconditions: the session must exist; figures are computed live from the session\'s current ledger. Required inputs: sessionId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only report projection. Returns 404 when no register session exists for the supplied id. 
+     * Returns an interim X-report for a register session: opening float, per-tender totals, cash settlements, cash movements with their reason and details, theoretical cash, and over/short when a count has been recorded. Use this tool for mid-shift figures while the session is open; use getSessionZReport instead for the end-of-session close summary. Preconditions: the session must exist; figures are computed live from the session\'s current ledger. Required inputs: sessionId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only report projection. Returns 404 when no register session exists for the supplied id. 
      * X-Report for a Register Session
      */
     async getSessionXReport(requestParameters: GetSessionXReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SessionReportResponse> {
@@ -399,7 +506,7 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Opens an OPEN register (drawer) session on a terminal; sales orders created on the terminal while it is open bind to it, and it supplies their location by default. Use this tool at the start of a drawer shift; do not use recordCashMovement, which requires a session that is already open. Preconditions: the terminal must have no session in OPEN or CLOSING — one drawer per terminal. A caller whose order:session:open grant is location-scoped must have the resolved location within reach (ADR-0061); for such a caller a session that resolves to no location is denied. Required inputs: terminalId and openedByClerkId; openingFloat defaults to the terminal\'s previous counted close (else zero) when omitted, and locationId defaults from the terminal\'s previous session. Emits an ORDER_SESSION_OPEN event. Returns 201 with the new session, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the resolved location, and 409 when the terminal already has an active session. 
+     * Opens an OPEN register (drawer) session on a terminal; sales orders created on the terminal while it is open bind to it, and it supplies their location by default. Use this tool at the start of a drawer shift; do not use recordCashMovement, which requires a session that is already open. Preconditions: the terminal must have no session in OPEN or CLOSING — one drawer per terminal. A caller whose order:session:open grant is location-scoped must have the resolved location within reach (ADR-0061); a register whose configured float is held at another location than the resolved one does not open there. Required inputs: terminalId; locationId defaults to the register\'s float location, else the terminal\'s previous session\'s; the opening float is the configured float (zero when none or negative) and the opener is the caller, so an openingFloat or openedByClerkId is ignored. Emits an ORDER_SESSION_OPEN event. Returns 201 with the new session, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the resolved location, 409 when the terminal already has an active session, and 422 REGISTER_FLOAT_LOCATION_MISMATCH when the float is held elsewhere. 
      * Open a Register Session
      */
     async openRegisterSessionRaw(requestParameters: OpenRegisterSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterSessionResponse>> {
@@ -436,7 +543,7 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Opens an OPEN register (drawer) session on a terminal; sales orders created on the terminal while it is open bind to it, and it supplies their location by default. Use this tool at the start of a drawer shift; do not use recordCashMovement, which requires a session that is already open. Preconditions: the terminal must have no session in OPEN or CLOSING — one drawer per terminal. A caller whose order:session:open grant is location-scoped must have the resolved location within reach (ADR-0061); for such a caller a session that resolves to no location is denied. Required inputs: terminalId and openedByClerkId; openingFloat defaults to the terminal\'s previous counted close (else zero) when omitted, and locationId defaults from the terminal\'s previous session. Emits an ORDER_SESSION_OPEN event. Returns 201 with the new session, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the resolved location, and 409 when the terminal already has an active session. 
+     * Opens an OPEN register (drawer) session on a terminal; sales orders created on the terminal while it is open bind to it, and it supplies their location by default. Use this tool at the start of a drawer shift; do not use recordCashMovement, which requires a session that is already open. Preconditions: the terminal must have no session in OPEN or CLOSING — one drawer per terminal. A caller whose order:session:open grant is location-scoped must have the resolved location within reach (ADR-0061); a register whose configured float is held at another location than the resolved one does not open there. Required inputs: terminalId; locationId defaults to the register\'s float location, else the terminal\'s previous session\'s; the opening float is the configured float (zero when none or negative) and the opener is the caller, so an openingFloat or openedByClerkId is ignored. Emits an ORDER_SESSION_OPEN event. Returns 201 with the new session, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the resolved location, 409 when the terminal already has an active session, and 422 REGISTER_FLOAT_LOCATION_MISMATCH when the float is held elsewhere. 
      * Open a Register Session
      */
     async openRegisterSession(requestParameters: OpenRegisterSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterSessionResponse> {
@@ -445,7 +552,7 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a PAID_IN or PAID_OUT cash movement against an OPEN register session; movements feed the theoretical-cash calculation at close. Use this tool for non-sale drawer cash such as petty cash or bank drops; do not use beginSessionClose, which records the final counted drawer instead. Preconditions: the session must exist and be OPEN — movements are rejected once closing has begun. Required inputs: movementType (PAID_IN or PAID_OUT), a positive amount, reason, and clerkId. Emits an ORDER_SESSION_CASH_MOVEMENT event. Returns 201 with the recorded movement, 400 when the amount is not positive or the movement type is unknown, 404 when the session does not exist, and 409 when the session is not OPEN. 
+     * Records a drawer cash movement with one of the fixed reasons against an OPEN register session: PETTY_EXPENSE (out), VENDOR_COD (out), BANK_DROP (out), FLOAT_INCREASE (in) or FLOAT_DECREASE (out); the direction follows the reason and movements feed the theoretical cash at close. Use this tool for non-sale drawer cash such as a petty expense or the bank drop; use requestCashMovementApproval first when a manager must approve, and do not use beginSessionClose, which records the final counted drawer instead. Preconditions: the session must exist and be OPEN; the reason\'s type must be allowed by the tenant\'s drawer policy; a petty expense needs an ACTIVE category; a float movement must match the difference between the register\'s configured float and the drawer\'s float. Above the cashier limit on the session\'s running total of the reason, and for every float change, the request must carry a manager\'s approvalToken whose approver is not the caller; a caller whose grant is location-scoped must have the session\'s location within reach (ADR-0061). Required inputs: requestId (UUIDv7, the idempotency key), reason, a positive amount and its currencyCode (ISO 4217, the functional currency); categoryCode, receiptReference and note for PETTY_EXPENSE; vendorId for VENDOR_COD; bagNumber for BANK_DROP. The cashier is the caller; a clerkId in the body is ignored. Emits an ORDER_SESSION_CASH_MOVEMENT event. Returns 201 with the recorded movement and 200 with the first result when the requestId was already recorded with the same payload; 400 REGISTER_SESSION_INVALID_ARGUMENT for a missing or malformed field (VALIDATION_ERROR for a non-ISO currencyCode), 403 for the approval rules or LOCATION_SCOPE_DENIED, 404 when the session does not exist, 409 REGISTER_SESSION_CONFLICT when the session is not OPEN or IDEMPOTENCY_CONFLICT when the requestId was used for another movement, and 422 for a drawer rule or CURRENCY_NOT_SUPPORTED for a currency other than the functional currency. 
      * Record a Drawer Cash Movement
      */
     async recordCashMovementRaw(requestParameters: RecordCashMovementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CashMovementResponse>> {
@@ -489,11 +596,110 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a PAID_IN or PAID_OUT cash movement against an OPEN register session; movements feed the theoretical-cash calculation at close. Use this tool for non-sale drawer cash such as petty cash or bank drops; do not use beginSessionClose, which records the final counted drawer instead. Preconditions: the session must exist and be OPEN — movements are rejected once closing has begun. Required inputs: movementType (PAID_IN or PAID_OUT), a positive amount, reason, and clerkId. Emits an ORDER_SESSION_CASH_MOVEMENT event. Returns 201 with the recorded movement, 400 when the amount is not positive or the movement type is unknown, 404 when the session does not exist, and 409 when the session is not OPEN. 
+     * Records a drawer cash movement with one of the fixed reasons against an OPEN register session: PETTY_EXPENSE (out), VENDOR_COD (out), BANK_DROP (out), FLOAT_INCREASE (in) or FLOAT_DECREASE (out); the direction follows the reason and movements feed the theoretical cash at close. Use this tool for non-sale drawer cash such as a petty expense or the bank drop; use requestCashMovementApproval first when a manager must approve, and do not use beginSessionClose, which records the final counted drawer instead. Preconditions: the session must exist and be OPEN; the reason\'s type must be allowed by the tenant\'s drawer policy; a petty expense needs an ACTIVE category; a float movement must match the difference between the register\'s configured float and the drawer\'s float. Above the cashier limit on the session\'s running total of the reason, and for every float change, the request must carry a manager\'s approvalToken whose approver is not the caller; a caller whose grant is location-scoped must have the session\'s location within reach (ADR-0061). Required inputs: requestId (UUIDv7, the idempotency key), reason, a positive amount and its currencyCode (ISO 4217, the functional currency); categoryCode, receiptReference and note for PETTY_EXPENSE; vendorId for VENDOR_COD; bagNumber for BANK_DROP. The cashier is the caller; a clerkId in the body is ignored. Emits an ORDER_SESSION_CASH_MOVEMENT event. Returns 201 with the recorded movement and 200 with the first result when the requestId was already recorded with the same payload; 400 REGISTER_SESSION_INVALID_ARGUMENT for a missing or malformed field (VALIDATION_ERROR for a non-ISO currencyCode), 403 for the approval rules or LOCATION_SCOPE_DENIED, 404 when the session does not exist, 409 REGISTER_SESSION_CONFLICT when the session is not OPEN or IDEMPOTENCY_CONFLICT when the requestId was used for another movement, and 422 for a drawer rule or CURRENCY_NOT_SUPPORTED for a currency other than the functional currency. 
      * Record a Drawer Cash Movement
      */
     async recordCashMovement(requestParameters: RecordCashMovementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CashMovementResponse> {
         const response = await this.recordCashMovementRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Verifies a manager\'s own credentials, entered once at the shared register under the cashier\'s sign-in, and returns a single-use approval token for one cash movement. pos-security-service checks the credentials in the caller\'s tenant under the sign-in lockout policy; no token is issued to the manager, no session is opened, and the cashier\'s session is untouched. Use this tool when recordCashMovement needs a manager (above the cashier limit, or a float change), then send the token as the movement\'s approvalToken before it expires; do not use it to sign the manager in — it issues no sign-in token and opens no session. Preconditions: the session must exist and be OPEN, within the caller\'s location scope; the verified person must hold order:session:approve_cash_movement with a location scope that reaches the session\'s location, and must not be the caller; after five failed approvals on one session the step-up refuses without checking. Required inputs: managerUsername, managerPassword, reason, the movement\'s exact amount and its currencyCode (the functional currency), plus its categoryCode or vendorId when it has one; the token is bound to the session, reason, amount, currency and category or vendor, expires after five minutes and is used once. Emits an ORDER_SESSION_CASH_MOVEMENT_APPROVE event; the password is never stored or logged. Returns 201 with the token and its expiry; 400 for a missing field; 403 CASH_MOVEMENT_APPROVAL_DENIED for any failed check (wrong or unknown credentials, a locked or inactive account, or a person without the permission — the same body for every reason, never 401), CASH_MOVEMENT_SELF_APPROVAL for the caller\'s own credentials, CASH_MOVEMENT_CALLER_UNIDENTIFIED when the caller\'s sign-in carries no user id, or LOCATION_SCOPE_DENIED; 404 when the session does not exist; 409 when it is not OPEN; 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional currency; 503 when the credentials could not be checked. 
+     * Approve a Drawer Cash Movement (Manager Step-Up)
+     */
+    async requestCashMovementApprovalRaw(requestParameters: RequestCashMovementApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CashMovementApprovalResponse>> {
+        if (requestParameters['sessionId'] == null) {
+            throw new runtime.RequiredError(
+                'sessionId',
+                'Required parameter "sessionId" was null or undefined when calling requestCashMovementApproval().'
+            );
+        }
+
+        if (requestParameters['cashMovementApprovalRequest'] == null) {
+            throw new runtime.RequiredError(
+                'cashMovementApprovalRequest',
+                'Required parameter "cashMovementApprovalRequest" was null or undefined when calling requestCashMovementApproval().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/sessions/{sessionId}/cash-movement-approvals`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CashMovementApprovalRequestToJSON(requestParameters['cashMovementApprovalRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CashMovementApprovalResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Verifies a manager\'s own credentials, entered once at the shared register under the cashier\'s sign-in, and returns a single-use approval token for one cash movement. pos-security-service checks the credentials in the caller\'s tenant under the sign-in lockout policy; no token is issued to the manager, no session is opened, and the cashier\'s session is untouched. Use this tool when recordCashMovement needs a manager (above the cashier limit, or a float change), then send the token as the movement\'s approvalToken before it expires; do not use it to sign the manager in — it issues no sign-in token and opens no session. Preconditions: the session must exist and be OPEN, within the caller\'s location scope; the verified person must hold order:session:approve_cash_movement with a location scope that reaches the session\'s location, and must not be the caller; after five failed approvals on one session the step-up refuses without checking. Required inputs: managerUsername, managerPassword, reason, the movement\'s exact amount and its currencyCode (the functional currency), plus its categoryCode or vendorId when it has one; the token is bound to the session, reason, amount, currency and category or vendor, expires after five minutes and is used once. Emits an ORDER_SESSION_CASH_MOVEMENT_APPROVE event; the password is never stored or logged. Returns 201 with the token and its expiry; 400 for a missing field; 403 CASH_MOVEMENT_APPROVAL_DENIED for any failed check (wrong or unknown credentials, a locked or inactive account, or a person without the permission — the same body for every reason, never 401), CASH_MOVEMENT_SELF_APPROVAL for the caller\'s own credentials, CASH_MOVEMENT_CALLER_UNIDENTIFIED when the caller\'s sign-in carries no user id, or LOCATION_SCOPE_DENIED; 404 when the session does not exist; 409 when it is not OPEN; 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional currency; 503 when the credentials could not be checked. 
+     * Approve a Drawer Cash Movement (Manager Step-Up)
+     */
+    async requestCashMovementApproval(requestParameters: RequestCashMovementApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CashMovementApprovalResponse> {
+        const response = await this.requestCashMovementApprovalRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces the two configurable movement types (petty expenses and vendor cash on delivery: allowed and cashier limit) and the over/short tolerance, with a justification. Each changed setting writes one history row (old and new value, actor, justification); a request that changes nothing writes nothing. Switching a type off is never retroactive: recorded movements stand and are carried on the close fact. Use this tool to change the drawer limits after reading them with getSessionPolicy; do not use it to see what one register session may record now — use getCashMovementOptions instead. Preconditions: an allowed type needs a cashier limit; vendor cash on delivery stays off until pos-order holds the vendor list. Required inputs: the version read (null only while the defaults apply), currencyCode (the functional currency, ISO 4217), pettyExpense and vendorCod (allowed, cashierLimit), overShortTolerance and a justification of at least 10 characters; limits and the tolerance must not be negative. Emits an ORDER_SESSION_POLICY_UPDATE event when a setting changes, and nothing otherwise. Returns 200 with the policy and its history, 400 VALIDATION_ERROR for a field rule or a missing or non-ISO currencyCode, 409 SESSION_POLICY_CONFLICT when the version read is not the current one or another change won a race (read again and retry), and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional currency. 
+     * Replace the Drawer Policy
+     */
+    async updateSessionPolicyRaw(requestParameters: UpdateSessionPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SessionPolicyResponse>> {
+        if (requestParameters['updateSessionPolicyRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateSessionPolicyRequest',
+                'Required parameter "updateSessionPolicyRequest" was null or undefined when calling updateSessionPolicy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/session-policy`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateSessionPolicyRequestToJSON(requestParameters['updateSessionPolicyRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SessionPolicyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces the two configurable movement types (petty expenses and vendor cash on delivery: allowed and cashier limit) and the over/short tolerance, with a justification. Each changed setting writes one history row (old and new value, actor, justification); a request that changes nothing writes nothing. Switching a type off is never retroactive: recorded movements stand and are carried on the close fact. Use this tool to change the drawer limits after reading them with getSessionPolicy; do not use it to see what one register session may record now — use getCashMovementOptions instead. Preconditions: an allowed type needs a cashier limit; vendor cash on delivery stays off until pos-order holds the vendor list. Required inputs: the version read (null only while the defaults apply), currencyCode (the functional currency, ISO 4217), pettyExpense and vendorCod (allowed, cashierLimit), overShortTolerance and a justification of at least 10 characters; limits and the tolerance must not be negative. Emits an ORDER_SESSION_POLICY_UPDATE event when a setting changes, and nothing otherwise. Returns 200 with the policy and its history, 400 VALIDATION_ERROR for a field rule or a missing or non-ISO currencyCode, 409 SESSION_POLICY_CONFLICT when the version read is not the current one or another change won a race (read again and retry), and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional currency. 
+     * Replace the Drawer Policy
+     */
+    async updateSessionPolicy(requestParameters: UpdateSessionPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SessionPolicyResponse> {
+        const response = await this.updateSessionPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

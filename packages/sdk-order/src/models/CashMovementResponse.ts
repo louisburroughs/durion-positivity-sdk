@@ -20,48 +20,123 @@ import { mapValues } from '../runtime';
  */
 export interface CashMovementResponse {
     /**
-     * 
+     * Positive amount moved
      * @type {number}
      * @memberof CashMovementResponse
      */
     amount?: number;
     /**
-     * 
+     * User id of the approving manager, or null
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    approvedBy?: string;
+    /**
+     * Deposit bag, for BANK_DROP
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    bagNumber?: string;
+    /**
+     * Petty-expense category, for PETTY_EXPENSE
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    categoryCode?: string;
+    /**
+     * Cashier who recorded it, from the security context (sign-in name)
      * @type {string}
      * @memberof CashMovementResponse
      */
     clerkId?: string;
     /**
-     * 
+     * The cashier's user id, when the sign-in carried one
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    clerkUserId?: string;
+    /**
+     * ISO 4217 code of the amount (the functional currency)
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    currencyCode?: string;
+    /**
+     * Movement id
      * @type {string}
      * @memberof CashMovementResponse
      */
     movementId?: string;
     /**
-     * 
+     * Direction, derived from the reason
      * @type {string}
      * @memberof CashMovementResponse
      */
-    movementType?: string;
+    movementType?: CashMovementResponseMovementTypeEnum;
     /**
-     * 
+     * Free-text note (the whole free-text reason of an older movement)
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    note?: string;
+    /**
+     * When the movement was recorded
      * @type {Date}
      * @memberof CashMovementResponse
      */
     occurredAt?: Date;
     /**
-     * 
+     * The fixed reason; null on a movement recorded before the fixed reasons
      * @type {string}
      * @memberof CashMovementResponse
      */
-    reason?: string;
+    reason?: CashMovementResponseReasonEnum;
     /**
-     * 
+     * Receipt, for PETTY_EXPENSE
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    receiptReference?: string;
+    /**
+     * The register's idempotency key; null on a movement recorded before the fixed reasons
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    requestId?: string;
+    /**
+     * Session the movement belongs to
      * @type {string}
      * @memberof CashMovementResponse
      */
     sessionId?: string;
+    /**
+     * Vendor paid, for VENDOR_COD
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    vendorId?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CashMovementResponseMovementTypeEnum {
+    In = 'PAID_IN',
+    Out = 'PAID_OUT'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum CashMovementResponseReasonEnum {
+    PettyExpense = 'PETTY_EXPENSE',
+    VendorCod = 'VENDOR_COD',
+    BankDrop = 'BANK_DROP',
+    FloatIncrease = 'FLOAT_INCREASE',
+    FloatDecrease = 'FLOAT_DECREASE'
+}
+
 
 /**
  * Check if a given object implements the CashMovementResponse interface.
@@ -81,12 +156,21 @@ export function CashMovementResponseFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'amount': json['amount'] == null ? undefined : json['amount'],
+        'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'bagNumber': json['bagNumber'] == null ? undefined : json['bagNumber'],
+        'categoryCode': json['categoryCode'] == null ? undefined : json['categoryCode'],
         'clerkId': json['clerkId'] == null ? undefined : json['clerkId'],
+        'clerkUserId': json['clerkUserId'] == null ? undefined : json['clerkUserId'],
+        'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
         'movementId': json['movementId'] == null ? undefined : json['movementId'],
         'movementType': json['movementType'] == null ? undefined : json['movementType'],
+        'note': json['note'] == null ? undefined : json['note'],
         'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
         'reason': json['reason'] == null ? undefined : json['reason'],
+        'receiptReference': json['receiptReference'] == null ? undefined : json['receiptReference'],
+        'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
     };
 }
 
@@ -97,12 +181,21 @@ export function CashMovementResponseToJSON(value?: CashMovementResponse | null):
     return {
         
         'amount': value['amount'],
+        'approvedBy': value['approvedBy'],
+        'bagNumber': value['bagNumber'],
+        'categoryCode': value['categoryCode'],
         'clerkId': value['clerkId'],
+        'clerkUserId': value['clerkUserId'],
+        'currencyCode': value['currencyCode'],
         'movementId': value['movementId'],
         'movementType': value['movementType'],
+        'note': value['note'],
         'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
         'reason': value['reason'],
+        'receiptReference': value['receiptReference'],
+        'requestId': value['requestId'],
         'sessionId': value['sessionId'],
+        'vendorId': value['vendorId'],
     };
 }
 
