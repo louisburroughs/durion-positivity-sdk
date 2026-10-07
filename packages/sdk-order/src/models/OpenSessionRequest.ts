@@ -26,18 +26,6 @@ export interface OpenSessionRequest {
      */
     locationId?: string;
     /**
-     * Clerk opening the session
-     * @type {string}
-     * @memberof OpenSessionRequest
-     */
-    openedByClerkId: string;
-    /**
-     * Starting drawer cash; defaults to the terminal's previous counted close when omitted
-     * @type {number}
-     * @memberof OpenSessionRequest
-     */
-    openingFloat?: number;
-    /**
      * Terminal the drawer belongs to; one open session per terminal
      * @type {string}
      * @memberof OpenSessionRequest
@@ -49,7 +37,6 @@ export interface OpenSessionRequest {
  * Check if a given object implements the OpenSessionRequest interface.
  */
 export function instanceOfOpenSessionRequest(value: object): boolean {
-    if (!('openedByClerkId' in value)) return false;
     if (!('terminalId' in value)) return false;
     return true;
 }
@@ -65,8 +52,6 @@ export function OpenSessionRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'openedByClerkId': json['openedByClerkId'],
-        'openingFloat': json['openingFloat'] == null ? undefined : json['openingFloat'],
         'terminalId': json['terminalId'],
     };
 }
@@ -78,8 +63,6 @@ export function OpenSessionRequestToJSON(value?: OpenSessionRequest | null): any
     return {
         
         'locationId': value['locationId'],
-        'openedByClerkId': value['openedByClerkId'],
-        'openingFloat': value['openingFloat'],
         'terminalId': value['terminalId'],
     };
 }

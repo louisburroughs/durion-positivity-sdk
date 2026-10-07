@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for recording a drawer cash movement
+ * Request payload for recording a drawer cash movement with one of the fixed reasons
  * @export
  * @interface CashMovementRequest
  */
@@ -26,32 +26,71 @@ export interface CashMovementRequest {
      */
     amount: number;
     /**
-     * Clerk recording the movement
+     * A manager's single-use approval token from the cash-movement-approvals step-up; required above the cashier limit and for every float change
      * @type {string}
      * @memberof CashMovementRequest
      */
-    clerkId: string;
+    approvalToken?: string;
     /**
-     * Movement direction
+     * Deposit bag number; required for BANK_DROP
      * @type {string}
      * @memberof CashMovementRequest
      */
-    movementType: CashMovementRequestMovementTypeEnum;
+    bagNumber?: string;
     /**
-     * Reason for the movement
+     * ACTIVE petty-expense category code; required for PETTY_EXPENSE
      * @type {string}
      * @memberof CashMovementRequest
      */
-    reason: string;
+    categoryCode?: string;
+    /**
+     * ISO 4217 code of the amount; must be the functional currency (ADR-0067)
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    currencyCode: string;
+    /**
+     * Free-text note; required for PETTY_EXPENSE, optional otherwise
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    note?: string;
+    /**
+     * The fixed reason; it decides the direction and the required fields
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    reason: CashMovementRequestReasonEnum;
+    /**
+     * Receipt reference; required for PETTY_EXPENSE
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    receiptReference?: string;
+    /**
+     * The register's idempotency key (UUIDv7): a retry with the same id returns the first result
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    requestId: string;
+    /**
+     * The vendor paid; required for VENDOR_COD
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    vendorId?: string;
 }
 
 /**
 * @export
 * @enum {string}
 */
-export enum CashMovementRequestMovementTypeEnum {
-    In = 'PAID_IN',
-    Out = 'PAID_OUT'
+export enum CashMovementRequestReasonEnum {
+    PettyExpense = 'PETTY_EXPENSE',
+    VendorCod = 'VENDOR_COD',
+    BankDrop = 'BANK_DROP',
+    FloatIncrease = 'FLOAT_INCREASE',
+    FloatDecrease = 'FLOAT_DECREASE'
 }
 
 
@@ -60,9 +99,9 @@ export enum CashMovementRequestMovementTypeEnum {
  */
 export function instanceOfCashMovementRequest(value: object): boolean {
     if (!('amount' in value)) return false;
-    if (!('clerkId' in value)) return false;
-    if (!('movementType' in value)) return false;
+    if (!('currencyCode' in value)) return false;
     if (!('reason' in value)) return false;
+    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -77,9 +116,15 @@ export function CashMovementRequestFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'amount': json['amount'],
-        'clerkId': json['clerkId'],
-        'movementType': json['movementType'],
+        'approvalToken': json['approvalToken'] == null ? undefined : json['approvalToken'],
+        'bagNumber': json['bagNumber'] == null ? undefined : json['bagNumber'],
+        'categoryCode': json['categoryCode'] == null ? undefined : json['categoryCode'],
+        'currencyCode': json['currencyCode'],
+        'note': json['note'] == null ? undefined : json['note'],
         'reason': json['reason'],
+        'receiptReference': json['receiptReference'] == null ? undefined : json['receiptReference'],
+        'requestId': json['requestId'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
     };
 }
 
@@ -90,9 +135,15 @@ export function CashMovementRequestToJSON(value?: CashMovementRequest | null): a
     return {
         
         'amount': value['amount'],
-        'clerkId': value['clerkId'],
-        'movementType': value['movementType'],
+        'approvalToken': value['approvalToken'],
+        'bagNumber': value['bagNumber'],
+        'categoryCode': value['categoryCode'],
+        'currencyCode': value['currencyCode'],
+        'note': value['note'],
         'reason': value['reason'],
+        'receiptReference': value['receiptReference'],
+        'requestId': value['requestId'],
+        'vendorId': value['vendorId'],
     };
 }
 
