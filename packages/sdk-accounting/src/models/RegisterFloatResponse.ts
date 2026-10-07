@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A register's change float after a go-live or Change float command
+ * A register's change float after a go-live, Change float or relocation command
  * @export
  * @interface RegisterFloatResponse
  */
@@ -32,13 +32,13 @@ export interface RegisterFloatResponse {
      */
     effectiveDate: Date;
     /**
-     * The journal entry the command posted
+     * The journal entry the command posted; null for a relocation of a zero float, which posts nothing
      * @type {string}
      * @memberof RegisterFloatResponse
      */
-    journalEntryId: string;
+    journalEntryId?: string;
     /**
-     * That entry's number
+     * That entry's number; null when no entry posted
      * @type {string}
      * @memberof RegisterFloatResponse
      */
@@ -50,7 +50,7 @@ export interface RegisterFloatResponse {
      */
     kind: RegisterFloatResponseKindEnum;
     /**
-     * The location the register belongs to
+     * The location the register belongs to; after a relocation, the destination
      * @type {string}
      * @memberof RegisterFloatResponse
      */
@@ -82,7 +82,8 @@ export interface RegisterFloatResponse {
 export enum RegisterFloatResponseKindEnum {
     GoLive = 'GO_LIVE',
     Change = 'CHANGE',
-    Reversal = 'REVERSAL'
+    Reversal = 'REVERSAL',
+    Relocation = 'RELOCATION'
 }
 
 
@@ -92,7 +93,6 @@ export enum RegisterFloatResponseKindEnum {
 export function instanceOfRegisterFloatResponse(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('effectiveDate' in value)) return false;
-    if (!('journalEntryId' in value)) return false;
     if (!('kind' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('previousAmount' in value)) return false;
@@ -112,7 +112,7 @@ export function RegisterFloatResponseFromJSONTyped(json: any, ignoreDiscriminato
         
         'amount': json['amount'],
         'effectiveDate': (new Date(json['effectiveDate'])),
-        'journalEntryId': json['journalEntryId'],
+        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'journalEntryNumber': json['journalEntryNumber'] == null ? undefined : json['journalEntryNumber'],
         'kind': json['kind'],
         'locationId': json['locationId'],

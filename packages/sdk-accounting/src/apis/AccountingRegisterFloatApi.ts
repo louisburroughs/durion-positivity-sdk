@@ -18,6 +18,7 @@ import type {
   ApiError,
   RegisterFloatChangeRequest,
   RegisterFloatGoLiveRequest,
+  RegisterFloatRelocationRequest,
   RegisterFloatResponse,
 } from '../models/index';
 import {
@@ -27,6 +28,8 @@ import {
     RegisterFloatChangeRequestToJSON,
     RegisterFloatGoLiveRequestFromJSON,
     RegisterFloatGoLiveRequestToJSON,
+    RegisterFloatRelocationRequestFromJSON,
+    RegisterFloatRelocationRequestToJSON,
     RegisterFloatResponseFromJSON,
     RegisterFloatResponseToJSON,
 } from '../models/index';
@@ -39,6 +42,11 @@ export interface ChangeRegisterFloatRequest {
 export interface EstablishGoLiveRegisterFloatRequest {
     registerId: string;
     registerFloatGoLiveRequest: RegisterFloatGoLiveRequest;
+}
+
+export interface RelocateRegisterFloatRequest {
+    registerId: string;
+    registerFloatRelocationRequest: RegisterFloatRelocationRequest;
 }
 
 /**
@@ -149,6 +157,59 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
      */
     async establishGoLiveRegisterFloat(requestParameters: EstablishGoLiveRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterFloatResponse> {
         const response = await this.establishGoLiveRegisterFloatRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Moves a register and its change float from fromLocationId to toLocationId, posting Dr 1080 Register Float at the destination / Cr 1080 at the origin for the current float on the effective date. The float is unchanged, there is no bank or 3900 line, and a zero float moves without an entry (journalEntryId null), which fixes a go-live made under a mistyped location. Use this tool for a register set up under the wrong location (ENTERED_IN_ERROR) or a drawer that moved (MOVED); do not use changeRegisterFloat, which changes the amount, and never reverse the relocation entry (409 FLOAT_RELOCATION_NOT_REVERSIBLE): move again instead. Preconditions: the caller holds accounting:float:manage with both locations in scope (403 LOCATION_SCOPE_DENIED), and the float is held at fromLocationId (404 FLOAT_REGISTER_NOT_FOUND, 422 FLOAT_REGISTER_LOCATION_MISMATCH) and moves elsewhere (422 FLOAT_RELOCATION_SAME_LOCATION). The register has no open pos-order session (422 FLOAT_REGISTER_SESSION_OPEN, referenceId names it) and its float is not negative (422 FLOAT_AMOUNT_NEGATIVE). The effective date is not after today nor before the register\'s latest float entry (422 FLOAT_RELOCATION_DATE_INVALID), and passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Required inputs: registerId (path), fromLocationId, toLocationId, reason, justification (10 or more characters) and requestId, on which the command is idempotent (a replay returns the first result with 200, another body is 409 IDEMPOTENCY_CONFLICT); effectiveDate defaults to today in the accounting time zone. Emits ACCOUNTING_REGISTER_FLOAT_RELOCATE, queues accounting.float.changed with kind RELOCATION, writes an audit row naming both locations and the reason, and returns 201. 
+     * Move a Register and Its Float to Another Location
+     */
+    async relocateRegisterFloatRaw(requestParameters: RelocateRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterFloatResponse>> {
+        if (requestParameters['registerId'] == null) {
+            throw new runtime.RequiredError(
+                'registerId',
+                'Required parameter "registerId" was null or undefined when calling relocateRegisterFloat().'
+            );
+        }
+
+        if (requestParameters['registerFloatRelocationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'registerFloatRelocationRequest',
+                'Required parameter "registerFloatRelocationRequest" was null or undefined when calling relocateRegisterFloat().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:float:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/registers/{registerId}/float/relocation`.replace(`{${"registerId"}}`, encodeURIComponent(String(requestParameters['registerId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RegisterFloatRelocationRequestToJSON(requestParameters['registerFloatRelocationRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RegisterFloatResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Moves a register and its change float from fromLocationId to toLocationId, posting Dr 1080 Register Float at the destination / Cr 1080 at the origin for the current float on the effective date. The float is unchanged, there is no bank or 3900 line, and a zero float moves without an entry (journalEntryId null), which fixes a go-live made under a mistyped location. Use this tool for a register set up under the wrong location (ENTERED_IN_ERROR) or a drawer that moved (MOVED); do not use changeRegisterFloat, which changes the amount, and never reverse the relocation entry (409 FLOAT_RELOCATION_NOT_REVERSIBLE): move again instead. Preconditions: the caller holds accounting:float:manage with both locations in scope (403 LOCATION_SCOPE_DENIED), and the float is held at fromLocationId (404 FLOAT_REGISTER_NOT_FOUND, 422 FLOAT_REGISTER_LOCATION_MISMATCH) and moves elsewhere (422 FLOAT_RELOCATION_SAME_LOCATION). The register has no open pos-order session (422 FLOAT_REGISTER_SESSION_OPEN, referenceId names it) and its float is not negative (422 FLOAT_AMOUNT_NEGATIVE). The effective date is not after today nor before the register\'s latest float entry (422 FLOAT_RELOCATION_DATE_INVALID), and passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Required inputs: registerId (path), fromLocationId, toLocationId, reason, justification (10 or more characters) and requestId, on which the command is idempotent (a replay returns the first result with 200, another body is 409 IDEMPOTENCY_CONFLICT); effectiveDate defaults to today in the accounting time zone. Emits ACCOUNTING_REGISTER_FLOAT_RELOCATE, queues accounting.float.changed with kind RELOCATION, writes an audit row naming both locations and the reason, and returns 201. 
+     * Move a Register and Its Float to Another Location
+     */
+    async relocateRegisterFloat(requestParameters: RelocateRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterFloatResponse> {
+        const response = await this.relocateRegisterFloatRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
