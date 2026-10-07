@@ -61,7 +61,8 @@ export enum TenantTemplateAttentionItemKindEnum {
     MappingKey = 'MAPPING_KEY',
     GlMapping = 'GL_MAPPING',
     DefaultGlMapping = 'DEFAULT_GL_MAPPING',
-    StatementLine = 'STATEMENT_LINE'
+    StatementLine = 'STATEMENT_LINE',
+    PettyExpenseCategory = 'PETTY_EXPENSE_CATEGORY'
 }
 /**
 * @export

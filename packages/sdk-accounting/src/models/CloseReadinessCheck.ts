@@ -63,6 +63,7 @@ export enum CloseReadinessCheckCodeEnum {
     IncompleteImports = 'INCOMPLETE_IMPORTS',
     OutstandingItemsAging = 'OUTSTANDING_ITEMS_AGING',
     ClearingBalanceAging = 'CLEARING_BALANCE_AGING',
+    OpeningBalanceEquityNotCleared = 'OPENING_BALANCE_EQUITY_NOT_CLEARED',
     LateBankTransactions = 'LATE_BANK_TRANSACTIONS',
     ReconciledAfterClose = 'RECONCILED_AFTER_CLOSE'
 }
