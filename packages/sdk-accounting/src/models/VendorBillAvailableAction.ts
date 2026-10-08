@@ -32,7 +32,7 @@ export interface VendorBillAvailableAction {
      */
     allowed: boolean;
     /**
-     * Why not; reserved for S13's rule-based blocks
+     * Why not, when allowed is false: AP_APPROVAL_LIMIT_EXCEEDED (the bill is over the clerk limit and the caller lacks accounting:ap:approve_over_limit), else AP_BILL_SELF_APPROVAL (the caller created the bill); null when allowed
      * @type {string}
      * @memberof VendorBillAvailableAction
      */
@@ -58,7 +58,8 @@ export enum VendorBillAvailableActionActionEnum {
     VoidException = 'VOID_EXCEPTION',
     SelectCandidate = 'SELECT_CANDIDATE',
     VoidApproved = 'VOID_APPROVED',
-    VoidUnmatched = 'VOID_UNMATCHED'
+    VoidUnmatched = 'VOID_UNMATCHED',
+    SetDueDate = 'SET_DUE_DATE'
 }
 
 
