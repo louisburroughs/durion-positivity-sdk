@@ -16,11 +16,14 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  PagedResponseTaxIdRevealRecordView,
   PagedResponseVendorView,
   RemitApprovalRequest,
   RemitChangeRequest,
   RemitChangeView,
   RemitRejectionRequest,
+  TaxIdRevealRequest,
+  TaxIdRevealView,
   VendorCreateRequest,
   VendorFactReplayResult,
   VendorStatusChangeRequest,
@@ -30,6 +33,8 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    PagedResponseTaxIdRevealRecordViewFromJSON,
+    PagedResponseTaxIdRevealRecordViewToJSON,
     PagedResponseVendorViewFromJSON,
     PagedResponseVendorViewToJSON,
     RemitApprovalRequestFromJSON,
@@ -40,6 +45,10 @@ import {
     RemitChangeViewToJSON,
     RemitRejectionRequestFromJSON,
     RemitRejectionRequestToJSON,
+    TaxIdRevealRequestFromJSON,
+    TaxIdRevealRequestToJSON,
+    TaxIdRevealViewFromJSON,
+    TaxIdRevealViewToJSON,
     VendorCreateRequestFromJSON,
     VendorCreateRequestToJSON,
     VendorFactReplayResultFromJSON,
@@ -76,6 +85,12 @@ export interface ListSupplierVendorRemitChangesRequest {
     status?: ListSupplierVendorRemitChangesStatusEnum;
 }
 
+export interface ListSupplierVendorTaxIdRevealsRequest {
+    vendorId: string;
+    page?: number;
+    size?: number;
+}
+
 export interface ListSupplierVendorsRequest {
     q?: string;
     status?: ListSupplierVendorsStatusEnum;
@@ -102,6 +117,12 @@ export interface ReplaySupplierVendorFactsRequest {
 export interface RequestSupplierVendorRemitChangeRequest {
     vendorId: string;
     remitChangeRequest: RemitChangeRequest;
+}
+
+export interface RevealSupplierVendorTaxRegistrationRequest {
+    vendorId: string;
+    registrationId: string;
+    taxIdRevealRequest: TaxIdRevealRequest;
 }
 
 export interface UpdateSupplierVendorRequest {
@@ -175,7 +196,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed, and 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use. 
+     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4). Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed, and 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use. 
      * Create vendor
      */
     async createSupplierVendorRaw(requestParameters: CreateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -212,7 +233,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed, and 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use. 
+     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4). Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed, and 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use. 
      * Create vendor
      */
     async createSupplierVendor(requestParameters: CreateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {
@@ -274,7 +295,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor with its tax registrations, approved remit-to and version, default terms and currency, and status. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
+     * Returns one vendor with its masked tax registrations (registrationId, scheme, region and last4, never the number), approved remit-to and version, default terms and currency, and status. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
      * Get vendor
      */
     async getSupplierVendorRaw(requestParameters: GetSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -308,7 +329,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor with its tax registrations, approved remit-to and version, default terms and currency, and status. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
+     * Returns one vendor with its masked tax registrations (registrationId, scheme, region and last4, never the number), approved remit-to and version, default terms and currency, and status. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
      * Get vendor
      */
     async getSupplierVendor(requestParameters: GetSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {
@@ -364,7 +385,58 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms and status. Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
+     * Returns one page of a vendor\'s tax-registration reveals, newest first: who revealed which registration, their roles, the reason, the correlation id, when, and whether it was REVEALED, UNREADABLE or REASON_REJECTED. Use this tool to review who saw a vendor\'s full numbers; do not use it to read a number, which only revealSupplierVendorTaxRegistration returns, and use getSupplierVendor instead for the masked registrations. Preconditions: the vendor must exist in the caller\'s tenant; only that tenant\'s reveals are visible. Required inputs: vendorId (UUIDv7) path parameter; page is zero-based and size is 1 to 200 (default 20). Emits a SUPPLIER_VENDOR_TAX_ID_REVEAL_LIST audit event; nothing is changed, and no row carries the number or last4. Returns 200 with an empty page when nothing was revealed, 400 when page or size is out of range, and 404 SUPPLIER_VENDOR_NOT_FOUND. 
+     * List a vendor\'s tax-registration reveals
+     */
+    async listSupplierVendorTaxIdRevealsRaw(requestParameters: ListSupplierVendorTaxIdRevealsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseTaxIdRevealRecordView>> {
+        if (requestParameters['vendorId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorId',
+                'Required parameter "vendorId" was null or undefined when calling listSupplierVendorTaxIdReveals().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/vendors/{vendorId}/tax-id-reveals`.replace(`{${"vendorId"}}`, encodeURIComponent(String(requestParameters['vendorId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseTaxIdRevealRecordViewFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one page of a vendor\'s tax-registration reveals, newest first: who revealed which registration, their roles, the reason, the correlation id, when, and whether it was REVEALED, UNREADABLE or REASON_REJECTED. Use this tool to review who saw a vendor\'s full numbers; do not use it to read a number, which only revealSupplierVendorTaxRegistration returns, and use getSupplierVendor instead for the masked registrations. Preconditions: the vendor must exist in the caller\'s tenant; only that tenant\'s reveals are visible. Required inputs: vendorId (UUIDv7) path parameter; page is zero-based and size is 1 to 200 (default 20). Emits a SUPPLIER_VENDOR_TAX_ID_REVEAL_LIST audit event; nothing is changed, and no row carries the number or last4. Returns 200 with an empty page when nothing was revealed, 400 when page or size is out of range, and 404 SUPPLIER_VENDOR_NOT_FOUND. 
+     * List a vendor\'s tax-registration reveals
+     */
+    async listSupplierVendorTaxIdReveals(requestParameters: ListSupplierVendorTaxIdRevealsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseTaxIdRevealRecordView> {
+        const response = await this.listSupplierVendorTaxIdRevealsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms, status and masked tax registrations (scheme, region, last4). Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
      * List vendors
      */
     async listSupplierVendorsRaw(requestParameters: ListSupplierVendorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseVendorView>> {
@@ -407,7 +479,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms and status. Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
+     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms, status and masked tax registrations (scheme, region, last4). Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
      * List vendors
      */
     async listSupplierVendors(requestParameters: ListSupplierVendorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseVendorView> {
@@ -626,7 +698,67 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation. The vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field, 404 SUPPLIER_VENDOR_NOT_FOUND, and 409 CONFLICT when version is stale. 
+     * Returns one tax registration\'s full number, after recording who revealed it, their roles, the reason and the correlation id in an append-only audit row in the same transaction. Use this tool only when a person must see the full number, for example to check a W-9 or a payee statement; do not use it to show a registration, and use getSupplierVendor instead, which returns the masked last4. Preconditions: the vendor and the registration must exist in the caller\'s tenant, and the caller must hold supplier:vendor_tax_id:reveal (ADMIN and CONTROLLER only). Required inputs: vendorId and registrationId (UUIDv7) path parameters, and a reason of 10 to 500 characters once trimmed. Emits a SUPPLIER_VENDOR_TAX_ID_REVEAL audit event and writes one reveal audit row; no row, no number. The response carries Cache-Control: no-store and must never be cached, logged or put in a URL. Returns 200 with the number, 400 JUSTIFICATION_REQUIRED, or VALIDATION_ERROR for an over-long reason or one that contains the number itself (recorded as REASON_REJECTED, nothing revealed), 404 SUPPLIER_VENDOR_NOT_FOUND or SUPPLIER_VENDOR_TAX_REGISTRATION_NOT_FOUND, and 500 SUPPLIER_VENDOR_TAX_ID_UNREADABLE when the stored number cannot be decrypted, which is still recorded. 
+     * Reveal a vendor tax-registration number
+     */
+    async revealSupplierVendorTaxRegistrationRaw(requestParameters: RevealSupplierVendorTaxRegistrationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxIdRevealView>> {
+        if (requestParameters['vendorId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorId',
+                'Required parameter "vendorId" was null or undefined when calling revealSupplierVendorTaxRegistration().'
+            );
+        }
+
+        if (requestParameters['registrationId'] == null) {
+            throw new runtime.RequiredError(
+                'registrationId',
+                'Required parameter "registrationId" was null or undefined when calling revealSupplierVendorTaxRegistration().'
+            );
+        }
+
+        if (requestParameters['taxIdRevealRequest'] == null) {
+            throw new runtime.RequiredError(
+                'taxIdRevealRequest',
+                'Required parameter "taxIdRevealRequest" was null or undefined when calling revealSupplierVendorTaxRegistration().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/vendors/{vendorId}/tax-registrations/{registrationId}/reveal`.replace(`{${"vendorId"}}`, encodeURIComponent(String(requestParameters['vendorId']))).replace(`{${"registrationId"}}`, encodeURIComponent(String(requestParameters['registrationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TaxIdRevealRequestToJSON(requestParameters['taxIdRevealRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxIdRevealViewFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one tax registration\'s full number, after recording who revealed it, their roles, the reason and the correlation id in an append-only audit row in the same transaction. Use this tool only when a person must see the full number, for example to check a W-9 or a payee statement; do not use it to show a registration, and use getSupplierVendor instead, which returns the masked last4. Preconditions: the vendor and the registration must exist in the caller\'s tenant, and the caller must hold supplier:vendor_tax_id:reveal (ADMIN and CONTROLLER only). Required inputs: vendorId and registrationId (UUIDv7) path parameters, and a reason of 10 to 500 characters once trimmed. Emits a SUPPLIER_VENDOR_TAX_ID_REVEAL audit event and writes one reveal audit row; no row, no number. The response carries Cache-Control: no-store and must never be cached, logged or put in a URL. Returns 200 with the number, 400 JUSTIFICATION_REQUIRED, or VALIDATION_ERROR for an over-long reason or one that contains the number itself (recorded as REASON_REJECTED, nothing revealed), 404 SUPPLIER_VENDOR_NOT_FOUND or SUPPLIER_VENDOR_TAX_REGISTRATION_NOT_FOUND, and 500 SUPPLIER_VENDOR_TAX_ID_UNREADABLE when the stored number cannot be decrypted, which is still recorded. 
+     * Reveal a vendor tax-registration number
+     */
+    async revealSupplierVendorTaxRegistration(requestParameters: RevealSupplierVendorTaxRegistrationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxIdRevealView> {
+        const response = await this.revealSupplierVendorTaxRegistrationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation. The vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them. Send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region), 404 SUPPLIER_VENDOR_NOT_FOUND, and 409 CONFLICT when version is stale. 
      * Update vendor
      */
     async updateSupplierVendorRaw(requestParameters: UpdateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -670,7 +802,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation. The vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field, 404 SUPPLIER_VENDOR_NOT_FOUND, and 409 CONFLICT when version is stale. 
+     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation. The vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them. Send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region), 404 SUPPLIER_VENDOR_NOT_FOUND, and 409 CONFLICT when version is stale. 
      * Update vendor
      */
     async updateSupplierVendor(requestParameters: UpdateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {

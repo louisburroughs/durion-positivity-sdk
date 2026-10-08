@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * One tax registration of a vendor.
+ * One tax registration of a vendor, as a create or update sends it. Reads never return the number: send registrationId without number to keep a stored registration.
  * @export
  * @interface TaxRegistrationDto
  */
 export interface TaxRegistrationDto {
     /**
-     * Registration number as issued. Never blank.
+     * Registration number as issued, 1 to 64 characters. Required for a new registration; omit it to keep the stored number of registrationId. Never returned by a read.
      * @type {string}
      * @memberof TaxRegistrationDto
      */
@@ -31,6 +31,12 @@ export interface TaxRegistrationDto {
      * @memberof TaxRegistrationDto
      */
     region?: string;
+    /**
+     * A stored registration of this vendor, to keep or re-key it. Omit for a new registration.
+     * @type {string}
+     * @memberof TaxRegistrationDto
+     */
+    registrationId?: string;
     /**
      * Registration scheme. Never blank.
      * @type {string}
@@ -58,6 +64,7 @@ export function TaxRegistrationDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'number': json['number'] == null ? undefined : json['number'],
         'region': json['region'] == null ? undefined : json['region'],
+        'registrationId': json['registrationId'] == null ? undefined : json['registrationId'],
         'scheme': json['scheme'] == null ? undefined : json['scheme'],
     };
 }
@@ -70,6 +77,7 @@ export function TaxRegistrationDtoToJSON(value?: TaxRegistrationDto | null): any
         
         'number': value['number'],
         'region': value['region'],
+        'registrationId': value['registrationId'],
         'scheme': value['scheme'],
     };
 }
