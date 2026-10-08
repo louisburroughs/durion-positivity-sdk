@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface TaxRateComponent {
     /**
+     * Configured placeholder recoverability of this tax type (held for expert advice); null for a country without a tax-type profile
+     * @type {boolean}
+     * @memberof TaxRateComponent
+     */
+    inputTaxRecoverable?: boolean;
+    /**
      * Jurisdiction level the rate applies at
      * @type {string}
      * @memberof TaxRateComponent
@@ -31,6 +37,12 @@ export interface TaxRateComponent {
      * @memberof TaxRateComponent
      */
     rate: number;
+    /**
+     * Tax-type code of this component as the country profile configures it (1-32 upper-case letters, digits or underscores); null for a country without a tax-type profile
+     * @type {string}
+     * @memberof TaxRateComponent
+     */
+    taxType?: string;
 }
 
 /**
@@ -67,8 +79,10 @@ export function TaxRateComponentFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'inputTaxRecoverable': json['inputTaxRecoverable'] == null ? undefined : json['inputTaxRecoverable'],
         'jurisdictionType': json['jurisdictionType'],
         'rate': json['rate'],
+        'taxType': json['taxType'] == null ? undefined : json['taxType'],
     };
 }
 
@@ -78,8 +92,10 @@ export function TaxRateComponentToJSON(value?: TaxRateComponent | null): any {
     }
     return {
         
+        'inputTaxRecoverable': value['inputTaxRecoverable'],
         'jurisdictionType': value['jurisdictionType'],
         'rate': value['rate'],
+        'taxType': value['taxType'],
     };
 }
 
