@@ -33,7 +33,13 @@ export interface ExecuteAPPaymentRequest {
      */
     allocations?: Array<AllocationLineRequest>;
     /**
-     * ISO 4217 currency code
+     * GL account id of the BANK_CASH account the payment is made from: active at the start of the execution date, not deactivated before the payment, and in the functional currency. May be omitted only when exactly one such account exists, which is then used (CAP:550 S42, AW41)
+     * @type {string}
+     * @memberof ExecuteAPPaymentRequest
+     */
+    bankAccountId?: string;
+    /**
+     * ISO 4217 currency code; must be the tenant's functional currency (else 422 CURRENCY_NOT_SUPPORTED, ADR-0067 PC-9)
      * @type {string}
      * @memberof ExecuteAPPaymentRequest
      */
@@ -57,11 +63,11 @@ export interface ExecuteAPPaymentRequest {
      */
     memo?: string;
     /**
-     * Net amount deposited (if applicable)
-     * @type {number}
+     * Justification for paying while the execution date's period is CLOSED; honoured only with accounting:period:override. The override is stored with the payment and applied to its posting, whose audit row names the payer (CAP:550 S42)
+     * @type {string}
      * @memberof ExecuteAPPaymentRequest
      */
-    netAmount?: number;
+    overrideJustification?: string;
     /**
      * Payment method (ACH, CHECK, WIRE, CREDIT_CARD, OTHER)
      * @type {string}
@@ -124,11 +130,12 @@ export function ExecuteAPPaymentRequestFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'allocations': json['allocations'] == null ? undefined : ((json['allocations'] as Array<any>).map(AllocationLineRequestFromJSON)),
+        'bankAccountId': json['bankAccountId'] == null ? undefined : json['bankAccountId'],
         'currency': json['currency'],
         'feeAmount': json['feeAmount'] == null ? undefined : json['feeAmount'],
         'grossAmount': json['grossAmount'],
         'memo': json['memo'] == null ? undefined : json['memo'],
-        'netAmount': json['netAmount'] == null ? undefined : json['netAmount'],
+        'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
         'paymentMethod': json['paymentMethod'],
         'paymentRef': json['paymentRef'],
         'paymentSource': json['paymentSource'] == null ? undefined : json['paymentSource'],
@@ -143,11 +150,12 @@ export function ExecuteAPPaymentRequestToJSON(value?: ExecuteAPPaymentRequest | 
     return {
         
         'allocations': value['allocations'] == null ? undefined : ((value['allocations'] as Array<any>).map(AllocationLineRequestToJSON)),
+        'bankAccountId': value['bankAccountId'],
         'currency': value['currency'],
         'feeAmount': value['feeAmount'],
         'grossAmount': value['grossAmount'],
         'memo': value['memo'],
-        'netAmount': value['netAmount'],
+        'overrideJustification': value['overrideJustification'],
         'paymentMethod': value['paymentMethod'],
         'paymentRef': value['paymentRef'],
         'paymentSource': value['paymentSource'],

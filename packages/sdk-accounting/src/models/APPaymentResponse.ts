@@ -33,6 +33,12 @@ export interface APPaymentResponse {
      */
     allocations?: Array<AllocationLineResponse>;
     /**
+     * GL account id of the BANK_CASH account the payment was made from (CAP:550 S42)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    bankAccountId?: string;
+    /**
      * Payment created timestamp
      * @type {Date}
      * @memberof APPaymentResponse
@@ -75,7 +81,7 @@ export interface APPaymentResponse {
      */
     glJournalEntryId?: string;
     /**
-     * GL posting error message (if failed)
+     * Why the posting was refused, as its code (GL_MAPPING_NOT_CONFIGURED, PERIOD_CLOSED, PERIOD_HARD_LOCKED, ACCOUNTING_TIME_ZONE_UNSET, GL_ACCOUNT_NOT_ACTIVE) or GL_POST_RETRIES_EXHAUSTED (the outbox gave up on a transient failure) while the payment is GL_POST_FAILED; in every case gl-posting-retry is the remedy once the cause is fixed
      * @type {string}
      * @memberof APPaymentResponse
      */
@@ -99,11 +105,11 @@ export interface APPaymentResponse {
      */
     memo?: string;
     /**
-     * Net amount
-     * @type {number}
+     * The tenant business date the payment executed on; its entry posts on this date (CAP:550 S42)
+     * @type {Date}
      * @memberof APPaymentResponse
      */
-    netAmount?: number;
+    paymentDate?: Date;
     /**
      * Payment UUID
      * @type {string}
@@ -175,6 +181,7 @@ export function APPaymentResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'allocations': json['allocations'] == null ? undefined : ((json['allocations'] as Array<any>).map(AllocationLineResponseFromJSON)),
+        'bankAccountId': json['bankAccountId'] == null ? undefined : json['bankAccountId'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'currency': json['currency'] == null ? undefined : json['currency'],
@@ -186,7 +193,7 @@ export function APPaymentResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         'glPostedAt': json['glPostedAt'] == null ? undefined : (new Date(json['glPostedAt'])),
         'grossAmount': json['grossAmount'] == null ? undefined : json['grossAmount'],
         'memo': json['memo'] == null ? undefined : json['memo'],
-        'netAmount': json['netAmount'] == null ? undefined : json['netAmount'],
+        'paymentDate': json['paymentDate'] == null ? undefined : (new Date(json['paymentDate'])),
         'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
         'paymentRef': json['paymentRef'] == null ? undefined : json['paymentRef'],
         'status': json['status'] == null ? undefined : json['status'],
@@ -203,6 +210,7 @@ export function APPaymentResponseToJSON(value?: APPaymentResponse | null): any {
     return {
         
         'allocations': value['allocations'] == null ? undefined : ((value['allocations'] as Array<any>).map(AllocationLineResponseToJSON)),
+        'bankAccountId': value['bankAccountId'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'currency': value['currency'],
@@ -214,7 +222,7 @@ export function APPaymentResponseToJSON(value?: APPaymentResponse | null): any {
         'glPostedAt': value['glPostedAt'] == null ? undefined : ((value['glPostedAt']).toISOString()),
         'grossAmount': value['grossAmount'],
         'memo': value['memo'],
-        'netAmount': value['netAmount'],
+        'paymentDate': value['paymentDate'] == null ? undefined : ((value['paymentDate']).toISOString().substring(0,10)),
         'paymentId': value['paymentId'],
         'paymentRef': value['paymentRef'],
         'status': value['status'],
