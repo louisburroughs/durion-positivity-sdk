@@ -19,12 +19,12 @@ import {
     RemitToDtoFromJSONTyped,
     RemitToDtoToJSON,
 } from './RemitToDto';
-import type { TaxRegistrationDto } from './TaxRegistrationDto';
+import type { TaxRegistrationView } from './TaxRegistrationView';
 import {
-    TaxRegistrationDtoFromJSON,
-    TaxRegistrationDtoFromJSONTyped,
-    TaxRegistrationDtoToJSON,
-} from './TaxRegistrationDto';
+    TaxRegistrationViewFromJSON,
+    TaxRegistrationViewFromJSONTyped,
+    TaxRegistrationViewToJSON,
+} from './TaxRegistrationView';
 
 /**
  * A vendor. remitTo is the approved remit-to; pending changes are listed separately.
@@ -117,11 +117,11 @@ export interface VendorView {
      */
     statusReason?: string;
     /**
-     * Tax registrations.
-     * @type {Array<TaxRegistrationDto>}
+     * Tax registrations, masked: never a number.
+     * @type {Array<TaxRegistrationView>}
      * @memberof VendorView
      */
-    taxRegistrations?: Array<TaxRegistrationDto>;
+    taxRegistrations?: Array<TaxRegistrationView>;
     /**
      * Last change time.
      * @type {Date}
@@ -195,7 +195,7 @@ export function VendorViewFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'status': json['status'] == null ? undefined : json['status'],
         'statusChangedAt': json['statusChangedAt'] == null ? undefined : (new Date(json['statusChangedAt'])),
         'statusReason': json['statusReason'] == null ? undefined : json['statusReason'],
-        'taxRegistrations': json['taxRegistrations'] == null ? undefined : ((json['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoFromJSON)),
+        'taxRegistrations': json['taxRegistrations'] == null ? undefined : ((json['taxRegistrations'] as Array<any>).map(TaxRegistrationViewFromJSON)),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
         'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
@@ -224,7 +224,7 @@ export function VendorViewToJSON(value?: VendorView | null): any {
         'status': value['status'],
         'statusChangedAt': value['statusChangedAt'] == null ? undefined : ((value['statusChangedAt']).toISOString()),
         'statusReason': value['statusReason'],
-        'taxRegistrations': value['taxRegistrations'] == null ? undefined : ((value['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoToJSON)),
+        'taxRegistrations': value['taxRegistrations'] == null ? undefined : ((value['taxRegistrations'] as Array<any>).map(TaxRegistrationViewToJSON)),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
         'updatedBy': value['updatedBy'],
         'vendorId': value['vendorId'],
