@@ -56,6 +56,12 @@ export interface VendorBillStageRow {
      */
     openAmount: number;
     /**
+     * The tier an approval needs, from the current clerk limit; null outside PENDING_RECEIPT_MATCH, MATCH_EXCEPTION and AWAITING_APPROVAL
+     * @type {string}
+     * @memberof VendorBillStageRow
+     */
+    requiredTier?: VendorBillStageRowRequiredTierEnum;
+    /**
      * Status
      * @type {string}
      * @memberof VendorBillStageRow
@@ -94,6 +100,14 @@ export interface VendorBillStageRow {
 export enum VendorBillStageRowChannelEnum {
     GoodsReceipt = 'GOODS_RECEIPT',
     SupplierConnection = 'SUPPLIER_CONNECTION'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum VendorBillStageRowRequiredTierEnum {
+    Clerk = 'CLERK',
+    OverLimit = 'OVER_LIMIT'
 }
 /**
 * @export
@@ -141,6 +155,7 @@ export function VendorBillStageRowFromJSONTyped(json: any, ignoreDiscriminator: 
         'currencyCode': json['currencyCode'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'openAmount': json['openAmount'],
+        'requiredTier': json['requiredTier'] == null ? undefined : json['requiredTier'],
         'status': json['status'],
         'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
         'totalAmount': json['totalAmount'],
@@ -161,6 +176,7 @@ export function VendorBillStageRowToJSON(value?: VendorBillStageRow | null): any
         'currencyCode': value['currencyCode'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'openAmount': value['openAmount'],
+        'requiredTier': value['requiredTier'],
         'status': value['status'],
         'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
         'totalAmount': value['totalAmount'],

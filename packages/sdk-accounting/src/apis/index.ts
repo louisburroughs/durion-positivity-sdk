@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './APApprovalPolicyApi';
 export * from './APPaymentsApi';
 export * from './AccountingAnalyticsApi';
 export * from './AccountingConfigurationApi';

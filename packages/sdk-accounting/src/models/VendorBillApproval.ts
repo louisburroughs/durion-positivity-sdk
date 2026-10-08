@@ -51,6 +51,24 @@ export interface VendorBillApproval {
      */
     approvedBy?: string;
     /**
+     * PERSON or SYSTEM (automatic approval of a HIGH match); only on an approved bill
+     * @type {string}
+     * @memberof VendorBillApproval
+     */
+    approvedByKind?: VendorBillApprovalApprovedByKindEnum;
+    /**
+     * The clerk approval limit in force now, in the functional currency; 0.00 means no clerk approves
+     * @type {number}
+     * @memberof VendorBillApproval
+     */
+    clerkLimit: number;
+    /**
+     * ISO 4217 code of clerkLimit
+     * @type {string}
+     * @memberof VendorBillApproval
+     */
+    currencyCode: string;
+    /**
      * 
      * @type {VendorBillClassification}
      * @memberof VendorBillApproval
@@ -63,7 +81,7 @@ export interface VendorBillApproval {
      */
     proposedDifference?: VendorBillDifference;
     /**
-     * The tier the approval needs
+     * The tier the approval needs, from the current clerk limit (never stored)
      * @type {string}
      * @memberof VendorBillApproval
      */
@@ -92,6 +110,14 @@ export interface VendorBillApproval {
 * @export
 * @enum {string}
 */
+export enum VendorBillApprovalApprovedByKindEnum {
+    Person = 'PERSON',
+    System = 'SYSTEM'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillApprovalRequiredTierEnum {
     Clerk = 'CLERK',
     OverLimit = 'OVER_LIMIT'
@@ -102,6 +128,8 @@ export enum VendorBillApprovalRequiredTierEnum {
  * Check if a given object implements the VendorBillApproval interface.
  */
 export function instanceOfVendorBillApproval(value: object): boolean {
+    if (!('clerkLimit' in value)) return false;
+    if (!('currencyCode' in value)) return false;
     if (!('requiredTier' in value)) return false;
     return true;
 }
@@ -119,6 +147,9 @@ export function VendorBillApprovalFromJSONTyped(json: any, ignoreDiscriminator: 
         'approvalJustification': json['approvalJustification'] == null ? undefined : json['approvalJustification'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'approvedByKind': json['approvedByKind'] == null ? undefined : json['approvedByKind'],
+        'clerkLimit': json['clerkLimit'],
+        'currencyCode': json['currencyCode'],
         'proposedClassification': json['proposedClassification'] == null ? undefined : VendorBillClassificationFromJSON(json['proposedClassification']),
         'proposedDifference': json['proposedDifference'] == null ? undefined : VendorBillDifferenceFromJSON(json['proposedDifference']),
         'requiredTier': json['requiredTier'],
@@ -137,6 +168,9 @@ export function VendorBillApprovalToJSON(value?: VendorBillApproval | null): any
         'approvalJustification': value['approvalJustification'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedBy': value['approvedBy'],
+        'approvedByKind': value['approvedByKind'],
+        'clerkLimit': value['clerkLimit'],
+        'currencyCode': value['currencyCode'],
         'proposedClassification': VendorBillClassificationToJSON(value['proposedClassification']),
         'proposedDifference': VendorBillDifferenceToJSON(value['proposedDifference']),
         'requiredTier': value['requiredTier'],
