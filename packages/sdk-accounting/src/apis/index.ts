@@ -12,6 +12,7 @@ export * from './AccountingRegisterFloatApi';
 export * from './AccountingTenantTemplateApi';
 export * from './AuditTrailApi';
 export * from './BankAccountsApi';
+export * from './BankDepositsApi';
 export * from './BankImportsApi';
 export * from './BankReconciliationApi';
 export * from './BankStatementsApi';
