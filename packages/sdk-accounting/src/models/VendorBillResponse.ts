@@ -13,6 +13,61 @@
  */
 
 import { mapValues } from '../runtime';
+import type { VendorBillApproval } from './VendorBillApproval';
+import {
+    VendorBillApprovalFromJSON,
+    VendorBillApprovalFromJSONTyped,
+    VendorBillApprovalToJSON,
+} from './VendorBillApproval';
+import type { VendorBillAvailableAction } from './VendorBillAvailableAction';
+import {
+    VendorBillAvailableActionFromJSON,
+    VendorBillAvailableActionFromJSONTyped,
+    VendorBillAvailableActionToJSON,
+} from './VendorBillAvailableAction';
+import type { VendorBillCheck } from './VendorBillCheck';
+import {
+    VendorBillCheckFromJSON,
+    VendorBillCheckFromJSONTyped,
+    VendorBillCheckToJSON,
+} from './VendorBillCheck';
+import type { VendorBillLine } from './VendorBillLine';
+import {
+    VendorBillLineFromJSON,
+    VendorBillLineFromJSONTyped,
+    VendorBillLineToJSON,
+} from './VendorBillLine';
+import type { VendorBillMatch } from './VendorBillMatch';
+import {
+    VendorBillMatchFromJSON,
+    VendorBillMatchFromJSONTyped,
+    VendorBillMatchToJSON,
+} from './VendorBillMatch';
+import type { VendorBillMatchCandidateSummary } from './VendorBillMatchCandidateSummary';
+import {
+    VendorBillMatchCandidateSummaryFromJSON,
+    VendorBillMatchCandidateSummaryFromJSONTyped,
+    VendorBillMatchCandidateSummaryToJSON,
+} from './VendorBillMatchCandidateSummary';
+import type { VendorBillPosting } from './VendorBillPosting';
+import {
+    VendorBillPostingFromJSON,
+    VendorBillPostingFromJSONTyped,
+    VendorBillPostingToJSON,
+} from './VendorBillPosting';
+import type { VendorBillReissue } from './VendorBillReissue';
+import {
+    VendorBillReissueFromJSON,
+    VendorBillReissueFromJSONTyped,
+    VendorBillReissueToJSON,
+} from './VendorBillReissue';
+import type { VendorBillRejection } from './VendorBillRejection';
+import {
+    VendorBillRejectionFromJSON,
+    VendorBillRejectionFromJSONTyped,
+    VendorBillRejectionToJSON,
+} from './VendorBillRejection';
+
 /**
  * Vendor bill details
  * @export
@@ -20,11 +75,17 @@ import { mapValues } from '../runtime';
  */
 export interface VendorBillResponse {
     /**
-     * Approval justification (if status = APPROVED)
-     * @type {string}
+     * 
+     * @type {VendorBillApproval}
      * @memberof VendorBillResponse
      */
-    approvalJustification?: string;
+    approval?: VendorBillApproval;
+    /**
+     * The decisions valid for the bill's status that the caller holds a permission for (P5)
+     * @type {Array<VendorBillAvailableAction>}
+     * @memberof VendorBillResponse
+     */
+    availableActions: Array<VendorBillAvailableAction>;
     /**
      * Bill date
      * @type {Date}
@@ -37,6 +98,18 @@ export interface VendorBillResponse {
      * @memberof VendorBillResponse
      */
     billNumber: string;
+    /**
+     * Where the bill came from
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    channel?: VendorBillResponseChannelEnum;
+    /**
+     * MATCHED_TO_DELIVERY, WITHIN_PRICE_TOLERANCE, TOTALS_ADD_UP and, on an EDI bill classified GOODS, OPEN_DELIVERIES_FROM_VENDOR
+     * @type {Array<VendorBillCheck>}
+     * @memberof VendorBillResponse
+     */
+    checks: Array<VendorBillCheck>;
     /**
      * Created timestamp
      * @type {Date}
@@ -68,6 +141,36 @@ export interface VendorBillResponse {
      */
     journalEntryId?: string;
     /**
+     * Received lines with what the vendor billed; empty for a bill without lines
+     * @type {Array<VendorBillLine>}
+     * @memberof VendorBillResponse
+     */
+    lines: Array<VendorBillLine>;
+    /**
+     * 
+     * @type {VendorBillMatch}
+     * @memberof VendorBillResponse
+     */
+    match?: VendorBillMatch;
+    /**
+     * The net the vendor's document states (AW47); null on a bill without header totals
+     * @type {number}
+     * @memberof VendorBillResponse
+     */
+    netAmount?: number;
+    /**
+     * Total less allocated payments
+     * @type {number}
+     * @memberof VendorBillResponse
+     */
+    openAmount: number;
+    /**
+     * Unresolved candidates of every ambiguous match naming this bill, each with its invoiceEventId; pick one with the select command before sending or accepting the bill
+     * @type {Array<VendorBillMatchCandidateSummary>}
+     * @memberof VendorBillResponse
+     */
+    openCandidates: Array<VendorBillMatchCandidateSummary>;
+    /**
      * Origin event ID (for traceability)
      * @type {string}
      * @memberof VendorBillResponse
@@ -86,17 +189,41 @@ export interface VendorBillResponse {
      */
     paymentTransactionId?: string;
     /**
-     * Rejection or exception reason (status REJECTED, MATCH_EXCEPTION or CURRENCY_HOLD)
-     * @type {string}
+     * 
+     * @type {VendorBillPosting}
      * @memberof VendorBillResponse
      */
-    rejectionReason?: string;
+    posting?: VendorBillPosting;
+    /**
+     * Re-issues of this approved bill under its number, held as exception items
+     * @type {Array<VendorBillReissue>}
+     * @memberof VendorBillResponse
+     */
+    reissues: Array<VendorBillReissue>;
+    /**
+     * 
+     * @type {VendorBillRejection}
+     * @memberof VendorBillResponse
+     */
+    rejection?: VendorBillRejection;
     /**
      * Bill status
      * @type {string}
      * @memberof VendorBillResponse
      */
     status: VendorBillResponseStatusEnum;
+    /**
+     * Why the bill is held: the MATCH_EXCEPTION or CURRENCY_HOLD explanation; null in any other status
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    statusExplanation?: string;
+    /**
+     * The tax the vendor's document states, never recalculated (AW39, AW47)
+     * @type {number}
+     * @memberof VendorBillResponse
+     */
+    taxAmount?: number;
     /**
      * Total bill amount
      * @type {number}
@@ -127,10 +254,19 @@ export interface VendorBillResponse {
 * @export
 * @enum {string}
 */
+export enum VendorBillResponseChannelEnum {
+    GoodsReceipt = 'GOODS_RECEIPT',
+    SupplierConnection = 'SUPPLIER_CONNECTION'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillResponseStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
     CurrencyHold = 'CURRENCY_HOLD',
+    AwaitingApproval = 'AWAITING_APPROVAL',
     Approved = 'APPROVED',
     Rejected = 'REJECTED',
     Paid = 'PAID',
@@ -142,8 +278,14 @@ export enum VendorBillResponseStatusEnum {
  * Check if a given object implements the VendorBillResponse interface.
  */
 export function instanceOfVendorBillResponse(value: object): boolean {
+    if (!('availableActions' in value)) return false;
     if (!('billNumber' in value)) return false;
+    if (!('checks' in value)) return false;
     if (!('createdAt' in value)) return false;
+    if (!('lines' in value)) return false;
+    if (!('openAmount' in value)) return false;
+    if (!('openCandidates' in value)) return false;
+    if (!('reissues' in value)) return false;
     if (!('status' in value)) return false;
     if (!('totalAmount' in value)) return false;
     if (!('vendorBillId' in value)) return false;
@@ -161,19 +303,31 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'approvalJustification': json['approvalJustification'] == null ? undefined : json['approvalJustification'],
+        'approval': json['approval'] == null ? undefined : VendorBillApprovalFromJSON(json['approval']),
+        'availableActions': ((json['availableActions'] as Array<any>).map(VendorBillAvailableActionFromJSON)),
         'billDate': json['billDate'] == null ? undefined : (new Date(json['billDate'])),
         'billNumber': json['billNumber'],
+        'channel': json['channel'] == null ? undefined : json['channel'],
+        'checks': ((json['checks'] as Array<any>).map(VendorBillCheckFromJSON)),
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'currency': json['currency'] == null ? undefined : json['currency'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
+        'lines': ((json['lines'] as Array<any>).map(VendorBillLineFromJSON)),
+        'match': json['match'] == null ? undefined : VendorBillMatchFromJSON(json['match']),
+        'netAmount': json['netAmount'] == null ? undefined : json['netAmount'],
+        'openAmount': json['openAmount'],
+        'openCandidates': ((json['openCandidates'] as Array<any>).map(VendorBillMatchCandidateSummaryFromJSON)),
         'originEventId': json['originEventId'] == null ? undefined : json['originEventId'],
         'originEventType': json['originEventType'] == null ? undefined : json['originEventType'],
         'paymentTransactionId': json['paymentTransactionId'] == null ? undefined : json['paymentTransactionId'],
-        'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
+        'posting': json['posting'] == null ? undefined : VendorBillPostingFromJSON(json['posting']),
+        'reissues': ((json['reissues'] as Array<any>).map(VendorBillReissueFromJSON)),
+        'rejection': json['rejection'] == null ? undefined : VendorBillRejectionFromJSON(json['rejection']),
         'status': json['status'],
+        'statusExplanation': json['statusExplanation'] == null ? undefined : json['statusExplanation'],
+        'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
         'totalAmount': json['totalAmount'],
         'vendorBillId': json['vendorBillId'],
         'vendorId': json['vendorId'],
@@ -187,19 +341,31 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
     }
     return {
         
-        'approvalJustification': value['approvalJustification'],
+        'approval': VendorBillApprovalToJSON(value['approval']),
+        'availableActions': ((value['availableActions'] as Array<any>).map(VendorBillAvailableActionToJSON)),
         'billDate': value['billDate'] == null ? undefined : ((value['billDate']).toISOString()),
         'billNumber': value['billNumber'],
+        'channel': value['channel'],
+        'checks': ((value['checks'] as Array<any>).map(VendorBillCheckToJSON)),
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'currency': value['currency'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'journalEntryId': value['journalEntryId'],
+        'lines': ((value['lines'] as Array<any>).map(VendorBillLineToJSON)),
+        'match': VendorBillMatchToJSON(value['match']),
+        'netAmount': value['netAmount'],
+        'openAmount': value['openAmount'],
+        'openCandidates': ((value['openCandidates'] as Array<any>).map(VendorBillMatchCandidateSummaryToJSON)),
         'originEventId': value['originEventId'],
         'originEventType': value['originEventType'],
         'paymentTransactionId': value['paymentTransactionId'],
-        'rejectionReason': value['rejectionReason'],
+        'posting': VendorBillPostingToJSON(value['posting']),
+        'reissues': ((value['reissues'] as Array<any>).map(VendorBillReissueToJSON)),
+        'rejection': VendorBillRejectionToJSON(value['rejection']),
         'status': value['status'],
+        'statusExplanation': value['statusExplanation'],
+        'taxAmount': value['taxAmount'],
         'totalAmount': value['totalAmount'],
         'vendorBillId': value['vendorBillId'],
         'vendorId': value['vendorId'],
