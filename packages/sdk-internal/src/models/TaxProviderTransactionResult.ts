@@ -38,7 +38,7 @@ export interface TaxProviderTransactionResult {
      */
     referenceId: string;
     /**
-     * Recorded lifecycle status
+     * Recorded lifecycle status. Commit returns COMMITTED or PENDING_COMMIT and void returns VOIDED or FAILED; ESTIMATED is a log-only status (a plug-in priced the document) and is never returned
      * @type {string}
      * @memberof TaxProviderTransactionResult
      */
@@ -53,7 +53,8 @@ export enum TaxProviderTransactionResultStatusEnum {
     PendingCommit = 'PENDING_COMMIT',
     Committed = 'COMMITTED',
     Voided = 'VOIDED',
-    Failed = 'FAILED'
+    Failed = 'FAILED',
+    Estimated = 'ESTIMATED'
 }
 
 

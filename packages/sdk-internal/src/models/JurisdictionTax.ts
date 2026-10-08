@@ -44,6 +44,12 @@ export interface JurisdictionTax {
      */
     exemptionReasonCode?: JurisdictionTaxExemptionReasonCodeEnum;
     /**
+     * Configured placeholder recoverability of this row's tax type (held for expert advice); null for a country without a tax-type profile
+     * @type {boolean}
+     * @memberof JurisdictionTax
+     */
+    inputTaxRecoverable?: boolean;
+    /**
      * Jurisdiction type (e.g. STATE, COUNTY, CITY, DISTRICT)
      * @type {string}
      * @memberof JurisdictionTax
@@ -55,6 +61,12 @@ export interface JurisdictionTax {
      * @memberof JurisdictionTax
      */
     rate: number;
+    /**
+     * Tax-type code of this row as the country profile configures it (1-32 upper-case letters, digits or underscores); null for a country without a tax-type profile
+     * @type {string}
+     * @memberof JurisdictionTax
+     */
+    taxType?: string;
 }
 
 /**
@@ -108,8 +120,10 @@ export function JurisdictionTaxFromJSONTyped(json: any, ignoreDiscriminator: boo
         'code': json['code'],
         'exempt': json['exempt'] == null ? undefined : json['exempt'],
         'exemptionReasonCode': json['exemptionReasonCode'] == null ? undefined : json['exemptionReasonCode'],
+        'inputTaxRecoverable': json['inputTaxRecoverable'] == null ? undefined : json['inputTaxRecoverable'],
         'jurisdictionType': json['jurisdictionType'],
         'rate': json['rate'],
+        'taxType': json['taxType'] == null ? undefined : json['taxType'],
     };
 }
 
@@ -123,8 +137,10 @@ export function JurisdictionTaxToJSON(value?: JurisdictionTax | null): any {
         'code': value['code'],
         'exempt': value['exempt'],
         'exemptionReasonCode': value['exemptionReasonCode'],
+        'inputTaxRecoverable': value['inputTaxRecoverable'],
         'jurisdictionType': value['jurisdictionType'],
         'rate': value['rate'],
+        'taxType': value['taxType'],
     };
 }
 

@@ -21,6 +21,7 @@ import type {
   TaxCalculationResponse,
   TaxProviderTransactionResult,
   TaxRateLookupResponse,
+  TaxTypesResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -35,6 +36,8 @@ import {
     TaxProviderTransactionResultToJSON,
     TaxRateLookupResponseFromJSON,
     TaxRateLookupResponseToJSON,
+    TaxTypesResponseFromJSON,
+    TaxTypesResponseToJSON,
 } from '../models/index';
 
 export interface CalculateTaxRequest {
@@ -54,6 +57,10 @@ export interface GetTaxRatesRequest {
     asOf?: Date;
 }
 
+export interface GetTaxTypesRequest {
+    countryCode: string;
+}
+
 export interface VoidTaxDocumentRequest {
     referenceId: string;
 }
@@ -64,7 +71,7 @@ export interface VoidTaxDocumentRequest {
 export class TaxApi extends runtime.BaseAPI {
 
     /**
-     * Calculates tax for the supplied line items against the destination address and returns the per-line and total tax amounts. Use this tool whenever a quote, estimate or invoice needs tax figures; do not use it to make a calculation permanent, which is commitTaxDocument. Preconditions: none beyond an authenticated caller; when an exemption is claimed the referenced certificate must already exist in the registry and be ACTIVE for the destination state on the transaction date, otherwise tax is calculated as taxable. Required inputs: lineItems (at least one) and destinationAddress with countryCode and postalCode; currencyCode defaults to USD, calculationType defaults to SALE, and referenceId should carry the source document id so the result can later be committed. Emits a TAX_CALCULATE event and, in production mode, calls the configured external tax provider; no provider document is created until commitTaxDocument is called. Returns 400 when line items or the destination address are missing or malformed, and 500 when the provider is unreachable in production mode. 
+     * Calculates tax for the supplied line items against the destination address and returns the per-line and total tax amounts. Use this tool whenever a quote, estimate or invoice needs tax figures; do not use it to make a calculation permanent, which is commitTaxDocument. Preconditions: none beyond an authenticated caller; when an exemption is claimed the referenced certificate must already exist in the registry and be ACTIVE for the destination state on the transaction date, otherwise tax is calculated as taxable. Required inputs: lineItems (at least one) and destinationAddress with countryCode and postalCode; currencyCode defaults to USD, calculationType defaults to SALE, and referenceId should carry the source document id so the result can later be committed. Emits a TAX_CALCULATE event and, in production mode, calls the configured external tax provider; no provider document is created until commitTaxDocument is called. A destination whose country the per-country default routes to a plug-in is priced by that plug-in in every provider mode, one typed jurisdiction row per tax type, and taxType and inputTaxRecoverable are null on every other country\'s rows. Returns 400 when line items or the destination address are missing or malformed, 422 TAX_JURISDICTION_NOT_CONFIGURED when such a country has no rate row for the region on the transaction date or CURRENCY_NOT_SUPPORTED when currencyCode is not that country\'s configured currency, and 500 when the provider is unreachable in production mode. 
      * Calculate tax
      */
     async calculateTaxRaw(requestParameters: CalculateTaxRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxCalculationResponse>> {
@@ -101,7 +108,7 @@ export class TaxApi extends runtime.BaseAPI {
     }
 
     /**
-     * Calculates tax for the supplied line items against the destination address and returns the per-line and total tax amounts. Use this tool whenever a quote, estimate or invoice needs tax figures; do not use it to make a calculation permanent, which is commitTaxDocument. Preconditions: none beyond an authenticated caller; when an exemption is claimed the referenced certificate must already exist in the registry and be ACTIVE for the destination state on the transaction date, otherwise tax is calculated as taxable. Required inputs: lineItems (at least one) and destinationAddress with countryCode and postalCode; currencyCode defaults to USD, calculationType defaults to SALE, and referenceId should carry the source document id so the result can later be committed. Emits a TAX_CALCULATE event and, in production mode, calls the configured external tax provider; no provider document is created until commitTaxDocument is called. Returns 400 when line items or the destination address are missing or malformed, and 500 when the provider is unreachable in production mode. 
+     * Calculates tax for the supplied line items against the destination address and returns the per-line and total tax amounts. Use this tool whenever a quote, estimate or invoice needs tax figures; do not use it to make a calculation permanent, which is commitTaxDocument. Preconditions: none beyond an authenticated caller; when an exemption is claimed the referenced certificate must already exist in the registry and be ACTIVE for the destination state on the transaction date, otherwise tax is calculated as taxable. Required inputs: lineItems (at least one) and destinationAddress with countryCode and postalCode; currencyCode defaults to USD, calculationType defaults to SALE, and referenceId should carry the source document id so the result can later be committed. Emits a TAX_CALCULATE event and, in production mode, calls the configured external tax provider; no provider document is created until commitTaxDocument is called. A destination whose country the per-country default routes to a plug-in is priced by that plug-in in every provider mode, one typed jurisdiction row per tax type, and taxType and inputTaxRecoverable are null on every other country\'s rows. Returns 400 when line items or the destination address are missing or malformed, 422 TAX_JURISDICTION_NOT_CONFIGURED when such a country has no rate row for the region on the transaction date or CURRENCY_NOT_SUPPORTED when currencyCode is not that country\'s configured currency, and 500 when the provider is unreachable in production mode. 
      * Calculate tax
      */
     async calculateTax(requestParameters: CalculateTaxRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxCalculationResponse> {
@@ -157,7 +164,7 @@ export class TaxApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves the per-jurisdiction tax rates applicable to a destination address, without calculating tax for any line items. Use this tool to preview or display the rate breakdown for an address; do not use it to compute tax on a cart or invoice, which is calculateTax. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014) — it has no gateway route and is reached only by direct in-cluster calls, never through pos-api-gateway. Required inputs: countryCode (ISO 3166-1 alpha-2) and postalCode; regionCode and city narrow the match further, and asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; components are per-jurisdiction rates as decimal fractions (not a blended estimate), and SPECIAL/DISTRICT jurisdiction types appear only when a configured rule produces them — today\'s test-mode rules emit STATE/COUNTY/CITY. Returns 400 when countryCode or postalCode are missing or malformed, and 501 when the configured tax provider does not support rate-only lookup (every production provider today; AvaTax rate-by-address is a documented follow-up, not yet implemented). 
+     * Resolves the per-jurisdiction tax rates applicable to a destination address, without calculating tax for any line items. Use this tool to preview or display the rate breakdown for an address; do not use it to compute tax on a cart or invoice, which is calculateTax. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014) — it has no gateway route and is reached only by direct in-cluster calls, never through pos-api-gateway. Required inputs: countryCode (ISO 3166-1 alpha-2) and postalCode; regionCode and city narrow the match further, and asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; components are per-jurisdiction rates as decimal fractions (not a blended estimate), and SPECIAL/DISTRICT jurisdiction types appear only when a configured rule produces them — today\'s test-mode rules emit STATE/COUNTY/CITY. For a country whose per-country default routes it to a plug-in, the plug-in answers in every provider mode with one typed component per tax type in effect (taxType, inputTaxRecoverable, source STUB), and taxType and inputTaxRecoverable are null for every other country. Returns 400 when countryCode or postalCode are missing or malformed, 422 TAX_JURISDICTION_NOT_CONFIGURED when such a country has no rate row for the region on asOf, and 501 when the configured tax provider does not support rate-only lookup (every production provider today; AvaTax rate-by-address is a documented follow-up, not yet implemented). 
      * Look up jurisdiction tax rates
      */
     async getTaxRatesRaw(requestParameters: GetTaxRatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRateLookupResponse>> {
@@ -218,7 +225,7 @@ export class TaxApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves the per-jurisdiction tax rates applicable to a destination address, without calculating tax for any line items. Use this tool to preview or display the rate breakdown for an address; do not use it to compute tax on a cart or invoice, which is calculateTax. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014) — it has no gateway route and is reached only by direct in-cluster calls, never through pos-api-gateway. Required inputs: countryCode (ISO 3166-1 alpha-2) and postalCode; regionCode and city narrow the match further, and asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; components are per-jurisdiction rates as decimal fractions (not a blended estimate), and SPECIAL/DISTRICT jurisdiction types appear only when a configured rule produces them — today\'s test-mode rules emit STATE/COUNTY/CITY. Returns 400 when countryCode or postalCode are missing or malformed, and 501 when the configured tax provider does not support rate-only lookup (every production provider today; AvaTax rate-by-address is a documented follow-up, not yet implemented). 
+     * Resolves the per-jurisdiction tax rates applicable to a destination address, without calculating tax for any line items. Use this tool to preview or display the rate breakdown for an address; do not use it to compute tax on a cart or invoice, which is calculateTax. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014) — it has no gateway route and is reached only by direct in-cluster calls, never through pos-api-gateway. Required inputs: countryCode (ISO 3166-1 alpha-2) and postalCode; regionCode and city narrow the match further, and asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; components are per-jurisdiction rates as decimal fractions (not a blended estimate), and SPECIAL/DISTRICT jurisdiction types appear only when a configured rule produces them — today\'s test-mode rules emit STATE/COUNTY/CITY. For a country whose per-country default routes it to a plug-in, the plug-in answers in every provider mode with one typed component per tax type in effect (taxType, inputTaxRecoverable, source STUB), and taxType and inputTaxRecoverable are null for every other country. Returns 400 when countryCode or postalCode are missing or malformed, 422 TAX_JURISDICTION_NOT_CONFIGURED when such a country has no rate row for the region on asOf, and 501 when the configured tax provider does not support rate-only lookup (every production provider today; AvaTax rate-by-address is a documented follow-up, not yet implemented). 
      * Look up jurisdiction tax rates
      */
     async getTaxRates(requestParameters: GetTaxRatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRateLookupResponse> {
@@ -259,6 +266,53 @@ export class TaxApi extends runtime.BaseAPI {
      */
     async getTaxServiceMode(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModeResponse> {
         const response = await this.getTaxServiceModeRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the tax types a country\'s configured profile declares, with the regime each is registered and recovered under, the jurisdiction level it is levied at, its placeholder recoverability, the country\'s regimes and its currency. Use this tool when a service must know a country\'s tax types without naming any of them in its own code; do not use it to price an address, which is getTaxRates or calculateTax instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-order, pos-invoice and pos-accounting with the service authority, never through pos-api-gateway. Required inputs: countryCode, two upper-case letters; there is no request body. No events are emitted and no state changes; every value is configuration held for expert advice, so source is always STUB. Returns 200 with empty lists and a null currency for a country without a profile, and 400 VALIDATION_ERROR when countryCode is missing or malformed. 
+     * List a country\'s configured tax types
+     */
+    async getTaxTypesRaw(requestParameters: GetTaxTypesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxTypesResponse>> {
+        if (requestParameters['countryCode'] == null) {
+            throw new runtime.RequiredError(
+                'countryCode',
+                'Required parameter "countryCode" was null or undefined when calling getTaxTypes().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:rates:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/tax-types`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxTypesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the tax types a country\'s configured profile declares, with the regime each is registered and recovered under, the jurisdiction level it is levied at, its placeholder recoverability, the country\'s regimes and its currency. Use this tool when a service must know a country\'s tax types without naming any of them in its own code; do not use it to price an address, which is getTaxRates or calculateTax instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-order, pos-invoice and pos-accounting with the service authority, never through pos-api-gateway. Required inputs: countryCode, two upper-case letters; there is no request body. No events are emitted and no state changes; every value is configuration held for expert advice, so source is always STUB. Returns 200 with empty lists and a null currency for a country without a profile, and 400 VALIDATION_ERROR when countryCode is missing or malformed. 
+     * List a country\'s configured tax types
+     */
+    async getTaxTypes(requestParameters: GetTaxTypesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxTypesResponse> {
+        const response = await this.getTaxTypesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
