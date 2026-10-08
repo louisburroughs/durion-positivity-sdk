@@ -16,32 +16,52 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  CandidateSelectionRequest,
-  ExceptionResolutionRequest,
   GoodsReceivedEvent,
   PageVendorBillListRow,
+  PageVendorBillStageRow,
+  VendorBillApproveRequest,
+  VendorBillExceptionResolutionRequest,
   VendorBillMatchCandidateResponse,
+  VendorBillRejectRequest,
   VendorBillResponse,
+  VendorBillStageCounts,
+  VendorBillSubmitRequest,
+  VendorBillVoidRequest,
   VendorInvoiceReceivedEvent,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    CandidateSelectionRequestFromJSON,
-    CandidateSelectionRequestToJSON,
-    ExceptionResolutionRequestFromJSON,
-    ExceptionResolutionRequestToJSON,
     GoodsReceivedEventFromJSON,
     GoodsReceivedEventToJSON,
     PageVendorBillListRowFromJSON,
     PageVendorBillListRowToJSON,
+    PageVendorBillStageRowFromJSON,
+    PageVendorBillStageRowToJSON,
+    VendorBillApproveRequestFromJSON,
+    VendorBillApproveRequestToJSON,
+    VendorBillExceptionResolutionRequestFromJSON,
+    VendorBillExceptionResolutionRequestToJSON,
     VendorBillMatchCandidateResponseFromJSON,
     VendorBillMatchCandidateResponseToJSON,
+    VendorBillRejectRequestFromJSON,
+    VendorBillRejectRequestToJSON,
     VendorBillResponseFromJSON,
     VendorBillResponseToJSON,
+    VendorBillStageCountsFromJSON,
+    VendorBillStageCountsToJSON,
+    VendorBillSubmitRequestFromJSON,
+    VendorBillSubmitRequestToJSON,
+    VendorBillVoidRequestFromJSON,
+    VendorBillVoidRequestToJSON,
     VendorInvoiceReceivedEventFromJSON,
     VendorInvoiceReceivedEventToJSON,
 } from '../models/index';
+
+export interface ApproveVendorBillRequest {
+    billId: string;
+    vendorBillApproveRequest: VendorBillApproveRequest;
+}
 
 export interface CreateVendorBillFromGoodsReceivedRequest {
     goodsReceivedEvent: GoodsReceivedEvent;
@@ -68,18 +88,38 @@ export interface ListVendorBillsRequest {
     sort?: Array<string>;
 }
 
+export interface ListVendorBillsByStageRequest {
+    stage: ListVendorBillsByStageStageEnum;
+    page?: number;
+    size?: number;
+}
+
 export interface MatchVendorInvoiceRequest {
     vendorInvoiceReceivedEvent: VendorInvoiceReceivedEvent;
 }
 
+export interface RejectVendorBillRequest {
+    billId: string;
+    vendorBillRejectRequest: VendorBillRejectRequest;
+}
+
 export interface ResolveVendorBillMatchExceptionRequest {
     billId: string;
-    exceptionResolutionRequest: ExceptionResolutionRequest;
+    vendorBillExceptionResolutionRequest: VendorBillExceptionResolutionRequest;
 }
 
 export interface SelectVendorBillMatchCandidateRequest {
     candidateId: string;
-    candidateSelectionRequest: CandidateSelectionRequest;
+}
+
+export interface SubmitVendorBillForApprovalRequest {
+    billId: string;
+    vendorBillSubmitRequest: VendorBillSubmitRequest;
+}
+
+export interface VoidVendorBillRequest {
+    billId: string;
+    vendorBillVoidRequest: VendorBillVoidRequest;
 }
 
 /**
@@ -88,7 +128,60 @@ export interface SelectVendorBillMatchCandidateRequest {
 export class VendorBillAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a vendor bill in PENDING_RECEIPT_MATCH status from a goods-received event, totaling the received line items and syncing the vendor into the AP vendor directory. Use this tool when goods arrive against a purchase order; do not use matchVendorInvoice, which is the later step that matches the vendor\'s invoice against this pending bill. Preconditions: none; a duplicate eventId is ignored and the existing bill is returned instead of creating a second one. Required inputs: eventId, organizationId, purchaseOrderId and vendorId (UUIDs), receivedDate, and lineItems each with productId, description, quantity and unitPrice; vendorName and dimensions are optional. Emits an ACCOUNTING_VENDOR_BILL_CREATE event; a vendor-directory sync failure is logged and never fails bill creation. Returns 201 with the created (or already-existing) bill, and 400 when the payload fails validation. Returns 409 AP_BILL_DUPLICATE when a live bill (any status except VOIDED or REJECTED) already holds the same vendor, bill date and bill number, compared ignoring case, spacing, punctuation and leading zeros; referenceId is the existing bill\'s vendorBillId and nothing is created. A replayed eventId is never a duplicate. 
+     * Approves a vendor bill in AWAITING_APPROVAL and posts it in the same transaction, so a bill is approved if and only if it posted (AW37): accounts payable is credited the billed gross and the debits follow the VENDOR_BILL posting category by class (receipt-matched lines 2100 at the received price with the difference in 5050, unmatched goods 2100 at the stated net with the tax in 5050, expenses the chosen EXPENSE_<CODE> key with the tax). The vendor\'s gross - (net + tax) within 0.01 per stated line, at most 0.05, goes on the largest debit as roundingAdjustment and a larger one where difference says (FREIGHT 5060, GOODS 2100, EXPENSE its key, PRICE_DIFFERENCE 5050); the entry is dated on the bill date when that is on or before today and its period is open, otherwise today. Use this tool for the approver\'s decision on a bill sent for approval; do not use submitVendorBillForApproval, which only sends it, or resolveVendorBillMatchException with ACCEPT, which approves a bill still in MATCH_EXCEPTION. Preconditions: the bill is AWAITING_APPROVAL (CURRENCY_HOLD bills never are), a goods-receipt bill has its invoice matched, and until approval limits exist every bill needs accounting:ap:approve_over_limit. Required inputs: billId (UUID) as a path parameter; justification (at least 10 characters), classification {debitClass GOODS|EXPENSE, expenseMappingKey} (each field given wins over the one proposed at submission), difference (as submitVendorBillForApproval takes it) and overrideJustification (with accounting:period:override, to post into a CLOSED period) are optional. Emits ACCOUNTING_VENDOR_BILL_APPROVE and writes a VENDOR_BILL_APPROVE audit row; a refused posting writes one VENDOR_BILL_APPROVE_REFUSED row and changes nothing else, and a replayed approve finds the bill APPROVED and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read, its posting included; 400 JUSTIFICATION_REQUIRED, VALIDATION_ERROR or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_APPROVABLE or AP_BILL_AWAITING_INVOICE; 422 AP_BILL_UNCLASSIFIED, AP_BILL_TOTALS_UNRECONCILED, AP_BILL_ZERO_TOTAL, PERIOD_CLOSED, PERIOD_HARD_LOCKED or GL_MAPPING_NOT_CONFIGURED (guided: referenceId CATEGORY/KEY and nextAction), each leaving the bill as it was. 
+     * Approve Vendor Bill
+     */
+    async approveVendorBillRaw(requestParameters: ApproveVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
+        if (requestParameters['billId'] == null) {
+            throw new runtime.RequiredError(
+                'billId',
+                'Required parameter "billId" was null or undefined when calling approveVendorBill().'
+            );
+        }
+
+        if (requestParameters['vendorBillApproveRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorBillApproveRequest',
+                'Required parameter "vendorBillApproveRequest" was null or undefined when calling approveVendorBill().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:approve_over_limit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/{billId}/approve`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VendorBillApproveRequestToJSON(requestParameters['vendorBillApproveRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Approves a vendor bill in AWAITING_APPROVAL and posts it in the same transaction, so a bill is approved if and only if it posted (AW37): accounts payable is credited the billed gross and the debits follow the VENDOR_BILL posting category by class (receipt-matched lines 2100 at the received price with the difference in 5050, unmatched goods 2100 at the stated net with the tax in 5050, expenses the chosen EXPENSE_<CODE> key with the tax). The vendor\'s gross - (net + tax) within 0.01 per stated line, at most 0.05, goes on the largest debit as roundingAdjustment and a larger one where difference says (FREIGHT 5060, GOODS 2100, EXPENSE its key, PRICE_DIFFERENCE 5050); the entry is dated on the bill date when that is on or before today and its period is open, otherwise today. Use this tool for the approver\'s decision on a bill sent for approval; do not use submitVendorBillForApproval, which only sends it, or resolveVendorBillMatchException with ACCEPT, which approves a bill still in MATCH_EXCEPTION. Preconditions: the bill is AWAITING_APPROVAL (CURRENCY_HOLD bills never are), a goods-receipt bill has its invoice matched, and until approval limits exist every bill needs accounting:ap:approve_over_limit. Required inputs: billId (UUID) as a path parameter; justification (at least 10 characters), classification {debitClass GOODS|EXPENSE, expenseMappingKey} (each field given wins over the one proposed at submission), difference (as submitVendorBillForApproval takes it) and overrideJustification (with accounting:period:override, to post into a CLOSED period) are optional. Emits ACCOUNTING_VENDOR_BILL_APPROVE and writes a VENDOR_BILL_APPROVE audit row; a refused posting writes one VENDOR_BILL_APPROVE_REFUSED row and changes nothing else, and a replayed approve finds the bill APPROVED and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read, its posting included; 400 JUSTIFICATION_REQUIRED, VALIDATION_ERROR or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_APPROVABLE or AP_BILL_AWAITING_INVOICE; 422 AP_BILL_UNCLASSIFIED, AP_BILL_TOTALS_UNRECONCILED, AP_BILL_ZERO_TOTAL, PERIOD_CLOSED, PERIOD_HARD_LOCKED or GL_MAPPING_NOT_CONFIGURED (guided: referenceId CATEGORY/KEY and nextAction), each leaving the bill as it was. 
+     * Approve Vendor Bill
+     */
+    async approveVendorBill(requestParameters: ApproveVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
+        const response = await this.approveVendorBillRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates a vendor bill in PENDING_RECEIPT_MATCH status from a goods-received event, totaling the received line items and syncing the vendor into the AP vendor directory. Use this tool when goods arrive against a purchase order; do not use matchVendorInvoice, which is the later step that matches the vendor\'s invoice against this pending bill. Preconditions: none; a duplicate eventId is ignored and the existing bill is returned instead of creating a second one. Required inputs: eventId, organizationId, purchaseOrderId and vendorId (UUIDs), receivedDate, and lineItems each with productId, description, quantity and unitPrice; vendorName and dimensions are optional. Emits an ACCOUNTING_VENDOR_BILL_CREATE event and posts nothing (a bill posts once, at approval); a vendor-directory sync failure is logged and never fails bill creation. Returns 201 with the created (or already-existing) bill, and 400 when the payload fails validation. Returns 409 AP_BILL_DUPLICATE when a live bill (any status except VOIDED or REJECTED) already holds the same vendor, bill date and bill number, compared ignoring case, spacing, punctuation and leading zeros; referenceId is the existing bill\'s vendorBillId and nothing is created. A replayed eventId is never a duplicate. 
      * Create Vendor Bill From Goods Received
      */
     async createVendorBillFromGoodsReceivedRaw(requestParameters: CreateVendorBillFromGoodsReceivedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -125,7 +218,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a vendor bill in PENDING_RECEIPT_MATCH status from a goods-received event, totaling the received line items and syncing the vendor into the AP vendor directory. Use this tool when goods arrive against a purchase order; do not use matchVendorInvoice, which is the later step that matches the vendor\'s invoice against this pending bill. Preconditions: none; a duplicate eventId is ignored and the existing bill is returned instead of creating a second one. Required inputs: eventId, organizationId, purchaseOrderId and vendorId (UUIDs), receivedDate, and lineItems each with productId, description, quantity and unitPrice; vendorName and dimensions are optional. Emits an ACCOUNTING_VENDOR_BILL_CREATE event; a vendor-directory sync failure is logged and never fails bill creation. Returns 201 with the created (or already-existing) bill, and 400 when the payload fails validation. Returns 409 AP_BILL_DUPLICATE when a live bill (any status except VOIDED or REJECTED) already holds the same vendor, bill date and bill number, compared ignoring case, spacing, punctuation and leading zeros; referenceId is the existing bill\'s vendorBillId and nothing is created. A replayed eventId is never a duplicate. 
+     * Creates a vendor bill in PENDING_RECEIPT_MATCH status from a goods-received event, totaling the received line items and syncing the vendor into the AP vendor directory. Use this tool when goods arrive against a purchase order; do not use matchVendorInvoice, which is the later step that matches the vendor\'s invoice against this pending bill. Preconditions: none; a duplicate eventId is ignored and the existing bill is returned instead of creating a second one. Required inputs: eventId, organizationId, purchaseOrderId and vendorId (UUIDs), receivedDate, and lineItems each with productId, description, quantity and unitPrice; vendorName and dimensions are optional. Emits an ACCOUNTING_VENDOR_BILL_CREATE event and posts nothing (a bill posts once, at approval); a vendor-directory sync failure is logged and never fails bill creation. Returns 201 with the created (or already-existing) bill, and 400 when the payload fails validation. Returns 409 AP_BILL_DUPLICATE when a live bill (any status except VOIDED or REJECTED) already holds the same vendor, bill date and bill number, compared ignoring case, spacing, punctuation and leading zeros; referenceId is the existing bill\'s vendorBillId and nothing is created. A replayed eventId is never a duplicate. 
      * Create Vendor Bill From Goods Received
      */
     async createVendorBillFromGoodsReceived(requestParameters: CreateVendorBillFromGoodsReceivedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
@@ -134,7 +227,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor bill with its status, amounts, match metadata and approval history. Use this tool when the bill id is already known; use getVendorBillByOriginEventId instead when only the goods-received event id is available, or listApBills to browse APPROVED bills. Preconditions: the vendor bill must exist. Required inputs: billId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_BILL_GET audit event; no state changes. Returns 404 when no vendor bill exists for the supplied id. 
+     * Returns one vendor bill as the review screen reads it: status, amounts (with the vendor\'s net and tax) and open amount, channel, the submission and (once approved) the approval, the rejection, the status explanation, the latest match evidence, the open candidates of an ambiguous match (each with candidateId and invoiceEventId), re-issues held against it, the received lines with what was billed, the checks (MATCHED_TO_DELIVERY, WITHIN_PRICE_TOLERANCE, TOTALS_ADD_UP and, on an EDI bill classified GOODS, OPEN_DELIVERIES_FROM_VENDOR), the decisions the caller may take now (availableActions) and the posting (journalEntryReference, postingDate, postingDateRule, roundingAdjustment, difference, reversalReference). Use this tool when the bill id is already known; use getVendorBillByOriginEventId instead when only the goods-received event id is available, or listVendorBillsByStage to browse a stage. Preconditions: the vendor bill must exist. Required inputs: billId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_BILL_GET audit event; no state changes. Returns 404 VENDOR_BILL_NOT_FOUND when no vendor bill exists for the supplied id, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
      * Get Vendor Bill By Id
      */
     async getVendorBillByIdRaw(requestParameters: GetVendorBillByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -168,7 +261,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor bill with its status, amounts, match metadata and approval history. Use this tool when the bill id is already known; use getVendorBillByOriginEventId instead when only the goods-received event id is available, or listApBills to browse APPROVED bills. Preconditions: the vendor bill must exist. Required inputs: billId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_BILL_GET audit event; no state changes. Returns 404 when no vendor bill exists for the supplied id. 
+     * Returns one vendor bill as the review screen reads it: status, amounts (with the vendor\'s net and tax) and open amount, channel, the submission and (once approved) the approval, the rejection, the status explanation, the latest match evidence, the open candidates of an ambiguous match (each with candidateId and invoiceEventId), re-issues held against it, the received lines with what was billed, the checks (MATCHED_TO_DELIVERY, WITHIN_PRICE_TOLERANCE, TOTALS_ADD_UP and, on an EDI bill classified GOODS, OPEN_DELIVERIES_FROM_VENDOR), the decisions the caller may take now (availableActions) and the posting (journalEntryReference, postingDate, postingDateRule, roundingAdjustment, difference, reversalReference). Use this tool when the bill id is already known; use getVendorBillByOriginEventId instead when only the goods-received event id is available, or listVendorBillsByStage to browse a stage. Preconditions: the vendor bill must exist. Required inputs: billId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_BILL_GET audit event; no state changes. Returns 404 VENDOR_BILL_NOT_FOUND when no vendor bill exists for the supplied id, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
      * Get Vendor Bill By Id
      */
     async getVendorBillById(requestParameters: GetVendorBillByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
@@ -216,6 +309,42 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
      */
     async getVendorBillByOriginEventId(requestParameters: GetVendorBillByOriginEventIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
         const response = await this.getVendorBillByOriginEventIdRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Counts the vendor bills in each stage of Bills to pay, as of now: CHECK (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, CURRENCY_HOLD), APPROVE (AWAITING_APPROVAL), PAY (APPROVED with an open amount above 0) and DONE (APPROVED, paid in full, the last payment dated in the current month). There is no due-date window, so bills without a due date count. Use this tool for the live counts of the review; do not use listVendorBillsByStage, which lists the bills of one stage, or listVendorBills, which needs a due-date window. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: none. Emits an ACCOUNTING_VENDOR_BILL_STAGES_VIEW audit event; no state changes. Returns 200 with the four counts and asOf, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * Get Vendor Bill Stage Counts
+     */
+    async getVendorBillStageCountsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillStageCounts>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/stages`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillStageCountsFromJSON(jsonValue));
+    }
+
+    /**
+     * Counts the vendor bills in each stage of Bills to pay, as of now: CHECK (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, CURRENCY_HOLD), APPROVE (AWAITING_APPROVAL), PAY (APPROVED with an open amount above 0) and DONE (APPROVED, paid in full, the last payment dated in the current month). There is no due-date window, so bills without a due date count. Use this tool for the live counts of the review; do not use listVendorBillsByStage, which lists the bills of one stage, or listVendorBills, which needs a due-date window. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: none. Emits an ACCOUNTING_VENDOR_BILL_STAGES_VIEW audit event; no state changes. Returns 200 with the four counts and asOf, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * Get Vendor Bill Stage Counts
+     */
+    async getVendorBillStageCounts(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillStageCounts> {
+        const response = await this.getVendorBillStageCountsRaw(initOverrides);
         return await response.value();
     }
 
@@ -337,7 +466,62 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Runs the three-way match of a received vendor invoice against pending goods-received bills: a HIGH_CONFIDENCE match with consistent quantities and prices auto-approves the bill, while a discrepancy, a MEDIUM confidence score or an AMBIGUOUS match parks it in MATCH_EXCEPTION. Use this tool when a vendor invoice arrives; do not use createVendorBillFromGoodsReceived, which records the receipt, and use resolveVendorBillMatchException or selectVendorBillMatchCandidate to clear exceptions. Preconditions: a bill in PENDING_RECEIPT_MATCH must exist for the vendor; an ambiguous outcome persists scored candidates for later operator selection. Required inputs: eventId, organizationId and vendorId (UUIDs), invoiceReference, invoiceDate and lineItems; dueDate is optional. Emits an ACCOUNTING_VENDOR_BILL_MATCH event; the returned bill\'s status conveys the outcome (APPROVED or MATCH_EXCEPTION), so callers must inspect it rather than assume approval. Returns 400 when no pending receipt matches the invoice or the payload fails validation. Returns 409 AP_BILL_DUPLICATE when the matched bill would take an invoiceReference that another live bill (any status except VOIDED or REJECTED) of the same vendor already holds on the same bill date, compared ignoring case, spacing, punctuation and leading zeros; referenceId is that bill\'s vendorBillId and the match changes nothing. A match that loses a concurrent race for the same number between that check and its commit answers the generic 409 DUPLICATE_RESOURCE instead, with no referenceId; the match is rolled back and no second bill holds the number. 
+     * Lists the vendor bills of one stage of Bills to pay, each with its bill number, vendor name, total, currency, bill and due dates, status, channel, submittedAt and open amount. The server sets the order: CHECK and APPROVE oldest first, PAY by due date with bills without one last, DONE newest paid first. There is no due-date window. Use this tool for the bills behind one count of getVendorBillStageCounts; use getVendorBillById instead for one bill\'s full review read. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: stage (CHECK, APPROVE, PAY or DONE); page (from 0) and size (capped at 100) are optional. Emits an ACCOUNTING_VENDOR_BILL_STAGE_LIST audit event; no state changes. Returns 200 with a page of rows, 400 VALIDATION_ERROR for an unknown stage, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * List Vendor Bills By Stage
+     */
+    async listVendorBillsByStageRaw(requestParameters: ListVendorBillsByStageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageVendorBillStageRow>> {
+        if (requestParameters['stage'] == null) {
+            throw new runtime.RequiredError(
+                'stage',
+                'Required parameter "stage" was null or undefined when calling listVendorBillsByStage().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['stage'] != null) {
+            queryParameters['stage'] = requestParameters['stage'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/by-stage`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageVendorBillStageRowFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists the vendor bills of one stage of Bills to pay, each with its bill number, vendor name, total, currency, bill and due dates, status, channel, submittedAt and open amount. The server sets the order: CHECK and APPROVE oldest first, PAY by due date with bills without one last, DONE newest paid first. There is no due-date window. Use this tool for the bills behind one count of getVendorBillStageCounts; use getVendorBillById instead for one bill\'s full review read. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: stage (CHECK, APPROVE, PAY or DONE); page (from 0) and size (capped at 100) are optional. Emits an ACCOUNTING_VENDOR_BILL_STAGE_LIST audit event; no state changes. Returns 200 with a page of rows, 400 VALIDATION_ERROR for an unknown stage, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * List Vendor Bills By Stage
+     */
+    async listVendorBillsByStage(requestParameters: ListVendorBillsByStageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillStageRow> {
+        const response = await this.listVendorBillsByStageRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Runs the three-way match of a received vendor invoice against pending goods-received bills (never an EDI bill): a HIGH match (score 70 or more) within tolerance sends the bill to AWAITING_APPROVAL with submittedBy SYSTEM and never approves it, a MEDIUM score or a discrepancy parks it in MATCH_EXCEPTION, and an AMBIGUOUS match keeps the scored candidates for a person to select one; nothing is posted. Every routed single match takes the invoice\'s number and its invoiceDate as the bill date (AW46) and keeps what the vendor billed (the billed total and each line\'s billed quantity and price) and an append-only evidence record with the receipt date, the score, the points per criterion (amount 40 against the received total, products 30, date 20, purchase order 5) and the line comparison. Use this tool when a vendor invoice arrives; do not use createVendorBillFromGoodsReceived, which records the receipt, and use resolveVendorBillMatchException or selectVendorBillMatchCandidate to clear exceptions. Preconditions: a bill in PENDING_RECEIPT_MATCH must exist for the vendor. Required inputs: eventId, organizationId and vendorId (UUIDs), invoiceReference, invoiceDate and lineItems; dueDate is optional. Emits an ACCOUNTING_VENDOR_BILL_MATCH event and writes a VENDOR_BILL_MATCH_ROUTED audit row; the returned bill\'s status conveys the outcome. Returns 400 when no pending receipt matches the invoice or the payload fails validation (a missing invoiceDate included), 409 AP_BILL_DUPLICATE when another live bill (any status except VOIDED or REJECTED) of the vendor already holds the invoiceReference on the invoiceDate, compared ignoring case, spacing, punctuation and leading zeros (referenceId names it, and the receipt bill is left untouched), the generic 409 DUPLICATE_RESOURCE when a concurrent writer takes the number between the check and the commit, and 409 OPTIMISTIC_LOCK when the matched bill was decided meanwhile (send the invoice again). 
      * Match Vendor Invoice
      */
     async matchVendorInvoiceRaw(requestParameters: MatchVendorInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -374,7 +558,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Runs the three-way match of a received vendor invoice against pending goods-received bills: a HIGH_CONFIDENCE match with consistent quantities and prices auto-approves the bill, while a discrepancy, a MEDIUM confidence score or an AMBIGUOUS match parks it in MATCH_EXCEPTION. Use this tool when a vendor invoice arrives; do not use createVendorBillFromGoodsReceived, which records the receipt, and use resolveVendorBillMatchException or selectVendorBillMatchCandidate to clear exceptions. Preconditions: a bill in PENDING_RECEIPT_MATCH must exist for the vendor; an ambiguous outcome persists scored candidates for later operator selection. Required inputs: eventId, organizationId and vendorId (UUIDs), invoiceReference, invoiceDate and lineItems; dueDate is optional. Emits an ACCOUNTING_VENDOR_BILL_MATCH event; the returned bill\'s status conveys the outcome (APPROVED or MATCH_EXCEPTION), so callers must inspect it rather than assume approval. Returns 400 when no pending receipt matches the invoice or the payload fails validation. Returns 409 AP_BILL_DUPLICATE when the matched bill would take an invoiceReference that another live bill (any status except VOIDED or REJECTED) of the same vendor already holds on the same bill date, compared ignoring case, spacing, punctuation and leading zeros; referenceId is that bill\'s vendorBillId and the match changes nothing. A match that loses a concurrent race for the same number between that check and its commit answers the generic 409 DUPLICATE_RESOURCE instead, with no referenceId; the match is rolled back and no second bill holds the number. 
+     * Runs the three-way match of a received vendor invoice against pending goods-received bills (never an EDI bill): a HIGH match (score 70 or more) within tolerance sends the bill to AWAITING_APPROVAL with submittedBy SYSTEM and never approves it, a MEDIUM score or a discrepancy parks it in MATCH_EXCEPTION, and an AMBIGUOUS match keeps the scored candidates for a person to select one; nothing is posted. Every routed single match takes the invoice\'s number and its invoiceDate as the bill date (AW46) and keeps what the vendor billed (the billed total and each line\'s billed quantity and price) and an append-only evidence record with the receipt date, the score, the points per criterion (amount 40 against the received total, products 30, date 20, purchase order 5) and the line comparison. Use this tool when a vendor invoice arrives; do not use createVendorBillFromGoodsReceived, which records the receipt, and use resolveVendorBillMatchException or selectVendorBillMatchCandidate to clear exceptions. Preconditions: a bill in PENDING_RECEIPT_MATCH must exist for the vendor. Required inputs: eventId, organizationId and vendorId (UUIDs), invoiceReference, invoiceDate and lineItems; dueDate is optional. Emits an ACCOUNTING_VENDOR_BILL_MATCH event and writes a VENDOR_BILL_MATCH_ROUTED audit row; the returned bill\'s status conveys the outcome. Returns 400 when no pending receipt matches the invoice or the payload fails validation (a missing invoiceDate included), 409 AP_BILL_DUPLICATE when another live bill (any status except VOIDED or REJECTED) of the vendor already holds the invoiceReference on the invoiceDate, compared ignoring case, spacing, punctuation and leading zeros (referenceId names it, and the receipt bill is left untouched), the generic 409 DUPLICATE_RESOURCE when a concurrent writer takes the number between the check and the commit, and 409 OPTIMISTIC_LOCK when the matched bill was decided meanwhile (send the invoice again). 
      * Match Vendor Invoice
      */
     async matchVendorInvoice(requestParameters: MatchVendorInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
@@ -383,7 +567,60 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves a vendor bill parked in MATCH_EXCEPTION with an operator decision: ACCEPT approves the bill despite the discrepancy, VOID rejects it, and CORRECT sends it back for correction. Use this tool for quantity, price or medium-confidence exceptions on one identified bill; do not use selectVendorBillMatchCandidate, which resolves an ambiguous match by picking among several candidate bills. Preconditions: the bill must exist and be in MATCH_EXCEPTION status. Required inputs: billId (UUID) as a path parameter, resolutionAction (ACCEPT, VOID or CORRECT), reason and operatorId, all recorded for audit. Emits an ACCOUNTING_VENDOR_BILL_MATCH_EXCEPTION_RESOLVE event. Returns 400 when the bill is not found, is not in MATCH_EXCEPTION status, or the action is not one of ACCEPT, VOID or CORRECT. 
+     * Rejects a vendor bill in AWAITING_APPROVAL: it moves to REJECTED, terminal, with the caller as rejectedBy and the reason recorded. Nothing was posted, so nothing is reversed. Use this tool when the approver refuses a bill; do not use voidVendorBill, which voids a bill already approved or a receipt placeholder, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION. Preconditions: the bill is AWAITING_APPROVAL. Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters). Emits ACCOUNTING_VENDOR_BILL_REJECT and writes a VENDOR_BILL_REJECT audit row; a replay finds the bill REJECTED and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read, 400 JUSTIFICATION_REQUIRED for a missing or short reason or ARGUMENT_NOT_VALID for one over 1000 characters, 401 without a valid token, 403 FORBIDDEN without accounting:ap:reject, 404 VENDOR_BILL_NOT_FOUND, and 409 AP_BILL_NOT_APPROVABLE naming the bill\'s status. 
+     * Reject Vendor Bill
+     */
+    async rejectVendorBillRaw(requestParameters: RejectVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
+        if (requestParameters['billId'] == null) {
+            throw new runtime.RequiredError(
+                'billId',
+                'Required parameter "billId" was null or undefined when calling rejectVendorBill().'
+            );
+        }
+
+        if (requestParameters['vendorBillRejectRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorBillRejectRequest',
+                'Required parameter "vendorBillRejectRequest" was null or undefined when calling rejectVendorBill().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:reject"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/{billId}/reject`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VendorBillRejectRequestToJSON(requestParameters['vendorBillRejectRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Rejects a vendor bill in AWAITING_APPROVAL: it moves to REJECTED, terminal, with the caller as rejectedBy and the reason recorded. Nothing was posted, so nothing is reversed. Use this tool when the approver refuses a bill; do not use voidVendorBill, which voids a bill already approved or a receipt placeholder, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION. Preconditions: the bill is AWAITING_APPROVAL. Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters). Emits ACCOUNTING_VENDOR_BILL_REJECT and writes a VENDOR_BILL_REJECT audit row; a replay finds the bill REJECTED and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read, 400 JUSTIFICATION_REQUIRED for a missing or short reason or ARGUMENT_NOT_VALID for one over 1000 characters, 401 without a valid token, 403 FORBIDDEN without accounting:ap:reject, 404 VENDOR_BILL_NOT_FOUND, and 409 AP_BILL_NOT_APPROVABLE naming the bill\'s status. 
+     * Reject Vendor Bill
+     */
+    async rejectVendorBill(requestParameters: RejectVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
+        const response = await this.rejectVendorBillRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Resolves a vendor bill in MATCH_EXCEPTION: ACCEPT is an approval and posts the bill exactly as approveVendorBill does, CORRECT sends it back to PENDING_RECEIPT_MATCH as received (the billed lines and total undone, the bill date the receipt date again, anything proposed cleared) writing no approval or rejection field, and VOID voids it with the caller as rejectedBy (nothing was posted, so nothing is reversed). Use this tool for a quantity, price, medium-confidence or totals exception on one bill; do not use selectVendorBillMatchCandidate, which resolves an ambiguous match among several bills, or submitVendorBillForApproval, which sends the bill to another person\'s approval. Preconditions: the bill is MATCH_EXCEPTION, and each action needs its own permission: ACCEPT accounting:ap:approve_over_limit, CORRECT accounting:ap:approve or accounting:ap:approve_over_limit, VOID accounting:ap:reject; ACCEPT also needs what approveVendorBill needs (no open ambiguous match, a matched invoice for a goods-receipt bill, the vendor\'s totals reconciled or a difference). Required inputs: billId (UUID) as a path parameter, resolutionAction (ACCEPT, CORRECT or VOID) and reason (at least 10 characters); ACCEPT also takes classification, difference and overrideJustification as approveVendorBill does, and an operatorId in the body is ignored because the actor is the caller. Emits ACCOUNTING_VENDOR_BILL_MATCH_EXCEPTION_RESOLVE and writes a VENDOR_BILL_MATCH_EXCEPTION_RESOLVE audit row; a replay finds the bill moved on and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read; 400 VALIDATION_ERROR for an unknown action, JUSTIFICATION_REQUIRED for a missing or short reason, or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without the action\'s permission; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_APPROVABLE or, for ACCEPT, AP_BILL_AWAITING_INVOICE; for ACCEPT, 422 AP_BILL_UNCLASSIFIED, AP_BILL_TOTALS_UNRECONCILED, AP_BILL_ZERO_TOTAL, PERIOD_CLOSED, PERIOD_HARD_LOCKED or GL_MAPPING_NOT_CONFIGURED, leaving the bill as it was. 
      * Resolve Vendor Bill Match Exception
      */
     async resolveVendorBillMatchExceptionRaw(requestParameters: ResolveVendorBillMatchExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -394,10 +631,10 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['exceptionResolutionRequest'] == null) {
+        if (requestParameters['vendorBillExceptionResolutionRequest'] == null) {
             throw new runtime.RequiredError(
-                'exceptionResolutionRequest',
-                'Required parameter "exceptionResolutionRequest" was null or undefined when calling resolveVendorBillMatchException().'
+                'vendorBillExceptionResolutionRequest',
+                'Required parameter "vendorBillExceptionResolutionRequest" was null or undefined when calling resolveVendorBillMatchException().'
             );
         }
 
@@ -409,7 +646,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["accounting:ap:pay"]);
+            const tokenString = await token("bearerAuth", ["accounting:ap:approve", "accounting:ap:approve_over_limit", "accounting:ap:reject"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -420,14 +657,14 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ExceptionResolutionRequestToJSON(requestParameters['exceptionResolutionRequest']),
+            body: VendorBillExceptionResolutionRequestToJSON(requestParameters['vendorBillExceptionResolutionRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillResponseFromJSON(jsonValue));
     }
 
     /**
-     * Resolves a vendor bill parked in MATCH_EXCEPTION with an operator decision: ACCEPT approves the bill despite the discrepancy, VOID rejects it, and CORRECT sends it back for correction. Use this tool for quantity, price or medium-confidence exceptions on one identified bill; do not use selectVendorBillMatchCandidate, which resolves an ambiguous match by picking among several candidate bills. Preconditions: the bill must exist and be in MATCH_EXCEPTION status. Required inputs: billId (UUID) as a path parameter, resolutionAction (ACCEPT, VOID or CORRECT), reason and operatorId, all recorded for audit. Emits an ACCOUNTING_VENDOR_BILL_MATCH_EXCEPTION_RESOLVE event. Returns 400 when the bill is not found, is not in MATCH_EXCEPTION status, or the action is not one of ACCEPT, VOID or CORRECT. 
+     * Resolves a vendor bill in MATCH_EXCEPTION: ACCEPT is an approval and posts the bill exactly as approveVendorBill does, CORRECT sends it back to PENDING_RECEIPT_MATCH as received (the billed lines and total undone, the bill date the receipt date again, anything proposed cleared) writing no approval or rejection field, and VOID voids it with the caller as rejectedBy (nothing was posted, so nothing is reversed). Use this tool for a quantity, price, medium-confidence or totals exception on one bill; do not use selectVendorBillMatchCandidate, which resolves an ambiguous match among several bills, or submitVendorBillForApproval, which sends the bill to another person\'s approval. Preconditions: the bill is MATCH_EXCEPTION, and each action needs its own permission: ACCEPT accounting:ap:approve_over_limit, CORRECT accounting:ap:approve or accounting:ap:approve_over_limit, VOID accounting:ap:reject; ACCEPT also needs what approveVendorBill needs (no open ambiguous match, a matched invoice for a goods-receipt bill, the vendor\'s totals reconciled or a difference). Required inputs: billId (UUID) as a path parameter, resolutionAction (ACCEPT, CORRECT or VOID) and reason (at least 10 characters); ACCEPT also takes classification, difference and overrideJustification as approveVendorBill does, and an operatorId in the body is ignored because the actor is the caller. Emits ACCOUNTING_VENDOR_BILL_MATCH_EXCEPTION_RESOLVE and writes a VENDOR_BILL_MATCH_EXCEPTION_RESOLVE audit row; a replay finds the bill moved on and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read; 400 VALIDATION_ERROR for an unknown action, JUSTIFICATION_REQUIRED for a missing or short reason, or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without the action\'s permission; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_APPROVABLE or, for ACCEPT, AP_BILL_AWAITING_INVOICE; for ACCEPT, 422 AP_BILL_UNCLASSIFIED, AP_BILL_TOTALS_UNRECONCILED, AP_BILL_ZERO_TOTAL, PERIOD_CLOSED, PERIOD_HARD_LOCKED or GL_MAPPING_NOT_CONFIGURED, leaving the bill as it was. 
      * Resolve Vendor Bill Match Exception
      */
     async resolveVendorBillMatchException(requestParameters: ResolveVendorBillMatchExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
@@ -436,7 +673,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Selects one candidate from an ambiguous invoice match, approving the corresponding vendor bill and marking the candidate set resolved. Use this tool after reviewing listVendorBillMatchCandidates; do not use resolveVendorBillMatchException, which handles discrepancy exceptions on a single bill. Preconditions: the candidate must exist and must not already be resolved. Required inputs: candidateId (UUID) as a path parameter and operatorId in the body, recorded as the approver. Emits an ACCOUNTING_VENDOR_BILL_MATCH_CANDIDATE_SELECT event. Returns 400 when the candidate is missing or already resolved (mapped as VALIDATION_ERROR, not 404). 
+     * Picks one candidate bill of an ambiguous invoice match and resolves the candidate set. Selection is matching only: the chosen bill keeps what the vendor billed (lines, total, the invoice number, the invoice date as its bill date and the due date, AW46), gets its match evidence with the receipt date and moves to AWAITING_APPROVAL with the caller as submittedBy, while a bill the match had held in MATCH_EXCEPTION for this invoice returns to PENDING_RECEIPT_MATCH; nothing approves it and nothing is posted. Use this tool after reviewing listVendorBillMatchCandidates or a bill read\'s openCandidates; do not use resolveVendorBillMatchException, which handles discrepancy exceptions on a single bill. Preconditions: the candidate exists and its set is unresolved, the chosen bill is PENDING_RECEIPT_MATCH or MATCH_EXCEPTION, and the candidate kept its invoice (one scored before #2509 is refused; match the invoice again instead). Required inputs: candidateId (UUID) as a path parameter; there is no request body. Emits ACCOUNTING_VENDOR_BILL_MATCH_CANDIDATE_SELECT and writes a VENDOR_BILL_MATCH_CANDIDATE_SELECT audit row, plus a VENDOR_BILL_MATCH_CANDIDATE_RELEASE row for a bill released; a replay is answered 409 AP_MATCH_CANDIDATE_ALREADY_RESOLVED. Returns 200 with the bill read, 401 without a valid token, 403 FORBIDDEN without accounting:ap:approve or accounting:ap:approve_over_limit, 404 AP_MATCH_CANDIDATE_NOT_FOUND, 409 AP_MATCH_CANDIDATE_ALREADY_RESOLVED when someone else resolved the set, 409 AP_BILL_NOT_APPROVABLE naming the chosen bill\'s status, 409 AP_BILL_AWAITING_INVOICE for a candidate that kept no invoice, and 409 AP_BILL_DUPLICATE when another live bill already holds the invoice number on the invoice date. 
      * Select Vendor Bill Match Candidate
      */
     async selectVendorBillMatchCandidateRaw(requestParameters: SelectVendorBillMatchCandidateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -447,10 +684,53 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['candidateSelectionRequest'] == null) {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:approve", "accounting:ap:approve_over_limit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/match-candidates/{candidateId}/select`.replace(`{${"candidateId"}}`, encodeURIComponent(String(requestParameters['candidateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Picks one candidate bill of an ambiguous invoice match and resolves the candidate set. Selection is matching only: the chosen bill keeps what the vendor billed (lines, total, the invoice number, the invoice date as its bill date and the due date, AW46), gets its match evidence with the receipt date and moves to AWAITING_APPROVAL with the caller as submittedBy, while a bill the match had held in MATCH_EXCEPTION for this invoice returns to PENDING_RECEIPT_MATCH; nothing approves it and nothing is posted. Use this tool after reviewing listVendorBillMatchCandidates or a bill read\'s openCandidates; do not use resolveVendorBillMatchException, which handles discrepancy exceptions on a single bill. Preconditions: the candidate exists and its set is unresolved, the chosen bill is PENDING_RECEIPT_MATCH or MATCH_EXCEPTION, and the candidate kept its invoice (one scored before #2509 is refused; match the invoice again instead). Required inputs: candidateId (UUID) as a path parameter; there is no request body. Emits ACCOUNTING_VENDOR_BILL_MATCH_CANDIDATE_SELECT and writes a VENDOR_BILL_MATCH_CANDIDATE_SELECT audit row, plus a VENDOR_BILL_MATCH_CANDIDATE_RELEASE row for a bill released; a replay is answered 409 AP_MATCH_CANDIDATE_ALREADY_RESOLVED. Returns 200 with the bill read, 401 without a valid token, 403 FORBIDDEN without accounting:ap:approve or accounting:ap:approve_over_limit, 404 AP_MATCH_CANDIDATE_NOT_FOUND, 409 AP_MATCH_CANDIDATE_ALREADY_RESOLVED when someone else resolved the set, 409 AP_BILL_NOT_APPROVABLE naming the chosen bill\'s status, 409 AP_BILL_AWAITING_INVOICE for a candidate that kept no invoice, and 409 AP_BILL_DUPLICATE when another live bill already holds the invoice number on the invoice date. 
+     * Select Vendor Bill Match Candidate
+     */
+    async selectVendorBillMatchCandidate(requestParameters: SelectVendorBillMatchCandidateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
+        const response = await this.selectVendorBillMatchCandidateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sends a vendor bill in PENDING_RECEIPT_MATCH or MATCH_EXCEPTION for approval: it moves to AWAITING_APPROVAL with the caller as submittedBy, and nothing is posted. From PENDING_RECEIPT_MATCH this is \"send without a delivery match\", for EDI bills only (a goods-receipt bill needs its vendor invoice matched first, AW45); from MATCH_EXCEPTION it resolves the exception for a person to approve. Use this tool when a clerk has checked a bill and wants it approved; do not use approveVendorBill, which is the approver\'s decision, or resolveVendorBillMatchException, which accepts, corrects or voids an exception directly. Preconditions: the bill is PENDING_RECEIPT_MATCH or MATCH_EXCEPTION (never CURRENCY_HOLD), no ambiguous match naming it is open, a goods-receipt bill has its invoice matched, its total is not 0.00, and the vendor\'s gross equals net + tax within 0.01 per stated line (at most 0.05) unless a difference is given (AW47). Required inputs: billId (UUID) as a path parameter and justification (at least 10 characters); classification {debitClass, expenseMappingKey} is an optional proposal the approver may keep, and difference {class FREIGHT|GOODS|EXPENSE|PRICE_DIFFERENCE, expenseMappingKey, justification} says where an unreconciled gap posts. Emits ACCOUNTING_VENDOR_BILL_SUBMIT and writes a VENDOR_BILL_SUBMIT audit row; the command takes no idempotency key, so a replay finds the bill AWAITING_APPROVAL and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read; 400 JUSTIFICATION_REQUIRED, VALIDATION_ERROR or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:approve or accounting:ap:approve_over_limit; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_APPROVABLE naming the status or an open ambiguous match, or AP_BILL_AWAITING_INVOICE; 422 AP_BILL_ZERO_TOTAL or AP_BILL_TOTALS_UNRECONCILED, writing nothing. 
+     * Submit Vendor Bill For Approval
+     */
+    async submitVendorBillForApprovalRaw(requestParameters: SubmitVendorBillForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
+        if (requestParameters['billId'] == null) {
             throw new runtime.RequiredError(
-                'candidateSelectionRequest',
-                'Required parameter "candidateSelectionRequest" was null or undefined when calling selectVendorBillMatchCandidate().'
+                'billId',
+                'Required parameter "billId" was null or undefined when calling submitVendorBillForApproval().'
+            );
+        }
+
+        if (requestParameters['vendorBillSubmitRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorBillSubmitRequest',
+                'Required parameter "vendorBillSubmitRequest" was null or undefined when calling submitVendorBillForApproval().'
             );
         }
 
@@ -462,29 +742,82 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["accounting:ap:pay"]);
+            const tokenString = await token("bearerAuth", ["accounting:ap:approve", "accounting:ap:approve_over_limit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
         const response = await this.request({
-            path: `/v1/accounting/vendor-bills/match-candidates/{candidateId}/select`.replace(`{${"candidateId"}}`, encodeURIComponent(String(requestParameters['candidateId']))),
+            path: `/v1/accounting/vendor-bills/{billId}/submit-for-approval`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: CandidateSelectionRequestToJSON(requestParameters['candidateSelectionRequest']),
+            body: VendorBillSubmitRequestToJSON(requestParameters['vendorBillSubmitRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillResponseFromJSON(jsonValue));
     }
 
     /**
-     * Selects one candidate from an ambiguous invoice match, approving the corresponding vendor bill and marking the candidate set resolved. Use this tool after reviewing listVendorBillMatchCandidates; do not use resolveVendorBillMatchException, which handles discrepancy exceptions on a single bill. Preconditions: the candidate must exist and must not already be resolved. Required inputs: candidateId (UUID) as a path parameter and operatorId in the body, recorded as the approver. Emits an ACCOUNTING_VENDOR_BILL_MATCH_CANDIDATE_SELECT event. Returns 400 when the candidate is missing or already resolved (mapped as VALIDATION_ERROR, not 404). 
-     * Select Vendor Bill Match Candidate
+     * Sends a vendor bill in PENDING_RECEIPT_MATCH or MATCH_EXCEPTION for approval: it moves to AWAITING_APPROVAL with the caller as submittedBy, and nothing is posted. From PENDING_RECEIPT_MATCH this is \"send without a delivery match\", for EDI bills only (a goods-receipt bill needs its vendor invoice matched first, AW45); from MATCH_EXCEPTION it resolves the exception for a person to approve. Use this tool when a clerk has checked a bill and wants it approved; do not use approveVendorBill, which is the approver\'s decision, or resolveVendorBillMatchException, which accepts, corrects or voids an exception directly. Preconditions: the bill is PENDING_RECEIPT_MATCH or MATCH_EXCEPTION (never CURRENCY_HOLD), no ambiguous match naming it is open, a goods-receipt bill has its invoice matched, its total is not 0.00, and the vendor\'s gross equals net + tax within 0.01 per stated line (at most 0.05) unless a difference is given (AW47). Required inputs: billId (UUID) as a path parameter and justification (at least 10 characters); classification {debitClass, expenseMappingKey} is an optional proposal the approver may keep, and difference {class FREIGHT|GOODS|EXPENSE|PRICE_DIFFERENCE, expenseMappingKey, justification} says where an unreconciled gap posts. Emits ACCOUNTING_VENDOR_BILL_SUBMIT and writes a VENDOR_BILL_SUBMIT audit row; the command takes no idempotency key, so a replay finds the bill AWAITING_APPROVAL and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read; 400 JUSTIFICATION_REQUIRED, VALIDATION_ERROR or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:approve or accounting:ap:approve_over_limit; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_APPROVABLE naming the status or an open ambiguous match, or AP_BILL_AWAITING_INVOICE; 422 AP_BILL_ZERO_TOTAL or AP_BILL_TOTALS_UNRECONCILED, writing nothing. 
+     * Submit Vendor Bill For Approval
      */
-    async selectVendorBillMatchCandidate(requestParameters: SelectVendorBillMatchCandidateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
-        const response = await this.selectVendorBillMatchCandidateRaw(requestParameters, initOverrides);
+    async submitVendorBillForApproval(requestParameters: SubmitVendorBillForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
+        const response = await this.submitVendorBillForApprovalRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Voids a vendor bill: an APPROVED bill with nothing allocated moves to VOIDED and its entry is reversed through the journal-entry reversal (linked both ways), dated today in today\'s period and never back in the original period (AW42), so 2100 is accrued again; a goods-receipt bill in PENDING_RECEIPT_MATCH that no vendor invoice will match moves to VOIDED and nothing is posted (AW45), its receipt accrual staying in 2100 until the vendor\'s EDI bill classified GOODS clears it. Use this tool to undo an approval that should not stand or to close a receipt placeholder; do not use rejectVendorBill, which refuses a bill not yet approved, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION, and correct a bill with payments allocated with a vendor credit note instead. Preconditions: every void needs accounting:ap:reject and an approved bill\'s also the approval tier, accounting:ap:approve_over_limit until approval limits exist; only this void reverses a bill\'s entry (the journal-entry reversal refuses one with 409 AP_BILL_ENTRY_NOT_REVERSIBLE). Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters); overrideJustification (at least 10 characters) reverses an approved bill into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_VOID and writes a VENDOR_BILL_VOID audit row naming the action (VOID_APPROVED or VOID_UNMATCHED); a replay finds the bill VOIDED and is answered 409 AP_BILL_NOT_VOIDABLE. Returns 200 with the bill read, an approved bill\'s posting with its reversalReference; 400 JUSTIFICATION_REQUIRED or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:reject, or without the approval tier for an approved bill; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_VOIDABLE for any other status or an allocated bill; 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for today\'s period, leaving the bill as it was. 
+     * Void Vendor Bill
+     */
+    async voidVendorBillRaw(requestParameters: VoidVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
+        if (requestParameters['billId'] == null) {
+            throw new runtime.RequiredError(
+                'billId',
+                'Required parameter "billId" was null or undefined when calling voidVendorBill().'
+            );
+        }
+
+        if (requestParameters['vendorBillVoidRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorBillVoidRequest',
+                'Required parameter "vendorBillVoidRequest" was null or undefined when calling voidVendorBill().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:reject"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/{billId}/void`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VendorBillVoidRequestToJSON(requestParameters['vendorBillVoidRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Voids a vendor bill: an APPROVED bill with nothing allocated moves to VOIDED and its entry is reversed through the journal-entry reversal (linked both ways), dated today in today\'s period and never back in the original period (AW42), so 2100 is accrued again; a goods-receipt bill in PENDING_RECEIPT_MATCH that no vendor invoice will match moves to VOIDED and nothing is posted (AW45), its receipt accrual staying in 2100 until the vendor\'s EDI bill classified GOODS clears it. Use this tool to undo an approval that should not stand or to close a receipt placeholder; do not use rejectVendorBill, which refuses a bill not yet approved, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION, and correct a bill with payments allocated with a vendor credit note instead. Preconditions: every void needs accounting:ap:reject and an approved bill\'s also the approval tier, accounting:ap:approve_over_limit until approval limits exist; only this void reverses a bill\'s entry (the journal-entry reversal refuses one with 409 AP_BILL_ENTRY_NOT_REVERSIBLE). Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters); overrideJustification (at least 10 characters) reverses an approved bill into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_VOID and writes a VENDOR_BILL_VOID audit row naming the action (VOID_APPROVED or VOID_UNMATCHED); a replay finds the bill VOIDED and is answered 409 AP_BILL_NOT_VOIDABLE. Returns 200 with the bill read, an approved bill\'s posting with its reversalReference; 400 JUSTIFICATION_REQUIRED or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:reject, or without the approval tier for an approved bill; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_VOIDABLE for any other status or an allocated bill; 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for today\'s period, leaving the bill as it was. 
+     * Void Vendor Bill
+     */
+    async voidVendorBill(requestParameters: VoidVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
+        const response = await this.voidVendorBillRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -498,8 +831,19 @@ export enum ListVendorBillsStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
     CurrencyHold = 'CURRENCY_HOLD',
+    AwaitingApproval = 'AWAITING_APPROVAL',
     Approved = 'APPROVED',
     Rejected = 'REJECTED',
     Paid = 'PAID',
     Voided = 'VOIDED'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListVendorBillsByStageStageEnum {
+    Check = 'CHECK',
+    Approve = 'APPROVE',
+    Pay = 'PAY',
+    Done = 'DONE'
 }
