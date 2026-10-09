@@ -16,14 +16,25 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  VendorApSettingsRequest,
+  VendorRemitToConfirmationRequest,
   VendorResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    VendorApSettingsRequestFromJSON,
+    VendorApSettingsRequestToJSON,
+    VendorRemitToConfirmationRequestFromJSON,
+    VendorRemitToConfirmationRequestToJSON,
     VendorResponseFromJSON,
     VendorResponseToJSON,
 } from '../models/index';
+
+export interface ConfirmVendorRemitToRequest {
+    vendorId: string;
+    vendorRemitToConfirmationRequest: VendorRemitToConfirmationRequest;
+}
 
 export interface GetVendorByIdRequest {
     vendorId: string;
@@ -32,6 +43,12 @@ export interface GetVendorByIdRequest {
 export interface SearchVendorsRequest {
     name?: string;
     limit?: number;
+    status?: string;
+}
+
+export interface SetVendorApSettingsRequest {
+    vendorId: string;
+    vendorApSettingsRequest: VendorApSettingsRequest;
 }
 
 /**
@@ -40,7 +57,60 @@ export interface SearchVendorsRequest {
 export class VendorDirectoryAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns one AP vendor by its identifier, typically to display a name for a deep-linked vendor id. Use this tool when the vendor id is already known; use searchVendors instead when resolving a name typed by a user. Preconditions: the vendor must exist in the AP vendor directory. Required inputs: vendorId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 404 when no vendor exists for the supplied id. 
+     * Records that the caller confirmed the vendor\'s current remit-to version, when, and how it was verified, so its bills approved at an earlier version can be paid again. A payment then passes for those bills, provided the payer is not the confirmer; a later remit-to change needs a new confirmation. Use this tool after verifying a changed remit-to with the vendor; do not use it to change the remit-to itself, use pos-supplier\'s remit-to change approval instead. Preconditions: the caller holds accounting:ap:approve and the vendor is in the copy. Required inputs: remitToVersion (the vendor\'s current version) and justification (at least 10 characters). Emits ACCOUNTING_VENDOR_REMIT_TO_CONFIRM and writes a REMIT_TO_CONFIRM audit row. Returns 200 with the vendor read; 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED; 403 VENDOR_REMIT_TO_SELF_CONFIRMATION when the caller requested this remit-to in pos-supplier; 409 VENDOR_PAYMENT_DETAILS_CHANGED when the version is not the current one; 503 VENDOR_REPLICATION_PENDING (Retry-After) when the vendor is not in the copy yet. 
+     * Confirm Vendor Remit-To
+     */
+    async confirmVendorRemitToRaw(requestParameters: ConfirmVendorRemitToRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorResponse>> {
+        if (requestParameters['vendorId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorId',
+                'Required parameter "vendorId" was null or undefined when calling confirmVendorRemitTo().'
+            );
+        }
+
+        if (requestParameters['vendorRemitToConfirmationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorRemitToConfirmationRequest',
+                'Required parameter "vendorRemitToConfirmationRequest" was null or undefined when calling confirmVendorRemitTo().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendors/{vendorId}/remit-to-confirmation`.replace(`{${"vendorId"}}`, encodeURIComponent(String(requestParameters['vendorId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VendorRemitToConfirmationRequestToJSON(requestParameters['vendorRemitToConfirmationRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records that the caller confirmed the vendor\'s current remit-to version, when, and how it was verified, so its bills approved at an earlier version can be paid again. A payment then passes for those bills, provided the payer is not the confirmer; a later remit-to change needs a new confirmation. Use this tool after verifying a changed remit-to with the vendor; do not use it to change the remit-to itself, use pos-supplier\'s remit-to change approval instead. Preconditions: the caller holds accounting:ap:approve and the vendor is in the copy. Required inputs: remitToVersion (the vendor\'s current version) and justification (at least 10 characters). Emits ACCOUNTING_VENDOR_REMIT_TO_CONFIRM and writes a REMIT_TO_CONFIRM audit row. Returns 200 with the vendor read; 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED; 403 VENDOR_REMIT_TO_SELF_CONFIRMATION when the caller requested this remit-to in pos-supplier; 409 VENDOR_PAYMENT_DETAILS_CHANGED when the version is not the current one; 503 VENDOR_REPLICATION_PENDING (Retry-After) when the vendor is not in the copy yet. 
+     * Confirm Vendor Remit-To
+     */
+    async confirmVendorRemitTo(requestParameters: ConfirmVendorRemitToRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorResponse> {
+        const response = await this.confirmVendorRemitToRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns one vendor from accounting\'s copy of the pos-supplier vendor master, with its vendorNumber, status, remitToVersion, paymentDetailsChanged and apSettings (the AP defaults and the last remit-to confirmation). Use this tool when the vendor id is already known, for example before confirming a changed remit-to; use searchVendors instead when resolving a name typed by a user. Preconditions: the caller holds accounting:ap:view and the vendor has been copied from pos-supplier. Required inputs: vendorId (the pos-supplier vendor UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the vendor is not in the copy yet. 
      * Get Vendor By Id
      */
     async getVendorByIdRaw(requestParameters: GetVendorByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorResponse>> {
@@ -74,7 +144,7 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one AP vendor by its identifier, typically to display a name for a deep-linked vendor id. Use this tool when the vendor id is already known; use searchVendors instead when resolving a name typed by a user. Preconditions: the vendor must exist in the AP vendor directory. Required inputs: vendorId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 404 when no vendor exists for the supplied id. 
+     * Returns one vendor from accounting\'s copy of the pos-supplier vendor master, with its vendorNumber, status, remitToVersion, paymentDetailsChanged and apSettings (the AP defaults and the last remit-to confirmation). Use this tool when the vendor id is already known, for example before confirming a changed remit-to; use searchVendors instead when resolving a name typed by a user. Preconditions: the caller holds accounting:ap:view and the vendor has been copied from pos-supplier. Required inputs: vendorId (the pos-supplier vendor UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the vendor is not in the copy yet. 
      * Get Vendor By Id
      */
     async getVendorById(requestParameters: GetVendorByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorResponse> {
@@ -83,7 +153,7 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches the AP vendor directory with a case-insensitive name-contains match, returning vendors ordered by name for typeahead use. Use this tool to resolve a vendor name to its vendorId; use getVendorById instead when a vendor id is already known and only its label is needed. Preconditions: none; a blank or absent name lists all vendors up to the limit. Required inputs: none; name is an optional contains term and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor name matches. 
+     * Searches accounting\'s copy of the pos-supplier vendor master with a case-insensitive name-contains match, returning active and inactive vendors ordered by name, each with its vendorNumber, status, current remitToVersion and paymentDetailsChanged flag. Use this tool to resolve a vendor name to its pos-supplier vendorId; use getVendorById instead when a vendor id is already known, and use pos-supplier\'s vendor endpoints to change a vendor. Preconditions: the caller holds accounting:ap:view; a vendor appears once its supplier.vendor.updated fact has been copied (seed with POST /v1/supplier/vendors/facts/replay). Required inputs: none; name is an optional contains term, status (ACTIVE or INACTIVE) an optional filter, and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor matches, and 400 VALIDATION_ERROR for a status outside ACTIVE and INACTIVE. 
      * Search Vendors By Name
      */
     async searchVendorsRaw(requestParameters: SearchVendorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VendorResponse>>> {
@@ -95,6 +165,10 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
 
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -118,11 +192,64 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches the AP vendor directory with a case-insensitive name-contains match, returning vendors ordered by name for typeahead use. Use this tool to resolve a vendor name to its vendorId; use getVendorById instead when a vendor id is already known and only its label is needed. Preconditions: none; a blank or absent name lists all vendors up to the limit. Required inputs: none; name is an optional contains term and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor name matches. 
+     * Searches accounting\'s copy of the pos-supplier vendor master with a case-insensitive name-contains match, returning active and inactive vendors ordered by name, each with its vendorNumber, status, current remitToVersion and paymentDetailsChanged flag. Use this tool to resolve a vendor name to its pos-supplier vendorId; use getVendorById instead when a vendor id is already known, and use pos-supplier\'s vendor endpoints to change a vendor. Preconditions: the caller holds accounting:ap:view; a vendor appears once its supplier.vendor.updated fact has been copied (seed with POST /v1/supplier/vendors/facts/replay). Required inputs: none; name is an optional contains term, status (ACTIVE or INACTIVE) an optional filter, and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor matches, and 400 VALIDATION_ERROR for a status outside ACTIVE and INACTIVE. 
      * Search Vendors By Name
      */
     async searchVendors(requestParameters: SearchVendorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VendorResponse>> {
         const response = await this.searchVendorsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sets the vendor\'s AP defaults: defaultDebitClass (GOODS or EXPENSE) and defaultExpenseMappingKey (an active VENDOR_BILL key EXPENSE_<CODE>); a field left out is unchanged and a field sent as null clears it. An approval falls back to them only when neither the approver\'s classification nor the proposal made at submission names a class or key; they never touch a posted entry, and each change writes an AP_VENDOR_SETTINGS_SET audit row, old to new. Use this tool when a controller sets how a vendor\'s bills are classed by default; do not use it to classify one bill, use the approval\'s classification instead. Preconditions: the caller holds accounting:ap_approval_policy:manage and the vendor is in the copy; an inactive vendor may be set. Required inputs: justification (at least 10 characters) and requestId (a UUID generated once per change); EXPENSE needs a key, sent or already set. Emits ACCOUNTING_VENDOR_AP_SETTINGS_SET; the call is idempotent on requestId: a replay writes nothing and returns the vendor as it is. Returns 200 with the vendor read; 400 VALIDATION_ERROR with fieldErrors or JUSTIFICATION_REQUIRED; 403 FORBIDDEN; 409 IDEMPOTENCY_CONFLICT for a requestId already used with another body; 503 VENDOR_REPLICATION_PENDING (Retry-After); nothing is written on a refusal. 
+     * Set Vendor AP Settings
+     */
+    async setVendorApSettingsRaw(requestParameters: SetVendorApSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorResponse>> {
+        if (requestParameters['vendorId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorId',
+                'Required parameter "vendorId" was null or undefined when calling setVendorApSettings().'
+            );
+        }
+
+        if (requestParameters['vendorApSettingsRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorApSettingsRequest',
+                'Required parameter "vendorApSettingsRequest" was null or undefined when calling setVendorApSettings().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap_approval_policy:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendors/{vendorId}/ap-settings`.replace(`{${"vendorId"}}`, encodeURIComponent(String(requestParameters['vendorId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VendorApSettingsRequestToJSON(requestParameters['vendorApSettingsRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Sets the vendor\'s AP defaults: defaultDebitClass (GOODS or EXPENSE) and defaultExpenseMappingKey (an active VENDOR_BILL key EXPENSE_<CODE>); a field left out is unchanged and a field sent as null clears it. An approval falls back to them only when neither the approver\'s classification nor the proposal made at submission names a class or key; they never touch a posted entry, and each change writes an AP_VENDOR_SETTINGS_SET audit row, old to new. Use this tool when a controller sets how a vendor\'s bills are classed by default; do not use it to classify one bill, use the approval\'s classification instead. Preconditions: the caller holds accounting:ap_approval_policy:manage and the vendor is in the copy; an inactive vendor may be set. Required inputs: justification (at least 10 characters) and requestId (a UUID generated once per change); EXPENSE needs a key, sent or already set. Emits ACCOUNTING_VENDOR_AP_SETTINGS_SET; the call is idempotent on requestId: a replay writes nothing and returns the vendor as it is. Returns 200 with the vendor read; 400 VALIDATION_ERROR with fieldErrors or JUSTIFICATION_REQUIRED; 403 FORBIDDEN; 409 IDEMPOTENCY_CONFLICT for a requestId already used with another body; 503 VENDOR_REPLICATION_PENDING (Retry-After); nothing is written on a refusal. 
+     * Set Vendor AP Settings
+     */
+    async setVendorApSettings(requestParameters: SetVendorApSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorResponse> {
+        const response = await this.setVendorApSettingsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
