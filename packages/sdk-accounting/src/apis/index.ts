@@ -10,6 +10,7 @@ export * from './AccountingGLApi';
 export * from './AccountingPeriodsApi';
 export * from './AccountingPettyExpenseCategoriesApi';
 export * from './AccountingRegisterFloatApi';
+export * from './AccountingTaxRegistrationsApi';
 export * from './AccountingTenantTemplateApi';
 export * from './AuditTrailApi';
 export * from './BankAccountsApi';
