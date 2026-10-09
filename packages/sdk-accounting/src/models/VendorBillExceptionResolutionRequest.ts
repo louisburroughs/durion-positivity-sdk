@@ -74,6 +74,12 @@ export interface VendorBillExceptionResolutionRequest {
      * @memberof VendorBillExceptionResolutionRequest
      */
     taxByType?: Array<VendorBillTaxAmount>;
+    /**
+     * ACCEPT only: accepts, for this bill only, tax the vendor charged on goods for resale where the tax country's purchase-tax rules hold such bills, 10-1000 characters (CAP:550 S43)
+     * @type {string}
+     * @memberof VendorBillExceptionResolutionRequest
+     */
+    taxOnResaleOverrideJustification?: string;
 }
 
 /**
@@ -112,6 +118,7 @@ export function VendorBillExceptionResolutionRequestFromJSONTyped(json: any, ign
         'reason': json['reason'],
         'resolutionAction': json['resolutionAction'],
         'taxByType': json['taxByType'] == null ? undefined : ((json['taxByType'] as Array<any>).map(VendorBillTaxAmountFromJSON)),
+        'taxOnResaleOverrideJustification': json['taxOnResaleOverrideJustification'] == null ? undefined : json['taxOnResaleOverrideJustification'],
     };
 }
 
@@ -127,6 +134,7 @@ export function VendorBillExceptionResolutionRequestToJSON(value?: VendorBillExc
         'reason': value['reason'],
         'resolutionAction': value['resolutionAction'],
         'taxByType': value['taxByType'] == null ? undefined : ((value['taxByType'] as Array<any>).map(VendorBillTaxAmountToJSON)),
+        'taxOnResaleOverrideJustification': value['taxOnResaleOverrideJustification'],
     };
 }
 

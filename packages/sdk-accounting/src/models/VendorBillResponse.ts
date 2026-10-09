@@ -79,6 +79,12 @@ import {
     VendorBillTaxByTypeFromJSONTyped,
     VendorBillTaxByTypeToJSON,
 } from './VendorBillTaxByType';
+import type { VendorBillTaxOnResaleOverride } from './VendorBillTaxOnResaleOverride';
+import {
+    VendorBillTaxOnResaleOverrideFromJSON,
+    VendorBillTaxOnResaleOverrideFromJSONTyped,
+    VendorBillTaxOnResaleOverrideToJSON,
+} from './VendorBillTaxOnResaleOverride';
 
 /**
  * Vendor bill details
@@ -249,6 +255,12 @@ export interface VendorBillResponse {
      */
     taxByType: Array<VendorBillTaxByType>;
     /**
+     * 
+     * @type {VendorBillTaxOnResaleOverride}
+     * @memberof VendorBillResponse
+     */
+    taxOnResaleOverride?: VendorBillTaxOnResaleOverride;
+    /**
      * Total bill amount
      * @type {number}
      * @memberof VendorBillResponse
@@ -355,6 +367,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'statusExplanation': json['statusExplanation'] == null ? undefined : json['statusExplanation'],
         'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
         'taxByType': ((json['taxByType'] as Array<any>).map(VendorBillTaxByTypeFromJSON)),
+        'taxOnResaleOverride': json['taxOnResaleOverride'] == null ? undefined : VendorBillTaxOnResaleOverrideFromJSON(json['taxOnResaleOverride']),
         'totalAmount': json['totalAmount'],
         'vendorBillId': json['vendorBillId'],
         'vendorId': json['vendorId'],
@@ -395,6 +408,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'statusExplanation': value['statusExplanation'],
         'taxAmount': value['taxAmount'],
         'taxByType': ((value['taxByType'] as Array<any>).map(VendorBillTaxByTypeToJSON)),
+        'taxOnResaleOverride': VendorBillTaxOnResaleOverrideToJSON(value['taxOnResaleOverride']),
         'totalAmount': value['totalAmount'],
         'vendorBillId': value['vendorBillId'],
         'vendorId': value['vendorId'],

@@ -68,6 +68,12 @@ export interface VendorBillApproveRequest {
      * @memberof VendorBillApproveRequest
      */
     taxByType?: Array<VendorBillTaxAmount>;
+    /**
+     * Accepts, for this bill only, tax the vendor charged on goods for resale where the tax country's purchase-tax rules hold such bills (check TAX_ON_RESALE_GOODS FAIL): why it is accepted, 10-1000 characters; looked at only when the hold applies (CAP:550 S43)
+     * @type {string}
+     * @memberof VendorBillApproveRequest
+     */
+    taxOnResaleOverrideJustification?: string;
 }
 
 /**
@@ -92,6 +98,7 @@ export function VendorBillApproveRequestFromJSONTyped(json: any, ignoreDiscrimin
         'justification': json['justification'] == null ? undefined : json['justification'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
         'taxByType': json['taxByType'] == null ? undefined : ((json['taxByType'] as Array<any>).map(VendorBillTaxAmountFromJSON)),
+        'taxOnResaleOverrideJustification': json['taxOnResaleOverrideJustification'] == null ? undefined : json['taxOnResaleOverrideJustification'],
     };
 }
 
@@ -106,6 +113,7 @@ export function VendorBillApproveRequestToJSON(value?: VendorBillApproveRequest 
         'justification': value['justification'],
         'overrideJustification': value['overrideJustification'],
         'taxByType': value['taxByType'] == null ? undefined : ((value['taxByType'] as Array<any>).map(VendorBillTaxAmountToJSON)),
+        'taxOnResaleOverrideJustification': value['taxOnResaleOverrideJustification'],
     };
 }
 
