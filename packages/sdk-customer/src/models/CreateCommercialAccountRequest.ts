@@ -26,29 +26,11 @@ export interface CreateCommercialAccountRequest {
      */
     billingTermsId?: string;
     /**
-     * Primary contact first name
-     * @type {string}
-     * @memberof CreateCommercialAccountRequest
-     */
-    contactFirstName?: string;
-    /**
-     * Primary contact last name
-     * @type {string}
-     * @memberof CreateCommercialAccountRequest
-     */
-    contactLastName?: string;
-    /**
      * Display/trading name
      * @type {string}
      * @memberof CreateCommercialAccountRequest
      */
     displayName?: string;
-    /**
-     * Contact email
-     * @type {string}
-     * @memberof CreateCommercialAccountRequest
-     */
-    email?: string;
     /**
      * External identifiers (system-specific IDs from upstream systems)
      * @type {{ [key: string]: string; }}
@@ -62,17 +44,11 @@ export interface CreateCommercialAccountRequest {
      */
     legalName: string;
     /**
-     * Party type (ORGANIZATION|INDIVIDUAL; default ORGANIZATION for commercial accounts)
+     * Party type; COMMERCIAL, the default, is the only accepted value. Create individual customers with createCrmPerson.
      * @type {string}
      * @memberof CreateCommercialAccountRequest
      */
     partyType?: string;
-    /**
-     * Contact phone
-     * @type {string}
-     * @memberof CreateCommercialAccountRequest
-     */
-    phone?: string;
     /**
      * Tax identification number (required for certain jurisdictions)
      * @type {string}
@@ -100,14 +76,10 @@ export function CreateCommercialAccountRequestFromJSONTyped(json: any, ignoreDis
     return {
         
         'billingTermsId': json['billingTermsId'] == null ? undefined : json['billingTermsId'],
-        'contactFirstName': json['contactFirstName'] == null ? undefined : json['contactFirstName'],
-        'contactLastName': json['contactLastName'] == null ? undefined : json['contactLastName'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
-        'email': json['email'] == null ? undefined : json['email'],
         'externalIdentifiers': json['externalIdentifiers'] == null ? undefined : json['externalIdentifiers'],
         'legalName': json['legalName'],
         'partyType': json['partyType'] == null ? undefined : json['partyType'],
-        'phone': json['phone'] == null ? undefined : json['phone'],
         'taxId': json['taxId'] == null ? undefined : json['taxId'],
     };
 }
@@ -119,14 +91,10 @@ export function CreateCommercialAccountRequestToJSON(value?: CreateCommercialAcc
     return {
         
         'billingTermsId': value['billingTermsId'],
-        'contactFirstName': value['contactFirstName'],
-        'contactLastName': value['contactLastName'],
         'displayName': value['displayName'],
-        'email': value['email'],
         'externalIdentifiers': value['externalIdentifiers'],
         'legalName': value['legalName'],
         'partyType': value['partyType'],
-        'phone': value['phone'],
         'taxId': value['taxId'],
     };
 }

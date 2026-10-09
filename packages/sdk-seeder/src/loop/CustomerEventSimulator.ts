@@ -1,5 +1,6 @@
 import {
   createCustomerClient,
+  CreatePersonRequestPreferredContactMethodEnum,
 } from '@durion-sdk/customer';
 import { createInvoiceClient } from '@durion-sdk/invoice';
 import { createAccountingClient } from '@durion-sdk/accounting';
@@ -245,15 +246,15 @@ export class CustomerEventSimulator {
         } else {
           firstName = this.random.firstName();
           lastName = this.random.lastName();
-          const customer = await this.customerClient.crmAccountsApi.createCrmCommercialAccount({
-            createCommercialAccountRequest: {
-              legalName: `${firstName} ${lastName}`,
-              displayName: `${firstName} ${lastName}`,
-              partyType: 'PERSON',
-              contactFirstName: firstName,
-              contactLastName: lastName,
-              email: this.random.email(firstName, lastName),
-              phone: this.random.phone(),
+          // An individual is a person party linked to a pos-people identity, which holds the
+          // name and contact points; pos-customer refuses a commercial account typed PERSON.
+          const customer = await this.customerClient.crmPersonsApi.createCrmPerson({
+            createPersonRequest: {
+              firstName,
+              lastName,
+              preferredContactMethod: CreatePersonRequestPreferredContactMethodEnum.Email,
+              emails: [{ value: this.random.email(firstName, lastName), primary: true }],
+              phones: [{ value: this.random.phone(), primary: true }],
             },
           });
           partyId = customer.partyId;
