@@ -19,6 +19,9 @@ import type {
   ModeResponse,
   TaxCalculationRequest,
   TaxCalculationResponse,
+  TaxEvidenceRulesResponse,
+  TaxPlausibilityCheckRequest,
+  TaxPlausibilityCheckResponse,
   TaxProviderTransactionResult,
   TaxRateLookupResponse,
   TaxTypesResponse,
@@ -32,6 +35,12 @@ import {
     TaxCalculationRequestToJSON,
     TaxCalculationResponseFromJSON,
     TaxCalculationResponseToJSON,
+    TaxEvidenceRulesResponseFromJSON,
+    TaxEvidenceRulesResponseToJSON,
+    TaxPlausibilityCheckRequestFromJSON,
+    TaxPlausibilityCheckRequestToJSON,
+    TaxPlausibilityCheckResponseFromJSON,
+    TaxPlausibilityCheckResponseToJSON,
     TaxProviderTransactionResultFromJSON,
     TaxProviderTransactionResultToJSON,
     TaxRateLookupResponseFromJSON,
@@ -44,9 +53,18 @@ export interface CalculateTaxRequest {
     taxCalculationRequest: TaxCalculationRequest;
 }
 
+export interface CheckTaxPlausibilityRequest {
+    taxPlausibilityCheckRequest: TaxPlausibilityCheckRequest;
+}
+
 export interface CommitTaxDocumentRequest {
     referenceId: string;
     referenceType?: string;
+}
+
+export interface GetTaxEvidenceRulesRequest {
+    countryCode: string;
+    asOf?: Date;
 }
 
 export interface GetTaxRatesRequest {
@@ -117,6 +135,52 @@ export class TaxApi extends runtime.BaseAPI {
     }
 
     /**
+     * Checks the tax amounts stated on a receipt against its total, a bookkeeping control against typing errors and not a tax rule, and answers whether the supplier\'s registration number is needed and well formed. Use this tool when a drawer receipt with stated tax is recorded; do not use it to compute tax, which is calculateTax, or to read the evidence threshold, which is getTaxEvidenceRules instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-order with the service authority, never through pos-api-gateway. Required inputs: countryCode, regionCode, postalCode, currencyCode (the country profile\'s) and receiptTotal (tax included, above zero); asOf defaults to today, and statedTaxes (each regime at most once) and supplierRegistrationNumber are optional. No events are emitted, no state changes and no tenant data is read; the supplier\'s number is never echoed, logged or stored, and source is always STUB. Each stated amount must be below receiptTotal, as must their sum, and at most receiptTotal times r over one plus r rounded up to the minor unit plus a configured tolerance, where r is the regime\'s row rate in the region, or 0 when the regime does not cover the region; a regime that covers the region but has no row there is unrated, gets no rate bound, and makes the outcome RATE_UNAVAILABLE when its amount is above zero. Returns 400 VALIDATION_ERROR when a field is missing or malformed, an amount is negative or a regime is repeated, and then, in this order with the first failing step listing all its fieldErrors, 422 TAX_JURISDICTION_NOT_CONFIGURED when the country has no tax profile, CURRENCY_NOT_SUPPORTED when currencyCode is not the profile\'s, AMOUNT_PRECISION_EXCEEDS_CURRENCY when an amount is finer than the currency\'s minor unit, TAX_REGIME_NOT_DECLARED when the country does not declare a regime, and TAX_AMOUNT_IMPLAUSIBLE when an amount is implausible, with each offending amount\'s maximum. 
+     * Check a receipt\'s stated tax
+     */
+    async checkTaxPlausibilityRaw(requestParameters: CheckTaxPlausibilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxPlausibilityCheckResponse>> {
+        if (requestParameters['taxPlausibilityCheckRequest'] == null) {
+            throw new runtime.RequiredError(
+                'taxPlausibilityCheckRequest',
+                'Required parameter "taxPlausibilityCheckRequest" was null or undefined when calling checkTaxPlausibility().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:rates:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/plausibility-checks`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TaxPlausibilityCheckRequestToJSON(requestParameters['taxPlausibilityCheckRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxPlausibilityCheckResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Checks the tax amounts stated on a receipt against its total, a bookkeeping control against typing errors and not a tax rule, and answers whether the supplier\'s registration number is needed and well formed. Use this tool when a drawer receipt with stated tax is recorded; do not use it to compute tax, which is calculateTax, or to read the evidence threshold, which is getTaxEvidenceRules instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-order with the service authority, never through pos-api-gateway. Required inputs: countryCode, regionCode, postalCode, currencyCode (the country profile\'s) and receiptTotal (tax included, above zero); asOf defaults to today, and statedTaxes (each regime at most once) and supplierRegistrationNumber are optional. No events are emitted, no state changes and no tenant data is read; the supplier\'s number is never echoed, logged or stored, and source is always STUB. Each stated amount must be below receiptTotal, as must their sum, and at most receiptTotal times r over one plus r rounded up to the minor unit plus a configured tolerance, where r is the regime\'s row rate in the region, or 0 when the regime does not cover the region; a regime that covers the region but has no row there is unrated, gets no rate bound, and makes the outcome RATE_UNAVAILABLE when its amount is above zero. Returns 400 VALIDATION_ERROR when a field is missing or malformed, an amount is negative or a regime is repeated, and then, in this order with the first failing step listing all its fieldErrors, 422 TAX_JURISDICTION_NOT_CONFIGURED when the country has no tax profile, CURRENCY_NOT_SUPPORTED when currencyCode is not the profile\'s, AMOUNT_PRECISION_EXCEEDS_CURRENCY when an amount is finer than the currency\'s minor unit, TAX_REGIME_NOT_DECLARED when the country does not declare a regime, and TAX_AMOUNT_IMPLAUSIBLE when an amount is implausible, with each offending amount\'s maximum. 
+     * Check a receipt\'s stated tax
+     */
+    async checkTaxPlausibility(requestParameters: CheckTaxPlausibilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxPlausibilityCheckResponse> {
+        const response = await this.checkTaxPlausibilityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Commits the provider tax document for a finalized invoice so the recorded tax becomes filing-visible at the provider. Use this tool when an invoice is finalized; do not use it to recalculate amounts, which is calculateTax, and do not use it to reverse a commit, which is voidTaxDocument. Preconditions: tax must already have been calculated for this referenceId with a committable request, so that a provider document exists to commit. Required inputs: referenceId (UUID) path parameter, which is the source invoice id; referenceType is an optional query parameter defaulting to INVOICE. Emits a TAX_COMMIT event and updates the stored provider transaction; the call is idempotent, so an already-COMMITTED document is returned unchanged. Returns 200 with status PENDING_COMMIT rather than an error when the provider call fails, because a sale is never blocked on the provider, so callers must read the returned status instead of treating 200 as a completed commit and leave the re-commit job to true it up. 
      * Commit tax document
      */
@@ -160,6 +224,57 @@ export class TaxApi extends runtime.BaseAPI {
      */
     async commitTaxDocument(requestParameters: CommitTaxDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxProviderTransactionResult> {
         const response = await this.commitTaxDocumentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the evidence rules a country\'s tax profile configures that are in effect on a date: which evidence a document type needs, such as the supplier\'s registration number, from which total. Use this tool when a drawer receipt or a vendor bill must know whether it needs evidence for an input-tax claim; do not use it to check a receipt\'s stated tax, which is checkTaxPlausibility instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-order and pos-accounting with the service authority, never through pos-api-gateway. Required inputs: countryCode, two upper-case letters; asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; every rule is configuration held for expert advice, so source is always STUB, and amounts are in the returned currency. A caller that cannot obtain the rules retries or holds, and never treats them as absent. Returns 200 with an empty list for a country without a rule, and 400 VALIDATION_ERROR when countryCode or asOf is missing or malformed. 
+     * List a country\'s evidence rules
+     */
+    async getTaxEvidenceRulesRaw(requestParameters: GetTaxEvidenceRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxEvidenceRulesResponse>> {
+        if (requestParameters['countryCode'] == null) {
+            throw new runtime.RequiredError(
+                'countryCode',
+                'Required parameter "countryCode" was null or undefined when calling getTaxEvidenceRules().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+
+        if (requestParameters['asOf'] != null) {
+            queryParameters['asOf'] = (requestParameters['asOf'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:rates:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/evidence-rules`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxEvidenceRulesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the evidence rules a country\'s tax profile configures that are in effect on a date: which evidence a document type needs, such as the supplier\'s registration number, from which total. Use this tool when a drawer receipt or a vendor bill must know whether it needs evidence for an input-tax claim; do not use it to check a receipt\'s stated tax, which is checkTaxPlausibility instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-order and pos-accounting with the service authority, never through pos-api-gateway. Required inputs: countryCode, two upper-case letters; asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; every rule is configuration held for expert advice, so source is always STUB, and amounts are in the returned currency. A caller that cannot obtain the rules retries or holds, and never treats them as absent. Returns 200 with an empty list for a country without a rule, and 400 VALIDATION_ERROR when countryCode or asOf is missing or malformed. 
+     * List a country\'s evidence rules
+     */
+    async getTaxEvidenceRules(requestParameters: GetTaxEvidenceRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxEvidenceRulesResponse> {
+        const response = await this.getTaxEvidenceRulesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
