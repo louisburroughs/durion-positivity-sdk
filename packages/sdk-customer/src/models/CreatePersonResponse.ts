@@ -44,6 +44,12 @@ export interface CreatePersonResponse {
      */
     lastName: string;
     /**
+     * Party id of the individual customer: the id getParty, vehicles, estimates and appointments key on (personId is the pos-people identity, not the party)
+     * @type {string}
+     * @memberof CreatePersonResponse
+     */
+    partyId: string;
+    /**
      * Unique identifier of the created person
      * @type {string}
      * @memberof CreatePersonResponse
@@ -77,6 +83,7 @@ export function instanceOfCreatePersonResponse(value: object): boolean {
     if (!('createdAt' in value)) return false;
     if (!('firstName' in value)) return false;
     if (!('lastName' in value)) return false;
+    if (!('partyId' in value)) return false;
     if (!('personId' in value)) return false;
     if (!('preferredContactMethod' in value)) return false;
     return true;
@@ -96,6 +103,7 @@ export function CreatePersonResponseFromJSONTyped(json: any, ignoreDiscriminator
         'createdAt': (new Date(json['createdAt'])),
         'firstName': json['firstName'],
         'lastName': json['lastName'],
+        'partyId': json['partyId'],
         'personId': json['personId'],
         'preferredContactMethod': json['preferredContactMethod'],
     };
@@ -111,6 +119,7 @@ export function CreatePersonResponseToJSON(value?: CreatePersonResponse | null):
         'createdAt': ((value['createdAt']).toISOString()),
         'firstName': value['firstName'],
         'lastName': value['lastName'],
+        'partyId': value['partyId'],
         'personId': value['personId'],
         'preferredContactMethod': value['preferredContactMethod'],
     };
