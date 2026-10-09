@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CashMovementStatedTax } from './CashMovementStatedTax';
+import {
+    CashMovementStatedTaxFromJSON,
+    CashMovementStatedTaxFromJSONTyped,
+    CashMovementStatedTaxToJSON,
+} from './CashMovementStatedTax';
+
 /**
  * Request payload for recording a drawer cash movement with one of the fixed reasons
  * @export
@@ -74,6 +81,24 @@ export interface CashMovementRequest {
      */
     requestId: string;
     /**
+     * Tax stated on the receipt, one entry per regime the category offers, for PETTY_EXPENSE only; absent and empty both mean none. The drawer still counts the movement's whole amount
+     * @type {Array<CashMovementStatedTax>}
+     * @memberof CashMovementRequest
+     */
+    statedTaxes?: Array<CashMovementStatedTax>;
+    /**
+     * Supplier on the receipt, for PETTY_EXPENSE only; required when any tax amount is stated, trimmed, at most 200 characters
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    supplierName?: string;
+    /**
+     * Supplier's indirect-tax registration number as printed, for PETTY_EXPENSE with at least one stated amount; checked by pos-tax, stored normalised, and never returned or logged
+     * @type {string}
+     * @memberof CashMovementRequest
+     */
+    supplierRegistrationNumber?: string;
+    /**
      * The vendor paid; required for VENDOR_COD
      * @type {string}
      * @memberof CashMovementRequest
@@ -124,6 +149,9 @@ export function CashMovementRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'reason': json['reason'],
         'receiptReference': json['receiptReference'] == null ? undefined : json['receiptReference'],
         'requestId': json['requestId'],
+        'statedTaxes': json['statedTaxes'] == null ? undefined : ((json['statedTaxes'] as Array<any>).map(CashMovementStatedTaxFromJSON)),
+        'supplierName': json['supplierName'] == null ? undefined : json['supplierName'],
+        'supplierRegistrationNumber': json['supplierRegistrationNumber'] == null ? undefined : json['supplierRegistrationNumber'],
         'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
     };
 }
@@ -143,6 +171,9 @@ export function CashMovementRequestToJSON(value?: CashMovementRequest | null): a
         'reason': value['reason'],
         'receiptReference': value['receiptReference'],
         'requestId': value['requestId'],
+        'statedTaxes': value['statedTaxes'] == null ? undefined : ((value['statedTaxes'] as Array<any>).map(CashMovementStatedTaxToJSON)),
+        'supplierName': value['supplierName'],
+        'supplierRegistrationNumber': value['supplierRegistrationNumber'],
         'vendorId': value['vendorId'],
     };
 }

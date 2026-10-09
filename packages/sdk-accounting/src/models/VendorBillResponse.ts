@@ -31,6 +31,12 @@ import {
     VendorBillCheckFromJSONTyped,
     VendorBillCheckToJSON,
 } from './VendorBillCheck';
+import type { VendorBillInputTaxRecovery } from './VendorBillInputTaxRecovery';
+import {
+    VendorBillInputTaxRecoveryFromJSON,
+    VendorBillInputTaxRecoveryFromJSONTyped,
+    VendorBillInputTaxRecoveryToJSON,
+} from './VendorBillInputTaxRecovery';
 import type { VendorBillLine } from './VendorBillLine';
 import {
     VendorBillLineFromJSON,
@@ -67,6 +73,12 @@ import {
     VendorBillRejectionFromJSONTyped,
     VendorBillRejectionToJSON,
 } from './VendorBillRejection';
+import type { VendorBillTaxByType } from './VendorBillTaxByType';
+import {
+    VendorBillTaxByTypeFromJSON,
+    VendorBillTaxByTypeFromJSONTyped,
+    VendorBillTaxByTypeToJSON,
+} from './VendorBillTaxByType';
 
 /**
  * Vendor bill details
@@ -134,6 +146,12 @@ export interface VendorBillResponse {
      * @memberof VendorBillResponse
      */
     dueDate?: Date;
+    /**
+     * What the posting did with each stated tax amount for a tenant that recovers input tax: the amount recovered and its account, or why nothing was (CAP:550 S32d); null before the posting and for a tenant without recovery, whose bill books the gross
+     * @type {Array<VendorBillInputTaxRecovery>}
+     * @memberof VendorBillResponse
+     */
+    inputTaxRecovery?: Array<VendorBillInputTaxRecovery>;
     /**
      * Journal entry ID (if GL posted)
      * @type {string}
@@ -225,6 +243,12 @@ export interface VendorBillResponse {
      */
     taxAmount?: number;
     /**
+     * The tax the vendor's document states, by tax type (CAP:550 S32d); empty when it states none by type
+     * @type {Array<VendorBillTaxByType>}
+     * @memberof VendorBillResponse
+     */
+    taxByType: Array<VendorBillTaxByType>;
+    /**
      * Total bill amount
      * @type {number}
      * @memberof VendorBillResponse
@@ -287,6 +311,7 @@ export function instanceOfVendorBillResponse(value: object): boolean {
     if (!('openCandidates' in value)) return false;
     if (!('reissues' in value)) return false;
     if (!('status' in value)) return false;
+    if (!('taxByType' in value)) return false;
     if (!('totalAmount' in value)) return false;
     if (!('vendorBillId' in value)) return false;
     if (!('vendorId' in value)) return false;
@@ -313,6 +338,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'currency': json['currency'] == null ? undefined : json['currency'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
+        'inputTaxRecovery': json['inputTaxRecovery'] == null ? undefined : ((json['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryFromJSON)),
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'lines': ((json['lines'] as Array<any>).map(VendorBillLineFromJSON)),
         'match': json['match'] == null ? undefined : VendorBillMatchFromJSON(json['match']),
@@ -328,6 +354,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'status': json['status'],
         'statusExplanation': json['statusExplanation'] == null ? undefined : json['statusExplanation'],
         'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
+        'taxByType': ((json['taxByType'] as Array<any>).map(VendorBillTaxByTypeFromJSON)),
         'totalAmount': json['totalAmount'],
         'vendorBillId': json['vendorBillId'],
         'vendorId': json['vendorId'],
@@ -351,6 +378,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'createdBy': value['createdBy'],
         'currency': value['currency'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
+        'inputTaxRecovery': value['inputTaxRecovery'] == null ? undefined : ((value['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryToJSON)),
         'journalEntryId': value['journalEntryId'],
         'lines': ((value['lines'] as Array<any>).map(VendorBillLineToJSON)),
         'match': VendorBillMatchToJSON(value['match']),
@@ -366,6 +394,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'status': value['status'],
         'statusExplanation': value['statusExplanation'],
         'taxAmount': value['taxAmount'],
+        'taxByType': ((value['taxByType'] as Array<any>).map(VendorBillTaxByTypeToJSON)),
         'totalAmount': value['totalAmount'],
         'vendorBillId': value['vendorBillId'],
         'vendorId': value['vendorId'],

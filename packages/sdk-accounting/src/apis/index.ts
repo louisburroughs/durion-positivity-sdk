@@ -7,6 +7,7 @@ export * from './AccountingConfigurationApi';
 export * from './AccountingEventsApi';
 export * from './AccountingExportsApi';
 export * from './AccountingGLApi';
+export * from './AccountingInputTaxRecoveryApi';
 export * from './AccountingPeriodsApi';
 export * from './AccountingPettyExpenseCategoriesApi';
 export * from './AccountingRegisterFloatApi';

@@ -56,6 +56,12 @@ export interface TaxEvidenceRulesResponse {
      * @memberof TaxEvidenceRulesResponse
      */
     source: string;
+    /**
+     * Regime whose registration a supplier's number is, the registration a SUPPLIER_REGISTRATION_NUMBER rule asks the supplier to hold; null when the country names none
+     * @type {string}
+     * @memberof TaxEvidenceRulesResponse
+     */
+    supplierRegistrationRegime?: string;
 }
 
 /**
@@ -84,6 +90,7 @@ export function TaxEvidenceRulesResponseFromJSONTyped(json: any, ignoreDiscrimin
         'currency': json['currency'] == null ? undefined : json['currency'],
         'rules': ((json['rules'] as Array<any>).map(TaxEvidenceRuleEntryFromJSON)),
         'source': json['source'],
+        'supplierRegistrationRegime': json['supplierRegistrationRegime'] == null ? undefined : json['supplierRegistrationRegime'],
     };
 }
 
@@ -98,6 +105,7 @@ export function TaxEvidenceRulesResponseToJSON(value?: TaxEvidenceRulesResponse 
         'currency': value['currency'],
         'rules': ((value['rules'] as Array<any>).map(TaxEvidenceRuleEntryToJSON)),
         'source': value['source'],
+        'supplierRegistrationRegime': value['supplierRegistrationRegime'],
     };
 }
 
