@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  InformationReturnFormsResponse,
   VendorApSettingsRequest,
   VendorRemitToConfirmationRequest,
   VendorResponse,
@@ -23,6 +24,8 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    InformationReturnFormsResponseFromJSON,
+    InformationReturnFormsResponseToJSON,
     VendorApSettingsRequestFromJSON,
     VendorApSettingsRequestToJSON,
     VendorRemitToConfirmationRequestFromJSON,
@@ -110,7 +113,7 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor from accounting\'s copy of the pos-supplier vendor master, with its vendorNumber, status, remitToVersion, paymentDetailsChanged and apSettings (the AP defaults and the last remit-to confirmation). Use this tool when the vendor id is already known, for example before confirming a changed remit-to; use searchVendors instead when resolving a name typed by a user. Preconditions: the caller holds accounting:ap:view and the vendor has been copied from pos-supplier. Required inputs: vendorId (the pos-supplier vendor UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the vendor is not in the copy yet. 
+     * Returns one vendor from accounting\'s copy of the pos-supplier vendor master, with its vendorNumber, status, remitToVersion, paymentDetailsChanged, apHold and apSettings: the AP defaults, the last remit-to confirmation, apHold (onHold, reason, setBy, setAt) and informationReturn (reportable, form, box, payeeTaxRegistrationScheme, payeeTinOnFile and the masked payeeTinLast4; a full taxpayer number is never served). Use this tool when the vendor id is already known, for example before confirming a changed remit-to; use searchVendors instead when resolving a name typed by a user. Preconditions: the caller holds accounting:ap:view and the vendor has been copied from pos-supplier. Required inputs: vendorId (the pos-supplier vendor UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the vendor is not in the copy yet. 
      * Get Vendor By Id
      */
     async getVendorByIdRaw(requestParameters: GetVendorByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorResponse>> {
@@ -144,7 +147,7 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor from accounting\'s copy of the pos-supplier vendor master, with its vendorNumber, status, remitToVersion, paymentDetailsChanged and apSettings (the AP defaults and the last remit-to confirmation). Use this tool when the vendor id is already known, for example before confirming a changed remit-to; use searchVendors instead when resolving a name typed by a user. Preconditions: the caller holds accounting:ap:view and the vendor has been copied from pos-supplier. Required inputs: vendorId (the pos-supplier vendor UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the vendor is not in the copy yet. 
+     * Returns one vendor from accounting\'s copy of the pos-supplier vendor master, with its vendorNumber, status, remitToVersion, paymentDetailsChanged, apHold and apSettings: the AP defaults, the last remit-to confirmation, apHold (onHold, reason, setBy, setAt) and informationReturn (reportable, form, box, payeeTaxRegistrationScheme, payeeTinOnFile and the masked payeeTinLast4; a full taxpayer number is never served). Use this tool when the vendor id is already known, for example before confirming a changed remit-to; use searchVendors instead when resolving a name typed by a user. Preconditions: the caller holds accounting:ap:view and the vendor has been copied from pos-supplier. Required inputs: vendorId (the pos-supplier vendor UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_GET audit event; no state changes. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the vendor is not in the copy yet. 
      * Get Vendor By Id
      */
     async getVendorById(requestParameters: GetVendorByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorResponse> {
@@ -153,7 +156,43 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches accounting\'s copy of the pos-supplier vendor master with a case-insensitive name-contains match, returning active and inactive vendors ordered by name, each with its vendorNumber, status, current remitToVersion and paymentDetailsChanged flag. Use this tool to resolve a vendor name to its pos-supplier vendorId; use getVendorById instead when a vendor id is already known, and use pos-supplier\'s vendor endpoints to change a vendor. Preconditions: the caller holds accounting:ap:view; a vendor appears once its supplier.vendor.updated fact has been copied (seed with POST /v1/supplier/vendors/facts/replay). Required inputs: none; name is an optional contains term, status (ACTIVE or INACTIVE) an optional filter, and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor matches, and 400 VALIDATION_ERROR for a status outside ACTIVE and INACTIVE. 
+     * Returns the information-return forms configured for the tenant\'s tax country (accounting.tax.country), each with its boxes and the payee-id schemes a payee may be reported under, relayed from pos-tax\'s configuration. Use this tool to fill the form, box and scheme pickers of a vendor\'s information-return flag; do not use it to make a vendor reportable, use setVendorApSettings instead. Preconditions: the caller holds accounting:ap:view; the values are placeholders held for expert advice, so source is STUB. Required inputs: none; the country is the deployment\'s tax country, never a parameter. Emits an ACCOUNTING_INFORMATION_RETURN_FORMS_VIEW audit event; no state changes. Returns 200 with an empty forms list when the country configures none, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot answer. 
+     * List Information-Return Forms
+     */
+    async listInformationReturnFormsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InformationReturnFormsResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/information-return-forms`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InformationReturnFormsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the information-return forms configured for the tenant\'s tax country (accounting.tax.country), each with its boxes and the payee-id schemes a payee may be reported under, relayed from pos-tax\'s configuration. Use this tool to fill the form, box and scheme pickers of a vendor\'s information-return flag; do not use it to make a vendor reportable, use setVendorApSettings instead. Preconditions: the caller holds accounting:ap:view; the values are placeholders held for expert advice, so source is STUB. Required inputs: none; the country is the deployment\'s tax country, never a parameter. Emits an ACCOUNTING_INFORMATION_RETURN_FORMS_VIEW audit event; no state changes. Returns 200 with an empty forms list when the country configures none, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot answer. 
+     * List Information-Return Forms
+     */
+    async listInformationReturnForms(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InformationReturnFormsResponse> {
+        const response = await this.listInformationReturnFormsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Searches accounting\'s copy of the pos-supplier vendor master with a case-insensitive name-contains match, returning active and inactive vendors ordered by name, each with its vendorNumber, status, current remitToVersion, paymentDetailsChanged flag and apHold flag (true while AP payments to the vendor are held). Use this tool to resolve a vendor name to its pos-supplier vendorId; use getVendorById instead when a vendor id is already known, and use pos-supplier\'s vendor endpoints to change a vendor. Preconditions: the caller holds accounting:ap:view; a vendor appears once its supplier.vendor.updated fact has been copied (seed with POST /v1/supplier/vendors/facts/replay). Required inputs: none; name is an optional contains term, status (ACTIVE or INACTIVE) an optional filter, and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor matches, and 400 VALIDATION_ERROR for a status outside ACTIVE and INACTIVE. 
      * Search Vendors By Name
      */
     async searchVendorsRaw(requestParameters: SearchVendorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VendorResponse>>> {
@@ -192,7 +231,7 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches accounting\'s copy of the pos-supplier vendor master with a case-insensitive name-contains match, returning active and inactive vendors ordered by name, each with its vendorNumber, status, current remitToVersion and paymentDetailsChanged flag. Use this tool to resolve a vendor name to its pos-supplier vendorId; use getVendorById instead when a vendor id is already known, and use pos-supplier\'s vendor endpoints to change a vendor. Preconditions: the caller holds accounting:ap:view; a vendor appears once its supplier.vendor.updated fact has been copied (seed with POST /v1/supplier/vendors/facts/replay). Required inputs: none; name is an optional contains term, status (ACTIVE or INACTIVE) an optional filter, and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor matches, and 400 VALIDATION_ERROR for a status outside ACTIVE and INACTIVE. 
+     * Searches accounting\'s copy of the pos-supplier vendor master with a case-insensitive name-contains match, returning active and inactive vendors ordered by name, each with its vendorNumber, status, current remitToVersion, paymentDetailsChanged flag and apHold flag (true while AP payments to the vendor are held). Use this tool to resolve a vendor name to its pos-supplier vendorId; use getVendorById instead when a vendor id is already known, and use pos-supplier\'s vendor endpoints to change a vendor. Preconditions: the caller holds accounting:ap:view; a vendor appears once its supplier.vendor.updated fact has been copied (seed with POST /v1/supplier/vendors/facts/replay). Required inputs: none; name is an optional contains term, status (ACTIVE or INACTIVE) an optional filter, and limit defaults to 20 with a server cap of 100. Emits an ACCOUNTING_VENDOR_SEARCH audit event; no state changes. Returns 200 with an empty list when no vendor matches, and 400 VALIDATION_ERROR for a status outside ACTIVE and INACTIVE. 
      * Search Vendors By Name
      */
     async searchVendors(requestParameters: SearchVendorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VendorResponse>> {
@@ -201,7 +240,7 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets the vendor\'s AP defaults: defaultDebitClass (GOODS or EXPENSE) and defaultExpenseMappingKey (an active VENDOR_BILL key EXPENSE_<CODE>); a field left out is unchanged and a field sent as null clears it. An approval falls back to them only when neither the approver\'s classification nor the proposal made at submission names a class or key; they never touch a posted entry, and each change writes an AP_VENDOR_SETTINGS_SET audit row, old to new. Use this tool when a controller sets how a vendor\'s bills are classed by default; do not use it to classify one bill, use the approval\'s classification instead. Preconditions: the caller holds accounting:ap_approval_policy:manage and the vendor is in the copy; an inactive vendor may be set. Required inputs: justification (at least 10 characters) and requestId (a UUID generated once per change); EXPENSE needs a key, sent or already set. Emits ACCOUNTING_VENDOR_AP_SETTINGS_SET; the call is idempotent on requestId: a replay writes nothing and returns the vendor as it is. Returns 200 with the vendor read; 400 VALIDATION_ERROR with fieldErrors or JUSTIFICATION_REQUIRED; 403 FORBIDDEN; 409 IDEMPOTENCY_CONFLICT for a requestId already used with another body; 503 VENDOR_REPLICATION_PENDING (Retry-After); nothing is written on a refusal. 
+     * Sets the vendor\'s AP settings: defaultDebitClass and defaultExpenseMappingKey (a field left out is unchanged, null clears it), apHold {onHold, reason} (a hold stops AP payments to the vendor with 422 VENDOR_ON_AP_HOLD, never approval or posting) and informationReturn {reportable, form, box, payeeTaxRegistrationScheme} (codes from listInformationReturnForms). Each change writes an audit row: AP_VENDOR_SETTINGS_SET per default or information-return field, AP_VENDOR_HOLD_SET or AP_VENDOR_HOLD_CLEARED for the hold; nothing posts. Use this tool when a controller sets a vendor\'s defaults, holds or releases its payments, or marks it reportable; do not use it to classify one bill, use the approval\'s classification instead. Preconditions: the caller holds accounting:ap_approval_policy:manage and the vendor is in the copy; an inactive vendor may be set, held or released. Required inputs: justification (at least 10 characters) and requestId (a UUID generated once per change); a hold needs a reason of 10-500 characters; reportable needs form and box; apHold or informationReturn sent as null, and any unknown property, is refused. Emits ACCOUNTING_VENDOR_AP_SETTINGS_SET; idempotent on requestId: a replay writes nothing and returns the vendor as it is. Returns 200 with the vendor read; 400 VALIDATION_ERROR with fieldErrors or JUSTIFICATION_REQUIRED; 403; 409 IDEMPOTENCY_CONFLICT; 503 VENDOR_REPLICATION_PENDING or SERVICE_UNAVAILABLE (pos-tax, information-return change only), with Retry-After; nothing is written on a refusal. 
      * Set Vendor AP Settings
      */
     async setVendorApSettingsRaw(requestParameters: SetVendorApSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorResponse>> {
@@ -245,7 +284,7 @@ export class VendorDirectoryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets the vendor\'s AP defaults: defaultDebitClass (GOODS or EXPENSE) and defaultExpenseMappingKey (an active VENDOR_BILL key EXPENSE_<CODE>); a field left out is unchanged and a field sent as null clears it. An approval falls back to them only when neither the approver\'s classification nor the proposal made at submission names a class or key; they never touch a posted entry, and each change writes an AP_VENDOR_SETTINGS_SET audit row, old to new. Use this tool when a controller sets how a vendor\'s bills are classed by default; do not use it to classify one bill, use the approval\'s classification instead. Preconditions: the caller holds accounting:ap_approval_policy:manage and the vendor is in the copy; an inactive vendor may be set. Required inputs: justification (at least 10 characters) and requestId (a UUID generated once per change); EXPENSE needs a key, sent or already set. Emits ACCOUNTING_VENDOR_AP_SETTINGS_SET; the call is idempotent on requestId: a replay writes nothing and returns the vendor as it is. Returns 200 with the vendor read; 400 VALIDATION_ERROR with fieldErrors or JUSTIFICATION_REQUIRED; 403 FORBIDDEN; 409 IDEMPOTENCY_CONFLICT for a requestId already used with another body; 503 VENDOR_REPLICATION_PENDING (Retry-After); nothing is written on a refusal. 
+     * Sets the vendor\'s AP settings: defaultDebitClass and defaultExpenseMappingKey (a field left out is unchanged, null clears it), apHold {onHold, reason} (a hold stops AP payments to the vendor with 422 VENDOR_ON_AP_HOLD, never approval or posting) and informationReturn {reportable, form, box, payeeTaxRegistrationScheme} (codes from listInformationReturnForms). Each change writes an audit row: AP_VENDOR_SETTINGS_SET per default or information-return field, AP_VENDOR_HOLD_SET or AP_VENDOR_HOLD_CLEARED for the hold; nothing posts. Use this tool when a controller sets a vendor\'s defaults, holds or releases its payments, or marks it reportable; do not use it to classify one bill, use the approval\'s classification instead. Preconditions: the caller holds accounting:ap_approval_policy:manage and the vendor is in the copy; an inactive vendor may be set, held or released. Required inputs: justification (at least 10 characters) and requestId (a UUID generated once per change); a hold needs a reason of 10-500 characters; reportable needs form and box; apHold or informationReturn sent as null, and any unknown property, is refused. Emits ACCOUNTING_VENDOR_AP_SETTINGS_SET; idempotent on requestId: a replay writes nothing and returns the vendor as it is. Returns 200 with the vendor read; 400 VALIDATION_ERROR with fieldErrors or JUSTIFICATION_REQUIRED; 403; 409 IDEMPOTENCY_CONFLICT; 503 VENDOR_REPLICATION_PENDING or SERVICE_UNAVAILABLE (pos-tax, information-return change only), with Retry-After; nothing is written on a refusal. 
      * Set Vendor AP Settings
      */
     async setVendorApSettings(requestParameters: SetVendorApSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorResponse> {
