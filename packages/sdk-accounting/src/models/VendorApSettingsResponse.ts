@@ -80,6 +80,12 @@ export interface VendorApSettingsResponse {
      * @memberof VendorApSettingsResponse
      */
     remitToConfirmedBy?: string;
+    /**
+     * The display name of the person who confirmed it ("First Last"), resolved now from accounting's people-contact copy; absent when not known, never the sign-in name
+     * @type {string}
+     * @memberof VendorApSettingsResponse
+     */
+    remitToConfirmedByName?: string;
 }
 
 /**
@@ -120,6 +126,7 @@ export function VendorApSettingsResponseFromJSONTyped(json: any, ignoreDiscrimin
         'informationReturn': VendorInformationReturnFromJSON(json['informationReturn']),
         'remitToConfirmedAt': json['remitToConfirmedAt'] == null ? undefined : (new Date(json['remitToConfirmedAt'])),
         'remitToConfirmedBy': json['remitToConfirmedBy'] == null ? undefined : json['remitToConfirmedBy'],
+        'remitToConfirmedByName': json['remitToConfirmedByName'] == null ? undefined : json['remitToConfirmedByName'],
     };
 }
 
@@ -137,6 +144,7 @@ export function VendorApSettingsResponseToJSON(value?: VendorApSettingsResponse 
         'informationReturn': VendorInformationReturnToJSON(value['informationReturn']),
         'remitToConfirmedAt': value['remitToConfirmedAt'] == null ? undefined : ((value['remitToConfirmedAt']).toISOString()),
         'remitToConfirmedBy': value['remitToConfirmedBy'],
+        'remitToConfirmedByName': value['remitToConfirmedByName'],
     };
 }
 

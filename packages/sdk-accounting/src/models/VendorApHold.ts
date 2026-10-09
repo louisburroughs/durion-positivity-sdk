@@ -43,6 +43,12 @@ export interface VendorApHold {
      * @memberof VendorApHold
      */
     setBy?: string;
+    /**
+     * The display name of the person who set the hold ("First Last"), resolved now from accounting's people-contact copy; absent when not known or without a hold, never the sign-in name
+     * @type {string}
+     * @memberof VendorApHold
+     */
+    setByName?: string;
 }
 
 /**
@@ -67,6 +73,7 @@ export function VendorApHoldFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'reason': json['reason'] == null ? undefined : json['reason'],
         'setAt': json['setAt'] == null ? undefined : (new Date(json['setAt'])),
         'setBy': json['setBy'] == null ? undefined : json['setBy'],
+        'setByName': json['setByName'] == null ? undefined : json['setByName'],
     };
 }
 
@@ -80,6 +87,7 @@ export function VendorApHoldToJSON(value?: VendorApHold | null): any {
         'reason': value['reason'],
         'setAt': value['setAt'] == null ? undefined : ((value['setAt']).toISOString()),
         'setBy': value['setBy'],
+        'setByName': value['setByName'],
     };
 }
 

@@ -141,6 +141,12 @@ export interface VendorBillResponse {
      */
     createdBy?: string;
     /**
+     * The display name of the person who created the bill ("First Last"), resolved now from accounting's people-contact copy; absent when not known or created by the system, never the sign-in name
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    createdByName?: string;
+    /**
      * ISO 4217 currency the bill is stated in; null means the ledger currency (a bill recorded before currencies were kept). A bill in another currency is held in CURRENCY_HOLD
      * @type {string}
      * @memberof VendorBillResponse
@@ -348,6 +354,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'checks': ((json['checks'] as Array<any>).map(VendorBillCheckFromJSON)),
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'createdByName': json['createdByName'] == null ? undefined : json['createdByName'],
         'currency': json['currency'] == null ? undefined : json['currency'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'inputTaxRecovery': json['inputTaxRecovery'] == null ? undefined : ((json['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryFromJSON)),
@@ -389,6 +396,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'checks': ((value['checks'] as Array<any>).map(VendorBillCheckToJSON)),
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'createdByName': value['createdByName'],
         'currency': value['currency'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'inputTaxRecovery': value['inputTaxRecovery'] == null ? undefined : ((value['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryToJSON)),
