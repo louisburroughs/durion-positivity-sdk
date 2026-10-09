@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CashMovementStatedTax } from './CashMovementStatedTax';
+import {
+    CashMovementStatedTaxFromJSON,
+    CashMovementStatedTaxFromJSONTyped,
+    CashMovementStatedTaxToJSON,
+} from './CashMovementStatedTax';
+
 /**
  * A drawer cash movement
  * @export
@@ -110,6 +117,36 @@ export interface CashMovementResponse {
      */
     sessionId?: string;
     /**
+     * Tax the receipt states, one entry per regime; empty when none
+     * @type {Array<CashMovementStatedTax>}
+     * @memberof CashMovementResponse
+     */
+    statedTaxes?: Array<CashMovementStatedTax>;
+    /**
+     * Supplier on a petty-expense receipt, or null
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    supplierName?: string;
+    /**
+     * Whether the supplier's registration number was recorded; the number itself is never returned
+     * @type {boolean}
+     * @memberof CashMovementResponse
+     */
+    supplierRegistrationNumberProvided?: boolean;
+    /**
+     * Whether an evidence rule asked for the supplier's number; null when no check was made
+     * @type {boolean}
+     * @memberof CashMovementResponse
+     */
+    supplierRegistrationRequired?: boolean;
+    /**
+     * pos-tax's answer on the stated tax; null when no check was made
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    taxPlausibility?: CashMovementResponseTaxPlausibilityEnum;
+    /**
      * Vendor paid, for VENDOR_COD
      * @type {string}
      * @memberof CashMovementResponse
@@ -135,6 +172,14 @@ export enum CashMovementResponseReasonEnum {
     BankDrop = 'BANK_DROP',
     FloatIncrease = 'FLOAT_INCREASE',
     FloatDecrease = 'FLOAT_DECREASE'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum CashMovementResponseTaxPlausibilityEnum {
+    Plausible = 'PLAUSIBLE',
+    RateUnavailable = 'RATE_UNAVAILABLE'
 }
 
 
@@ -170,6 +215,11 @@ export function CashMovementResponseFromJSONTyped(json: any, ignoreDiscriminator
         'receiptReference': json['receiptReference'] == null ? undefined : json['receiptReference'],
         'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
+        'statedTaxes': json['statedTaxes'] == null ? undefined : ((json['statedTaxes'] as Array<any>).map(CashMovementStatedTaxFromJSON)),
+        'supplierName': json['supplierName'] == null ? undefined : json['supplierName'],
+        'supplierRegistrationNumberProvided': json['supplierRegistrationNumberProvided'] == null ? undefined : json['supplierRegistrationNumberProvided'],
+        'supplierRegistrationRequired': json['supplierRegistrationRequired'] == null ? undefined : json['supplierRegistrationRequired'],
+        'taxPlausibility': json['taxPlausibility'] == null ? undefined : json['taxPlausibility'],
         'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
     };
 }
@@ -195,6 +245,11 @@ export function CashMovementResponseToJSON(value?: CashMovementResponse | null):
         'receiptReference': value['receiptReference'],
         'requestId': value['requestId'],
         'sessionId': value['sessionId'],
+        'statedTaxes': value['statedTaxes'] == null ? undefined : ((value['statedTaxes'] as Array<any>).map(CashMovementStatedTaxToJSON)),
+        'supplierName': value['supplierName'],
+        'supplierRegistrationNumberProvided': value['supplierRegistrationNumberProvided'],
+        'supplierRegistrationRequired': value['supplierRegistrationRequired'],
+        'taxPlausibility': value['taxPlausibility'],
         'vendorId': value['vendorId'],
     };
 }

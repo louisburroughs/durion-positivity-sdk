@@ -25,6 +25,12 @@ import {
     VendorBillDifferenceFromJSONTyped,
     VendorBillDifferenceToJSON,
 } from './VendorBillDifference';
+import type { VendorBillTaxAmount } from './VendorBillTaxAmount';
+import {
+    VendorBillTaxAmountFromJSON,
+    VendorBillTaxAmountFromJSONTyped,
+    VendorBillTaxAmountToJSON,
+} from './VendorBillTaxAmount';
 
 /**
  * Resolve a bill in MATCH_EXCEPTION
@@ -62,6 +68,12 @@ export interface VendorBillExceptionResolutionRequest {
      * @memberof VendorBillExceptionResolutionRequest
      */
     resolutionAction: VendorBillExceptionResolutionRequestResolutionActionEnum;
+    /**
+     * The tax the vendor's document states, by tax type, ACCEPT only, copied from the document (CAP:550 S32d, AW51); replaces the tax by type stored on the bill and must add up to its stated tax, else 422 AP_BILL_TAX_SPLIT_MISMATCH. Omit it to keep what the bill states
+     * @type {Array<VendorBillTaxAmount>}
+     * @memberof VendorBillExceptionResolutionRequest
+     */
+    taxByType?: Array<VendorBillTaxAmount>;
 }
 
 /**
@@ -99,6 +111,7 @@ export function VendorBillExceptionResolutionRequestFromJSONTyped(json: any, ign
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
         'reason': json['reason'],
         'resolutionAction': json['resolutionAction'],
+        'taxByType': json['taxByType'] == null ? undefined : ((json['taxByType'] as Array<any>).map(VendorBillTaxAmountFromJSON)),
     };
 }
 
@@ -113,6 +126,7 @@ export function VendorBillExceptionResolutionRequestToJSON(value?: VendorBillExc
         'overrideJustification': value['overrideJustification'],
         'reason': value['reason'],
         'resolutionAction': value['resolutionAction'],
+        'taxByType': value['taxByType'] == null ? undefined : ((value['taxByType'] as Array<any>).map(VendorBillTaxAmountToJSON)),
     };
 }
 

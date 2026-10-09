@@ -25,6 +25,12 @@ import {
     VendorBillDifferenceFromJSONTyped,
     VendorBillDifferenceToJSON,
 } from './VendorBillDifference';
+import type { VendorBillTaxAmount } from './VendorBillTaxAmount';
+import {
+    VendorBillTaxAmountFromJSON,
+    VendorBillTaxAmountFromJSONTyped,
+    VendorBillTaxAmountToJSON,
+} from './VendorBillTaxAmount';
 
 /**
  * Approve a bill; the approval posts it
@@ -56,6 +62,12 @@ export interface VendorBillApproveRequest {
      * @memberof VendorBillApproveRequest
      */
     overrideJustification?: string;
+    /**
+     * The tax the vendor's document states, by tax type, copied from the document (CAP:550 S32d, AW51); replaces the tax by type stored on the bill and must add up to its stated tax, else 422 AP_BILL_TAX_SPLIT_MISMATCH. Omit it to keep what the bill states
+     * @type {Array<VendorBillTaxAmount>}
+     * @memberof VendorBillApproveRequest
+     */
+    taxByType?: Array<VendorBillTaxAmount>;
 }
 
 /**
@@ -79,6 +91,7 @@ export function VendorBillApproveRequestFromJSONTyped(json: any, ignoreDiscrimin
         'difference': json['difference'] == null ? undefined : VendorBillDifferenceFromJSON(json['difference']),
         'justification': json['justification'] == null ? undefined : json['justification'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
+        'taxByType': json['taxByType'] == null ? undefined : ((json['taxByType'] as Array<any>).map(VendorBillTaxAmountFromJSON)),
     };
 }
 
@@ -92,6 +105,7 @@ export function VendorBillApproveRequestToJSON(value?: VendorBillApproveRequest 
         'difference': VendorBillDifferenceToJSON(value['difference']),
         'justification': value['justification'],
         'overrideJustification': value['overrideJustification'],
+        'taxByType': value['taxByType'] == null ? undefined : ((value['taxByType'] as Array<any>).map(VendorBillTaxAmountToJSON)),
     };
 }
 

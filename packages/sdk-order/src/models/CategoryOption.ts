@@ -37,6 +37,12 @@ export interface CategoryOption {
      * @memberof CategoryOption
      */
     label?: string;
+    /**
+     * Regimes whose tax the register may state on this category's receipts here and today; empty when none
+     * @type {Array<string>}
+     * @memberof CategoryOption
+     */
+    offeredRegimes?: Array<string>;
 }
 
 /**
@@ -59,6 +65,7 @@ export function CategoryOptionFromJSONTyped(json: any, ignoreDiscriminator: bool
         'code': json['code'] == null ? undefined : json['code'],
         'examples': json['examples'] == null ? undefined : json['examples'],
         'label': json['label'] == null ? undefined : json['label'],
+        'offeredRegimes': json['offeredRegimes'] == null ? undefined : json['offeredRegimes'],
     };
 }
 
@@ -71,6 +78,7 @@ export function CategoryOptionToJSON(value?: CategoryOption | null): any {
         'code': value['code'],
         'examples': value['examples'],
         'label': value['label'],
+        'offeredRegimes': value['offeredRegimes'],
     };
 }
 

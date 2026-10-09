@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Reconciliation of report net tax against the Sales-Tax Payable (2200) GL account period activity
+ * Reconciliation of report net tax against the period activity of the tax-payable GL accounts its mapping keys reach
  * @export
  * @interface TaxLiabilityReconciliation
  */
@@ -26,7 +26,7 @@ export interface TaxLiabilityReconciliation {
      */
     drift: number;
     /**
-     * Credit-normal net activity of account 2200 in the period (Σ credit - Σ debit of POSTED lines); zero when the account has no activity or is not seeded
+     * Credit-normal net activity of the tax-payable accounts in the period (Σ credit - Σ debit of POSTED lines); zero when the account has no activity or is not seeded
      * @type {number}
      * @memberof TaxLiabilityReconciliation
      */
@@ -44,7 +44,7 @@ export interface TaxLiabilityReconciliation {
      */
     reportNetTax: number;
     /**
-     * Sales-Tax Payable GL account code being reconciled against
+     * The tax-payable GL account codes reconciled against, comma-separated in code order: every account a tax-payable mapping key (SALES_TAX_PAYABLE and each SALES_TAX_PAYABLE_<taxType>) maps to in the period; empty when none is mapped
      * @type {string}
      * @memberof TaxLiabilityReconciliation
      */

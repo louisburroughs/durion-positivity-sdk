@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CashMovementEvidenceRule } from './CashMovementEvidenceRule';
+import {
+    CashMovementEvidenceRuleFromJSON,
+    CashMovementEvidenceRuleFromJSONTyped,
+    CashMovementEvidenceRuleToJSON,
+} from './CashMovementEvidenceRule';
 import type { CategoryOption } from './CategoryOption';
 import {
     CategoryOptionFromJSON,
@@ -44,6 +50,12 @@ export interface CashMovementOptionsResponse {
      * @memberof CashMovementOptionsResponse
      */
     currencyCode?: string;
+    /**
+     * 
+     * @type {CashMovementEvidenceRule}
+     * @memberof CashMovementOptionsResponse
+     */
+    evidenceRule?: CashMovementEvidenceRule;
     /**
      * One entry per fixed reason
      * @type {Array<ReasonOption>}
@@ -77,6 +89,7 @@ export function CashMovementOptionsResponseFromJSONTyped(json: any, ignoreDiscri
         
         'categories': json['categories'] == null ? undefined : ((json['categories'] as Array<any>).map(CategoryOptionFromJSON)),
         'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
+        'evidenceRule': json['evidenceRule'] == null ? undefined : CashMovementEvidenceRuleFromJSON(json['evidenceRule']),
         'reasons': json['reasons'] == null ? undefined : ((json['reasons'] as Array<any>).map(ReasonOptionFromJSON)),
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
     };
@@ -90,6 +103,7 @@ export function CashMovementOptionsResponseToJSON(value?: CashMovementOptionsRes
         
         'categories': value['categories'] == null ? undefined : ((value['categories'] as Array<any>).map(CategoryOptionToJSON)),
         'currencyCode': value['currencyCode'],
+        'evidenceRule': CashMovementEvidenceRuleToJSON(value['evidenceRule']),
         'reasons': value['reasons'] == null ? undefined : ((value['reasons'] as Array<any>).map(ReasonOptionToJSON)),
         'sessionId': value['sessionId'],
     };

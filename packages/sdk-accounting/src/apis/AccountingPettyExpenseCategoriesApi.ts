@@ -21,6 +21,8 @@ import type {
   PettyExpenseCategoryListResponse,
   PettyExpenseCategoryRemapRequest,
   PettyExpenseCategoryResponse,
+  PettyExpenseCategoryTaxRecoveryRequest,
+  PettyExpenseCategoryTaxRecoveryResponse,
   PettyExpenseCategoryUpdateRequest,
 } from '../models/index';
 import {
@@ -36,6 +38,10 @@ import {
     PettyExpenseCategoryRemapRequestToJSON,
     PettyExpenseCategoryResponseFromJSON,
     PettyExpenseCategoryResponseToJSON,
+    PettyExpenseCategoryTaxRecoveryRequestFromJSON,
+    PettyExpenseCategoryTaxRecoveryRequestToJSON,
+    PettyExpenseCategoryTaxRecoveryResponseFromJSON,
+    PettyExpenseCategoryTaxRecoveryResponseToJSON,
     PettyExpenseCategoryUpdateRequestFromJSON,
     PettyExpenseCategoryUpdateRequestToJSON,
 } from '../models/index';
@@ -52,6 +58,11 @@ export interface DeactivatePettyExpenseCategoryRequest {
 export interface RemapPettyExpenseCategoryRequest {
     code: string;
     pettyExpenseCategoryRemapRequest: PettyExpenseCategoryRemapRequest;
+}
+
+export interface SetPettyExpenseCategoryTaxRecoveryRequest {
+    code: string;
+    pettyExpenseCategoryTaxRecoveryRequest: PettyExpenseCategoryTaxRecoveryRequest;
 }
 
 export interface UpdatePettyExpenseCategoryRequest {
@@ -249,6 +260,59 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
      */
     async remapPettyExpenseCategory(requestParameters: RemapPettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PettyExpenseCategoryResponse> {
         const response = await this.remapPettyExpenseCategoryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sets whether the tax stated on a petty-expense category\'s receipts is recovered, and which share, from now on; a movement already recorded keeps the share in force when it was recorded. Use this tool when the accountant decides how much of a category\'s stated tax may be claimed; do not use updatePettyExpenseCategory, which changes only the label and examples. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); recovery under at least one regime is on today (422 INPUT_TAX_RECOVERY_NOT_ENABLED); version is the one last read, 0 for a category never set (409 OPTIMISTIC_LOCK); the tax service answers whether a regime\'s recovery is on (503 SERVICE_UNAVAILABLE with Retry-After when it cannot). Required inputs: code (path), taxRecoverable, recoverablePercent in (0, 100] when recoverable and absent otherwise, version, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_CATEGORY_TAX_RECOVERY_UPDATE event, writes a history row naming the caller and role, queues accounting.petty-expense-category.changed with the new values, and returns 200 with the setting. 
+     * Set Petty-Expense Category Tax Recovery
+     */
+    async setPettyExpenseCategoryTaxRecoveryRaw(requestParameters: SetPettyExpenseCategoryTaxRecoveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PettyExpenseCategoryTaxRecoveryResponse>> {
+        if (requestParameters['code'] == null) {
+            throw new runtime.RequiredError(
+                'code',
+                'Required parameter "code" was null or undefined when calling setPettyExpenseCategoryTaxRecovery().'
+            );
+        }
+
+        if (requestParameters['pettyExpenseCategoryTaxRecoveryRequest'] == null) {
+            throw new runtime.RequiredError(
+                'pettyExpenseCategoryTaxRecoveryRequest',
+                'Required parameter "pettyExpenseCategoryTaxRecoveryRequest" was null or undefined when calling setPettyExpenseCategoryTaxRecovery().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:mapping-key:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/petty-expense-categories/{code}/tax-recovery`.replace(`{${"code"}}`, encodeURIComponent(String(requestParameters['code']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PettyExpenseCategoryTaxRecoveryRequestToJSON(requestParameters['pettyExpenseCategoryTaxRecoveryRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PettyExpenseCategoryTaxRecoveryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Sets whether the tax stated on a petty-expense category\'s receipts is recovered, and which share, from now on; a movement already recorded keeps the share in force when it was recorded. Use this tool when the accountant decides how much of a category\'s stated tax may be claimed; do not use updatePettyExpenseCategory, which changes only the label and examples. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); recovery under at least one regime is on today (422 INPUT_TAX_RECOVERY_NOT_ENABLED); version is the one last read, 0 for a category never set (409 OPTIMISTIC_LOCK); the tax service answers whether a regime\'s recovery is on (503 SERVICE_UNAVAILABLE with Retry-After when it cannot). Required inputs: code (path), taxRecoverable, recoverablePercent in (0, 100] when recoverable and absent otherwise, version, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_CATEGORY_TAX_RECOVERY_UPDATE event, writes a history row naming the caller and role, queues accounting.petty-expense-category.changed with the new values, and returns 200 with the setting. 
+     * Set Petty-Expense Category Tax Recovery
+     */
+    async setPettyExpenseCategoryTaxRecovery(requestParameters: SetPettyExpenseCategoryTaxRecoveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PettyExpenseCategoryTaxRecoveryResponse> {
+        const response = await this.setPettyExpenseCategoryTaxRecoveryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
