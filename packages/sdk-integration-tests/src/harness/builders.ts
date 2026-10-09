@@ -1,3 +1,4 @@
+import { CreatePersonRequestPreferredContactMethodEnum } from '@durion-sdk/customer';
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import { CoverageRuleRequestRuleTypeEnum, MobileUnitRequestStatusEnum } from '@durion-sdk/location';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
@@ -95,19 +96,25 @@ export async function createPersonAccount(
   const lastName = ctx.random.lastName();
   // The email carries the runId: it is unique per account in CRM, and a
   // generated address without it collides the moment a suite runs twice.
+  // createCrmPerson validates it, and names like O'Hara would fail that, so
+  // anything outside the accepted local-part characters is dropped.
   accountSequence += 1;
-  const email = `${firstName}.${lastName}.${ctx.runId}-${accountSequence}@itest.invalid`.toLowerCase();
-  const customer = await call('createCrmCommercialAccount', () =>
-    as.customer.crmAccountsApi.createCrmCommercialAccount({
-    createCommercialAccountRequest: {
-      legalName: `${firstName} ${lastName}`,
-      displayName: `${firstName} ${lastName} [${ctx.runId}]`,
-      partyType: 'PERSON',
-      contactFirstName: firstName,
-      contactLastName: lastName,
-      email,
-      phone: ctx.random.phone(),
-    },
+  const localPart = `${firstName}.${lastName}.${ctx.runId}-${accountSequence}`
+    .toLowerCase()
+    .replace(/[^a-z0-9+_.-]/g, '');
+  const email = `${localPart}@itest.invalid`;
+  // An individual is a person party linked to a pos-people identity, which holds the name and
+  // contact points the party detail page shows. A commercial account typed PERSON has no person
+  // behind it, so pos-customer refuses that shape.
+  const customer = await call('createCrmPerson', () =>
+    as.customer.crmPersonsApi.createCrmPerson({
+      createPersonRequest: {
+        firstName,
+        lastName,
+        preferredContactMethod: CreatePersonRequestPreferredContactMethodEnum.Email,
+        emails: [{ value: email, primary: true }],
+        phones: [{ value: ctx.random.phone(), primary: true }],
+      },
     }),
   );
   return {
