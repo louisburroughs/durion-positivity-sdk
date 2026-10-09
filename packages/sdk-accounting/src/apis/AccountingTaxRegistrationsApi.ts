@@ -18,6 +18,7 @@ import type {
   ApiError,
   ChangeTaxRegistrationRequest,
   RecordTaxRegistrationRequest,
+  TaxRegimesResponse,
   TaxRegistrationListResponse,
   TaxRegistrationView,
 } from '../models/index';
@@ -28,6 +29,8 @@ import {
     ChangeTaxRegistrationRequestToJSON,
     RecordTaxRegistrationRequestFromJSON,
     RecordTaxRegistrationRequestToJSON,
+    TaxRegimesResponseFromJSON,
+    TaxRegimesResponseToJSON,
     TaxRegistrationListResponseFromJSON,
     TaxRegistrationListResponseToJSON,
     TaxRegistrationViewFromJSON,
@@ -37,6 +40,10 @@ import {
 export interface ChangeTaxRegistrationOperationRequest {
     registrationId: string;
     changeTaxRegistrationRequest: ChangeTaxRegistrationRequest;
+}
+
+export interface ListTaxRegimesRequest {
+    countryCode?: string;
 }
 
 export interface ListTaxRegistrationsRequest {
@@ -102,6 +109,46 @@ export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
      */
     async changeTaxRegistration(requestParameters: ChangeTaxRegistrationOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegistrationView> {
         const response = await this.changeTaxRegistrationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the indirect-tax regimes configured for a country, each with the region codes it covers and the tax types registered and recovered under it, relayed from pos-tax\'s configuration. Use this tool to offer the regime choices of a tax registration; do not use it to read the company\'s registrations, use listTaxRegistrations instead. Preconditions: the caller holds accounting:tax_registration:view; the values are placeholders held for expert advice, so source is STUB. Required inputs: none; countryCode (two upper-case letters) picks a country, otherwise the deployment\'s tax country (accounting.tax.country) applies. Emits an ACCOUNTING_TAX_REGIMES_VIEW audit event; no state changes, and nothing is cached. Returns 200 with an empty regimes list when the country configures none, 400 VALIDATION_ERROR for a malformed countryCode, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot answer. 
+     * List Configured Tax Regimes
+     */
+    async listTaxRegimesRaw(requestParameters: ListTaxRegimesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRegimesResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:tax_registration:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/tax-regimes`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxRegimesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the indirect-tax regimes configured for a country, each with the region codes it covers and the tax types registered and recovered under it, relayed from pos-tax\'s configuration. Use this tool to offer the regime choices of a tax registration; do not use it to read the company\'s registrations, use listTaxRegistrations instead. Preconditions: the caller holds accounting:tax_registration:view; the values are placeholders held for expert advice, so source is STUB. Required inputs: none; countryCode (two upper-case letters) picks a country, otherwise the deployment\'s tax country (accounting.tax.country) applies. Emits an ACCOUNTING_TAX_REGIMES_VIEW audit event; no state changes, and nothing is cached. Returns 200 with an empty regimes list when the country configures none, 400 VALIDATION_ERROR for a malformed countryCode, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot answer. 
+     * List Configured Tax Regimes
+     */
+    async listTaxRegimes(requestParameters: ListTaxRegimesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegimesResponse> {
+        const response = await this.listTaxRegimesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
