@@ -7,7 +7,7 @@
  * (`runs/acceleratedYear.ts`) so there is exactly one implementation of "a year of
  * shop activity" and the two differ only in whether they assert.
  */
-import { SeederRandom } from '@durion-sdk/seeder';
+import { ensureSeedVendor, SeederRandom } from '@durion-sdk/seeder';
 import { AcceleratedConfig } from './acceleratedConfig';
 import { loadAcceleratedContext, type AcceleratedContext } from './acceleratedContext';
 import { AcceleratedDayRunner, type DayReport } from './acceleratedDayRunner';
@@ -180,7 +180,8 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
   // Each approved count adjustment is journalled the moment it is approved, not with
   // the day: an approval commits on the backend at once, and a run interrupted
   // before the day's flush would otherwise lose it from the year-end reconciliation.
-  const maintenancePort = createMaintenancePort(as.parts, as.manager, ctx);
+  const seedVendorId = await ensureSeedVendor(as.admin.supplier.supplierVendorsApi);
+  const maintenancePort = createMaintenancePort(as.parts, as.manager, ctx, seedVendorId);
   const maintenance: typeof maintenancePort = {
     ...maintenancePort,
     cycleCount: (at, onApproved) =>

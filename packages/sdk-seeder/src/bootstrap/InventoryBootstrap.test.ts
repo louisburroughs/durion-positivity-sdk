@@ -57,7 +57,7 @@ function mockPurchaseOrderPage(content: unknown[]) {
 async function run(bootstrapClients = mockClients()) {
   const sdkConfig = { baseUrl: 'http://inventory' } as DurionSdkConfig;
   const orderSdkConfig = { baseUrl: 'http://order' } as DurionSdkConfig;
-  const result = await new InventoryBootstrap(sdkConfig, orderSdkConfig).run(
+  const result = await new InventoryBootstrap(sdkConfig, orderSdkConfig, 'seed-vendor').run(
     [{ id: PRODUCT_ID, name: PRODUCT_NAME }],
     LOCATION_ID,
     VIRTUAL_NOW,

@@ -22,7 +22,8 @@
     "@durion-sdk/order": "*",
     "@durion-sdk/accounting": "*",
     "@durion-sdk/vehicle-inventory": "*",
-    "@durion-sdk/invoice": "*"
+    "@durion-sdk/invoice": "*",
+    "@durion-sdk/supplier": "*"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.0.0",

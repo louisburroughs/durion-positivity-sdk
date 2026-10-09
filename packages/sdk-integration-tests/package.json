@@ -20,6 +20,7 @@
     "@durion-sdk/invoice": "*",
     "@durion-sdk/location": "*",
     "@durion-sdk/order": "*",
+    "@durion-sdk/supplier": "*",
     "@durion-sdk/people": "*",
     "@durion-sdk/security": "*",
     "@durion-sdk/seeder": "*",

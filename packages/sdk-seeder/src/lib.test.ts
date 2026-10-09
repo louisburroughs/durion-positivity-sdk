@@ -4,7 +4,9 @@ import {
   SeederAuth,
   SeederConfig,
   SeederRandom,
-  SEED_VENDOR_ID,
+  SEED_VENDOR_NUMBER,
+  createPurchaseOrderOnceVendorReplicated,
+  ensureSeedVendor,
   type ReferenceCache,
 } from '@durion-sdk/seeder';
 
@@ -17,8 +19,10 @@ describe('sdk-seeder library barrel', () => {
     expect(typeof SeederRandom).toBe('function');
   });
 
-  it('exports the seed vendor id used by inventory bootstrap and restock', () => {
-    expect(SEED_VENDOR_ID).toBe('sdk-seeder-vendor-main');
+  it('exports the seed vendor lookup used by inventory bootstrap, restock and the integration tests', () => {
+    expect(SEED_VENDOR_NUMBER).toBe('SDK-SEED-MAIN');
+    expect(typeof ensureSeedVendor).toBe('function');
+    expect(typeof createPurchaseOrderOnceVendorReplicated).toBe('function');
   });
 
   it('exports ReferenceCache as a usable type', () => {

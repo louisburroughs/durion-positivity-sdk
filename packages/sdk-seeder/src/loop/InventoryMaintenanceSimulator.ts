@@ -1,6 +1,7 @@
 import { createInventoryClient } from '@durion-sdk/inventory';
 import { createOrderClient } from '@durion-sdk/order';
-import { SEED_VENDOR_ID } from '../bootstrap/InventoryBootstrap';
+import { createSupplierClient } from '@durion-sdk/supplier';
+import { createPurchaseOrderOnceVendorReplicated, ensureSeedVendor } from '../bootstrap/SeedVendor';
 import { SeederAuth } from '../SeederAuth';
 import { SeederConfig } from '../SeederConfig';
 import { ReferenceCache } from '../support/ReferenceCache';
@@ -52,6 +53,8 @@ export class InventoryMaintenanceSimulator {
   // contract no longer declares /v1/inventory/purchase-orders, and the calls
   // below used to 404. Same split InventoryBootstrap already makes.
   private readonly orderClient;
+  /** The seed vendor's pos-supplier id, looked up on the first restock. */
+  private seedVendorId?: Promise<string>;
 
   constructor(
     private readonly config: SeederConfig,
@@ -115,7 +118,10 @@ export class InventoryMaintenanceSimulator {
 
   async runMonthlyRestock(virtualNow: Date): Promise<void> {
     try {
-      const vendorId = SEED_VENDOR_ID;
+      this.seedVendorId ??= ensureSeedVendor(
+        createSupplierClient(this.auth.buildSdkConfig('supplier')).supplierVendorsApi,
+      );
+      const vendorId = await this.seedVendorId;
 
       const products = pickMany(this.refs.productEntityIds, 5, 8);
       if (products.length === 0) {
@@ -127,7 +133,7 @@ export class InventoryMaintenanceSimulator {
       console.log(`[Inventory] Creating monthly restock PO for: ${productNames.join(', ')}`);
 
       const partsClerkName = this.refs.employeeNameById.get(this.refs.employees.partsClerk) ?? 'Parts Clerk';
-      const purchaseOrder = await this.orderClient.purchaseOrdersApi.createPurchaseOrder({
+      const purchaseOrder = await createPurchaseOrderOnceVendorReplicated(this.orderClient.purchaseOrdersApi, {
         createPurchaseOrderRequest: {
           vendorId,
           poDate: new Date(virtualNow),

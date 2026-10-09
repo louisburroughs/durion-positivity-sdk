@@ -30,8 +30,11 @@ export function createSupplierClient(config: DurionSdkConfig) {
     supplierMarketingCatalogApi: new GeneratedApis.SupplierMarketingCatalogApi(configuration),
     supplierOrderTransmissionApi: new GeneratedApis.SupplierOrderTransmissionApi(configuration),
     supplierPriceCatalogApi: new GeneratedApis.SupplierPriceCatalogApi(configuration),
+    supplierStockAvailabilityApi: new GeneratedApis.SupplierStockAvailabilityApi(configuration),
     supplierStockInquiryApi: new GeneratedApis.SupplierStockInquiryApi(configuration),
+    supplierStockSnapshotsApi: new GeneratedApis.SupplierStockSnapshotsApi(configuration),
     supplierVendorProfilesApi: new GeneratedApis.SupplierVendorProfilesApi(configuration),
+    supplierVendorsApi: new GeneratedApis.SupplierVendorsApi(configuration),
   };
 }
 
