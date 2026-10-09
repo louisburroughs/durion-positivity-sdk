@@ -27,11 +27,17 @@ import {
 } from './VendorInformationReturnRequest';
 
 /**
- * The vendor's AP settings to change (defaults, AP hold, information-return flag), the justification and the request id. A field left out is unchanged; a default sent as null clears it.
+ * The vendor's AP settings to change (defaults, AP hold, information-return flag, tax-on-resale acceptance), the justification and the request id. A field left out is unchanged; a default sent as null clears it.
  * @export
  * @interface VendorApSettingsRequest
  */
 export interface VendorApSettingsRequest {
+    /**
+     * Optional: whether a bill of this vendor charging tax on goods for resale is approved without a per-bill override where the tax country's purchase-tax rules hold such bills (CAP:550 S43); absent leaves it unchanged, null is refused
+     * @type {boolean}
+     * @memberof VendorApSettingsRequest
+     */
+    acceptTaxOnResaleGoods?: boolean;
     /**
      * 
      * @type {VendorApHoldRequest}
@@ -99,6 +105,7 @@ export function VendorApSettingsRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'acceptTaxOnResaleGoods': json['acceptTaxOnResaleGoods'] == null ? undefined : json['acceptTaxOnResaleGoods'],
         'apHold': json['apHold'] == null ? undefined : VendorApHoldRequestFromJSON(json['apHold']),
         'defaultDebitClass': json['defaultDebitClass'] == null ? undefined : json['defaultDebitClass'],
         'defaultExpenseMappingKey': json['defaultExpenseMappingKey'] == null ? undefined : json['defaultExpenseMappingKey'],
@@ -114,6 +121,7 @@ export function VendorApSettingsRequestToJSON(value?: VendorApSettingsRequest | 
     }
     return {
         
+        'acceptTaxOnResaleGoods': value['acceptTaxOnResaleGoods'],
         'apHold': VendorApHoldRequestToJSON(value['apHold']),
         'defaultDebitClass': value['defaultDebitClass'],
         'defaultExpenseMappingKey': value['defaultExpenseMappingKey'],

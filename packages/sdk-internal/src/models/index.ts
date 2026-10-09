@@ -25,6 +25,7 @@ export * from './TaxPlausibilityCheckResponse';
 export * from './TaxPlausibilityMaximum';
 export * from './TaxPlausibilityRateUsed';
 export * from './TaxProviderTransactionResult';
+export * from './TaxPurchaseRulesResponse';
 export * from './TaxRateComponent';
 export * from './TaxRateLookupResponse';
 export * from './TaxRegimeEntry';

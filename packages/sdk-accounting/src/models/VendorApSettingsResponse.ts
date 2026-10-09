@@ -33,6 +33,12 @@ import {
  */
 export interface VendorApSettingsResponse {
     /**
+     * Whether a bill of this vendor charging tax on goods for resale is approved without a per-bill override where the tax country's purchase-tax rules hold such bills (CAP:550 S43); false when not set
+     * @type {boolean}
+     * @memberof VendorApSettingsResponse
+     */
+    acceptTaxOnResaleGoods: boolean;
+    /**
      * 
      * @type {VendorApHold}
      * @memberof VendorApSettingsResponse
@@ -90,6 +96,7 @@ export enum VendorApSettingsResponseDefaultDebitClassEnum {
  * Check if a given object implements the VendorApSettingsResponse interface.
  */
 export function instanceOfVendorApSettingsResponse(value: object): boolean {
+    if (!('acceptTaxOnResaleGoods' in value)) return false;
     if (!('apHold' in value)) return false;
     if (!('informationReturn' in value)) return false;
     return true;
@@ -105,6 +112,7 @@ export function VendorApSettingsResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'acceptTaxOnResaleGoods': json['acceptTaxOnResaleGoods'],
         'apHold': VendorApHoldFromJSON(json['apHold']),
         'confirmedRemitToVersion': json['confirmedRemitToVersion'] == null ? undefined : json['confirmedRemitToVersion'],
         'defaultDebitClass': json['defaultDebitClass'] == null ? undefined : json['defaultDebitClass'],
@@ -121,6 +129,7 @@ export function VendorApSettingsResponseToJSON(value?: VendorApSettingsResponse 
     }
     return {
         
+        'acceptTaxOnResaleGoods': value['acceptTaxOnResaleGoods'],
         'apHold': VendorApHoldToJSON(value['apHold']),
         'confirmedRemitToVersion': value['confirmedRemitToVersion'],
         'defaultDebitClass': value['defaultDebitClass'],

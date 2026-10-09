@@ -26,7 +26,7 @@ export interface VendorBillCheck {
      */
     args: { [key: string]: string; };
     /**
-     * MATCHED_TO_DELIVERY, WITHIN_PRICE_TOLERANCE, TOTALS_ADD_UP, OPEN_DELIVERIES_FROM_VENDOR, WITHIN_CLERK_LIMIT or VENDOR_AP_HOLD (informational: FAIL with vendorNumber, reason and since while the vendor is on AP hold, which blocks payment only)
+     * MATCHED_TO_DELIVERY, WITHIN_PRICE_TOLERANCE, TOTALS_ADD_UP, OPEN_DELIVERIES_FROM_VENDOR, WITHIN_CLERK_LIMIT, VENDOR_AP_HOLD (informational: FAIL with vendorNumber, reason and since while the vendor is on AP hold, which blocks payment only) or TAX_ON_RESALE_GOODS (FAIL with taxAmount and currencyCode while the tax country's rules hold the bill's tax on goods for resale; PASS with acceptedBy VENDOR_SETTING or BILL; NOT_APPLICABLE, with rulesUnavailable true when the rules cannot be read)
      * @type {string}
      * @memberof VendorBillCheck
      */

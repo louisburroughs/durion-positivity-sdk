@@ -315,6 +315,7 @@ export * from './VendorBillSubmitRequest';
 export * from './VendorBillSummaryResponse';
 export * from './VendorBillTaxAmount';
 export * from './VendorBillTaxByType';
+export * from './VendorBillTaxOnResaleOverride';
 export * from './VendorBillVoidRequest';
 export * from './VendorInformationReturn';
 export * from './VendorInformationReturnRequest';
