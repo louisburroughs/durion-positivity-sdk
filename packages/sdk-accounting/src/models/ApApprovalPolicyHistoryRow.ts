@@ -26,11 +26,17 @@ export interface ApApprovalPolicyHistoryRow {
      */
     changedAt: Date;
     /**
-     * Who changed it
+     * Who changed it: the sign-in name, kept for audit and never shown to a person
      * @type {string}
      * @memberof ApApprovalPolicyHistoryRow
      */
     changedBy: string;
+    /**
+     * The display name of the person who changed it ("First Last"), resolved now from accounting's people-contact copy; absent when not known, never the sign-in name
+     * @type {string}
+     * @memberof ApApprovalPolicyHistoryRow
+     */
+    changedByName?: string;
     /**
      * The caller's roles at the time of the change
      * @type {Array<string>}
@@ -88,6 +94,7 @@ export function ApApprovalPolicyHistoryRowFromJSONTyped(json: any, ignoreDiscrim
         
         'changedAt': (new Date(json['changedAt'])),
         'changedBy': json['changedBy'],
+        'changedByName': json['changedByName'] == null ? undefined : json['changedByName'],
         'changedByRoles': json['changedByRoles'],
         'justification': json['justification'],
         'newValue': json['newValue'],
@@ -104,6 +111,7 @@ export function ApApprovalPolicyHistoryRowToJSON(value?: ApApprovalPolicyHistory
         
         'changedAt': ((value['changedAt']).toISOString()),
         'changedBy': value['changedBy'],
+        'changedByName': value['changedByName'],
         'changedByRoles': value['changedByRoles'],
         'justification': value['justification'],
         'newValue': value['newValue'],

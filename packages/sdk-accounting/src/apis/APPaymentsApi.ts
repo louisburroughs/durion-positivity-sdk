@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   APPaymentGLPostingRetryRequest,
   APPaymentResponse,
+  ApPayFromAccountListResponse,
   ApiError,
   ExecuteAPPaymentRequest,
   PageVendorBillSummaryResponse,
@@ -26,6 +27,8 @@ import {
     APPaymentGLPostingRetryRequestToJSON,
     APPaymentResponseFromJSON,
     APPaymentResponseToJSON,
+    ApPayFromAccountListResponseFromJSON,
+    ApPayFromAccountListResponseToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
     ExecuteAPPaymentRequestFromJSON,
@@ -244,6 +247,42 @@ export class APPaymentsApi extends runtime.BaseAPI {
      */
     async listApBills(requestParameters: ListApBillsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillSummaryResponse> {
         const response = await this.listApBillsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists the bank accounts a vendor payment may come from today: exactly the accounts executeApPayment would accept, computed by the same rule (a BANK_CASH account active from the start of asOf, not deactivated by now, and in the functional currency currencyCode). Each account carries bankAccountId (the GL account id executeApPayment takes), its number and name, and the bank name and masked number from its bank-account profile (both absent without one); a full bank account number is never served, and accounts are ordered by account number. defaultBankAccountId is the single eligible account an omitted bankAccountId resolves to, absent when there is none or more than one; an empty list means no account is set up and a payment answers 400 fieldErrors[bankAccountId], and the read is informational, since the payment still checks eligibility when it executes. Use this tool when a payer chooses where a vendor payment comes from; do not use it to reconcile, use listBankAccounts instead. Preconditions: none beyond accounting:ap:pay. Required inputs: none; there are no request parameters and no request body. Emits an ACCOUNTING_AP_PAY_FROM_ACCOUNTS_VIEW audit event; no state changes. Returns 401 without a valid token and 403 FORBIDDEN without accounting:ap:pay. 
+     * List AP Pay-From Accounts
+     */
+    async listApPayFromAccountsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApPayFromAccountListResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:pay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/ap/pay-from-accounts`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ApPayFromAccountListResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists the bank accounts a vendor payment may come from today: exactly the accounts executeApPayment would accept, computed by the same rule (a BANK_CASH account active from the start of asOf, not deactivated by now, and in the functional currency currencyCode). Each account carries bankAccountId (the GL account id executeApPayment takes), its number and name, and the bank name and masked number from its bank-account profile (both absent without one); a full bank account number is never served, and accounts are ordered by account number. defaultBankAccountId is the single eligible account an omitted bankAccountId resolves to, absent when there is none or more than one; an empty list means no account is set up and a payment answers 400 fieldErrors[bankAccountId], and the read is informational, since the payment still checks eligibility when it executes. Use this tool when a payer chooses where a vendor payment comes from; do not use it to reconcile, use listBankAccounts instead. Preconditions: none beyond accounting:ap:pay. Required inputs: none; there are no request parameters and no request body. Emits an ACCOUNTING_AP_PAY_FROM_ACCOUNTS_VIEW audit event; no state changes. Returns 401 without a valid token and 403 FORBIDDEN without accounting:ap:pay. 
+     * List AP Pay-From Accounts
+     */
+    async listApPayFromAccounts(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApPayFromAccountListResponse> {
+        const response = await this.listApPayFromAccountsRaw(initOverrides);
         return await response.value();
     }
 

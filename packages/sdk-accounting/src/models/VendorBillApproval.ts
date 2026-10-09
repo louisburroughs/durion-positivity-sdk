@@ -45,7 +45,7 @@ export interface VendorBillApproval {
      */
     approvedAt?: Date;
     /**
-     * Who approved it; only on an approved bill
+     * Who approved it (sign-in name, or SYSTEM); only on an approved bill
      * @type {string}
      * @memberof VendorBillApproval
      */
@@ -56,6 +56,12 @@ export interface VendorBillApproval {
      * @memberof VendorBillApproval
      */
     approvedByKind?: VendorBillApprovalApprovedByKindEnum;
+    /**
+     * The display name of the approver ("First Last"), resolved now from accounting's people-contact copy; absent when not known, for SYSTEM and before approval, never the sign-in name
+     * @type {string}
+     * @memberof VendorBillApproval
+     */
+    approvedByName?: string;
     /**
      * The clerk approval limit in force now, in the functional currency; 0.00 means no clerk approves
      * @type {number}
@@ -104,6 +110,12 @@ export interface VendorBillApproval {
      * @memberof VendorBillApproval
      */
     submittedBy?: string;
+    /**
+     * The display name of the person who sent it ("First Last"), resolved now from accounting's people-contact copy; absent when not known and for SYSTEM, never the sign-in name
+     * @type {string}
+     * @memberof VendorBillApproval
+     */
+    submittedByName?: string;
 }
 
 /**
@@ -148,6 +160,7 @@ export function VendorBillApprovalFromJSONTyped(json: any, ignoreDiscriminator: 
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
         'approvedByKind': json['approvedByKind'] == null ? undefined : json['approvedByKind'],
+        'approvedByName': json['approvedByName'] == null ? undefined : json['approvedByName'],
         'clerkLimit': json['clerkLimit'],
         'currencyCode': json['currencyCode'],
         'proposedClassification': json['proposedClassification'] == null ? undefined : VendorBillClassificationFromJSON(json['proposedClassification']),
@@ -156,6 +169,7 @@ export function VendorBillApprovalFromJSONTyped(json: any, ignoreDiscriminator: 
         'submissionJustification': json['submissionJustification'] == null ? undefined : json['submissionJustification'],
         'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
         'submittedBy': json['submittedBy'] == null ? undefined : json['submittedBy'],
+        'submittedByName': json['submittedByName'] == null ? undefined : json['submittedByName'],
     };
 }
 
@@ -169,6 +183,7 @@ export function VendorBillApprovalToJSON(value?: VendorBillApproval | null): any
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedBy': value['approvedBy'],
         'approvedByKind': value['approvedByKind'],
+        'approvedByName': value['approvedByName'],
         'clerkLimit': value['clerkLimit'],
         'currencyCode': value['currencyCode'],
         'proposedClassification': VendorBillClassificationToJSON(value['proposedClassification']),
@@ -177,6 +192,7 @@ export function VendorBillApprovalToJSON(value?: VendorBillApproval | null): any
         'submissionJustification': value['submissionJustification'],
         'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
         'submittedBy': value['submittedBy'],
+        'submittedByName': value['submittedByName'],
     };
 }
 

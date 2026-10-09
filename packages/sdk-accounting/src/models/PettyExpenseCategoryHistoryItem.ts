@@ -20,11 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface PettyExpenseCategoryHistoryItem {
     /**
-     * Who made it (from the security context)
+     * Who made it: the sign-in name from the security context, kept for audit and never shown to a person
      * @type {string}
      * @memberof PettyExpenseCategoryHistoryItem
      */
     actor?: string;
+    /**
+     * The display name of the person who made it ("First Last"), resolved when the response is built from accounting's people-contact copy; absent when not known or SYSTEM, never the sign-in name
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    actorName?: string;
     /**
      * What changed
      * @type {string}
@@ -87,6 +93,7 @@ export function PettyExpenseCategoryHistoryItemFromJSONTyped(json: any, ignoreDi
     return {
         
         'actor': json['actor'] == null ? undefined : json['actor'],
+        'actorName': json['actorName'] == null ? undefined : json['actorName'],
         'changeType': json['changeType'] == null ? undefined : json['changeType'],
         'changedAt': json['changedAt'] == null ? undefined : (new Date(json['changedAt'])),
         'justification': json['justification'] == null ? undefined : json['justification'],
@@ -102,6 +109,7 @@ export function PettyExpenseCategoryHistoryItemToJSON(value?: PettyExpenseCatego
     return {
         
         'actor': value['actor'],
+        'actorName': value['actorName'],
         'changeType': value['changeType'],
         'changedAt': value['changedAt'] == null ? undefined : ((value['changedAt']).toISOString()),
         'justification': value['justification'],

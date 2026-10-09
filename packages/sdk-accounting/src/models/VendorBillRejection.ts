@@ -32,11 +32,17 @@ export interface VendorBillRejection {
      */
     rejectedAt: Date;
     /**
-     * Who
+     * Who (sign-in name)
      * @type {string}
      * @memberof VendorBillRejection
      */
     rejectedBy: string;
+    /**
+     * The display name of the person who rejected or voided it ("First Last"), resolved now from accounting's people-contact copy; absent when not known, never the sign-in name
+     * @type {string}
+     * @memberof VendorBillRejection
+     */
+    rejectedByName?: string;
 }
 
 /**
@@ -62,6 +68,7 @@ export function VendorBillRejectionFromJSONTyped(json: any, ignoreDiscriminator:
         'reason': json['reason'],
         'rejectedAt': (new Date(json['rejectedAt'])),
         'rejectedBy': json['rejectedBy'],
+        'rejectedByName': json['rejectedByName'] == null ? undefined : json['rejectedByName'],
     };
 }
 
@@ -74,6 +81,7 @@ export function VendorBillRejectionToJSON(value?: VendorBillRejection | null): a
         'reason': value['reason'],
         'rejectedAt': ((value['rejectedAt']).toISOString()),
         'rejectedBy': value['rejectedBy'],
+        'rejectedByName': value['rejectedByName'],
     };
 }
 
