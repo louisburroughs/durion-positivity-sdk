@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   PermissionDto,
+  PermissionHoldersResponse,
   RoleAssignmentDto,
   RoleAssignmentRequest,
   RoleCreateRequest,
@@ -32,6 +33,8 @@ import {
     ApiErrorToJSON,
     PermissionDtoFromJSON,
     PermissionDtoToJSON,
+    PermissionHoldersResponseFromJSON,
+    PermissionHoldersResponseToJSON,
     RoleAssignmentDtoFromJSON,
     RoleAssignmentDtoToJSON,
     RoleAssignmentRequestFromJSON,
@@ -88,6 +91,10 @@ export interface GetUserPermissionsLegacyRequest {
 export interface GrantRolePermissionRequest {
     roleId: string;
     rolePermissionGrantRequest: RolePermissionGrantRequest;
+}
+
+export interface ListPermissionHoldersRequest {
+    permission: Array<string>;
 }
 
 export interface ListUserRoleAssignmentsRequest {
@@ -560,6 +567,53 @@ export class RoleManagementApi extends runtime.BaseAPI {
      */
     async grantRolePermission(requestParameters: GrantRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.grantRolePermissionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns, for each requested permission code, the roles of the caller\'s tenant that currently hold it, each with its name, its templateKey (null for a custom role) and its locationScope; roles are sorted by name, and a code no role holds is answered with an empty roles list. Use this tool to state a tenant\'s real separation of duties, as the Approval limits page does; do not use listRoles or getRoleDefaultPermissions, which return every grant of every role or one role at a time, and do not use it to find users, because it returns no user ids, names or counts. Preconditions: the caller must hold security:role:view, which may ask about any registered code, or accounting:ap_approval_policy:manage, which may ask only about accounting:ap:approve, accounting:ap:approve_over_limit, accounting:ap:reject, accounting:ap:pay and accounting:ap_approval_policy:manage. Required inputs: permission, repeated once per code, 1 to 20 distinct domain:resource:action codes; codes are trimmed, matched case-insensitively and answered in the catalog\'s spelling, and duplicates are answered once in first-seen order. No events are emitted and no state changes; the grants are read live for the caller\'s tenant with no cache, so a token issued before a grant change keeps its old permissions until it is reissued. Returns 400 VALIDATION_ERROR when permission is missing, names more than 20 distinct codes or holds a malformed code, with fieldErrors on permission naming the bad values. Returns 403 when the caller holds neither permission, and 403 PERMISSION_HOLDER_SCOPE_DENIED, naming the codes, before anything is read when a scoped caller asks about a code outside its scope. Returns 422 PERMISSION_NOT_REGISTERED, with fieldErrors on permission, when a well-formed code is not in the permission catalog, rather than answering that nobody holds it. 
+     * List the Roles That Hold Given Permissions
+     */
+    async listPermissionHoldersRaw(requestParameters: ListPermissionHoldersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PermissionHoldersResponse>> {
+        if (requestParameters['permission'] == null) {
+            throw new runtime.RequiredError(
+                'permission',
+                'Required parameter "permission" was null or undefined when calling listPermissionHolders().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['permission'] != null) {
+            queryParameters['permission'] = requestParameters['permission'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:view", "accounting:ap_approval_policy:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/roles/permission-holders`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PermissionHoldersResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns, for each requested permission code, the roles of the caller\'s tenant that currently hold it, each with its name, its templateKey (null for a custom role) and its locationScope; roles are sorted by name, and a code no role holds is answered with an empty roles list. Use this tool to state a tenant\'s real separation of duties, as the Approval limits page does; do not use listRoles or getRoleDefaultPermissions, which return every grant of every role or one role at a time, and do not use it to find users, because it returns no user ids, names or counts. Preconditions: the caller must hold security:role:view, which may ask about any registered code, or accounting:ap_approval_policy:manage, which may ask only about accounting:ap:approve, accounting:ap:approve_over_limit, accounting:ap:reject, accounting:ap:pay and accounting:ap_approval_policy:manage. Required inputs: permission, repeated once per code, 1 to 20 distinct domain:resource:action codes; codes are trimmed, matched case-insensitively and answered in the catalog\'s spelling, and duplicates are answered once in first-seen order. No events are emitted and no state changes; the grants are read live for the caller\'s tenant with no cache, so a token issued before a grant change keeps its old permissions until it is reissued. Returns 400 VALIDATION_ERROR when permission is missing, names more than 20 distinct codes or holds a malformed code, with fieldErrors on permission naming the bad values. Returns 403 when the caller holds neither permission, and 403 PERMISSION_HOLDER_SCOPE_DENIED, naming the codes, before anything is read when a scoped caller asks about a code outside its scope. Returns 422 PERMISSION_NOT_REGISTERED, with fieldErrors on permission, when a well-formed code is not in the permission catalog, rather than answering that nobody holds it. 
+     * List the Roles That Hold Given Permissions
+     */
+    async listPermissionHolders(requestParameters: ListPermissionHoldersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionHoldersResponse> {
+        const response = await this.listPermissionHoldersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
