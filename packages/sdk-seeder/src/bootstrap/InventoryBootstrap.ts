@@ -6,6 +6,7 @@ import {
 } from '@durion-sdk/order';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
 import { isResponseErrorMatching, retryWhileReplicating } from '../support/replicationRetry';
+import { createPurchaseOrderOnceVendorReplicated } from './SeedVendor';
 
 interface InventoryBootstrapResult {
   createdCount: number;
@@ -23,7 +24,6 @@ interface StockPosition {
   incomingQuantity: number;
 }
 
-export const SEED_VENDOR_ID = 'sdk-seeder-vendor-main';
 const SEED_CURRENCY = 'USD';
 const PURCHASE_ORDER_LOOKUP_TIMEOUT_MS = 15_000;
 
@@ -52,10 +52,12 @@ export class InventoryBootstrap {
    * pos-inventory: @durion-sdk/inventory still carries a PurchaseOrdersApi from
    * before the move, but its paths 404 against the gateway. ASNs and goods
    * receipts are still inventory's, so this needs a client for each service.
+   * vendorId is the seed vendor's pos-supplier id (see ensureSeedVendor).
    */
   constructor(
     private readonly sdkConfig: DurionSdkConfig,
     private readonly orderSdkConfig: DurionSdkConfig,
+    private readonly vendorId: string,
   ) {}
 
   async run(
@@ -113,9 +115,9 @@ export class InventoryBootstrap {
       const expectedDeliveryDate = new Date(virtualNow.getTime() + 24 * 60 * 60 * 1000);
 
       try {
-        const purchaseOrder = await purchaseOrdersApi.createPurchaseOrder({
+        const purchaseOrder = await createPurchaseOrderOnceVendorReplicated(purchaseOrdersApi, {
           createPurchaseOrderRequest: {
-            vendorId: SEED_VENDOR_ID,
+            vendorId: this.vendorId,
             poDate: purchaseOrderDate,
             currency: SEED_CURRENCY,
             shipToLocationId: locationId,
@@ -167,7 +169,7 @@ export class InventoryBootstrap {
             asnApi.createAsn(
               {
                 createAsnRequest: {
-                  vendorId: SEED_VENDOR_ID,
+                  vendorId: this.vendorId,
                   asnReferenceNumber: `ASN-SEED-${poId}`,
                   relatedPoIds: [poId],
                   shipDate: purchaseOrderDate,
@@ -369,10 +371,9 @@ export class InventoryBootstrap {
    * could not see any order past the twentieth and re-created it on every run.
    * Fifty orders exist on alpha for thirty products because of this.
    *
-   * The vendor filter is dropped rather than translated: this seeder's
-   * SEED_VENDOR_ID is not a UUID, and the endpoint rejects a non-UUID vendorId
-   * with a 400. Matching on the seed comment is what actually identifies these
-   * orders, and it happens below regardless.
+   * The vendor filter is dropped rather than translated: matching on the seed
+   * comment is what actually identifies these orders, and it happens below
+   * regardless.
    */
   private async listSeededPurchaseOrders(): Promise<PurchaseOrderResponse[]> {
     const token = this.orderSdkConfig.token ? await this.orderSdkConfig.token() : undefined;

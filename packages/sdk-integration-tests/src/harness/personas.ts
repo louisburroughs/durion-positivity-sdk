@@ -7,6 +7,7 @@ import { createInvoiceClient } from '@durion-sdk/invoice';
 import { createOrderClient } from '@durion-sdk/order';
 import { createPeopleClient } from '@durion-sdk/people';
 import { createSecurityClient } from '@durion-sdk/security';
+import { createSupplierClient } from '@durion-sdk/supplier';
 import { SeederAuth, SeederConfig } from '@durion-sdk/seeder';
 import { createVehicleInventoryClient } from '@durion-sdk/vehicle-inventory';
 import { createWorkorderClient } from '@durion-sdk/workorder';
@@ -25,6 +26,8 @@ export interface DomainClients {
    * before the move whose paths 404 against the gateway.
    */
   order: ReturnType<typeof createOrderClient>;
+  /** pos-supplier: the vendor master purchase orders are raised against. */
+  supplier: ReturnType<typeof createSupplierClient>;
   /**
    * Vehicles are owned here, not by CRM: pos-customer serves them from an
    * ext_vehicle replica and its own create endpoint only files a VIN string
@@ -126,6 +129,7 @@ export class Personas {
         accounting: createAccountingClient(auth.buildSdkConfig('accounting')),
         inventory: createInventoryClient(auth.buildSdkConfig('inventory')),
         order: createOrderClient(auth.buildSdkConfig('order')),
+        supplier: createSupplierClient(auth.buildSdkConfig('supplier')),
         vehicleInventory: createVehicleInventoryClient(auth.buildSdkConfig('vehicle-inventory')),
         catalog: createCatalogClient(auth.buildSdkConfig('catalog')),
         location: createLocationClient(auth.buildSdkConfig('location')),

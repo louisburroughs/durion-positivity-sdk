@@ -24,7 +24,7 @@
  */
 import { CreateScrapRequestReasonCodeEnum } from '@durion-sdk/inventory';
 import { ListTimeEntriesStatusEnum } from '@durion-sdk/people';
-import { SEED_VENDOR_ID } from '@durion-sdk/seeder';
+import { createPurchaseOrderOnceVendorReplicated } from '@durion-sdk/seeder';
 import type { ReferenceCache } from '@durion-sdk/seeder';
 import { readNumber, readString, requireField, type BuilderContext } from './builders';
 import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
@@ -391,6 +391,8 @@ export function createMaintenancePort(
   parts: DomainClients,
   manager: DomainClients,
   ctx: BuilderContext,
+  /** The seed vendor's pos-supplier id (ensureSeedVendor); restocks are raised against it. */
+  seedVendorId: string,
 ): MaintenancePort {
   const refs = ctx.refs;
   const RESTOCK_QUANTITY = 50;
@@ -509,9 +511,9 @@ export function createMaintenancePort(
       }
 
       const po = await call('createPurchaseOrder', () =>
-        parts.order.purchaseOrdersApi.createPurchaseOrder({
+        createPurchaseOrderOnceVendorReplicated(parts.order.purchaseOrdersApi, {
           createPurchaseOrderRequest: {
-            vendorId: SEED_VENDOR_ID,
+            vendorId: seedVendorId,
             // Virtual time, not today: a year of purchase orders all stamped with
             // the real date would make the financial history unreadable.
             poDate: new Date(at),
@@ -548,7 +550,7 @@ export function createMaintenancePort(
         () =>
           parts.inventory.asnApi.createAsn({
             createAsnRequest: {
-              vendorId: SEED_VENDOR_ID,
+              vendorId: seedVendorId,
               // The id's tail, not its head: purchase order ids are UUIDv7 and
               // share their leading characters within the same time window.
               asnReferenceNumber: `ASN-${ctx.runId}-${purchaseOrderId.slice(-12)}`,

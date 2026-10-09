@@ -65,7 +65,7 @@ const PHASE_2_API_PROPS: Readonly<Record<string, readonly string[]>> = {
   'people-contact': ['peopleApi', 'userPersonLinkingApi'],
   'marketing': ['marketingCampaignsApi', 'marketingTemplatesApi'],
   'mcp-server': ['mcpChatApi', 'systemPromptsApi'],
-  'supplier': ['supplierVendorProfilesApi', 'supplierPriceCatalogApi'],
+  'supplier': ['supplierVendorProfilesApi', 'supplierPriceCatalogApi', 'supplierVendorsApi'],
   'warranty': ['warrantyClaimsApi', 'warrantyPoliciesApi'],
   'price': ['priceQuotesApi', 'priceRestrictionsApi'],
   'shop-manager': ['appointmentsApi', 'shopAuditApi'],

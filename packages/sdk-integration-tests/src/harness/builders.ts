@@ -1,7 +1,7 @@
 import { CreatePersonRequestPreferredContactMethodEnum } from '@durion-sdk/customer';
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import { CoverageRuleRequestRuleTypeEnum, MobileUnitRequestStatusEnum } from '@durion-sdk/location';
-import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
+import { createPurchaseOrderOnceVendorReplicated, type ReferenceCache, type SeederRandom } from '@durion-sdk/seeder';
 import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 
@@ -380,7 +380,7 @@ export async function createApprovedPo(
   vendorId: string,
   products: Array<{ skuId: string; quantity: number; unitCostMinor: number }>,
 ): Promise<CreatedPo> {
-  const po = await asParts.order.purchaseOrdersApi.createPurchaseOrder({
+  const po = await createPurchaseOrderOnceVendorReplicated(asParts.order.purchaseOrdersApi, {
     createPurchaseOrderRequest: {
       vendorId,
       poDate: new Date(),

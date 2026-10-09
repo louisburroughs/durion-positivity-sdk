@@ -16,7 +16,7 @@
  * Keep this file and its twin in step: a change here that is not a clock or
  * calendar concern belongs in both.
  */
-import { SEED_VENDOR_ID, SeederRandom } from '@durion-sdk/seeder';
+import { createPurchaseOrderOnceVendorReplicated, ensureSeedVendor, SeederRandom } from '@durion-sdk/seeder';
 import {
   addLaborLine,
   addPartLine,
@@ -88,6 +88,8 @@ describe('Suite D — receiving', () => {
   let personas: Personas;
   let ctx: BuilderContext;
   let admin: DomainClients;
+  /** The seed vendor's pos-supplier id; every purchase order here is raised against it. */
+  let seedVendorId: string;
   let advisor: DomainClients;
   let manager: DomainClients;
   let parts: DomainClients;
@@ -96,7 +98,7 @@ describe('Suite D — receiving', () => {
 
   /** Receives every line of a purchase order in full, at each line's own SKU. */
   const receiveFully = async (po: CreatedPo, quantity: number) => {
-    const asnId = await createAsnForPo(parts, ctx, SEED_VENDOR_ID, po);
+    const asnId = await createAsnForPo(parts, ctx, seedVendorId, po);
     const receipt = await call('createGoodsReceipt', () =>
       parts.inventory.asnApi.createGoodsReceipt({
         createGoodsReceiptRequest: {
@@ -128,6 +130,7 @@ describe('Suite D — receiving', () => {
     personas = new Personas(ItestConfig.fromEnv());
     await personas.login();
     admin = personas.as('admin');
+    seedVendorId = await ensureSeedVendor(admin.supplier.supplierVendorsApi);
     advisor = personas.as('advisor');
     manager = personas.as('manager');
     parts = personas.as('parts');
@@ -175,7 +178,7 @@ describe('Suite D — receiving', () => {
     }, 180_000);
 
     it('D2 — the parts clerk raises a PO and the manager approves it', async () => {
-      po = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+      po = await createApprovedPo(parts, manager, ctx, seedVendorId, [
         {
           skuId: product.productEntityId,
           quantity: RECEIVE_QUANTITY,
@@ -270,14 +273,14 @@ describe('Suite D — receiving', () => {
 
       // Part two: the same flow against a receipt booked into staging, which is
       // where putaway is meant to start.
-      const stagedPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+      const stagedPo = await createApprovedPo(parts, manager, ctx, seedVendorId, [
         {
           skuId: product.productEntityId,
           quantity: RECEIVE_QUANTITY,
           unitCostMinor: UNIT_COST_MINOR,
         },
       ]);
-      const stagedAsnId = await createAsnForPo(parts, ctx, SEED_VENDOR_ID, stagedPo);
+      const stagedAsnId = await createAsnForPo(parts, ctx, seedVendorId, stagedPo);
       const stagedReceipt = await call('createGoodsReceipt(staging)', () =>
         parts.inventory.asnApi.createGoodsReceipt({
           createGoodsReceiptRequest: {
@@ -462,7 +465,7 @@ describe('Suite D — receiving', () => {
     }, 420_000);
 
     it('D6 — a receiving session is built from the purchase order\'s lines', async () => {
-      const secondPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+      const secondPo = await createApprovedPo(parts, manager, ctx, seedVendorId, [
         {
           skuId: product.productEntityId,
           quantity: SESSION_QUANTITY,
@@ -579,7 +582,7 @@ describe('Suite D — receiving', () => {
     it('D8 — the shortage part is ordered and received, and stock arrives', async () => {
       const onHandBefore = await readOnHand(parts, shortProduct.productEntityId, locationId);
 
-      shortagePo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+      shortagePo = await createApprovedPo(parts, manager, ctx, seedVendorId, [
         {
           skuId: shortProduct.productEntityId,
           quantity: SHORTAGE_QUANTITY,
@@ -610,7 +613,7 @@ describe('Suite D — receiving', () => {
       // first time. A fresh PO is raised for the short part rather than reusing
       // the one D8 already received in full, which has nothing outstanding left
       // to stage.
-      const crossDockPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+      const crossDockPo = await createApprovedPo(parts, manager, ctx, seedVendorId, [
         {
           skuId: shortProduct.productEntityId,
           quantity: SHORTAGE_QUANTITY,
@@ -690,10 +693,10 @@ describe('Suite D — receiving', () => {
     }, 300_000);
 
     it('D11 — over-receipt behaviour is recorded, and a bogus cross-dock target is refused', async () => {
-      const overPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+      const overPo = await createApprovedPo(parts, manager, ctx, seedVendorId, [
         { skuId: shortProduct.productEntityId, quantity: 1, unitCostMinor: UNIT_COST_MINOR },
       ]);
-      const asnId = await createAsnForPo(parts, ctx, SEED_VENDOR_ID, overPo);
+      const asnId = await createAsnForPo(parts, ctx, seedVendorId, overPo);
 
       // 999 against a PO line of 1. This was accepted once, then refused with a
       // bare 403 - indistinguishable from a missing permission for a persona
@@ -749,9 +752,9 @@ describe('Suite D — receiving', () => {
   describe('role-mode negatives', () => {
     itInRoleMode('a technician cannot approve a purchase order', async () => {
       const product = await createCatalogProduct(admin, ctx, 'NEG1');
-      const po = await parts.order.purchaseOrdersApi.createPurchaseOrder({
+      const po = await createPurchaseOrderOnceVendorReplicated(parts.order.purchaseOrdersApi, {
         createPurchaseOrderRequest: {
-          vendorId: SEED_VENDOR_ID,
+          vendorId: seedVendorId,
           // Virtual time: a purchase order stamped with today would sit a year
           // away from the receipt it belongs to.
           poDate: await accel.now(),
@@ -782,9 +785,9 @@ describe('Suite D — receiving', () => {
 
     itInRoleMode('the parts clerk who raises a PO cannot approve it', async () => {
       const product = await createCatalogProduct(admin, ctx, 'NEG2');
-      const po = await parts.order.purchaseOrdersApi.createPurchaseOrder({
+      const po = await createPurchaseOrderOnceVendorReplicated(parts.order.purchaseOrdersApi, {
         createPurchaseOrderRequest: {
-          vendorId: SEED_VENDOR_ID,
+          vendorId: seedVendorId,
           // Virtual time: a purchase order stamped with today would sit a year
           // away from the receipt it belongs to.
           poDate: await accel.now(),

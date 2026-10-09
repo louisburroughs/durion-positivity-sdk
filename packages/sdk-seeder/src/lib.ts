@@ -10,7 +10,11 @@ export { SeederAuth, renewAllAuths, resetAuthStateForTests } from './SeederAuth'
 export { SeederConfig, type SeederConfigShape, type SeederConfigValues } from './SeederConfig';
 export { SecurityBootstrap } from './bootstrap/SecurityBootstrap';
 export { BootstrapOrchestrator } from './bootstrap/BootstrapOrchestrator';
-export { SEED_VENDOR_ID } from './bootstrap/InventoryBootstrap';
+export {
+  SEED_VENDOR_NUMBER,
+  createPurchaseOrderOnceVendorReplicated,
+  ensureSeedVendor,
+} from './bootstrap/SeedVendor';
 export type { EmployeeRefs, ReferenceCache } from './support/ReferenceCache';
 export { SeederRandom } from './support/SeederRandom';
 export {

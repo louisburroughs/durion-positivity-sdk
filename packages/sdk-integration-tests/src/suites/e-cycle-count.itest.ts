@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { SEED_VENDOR_ID, SeederRandom } from '@durion-sdk/seeder';
+import { ensureSeedVendor, SeederRandom } from '@durion-sdk/seeder';
 import {
   StorageLocationRequestStorageCategoryCodeEnum,
   StorageLocationRequestTypeEnum,
@@ -75,6 +75,8 @@ describe('Suite E — cycle counting', () => {
   let context: ItestContext;
   let personas: Personas;
   let admin: DomainClients;
+  /** The seed vendor's pos-supplier id; every purchase order here is raised against it. */
+  let seedVendorId: string;
   let parts: DomainClients;
   let tech: DomainClients;
 
@@ -109,6 +111,7 @@ describe('Suite E — cycle counting', () => {
     personas = new Personas(ItestConfig.fromEnv());
     await personas.login();
     admin = personas.as('admin');
+    seedVendorId = await ensureSeedVendor(admin.supplier.supplierVendorsApi);
     parts = personas.as('parts');
     tech = personas.as('tech');
     siteId = context.referenceCache.locationId;
@@ -787,7 +790,7 @@ describe('Suite E — cycle counting', () => {
       const costed = [lossSku, gainSku, manualSku, costedScrapSku];
       const receipt = await receivePriced(parts, personas.as('manager'), ctx, {
         locationId: costedLocationId,
-        vendorId: SEED_VENDOR_ID,
+        vendorId: seedVendorId,
         skus: costed,
         quantity: GL_SEEDED,
         unitCostMinor: GL_UNIT_COST_MINOR,
