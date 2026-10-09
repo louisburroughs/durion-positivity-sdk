@@ -20,6 +20,7 @@ import type {
   TaxCalculationRequest,
   TaxCalculationResponse,
   TaxEvidenceRulesResponse,
+  TaxInformationReturnFormsResponse,
   TaxPlausibilityCheckRequest,
   TaxPlausibilityCheckResponse,
   TaxProviderTransactionResult,
@@ -37,6 +38,8 @@ import {
     TaxCalculationResponseToJSON,
     TaxEvidenceRulesResponseFromJSON,
     TaxEvidenceRulesResponseToJSON,
+    TaxInformationReturnFormsResponseFromJSON,
+    TaxInformationReturnFormsResponseToJSON,
     TaxPlausibilityCheckRequestFromJSON,
     TaxPlausibilityCheckRequestToJSON,
     TaxPlausibilityCheckResponseFromJSON,
@@ -65,6 +68,10 @@ export interface CommitTaxDocumentRequest {
 export interface GetTaxEvidenceRulesRequest {
     countryCode: string;
     asOf?: Date;
+}
+
+export interface GetTaxInformationReturnFormsRequest {
+    countryCode: string;
 }
 
 export interface GetTaxRatesRequest {
@@ -275,6 +282,53 @@ export class TaxApi extends runtime.BaseAPI {
      */
     async getTaxEvidenceRules(requestParameters: GetTaxEvidenceRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxEvidenceRulesResponse> {
         const response = await this.getTaxEvidenceRulesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the information-return forms a country configures, each with its boxes and the payee-id schemes a payee may be reported under, so a vendor can be marked reportable in a form and box. Use this tool when pos-accounting validates or offers a vendor\'s information-return flag; do not use it to read tax rates or evidence rules, which are getTaxRates and getTaxEvidenceRules instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-accounting with the service authority, never through pos-api-gateway. Required inputs: countryCode, two upper-case letters. No events are emitted, no state changes and no tenant data is read; every value is configuration held for expert advice, so source is always STUB. Returns 200 with an empty list for a country without a configured form, and 400 VALIDATION_ERROR when countryCode is missing or malformed. 
+     * List a country\'s information-return forms
+     */
+    async getTaxInformationReturnFormsRaw(requestParameters: GetTaxInformationReturnFormsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxInformationReturnFormsResponse>> {
+        if (requestParameters['countryCode'] == null) {
+            throw new runtime.RequiredError(
+                'countryCode',
+                'Required parameter "countryCode" was null or undefined when calling getTaxInformationReturnForms().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:rates:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/information-return-forms`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxInformationReturnFormsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the information-return forms a country configures, each with its boxes and the payee-id schemes a payee may be reported under, so a vendor can be marked reportable in a form and box. Use this tool when pos-accounting validates or offers a vendor\'s information-return flag; do not use it to read tax rates or evidence rules, which are getTaxRates and getTaxEvidenceRules instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-accounting with the service authority, never through pos-api-gateway. Required inputs: countryCode, two upper-case letters. No events are emitted, no state changes and no tenant data is read; every value is configuration held for expert advice, so source is always STUB. Returns 200 with an empty list for a country without a configured form, and 400 VALIDATION_ERROR when countryCode is missing or malformed. 
+     * List a country\'s information-return forms
+     */
+    async getTaxInformationReturnForms(requestParameters: GetTaxInformationReturnFormsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxInformationReturnFormsResponse> {
+        const response = await this.getTaxInformationReturnFormsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

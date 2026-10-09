@@ -56,6 +56,18 @@ export interface VendorBillSummaryResponse {
      */
     totalAmount: number;
     /**
+     * True while the bill's vendor is on AP hold: paying it answers 422 VENDOR_ON_AP_HOLD; the bill stays listed
+     * @type {boolean}
+     * @memberof VendorBillSummaryResponse
+     */
+    vendorApHold: boolean;
+    /**
+     * Why the bill's vendor is on AP hold, to show beside the disabled Pay; null when the vendor is not held
+     * @type {string}
+     * @memberof VendorBillSummaryResponse
+     */
+    vendorApHoldReason?: string;
+    /**
      * Vendor bill UUID
      * @type {string}
      * @memberof VendorBillSummaryResponse
@@ -98,6 +110,7 @@ export function instanceOfVendorBillSummaryResponse(value: object): boolean {
     if (!('billNumber' in value)) return false;
     if (!('status' in value)) return false;
     if (!('totalAmount' in value)) return false;
+    if (!('vendorApHold' in value)) return false;
     if (!('vendorBillId' in value)) return false;
     if (!('vendorId' in value)) return false;
     return true;
@@ -119,6 +132,8 @@ export function VendorBillSummaryResponseFromJSONTyped(json: any, ignoreDiscrimi
         'openAmount': json['openAmount'] == null ? undefined : json['openAmount'],
         'status': json['status'],
         'totalAmount': json['totalAmount'],
+        'vendorApHold': json['vendorApHold'],
+        'vendorApHoldReason': json['vendorApHoldReason'] == null ? undefined : json['vendorApHoldReason'],
         'vendorBillId': json['vendorBillId'],
         'vendorId': json['vendorId'],
         'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
@@ -137,6 +152,8 @@ export function VendorBillSummaryResponseToJSON(value?: VendorBillSummaryRespons
         'openAmount': value['openAmount'],
         'status': value['status'],
         'totalAmount': value['totalAmount'],
+        'vendorApHold': value['vendorApHold'],
+        'vendorApHoldReason': value['vendorApHoldReason'],
         'vendorBillId': value['vendorBillId'],
         'vendorId': value['vendorId'],
         'vendorName': value['vendorName'],

@@ -27,6 +27,12 @@ import {
  */
 export interface VendorResponse {
     /**
+     * True while the vendor is on AP hold: paying it answers 422 VENDOR_ON_AP_HOLD, while its bills are still approved and posted; the reason is in apSettings.apHold on getVendorById
+     * @type {boolean}
+     * @memberof VendorResponse
+     */
+    apHold: boolean;
+    /**
      * 
      * @type {VendorApSettingsResponse}
      * @memberof VendorResponse
@@ -84,6 +90,7 @@ export enum VendorResponseStatusEnum {
  * Check if a given object implements the VendorResponse interface.
  */
 export function instanceOfVendorResponse(value: object): boolean {
+    if (!('apHold' in value)) return false;
     if (!('name' in value)) return false;
     if (!('paymentDetailsChanged' in value)) return false;
     if (!('remitToVersion' in value)) return false;
@@ -103,6 +110,7 @@ export function VendorResponseFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
+        'apHold': json['apHold'],
         'apSettings': json['apSettings'] == null ? undefined : VendorApSettingsResponseFromJSON(json['apSettings']),
         'name': json['name'],
         'paymentDetailsChanged': json['paymentDetailsChanged'],
@@ -119,6 +127,7 @@ export function VendorResponseToJSON(value?: VendorResponse | null): any {
     }
     return {
         
+        'apHold': value['apHold'],
         'apSettings': VendorApSettingsResponseToJSON(value['apSettings']),
         'name': value['name'],
         'paymentDetailsChanged': value['paymentDetailsChanged'],

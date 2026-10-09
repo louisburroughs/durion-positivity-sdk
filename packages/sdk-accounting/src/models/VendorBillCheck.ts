@@ -26,7 +26,7 @@ export interface VendorBillCheck {
      */
     args: { [key: string]: string; };
     /**
-     * MATCHED_TO_DELIVERY, WITHIN_PRICE_TOLERANCE, TOTALS_ADD_UP or OPEN_DELIVERIES_FROM_VENDOR
+     * MATCHED_TO_DELIVERY, WITHIN_PRICE_TOLERANCE, TOTALS_ADD_UP, OPEN_DELIVERIES_FROM_VENDOR, WITHIN_CLERK_LIMIT or VENDOR_AP_HOLD (informational: FAIL with vendorNumber, reason and since while the vendor is on AP hold, which blocks payment only)
      * @type {string}
      * @memberof VendorBillCheck
      */

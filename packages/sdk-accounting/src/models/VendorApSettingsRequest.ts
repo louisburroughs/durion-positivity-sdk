@@ -13,12 +13,31 @@
  */
 
 import { mapValues } from '../runtime';
+import type { VendorApHoldRequest } from './VendorApHoldRequest';
+import {
+    VendorApHoldRequestFromJSON,
+    VendorApHoldRequestFromJSONTyped,
+    VendorApHoldRequestToJSON,
+} from './VendorApHoldRequest';
+import type { VendorInformationReturnRequest } from './VendorInformationReturnRequest';
+import {
+    VendorInformationReturnRequestFromJSON,
+    VendorInformationReturnRequestFromJSONTyped,
+    VendorInformationReturnRequestToJSON,
+} from './VendorInformationReturnRequest';
+
 /**
- * The vendor's AP defaults to change, the justification and the request id. A field left out is unchanged; a field sent as null clears it.
+ * The vendor's AP settings to change (defaults, AP hold, information-return flag), the justification and the request id. A field left out is unchanged; a default sent as null clears it.
  * @export
  * @interface VendorApSettingsRequest
  */
 export interface VendorApSettingsRequest {
+    /**
+     * 
+     * @type {VendorApHoldRequest}
+     * @memberof VendorApSettingsRequest
+     */
+    apHold?: VendorApHoldRequest;
     /**
      * GOODS, EXPENSE, or null to clear: the class a bill whose lines are not stored posts with when nobody names one. EXPENSE needs a defaultExpenseMappingKey (sent or already set)
      * @type {string}
@@ -32,7 +51,13 @@ export interface VendorApSettingsRequest {
      */
     defaultExpenseMappingKey?: string;
     /**
-     * Why the defaults change, at least 10 characters; recorded on the audit row
+     * 
+     * @type {VendorInformationReturnRequest}
+     * @memberof VendorApSettingsRequest
+     */
+    informationReturn?: VendorInformationReturnRequest;
+    /**
+     * Why the settings change, at least 10 characters; recorded on every audit row, and the record of why a hold is released
      * @type {string}
      * @memberof VendorApSettingsRequest
      */
@@ -74,8 +99,10 @@ export function VendorApSettingsRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'apHold': json['apHold'] == null ? undefined : VendorApHoldRequestFromJSON(json['apHold']),
         'defaultDebitClass': json['defaultDebitClass'] == null ? undefined : json['defaultDebitClass'],
         'defaultExpenseMappingKey': json['defaultExpenseMappingKey'] == null ? undefined : json['defaultExpenseMappingKey'],
+        'informationReturn': json['informationReturn'] == null ? undefined : VendorInformationReturnRequestFromJSON(json['informationReturn']),
         'justification': json['justification'],
         'requestId': json['requestId'],
     };
@@ -87,8 +114,10 @@ export function VendorApSettingsRequestToJSON(value?: VendorApSettingsRequest | 
     }
     return {
         
+        'apHold': VendorApHoldRequestToJSON(value['apHold']),
         'defaultDebitClass': value['defaultDebitClass'],
         'defaultExpenseMappingKey': value['defaultExpenseMappingKey'],
+        'informationReturn': VendorInformationReturnRequestToJSON(value['informationReturn']),
         'justification': value['justification'],
         'requestId': value['requestId'],
     };

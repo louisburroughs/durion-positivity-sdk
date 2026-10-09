@@ -80,6 +80,12 @@ export interface VendorBillStageRow {
      */
     totalAmount: number;
     /**
+     * True while the bill's vendor is on AP hold (#2615): it is not paid until released, but it is still approved and posted
+     * @type {boolean}
+     * @memberof VendorBillStageRow
+     */
+    vendorApHold: boolean;
+    /**
      * Bill id
      * @type {string}
      * @memberof VendorBillStageRow
@@ -135,6 +141,7 @@ export function instanceOfVendorBillStageRow(value: object): boolean {
     if (!('openAmount' in value)) return false;
     if (!('status' in value)) return false;
     if (!('totalAmount' in value)) return false;
+    if (!('vendorApHold' in value)) return false;
     if (!('vendorBillId' in value)) return false;
     return true;
 }
@@ -159,6 +166,7 @@ export function VendorBillStageRowFromJSONTyped(json: any, ignoreDiscriminator: 
         'status': json['status'],
         'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
         'totalAmount': json['totalAmount'],
+        'vendorApHold': json['vendorApHold'],
         'vendorBillId': json['vendorBillId'],
         'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
     };
@@ -180,6 +188,7 @@ export function VendorBillStageRowToJSON(value?: VendorBillStageRow | null): any
         'status': value['status'],
         'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
         'totalAmount': value['totalAmount'],
+        'vendorApHold': value['vendorApHold'],
         'vendorBillId': value['vendorBillId'],
         'vendorName': value['vendorName'],
     };

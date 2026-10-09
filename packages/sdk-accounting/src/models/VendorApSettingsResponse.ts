@@ -13,12 +13,31 @@
  */
 
 import { mapValues } from '../runtime';
+import type { VendorApHold } from './VendorApHold';
+import {
+    VendorApHoldFromJSON,
+    VendorApHoldFromJSONTyped,
+    VendorApHoldToJSON,
+} from './VendorApHold';
+import type { VendorInformationReturn } from './VendorInformationReturn';
+import {
+    VendorInformationReturnFromJSON,
+    VendorInformationReturnFromJSONTyped,
+    VendorInformationReturnToJSON,
+} from './VendorInformationReturn';
+
 /**
- * The vendor's accounting-side settings: AP defaults (AW39) and the remit-to confirmation
+ * The vendor's accounting-side settings: AP defaults (AW39), the remit-to confirmation, the AP payment hold and the information-return flag
  * @export
  * @interface VendorApSettingsResponse
  */
 export interface VendorApSettingsResponse {
+    /**
+     * 
+     * @type {VendorApHold}
+     * @memberof VendorApSettingsResponse
+     */
+    apHold: VendorApHold;
     /**
      * The remit-to version last confirmed; payment by anyone but the confirmer passes on it while it is current
      * @type {number}
@@ -37,6 +56,12 @@ export interface VendorApSettingsResponse {
      * @memberof VendorApSettingsResponse
      */
     defaultExpenseMappingKey?: string;
+    /**
+     * 
+     * @type {VendorInformationReturn}
+     * @memberof VendorApSettingsResponse
+     */
+    informationReturn: VendorInformationReturn;
     /**
      * When it was confirmed
      * @type {Date}
@@ -65,6 +90,8 @@ export enum VendorApSettingsResponseDefaultDebitClassEnum {
  * Check if a given object implements the VendorApSettingsResponse interface.
  */
 export function instanceOfVendorApSettingsResponse(value: object): boolean {
+    if (!('apHold' in value)) return false;
+    if (!('informationReturn' in value)) return false;
     return true;
 }
 
@@ -78,9 +105,11 @@ export function VendorApSettingsResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'apHold': VendorApHoldFromJSON(json['apHold']),
         'confirmedRemitToVersion': json['confirmedRemitToVersion'] == null ? undefined : json['confirmedRemitToVersion'],
         'defaultDebitClass': json['defaultDebitClass'] == null ? undefined : json['defaultDebitClass'],
         'defaultExpenseMappingKey': json['defaultExpenseMappingKey'] == null ? undefined : json['defaultExpenseMappingKey'],
+        'informationReturn': VendorInformationReturnFromJSON(json['informationReturn']),
         'remitToConfirmedAt': json['remitToConfirmedAt'] == null ? undefined : (new Date(json['remitToConfirmedAt'])),
         'remitToConfirmedBy': json['remitToConfirmedBy'] == null ? undefined : json['remitToConfirmedBy'],
     };
@@ -92,9 +121,11 @@ export function VendorApSettingsResponseToJSON(value?: VendorApSettingsResponse 
     }
     return {
         
+        'apHold': VendorApHoldToJSON(value['apHold']),
         'confirmedRemitToVersion': value['confirmedRemitToVersion'],
         'defaultDebitClass': value['defaultDebitClass'],
         'defaultExpenseMappingKey': value['defaultExpenseMappingKey'],
+        'informationReturn': VendorInformationReturnToJSON(value['informationReturn']),
         'remitToConfirmedAt': value['remitToConfirmedAt'] == null ? undefined : ((value['remitToConfirmedAt']).toISOString()),
         'remitToConfirmedBy': value['remitToConfirmedBy'],
     };
