@@ -13,12 +13,25 @@
  */
 
 import { mapValues } from '../runtime';
+import type { VendorApSettingsResponse } from './VendorApSettingsResponse';
+import {
+    VendorApSettingsResponseFromJSON,
+    VendorApSettingsResponseFromJSONTyped,
+    VendorApSettingsResponseToJSON,
+} from './VendorApSettingsResponse';
+
 /**
- * AP vendor directory entry (name to vendorId resolution)
+ * A vendor from accounting's copy of the pos-supplier vendor master: the pos-supplier vendorId, its name, number and status, its current remit-to version and whether payment details changed
  * @export
  * @interface VendorResponse
  */
 export interface VendorResponse {
+    /**
+     * 
+     * @type {VendorApSettingsResponse}
+     * @memberof VendorResponse
+     */
+    apSettings?: VendorApSettingsResponse;
     /**
      * Vendor display name
      * @type {string}
@@ -26,23 +39,35 @@ export interface VendorResponse {
      */
     name: string;
     /**
-     * Vendor status
+     * True when an approved, open bill of the vendor was approved at another remit-to version than the current one and nobody has confirmed the current version: paying it answers 409 VENDOR_PAYMENT_DETAILS_CHANGED until a holder of accounting:ap:approve other than the payer confirms it
+     * @type {boolean}
+     * @memberof VendorResponse
+     */
+    paymentDetailsChanged: boolean;
+    /**
+     * The vendor's current remit-to version: 0 with no remit-to, 1 for one given at creation, then +1 per approved change; a bill approved at another version is not paid until it is confirmed
+     * @type {number}
+     * @memberof VendorResponse
+     */
+    remitToVersion: number;
+    /**
+     * ACTIVE, or INACTIVE: an inactive vendor takes no new bill, payment or purchase order, and its open bills are not paid while it is inactive
      * @type {string}
      * @memberof VendorResponse
      */
-    status?: VendorResponseStatusEnum;
+    status: VendorResponseStatusEnum;
     /**
-     * Stable vendor identifier
+     * The pos-supplier vendor id, the one key bills, AP payments and purchase orders name
      * @type {string}
      * @memberof VendorResponse
      */
     vendorId: string;
     /**
-     * Human-readable vendor number, when assigned
+     * The tenant-unique vendor number people quote
      * @type {string}
      * @memberof VendorResponse
      */
-    vendorNumber?: string;
+    vendorNumber: string;
 }
 
 /**
@@ -60,7 +85,11 @@ export enum VendorResponseStatusEnum {
  */
 export function instanceOfVendorResponse(value: object): boolean {
     if (!('name' in value)) return false;
+    if (!('paymentDetailsChanged' in value)) return false;
+    if (!('remitToVersion' in value)) return false;
+    if (!('status' in value)) return false;
     if (!('vendorId' in value)) return false;
+    if (!('vendorNumber' in value)) return false;
     return true;
 }
 
@@ -74,10 +103,13 @@ export function VendorResponseFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
+        'apSettings': json['apSettings'] == null ? undefined : VendorApSettingsResponseFromJSON(json['apSettings']),
         'name': json['name'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'paymentDetailsChanged': json['paymentDetailsChanged'],
+        'remitToVersion': json['remitToVersion'],
+        'status': json['status'],
         'vendorId': json['vendorId'],
-        'vendorNumber': json['vendorNumber'] == null ? undefined : json['vendorNumber'],
+        'vendorNumber': json['vendorNumber'],
     };
 }
 
@@ -87,7 +119,10 @@ export function VendorResponseToJSON(value?: VendorResponse | null): any {
     }
     return {
         
+        'apSettings': VendorApSettingsResponseToJSON(value['apSettings']),
         'name': value['name'],
+        'paymentDetailsChanged': value['paymentDetailsChanged'],
+        'remitToVersion': value['remitToVersion'],
         'status': value['status'],
         'vendorId': value['vendorId'],
         'vendorNumber': value['vendorNumber'],

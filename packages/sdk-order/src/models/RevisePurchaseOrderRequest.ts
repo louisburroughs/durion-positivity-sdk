@@ -74,6 +74,12 @@ export interface RevisePurchaseOrderRequest {
      * @memberof RevisePurchaseOrderRequest
      */
     shipToLocationId?: string;
+    /**
+     * Identifier of the pos-supplier vendor the order is placed with instead; only while the order is DRAFT, and the vendor must be active in pos-order's vendor copy. Absent keeps the vendor
+     * @type {string}
+     * @memberof RevisePurchaseOrderRequest
+     */
+    vendorId?: string;
 }
 
 /**
@@ -104,6 +110,7 @@ export function RevisePurchaseOrderRequestFromJSONTyped(json: any, ignoreDiscrim
         'requestedBy': json['requestedBy'] == null ? undefined : json['requestedBy'],
         'revisionReason': json['revisionReason'],
         'shipToLocationId': json['shipToLocationId'] == null ? undefined : json['shipToLocationId'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
     };
 }
 
@@ -121,6 +128,7 @@ export function RevisePurchaseOrderRequestToJSON(value?: RevisePurchaseOrderRequ
         'requestedBy': value['requestedBy'],
         'revisionReason': value['revisionReason'],
         'shipToLocationId': value['shipToLocationId'],
+        'vendorId': value['vendorId'],
     };
 }
 
