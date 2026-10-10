@@ -36,6 +36,11 @@ export interface RunnableJob {
   /** True while the mechanic's labor clock is running on this job. */
   readonly laborOpen: boolean;
   /**
+   * The virtual instant before which the next step may not run — the labor close
+   * waiting for the job to have been worked (see AcceleratedJob.readyAt).
+   */
+  readonly readyAt?: Date;
+  /**
    * True for a job stopped at a hold that keeps its position (the open-work tail).
    * It is carried like any open job but never advanced: `mayWorkNow` refuses it, so
    * a parked job neither spins the tick loop nor keeps a day's loop alive.
@@ -673,8 +678,32 @@ export class AcceleratedDayRunner {
    * only to *finish* — the intake loop refuses to open new bay work once the window has
    * closed, so anything still running in the grace is a car already on a lift.
    */
+  /**
+   * The earliest future `readyAt` among jobs that would otherwise be runnable, if it
+   * falls before `until`. A job refused for another reason — parked, the wrong kind,
+   * the shop shut — is not waited for.
+   */
+  private earliestReadyAt(active: readonly ActiveJob[], until: Date, kindLimit?: PositionKind): Date | undefined {
+    let earliest: Date | undefined;
+    for (const { job } of active) {
+      if (job.readyAt === undefined || job.readyAt.getTime() >= until.getTime()) {
+        continue;
+      }
+      if (!this.mayWorkNow(job, job.readyAt, kindLimit)) {
+        continue;
+      }
+      if (earliest === undefined || job.readyAt.getTime() < earliest.getTime()) {
+        earliest = job.readyAt;
+      }
+    }
+    return earliest;
+  }
+
   private mayWorkNow(job: RunnableJob, now: Date, kindLimit?: PositionKind): boolean {
     if (job.parked === true) {
+      return false;
+    }
+    if (job.readyAt !== undefined && now.getTime() < job.readyAt.getTime()) {
       return false;
     }
     // A stretch limited to mobile units must not advance a bay job either. `kindLimit`
@@ -821,7 +850,17 @@ export class AcceleratedDayRunner {
       // checked at, so no job can run away with the clock.
       const runnable = active.filter((entry) => this.mayWorkNow(entry.job, now, options.kindLimit));
       if (runnable.length === 0) {
-        break;
+        // Nothing to step, but a job whose next step is only not *yet* due — the labor
+        // close waiting for the job to have been worked — is still today's work. Wait
+        // for the earliest such instant inside the bound rather than carrying the job
+        // to tomorrow; a wait is not a tick, so no tick cost is recorded for it.
+        const readyAt = this.earliestReadyAt(active, until, options.kindLimit);
+        if (readyAt === undefined) {
+          break;
+        }
+        await this.deps.waitUntil(readyAt, 'a job to be ready for its next step');
+        now = await this.deps.now();
+        continue;
       }
       // Refuse a tick that the observed cost says would cross the bound. Without this
       // the loop stops one tick *past* `until`, which for the grace stretch means the

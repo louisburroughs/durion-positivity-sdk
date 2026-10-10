@@ -89,6 +89,11 @@ export interface JobDeps {
    * function answering undefined, runs the whole lifecycle.
    */
   holdAt?: (at: Date) => HoldPoint | undefined;
+  /**
+   * Waits for a virtual instant. Used only to give a labor entry its minimum span
+   * before stopping it; without it the floor is skipped.
+   */
+  waitUntil?: (target: Date) => Promise<void>;
   /** Customer decision odds, mirroring the seeder's distribution. */
   approveChance?: number;
   declineChance?: number;
@@ -127,6 +132,20 @@ export const SERVICE_ADVISOR_LIMIT = 500;
  * which failed whole days of jobs. It only stops a stuck command holding a bay forever.
  */
 export const INVOICE_WAIT_VIRTUAL_MS = 2 * 60 * 60 * 1000;
+/**
+ * The least labor a job books before its labor clock is closed for good, in virtual
+ * time. Nothing in the run makes work take time except the ticks, and at scale 2050 a
+ * quick tick is under a virtual minute: labor-open, complete-items and labor-close
+ * fitted inside one, and a completed job recorded 0.00 hours (Z13b). The day runner
+ * holds the close back (see `readyAt`) rather than the job sleeping inside a tick.
+ */
+export const MIN_JOB_LABOR_VIRTUAL_MS = 30 * 60 * 1000;
+/**
+ * The least any single entry runs before it is stopped. The backend books whole
+ * minutes, so an entry opened in a closing tick and suspended straight after would
+ * record nothing; waiting out the remainder costs ~60 ms real at scale 2050.
+ */
+export const MIN_LABOR_ENTRY_VIRTUAL_MS = 2 * 60 * 1000;
 const COMPLETABLE = new Set(['OPEN', 'READY_TO_EXECUTE', 'IN_PROGRESS']);
 
 export class AcceleratedJob {
@@ -150,6 +169,10 @@ export class AcceleratedJob {
    * is what tells the next `advance` to reopen.
    */
   private laborBracketOpen = false;
+  /** When the open entry started, as this job observed it; undefined when none is open. */
+  private laborOpenedAt: Date | undefined;
+  /** Labor already booked in this bracket by entries since stopped. */
+  private laborBookedMs = 0;
   /** True once the backend holds this job's technician, until it is handed back. */
   private technicianAssigned = false;
   /** True once the workorder is COMPLETED, after which nothing may be released from it. */
@@ -285,6 +308,21 @@ export class AcceleratedJob {
   /** The step that will run next, for logs and for a carried job's report. */
   get nextStep(): string {
     return this.steps[this.cursor]?.name ?? 'done';
+  }
+
+  /**
+   * The virtual instant before which the next step may not run, if any.
+   *
+   * Only the labor close waits: the mechanic is on the job until it has booked
+   * MIN_JOB_LABOR_VIRTUAL_MS across its entries. A suspended job has no open entry
+   * and closes as soon as it is advanced — its hours are already on the entries.
+   */
+  get readyAt(): Date | undefined {
+    if (this.nextStep !== 'labor-close' || this.laborOpenedAt === undefined) {
+      return undefined;
+    }
+    const remaining = MIN_JOB_LABOR_VIRTUAL_MS - this.laborBookedMs;
+    return remaining > 0 ? new Date(this.laborOpenedAt.getTime() + remaining) : undefined;
   }
 
   get stepsRemaining(): number {
@@ -654,6 +692,9 @@ export class AcceleratedJob {
       }),
     );
     this.laborEntryId = requireField(readString(entry, 'id', 'entryId'), 'labor entry id');
+    // Read after the backend stamped startTime, so the span measured here is never
+    // longer than the one it records.
+    this.laborOpenedAt = await this.deps.now();
     this.laborBracketOpen = true;
     await this.mark('labor-open');
   }
@@ -662,6 +703,7 @@ export class AcceleratedJob {
   private async closeLaborSession(): Promise<void> {
     await this.stopLaborEntry();
     this.laborBracketOpen = false;
+    this.laborBookedMs = 0;
     await this.mark('labor-closed');
   }
 
@@ -685,6 +727,13 @@ export class AcceleratedJob {
     if (!entryId) {
       return;
     }
+    const openedAt = this.laborOpenedAt;
+    if (openedAt && this.deps.waitUntil) {
+      const earliest = new Date(openedAt.getTime() + MIN_LABOR_ENTRY_VIRTUAL_MS);
+      if ((await this.deps.now()).getTime() < earliest.getTime()) {
+        await this.deps.waitUntil(earliest);
+      }
+    }
     try {
       await call('stopLaborSession', () =>
         this.deps.as.tech.workorder.workorderLaborAPIApi.stopLaborSession({
@@ -697,7 +746,11 @@ export class AcceleratedJob {
         throw error;
       }
     }
+    if (openedAt) {
+      this.laborBookedMs += (await this.deps.now()).getTime() - openedAt.getTime();
+    }
     this.laborEntryId = undefined;
+    this.laborOpenedAt = undefined;
   }
 
   private async completeItems(): Promise<void> {

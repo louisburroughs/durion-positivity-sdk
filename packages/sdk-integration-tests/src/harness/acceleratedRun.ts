@@ -30,6 +30,9 @@ import { ClockConvergedError, VirtualClock } from './virtualClock';
 import { VirtualTimer } from './virtualTimer';
 import { convergenceAt, createHoldPolicy, tailStartsAt } from './openWorkTail';
 
+
+/** Real ms between clock reads while a labor entry waits out its minimum span. */
+const LABOR_FLOOR_POLL_MS = 25;
 export type StopReason = 'days-complete' | 'converged' | 'budget' | 'failed';
 
 export interface YearRunResult {
@@ -114,6 +117,9 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     maxSkewMs: accel.maxSkewMs,
   });
   const timer = new VirtualTimer(clock, { pollMs: accel.pollMs });
+  // The labor floor waits a virtual minute or two, which at scale 2050 is tens of real
+  // milliseconds: the run's poll would overshoot it by a quarter of an hour at close.
+  const laborTimer = new VirtualTimer(clock, { pollMs: LABOR_FLOOR_POLL_MS });
 
   const first = await clock.read();
   const virtualEnd = new Date(first.virtualTime.getTime() + accel.days * DAY_MS);
@@ -212,6 +218,10 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
         claim,
         fromAppointment: arrival,
         now: () => clock.now(),
+        // Gives a labor entry its minimum span before it is stopped (Z13b).
+        waitUntil: async (target) => {
+          await laborTimer.waitUntil(target, 'a labor entry to record a full minute');
+        },
         // A fraction of invoices are deliberately left unpaid when AR aging is
         // wanted; the default of 0 pays every one.
         leaveUnpaid: accel.unpaidRatio > 0 && ctx.random.chance(accel.unpaidRatio),
