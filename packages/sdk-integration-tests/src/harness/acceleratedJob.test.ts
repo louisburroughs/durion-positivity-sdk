@@ -1,5 +1,12 @@
 import { SeederRandom, type ReferenceCache } from '@durion-sdk/seeder';
-import { AcceleratedJob, INVOICE_WAIT_VIRTUAL_MS, SERVICE_ADVISOR_LIMIT, type JobDeps } from './acceleratedJob';
+import {
+  AcceleratedJob,
+  INVOICE_WAIT_VIRTUAL_MS,
+  MIN_JOB_LABOR_VIRTUAL_MS,
+  MIN_LABOR_ENTRY_VIRTUAL_MS,
+  SERVICE_ADVISOR_LIMIT,
+  type JobDeps,
+} from './acceleratedJob';
 import type { Claim } from './resourceLedger';
 
 /**
@@ -445,3 +452,102 @@ describe('AcceleratedJob — working an appointment (#148)', () => {
   });
 });
 
+
+describe('AcceleratedJob — labor that records real hours', () => {
+  // The backend stores hoursWorked as whole minutes / 60, so an entry shorter than a
+  // virtual minute is 0.00 hours. At scale 2050 a quick tick is under a virtual minute,
+  // and labor-open -> complete-items -> labor-close fitted inside one: 57 entries in a
+  // year recorded a completed job's work as nothing (Z13b).
+  const laboring = (clock: { ms: number }) => {
+    const calls: Array<{ call: string; at: number }> = [];
+    const waits: number[] = [];
+    const as = {
+      tech: {
+        workorder: {
+          workorderLaborAPIApi: {
+            async startLaborSession() {
+              calls.push({ call: 'start', at: clock.ms });
+              return { id: `entry-${calls.length}` };
+            },
+            async stopLaborSession() {
+              calls.push({ call: 'stop', at: clock.ms });
+              return {};
+            },
+          },
+        },
+      },
+    } as unknown as JobDeps['as'];
+    const job = new AcceleratedJob('job-8', {
+      ...deps(claimAt('site-north')),
+      as,
+      now: async () => new Date(clock.ms),
+      waitUntil: async (target: Date) => {
+        waits.push(target.getTime());
+        clock.ms = Math.max(clock.ms, target.getTime());
+      },
+    });
+    (job as unknown as { serviceItemMap: Map<string, string> }).serviceItemMap.set('svc-1', 'item-1');
+    atStep(job, 'labor-open');
+    return { job, calls, waits };
+  };
+  const skipTo = (job: AcceleratedJob, step: string) => {
+    const internals = job as unknown as { steps: Array<{ name: string }>; cursor: number };
+    internals.cursor = internals.steps.findIndex((candidate) => candidate.name === step);
+  };
+
+  it('is not ready to close its labor until the job has been worked', async () => {
+    const clock = { ms: Date.parse('2025-11-03T10:00:00Z') };
+    const { job } = laboring(clock);
+
+    await job.advance();
+    skipTo(job, 'labor-close');
+
+    expect(job.readyAt).toBeDefined();
+    const readyAt = job.readyAt as Date;
+    expect(readyAt.getTime() - clock.ms).toBeGreaterThanOrEqual(MIN_JOB_LABOR_VIRTUAL_MS);
+  });
+
+  it('counts the hours already worked before a suspend toward the minimum', async () => {
+    const clock = { ms: Date.parse('2025-11-03T10:00:00Z') };
+    const { job } = laboring(clock);
+    await job.advance();
+    skipTo(job, 'labor-close');
+    const required = (job.readyAt as Date).getTime() - clock.ms;
+
+    clock.ms += 10 * 60_000;
+    await job.suspendLabor();
+    clock.ms = Date.parse('2025-11-04T08:00:00Z');
+    skipTo(job, 'complete-items');
+    const steps = (job as unknown as { steps: Array<{ name: string; run: () => Promise<unknown> }> }).steps;
+    steps[steps.findIndex((step) => step.name === 'complete-items')].run = async () => undefined;
+    await job.advance();
+
+    expect(job.nextStep).toBe('labor-close');
+    expect((job.readyAt as Date).getTime() - clock.ms).toBe(required - 10 * 60_000);
+  });
+
+  it('never stops an entry before it can record a minute', async () => {
+    const clock = { ms: Date.parse('2025-11-03T10:00:00Z') };
+    const { job, calls, waits } = laboring(clock);
+    await job.advance();
+    const startedAt = clock.ms;
+
+    clock.ms += 20_000;
+    await job.suspendLabor();
+
+    expect(waits).toEqual([startedAt + MIN_LABOR_ENTRY_VIRTUAL_MS]);
+    const stop = calls.find((entry) => entry.call === 'stop');
+    expect((stop?.at ?? 0) - startedAt).toBeGreaterThanOrEqual(MIN_LABOR_ENTRY_VIRTUAL_MS);
+  });
+
+  it('does not wait for an entry that is already long enough', async () => {
+    const clock = { ms: Date.parse('2025-11-03T10:00:00Z') };
+    const { job, waits } = laboring(clock);
+    await job.advance();
+
+    clock.ms += 30 * 60_000;
+    await job.suspendLabor();
+
+    expect(waits).toEqual([]);
+  });
+});

@@ -59,6 +59,10 @@ class FakeJob implements RunnableJob {
   readonly ranOnTheClock: boolean[] = [];
   /** Set by the harness so a job can see the shift state. */
   onTheClock: () => boolean = () => true;
+  /** Mirrors AcceleratedJob.readyAt: the labor close waits until the job has been worked. */
+  readyAt: Date | undefined;
+  /** Virtual minutes after its first step the job must wait before the next (0: none). */
+  holdAfterFirstMinutes = 0;
 
   constructor(
     readonly label: string,
@@ -91,10 +95,14 @@ class FakeJob implements RunnableJob {
     // and may have labor entries. A fake that only produced one on completion made every
     // assertion about carried work vacuous.
     this.workorderId ??= `wo-${this.label}`;
+    this.readyAt = undefined;
     this.ranAt.push(this.clock.peek());
     this.ranOnTheClock.push(this.onTheClock());
     this.clock.advance(typeof this.stepMinutes === 'function' ? this.stepMinutes() : this.stepMinutes);
     this.advances += 1;
+    if (this.advances === 1 && this.holdAfterFirstMinutes > 0) {
+      this.readyAt = new Date(this.clock.peek().getTime() + this.holdAfterFirstMinutes * 60_000);
+    }
     if (this.advances >= this.steps) {
       this.outcome = this.finish;
       if (this.finish === 'completed') {
@@ -191,6 +199,8 @@ const harness = (options: {
   arrivals?: Arrival[];
   /** Sites the fake booking reports a booking at, one per call of onBooked (#148). */
   bookAt?: string[];
+  /** Virtual minutes each job must wait after its first step (FakeJob.holdAfterFirstMinutes). */
+  holdAfterFirstMinutes?: number;
 }): Harness => {
   const clock = fakeClock(options.startIso);
   const ledger = new ResourceLedger();
@@ -323,6 +333,7 @@ const harness = (options: {
       );
       job.onTheClock = () => shiftOpen.value;
       job.suspendFails = options.suspendFails ?? false;
+      job.holdAfterFirstMinutes = options.holdAfterFirstMinutes ?? 0;
       jobs.push(job);
       return job;
     },
@@ -1676,5 +1687,42 @@ describe('AcceleratedDayRunner — which phase may end a year', () => {
     });
 
     await expect(runner.runDay(1)).rejects.toThrow(/could not be clocked in/);
+  });
+});
+
+describe('AcceleratedDayRunner — a job not ready for its next step', () => {
+  it('waits for it inside the hours rather than ending the day', async () => {
+    // AcceleratedJob holds labor-close back until the job has booked real hours (Z13b).
+    // With nothing else runnable, the loop used to break and carry the job to tomorrow.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T07:00:00Z',
+      stepMinutes: 1,
+      jobSteps: 2,
+      jobsToday: 1,
+      concurrency: 1,
+      holdAfterFirstMinutes: 45,
+    });
+
+    const report = await runner.runDay(1, { sampled: true });
+
+    expect(report.workordersCompleted).toBe(1);
+    expect(jobs[0].ranAt[1].getTime() - jobs[0].ranAt[0].getTime()).toBeGreaterThanOrEqual(45 * 60_000);
+  });
+
+  it('does not run the step early while other work keeps the loop busy', async () => {
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T07:00:00Z',
+      stepMinutes: 5,
+      jobSteps: 2,
+      jobsToday: 3,
+      concurrency: 2,
+      holdAfterFirstMinutes: 45,
+    });
+
+    await runner.runDay(1, { sampled: true });
+
+    for (const job of jobs.filter((candidate) => candidate.ranAt.length > 1)) {
+      expect(job.ranAt[1].getTime() - job.ranAt[0].getTime()).toBeGreaterThanOrEqual(45 * 60_000);
+    }
   });
 });
