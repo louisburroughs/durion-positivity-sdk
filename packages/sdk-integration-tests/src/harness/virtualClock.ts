@@ -240,14 +240,16 @@ export class VirtualClock {
           'so the deployment has no timeline in it to drive',
       );
     }
+    // Kept apart from the problems: a shortfall on an otherwise sound reading is the
+    // timeline running out, which a run already under way reads as the end of its year.
+    let spent: string | undefined;
     if (virtualTime && isFiniteNumber(raw.scale) && raw.scale > 1) {
       const remaining = remainingVirtualDays(virtualTime, readAt, raw.scale);
       if (remaining < this.minRemainingDays) {
-        problems.push(
+        spent =
           `only ${remaining.toFixed(2)} virtual day(s) remain before the clock converges, below the ` +
-            `${this.minRemainingDays} this run needs. The timeline is nearly spent — re-dispatch the ` +
-            'accelerated stack and start a fresh journal.',
-        );
+          `${this.minRemainingDays} this run needs. The timeline is nearly spent — re-dispatch the ` +
+          'accelerated stack and start a fresh journal.';
       }
     }
     if (virtualTime && virtualStart && virtualTime.getTime() < virtualStart.getTime()) {
@@ -267,12 +269,13 @@ export class VirtualClock {
     }
 
     if (problems.length > 0) {
+      const all = spent === undefined ? problems : [...problems, spent];
       throw new Error(
-        `[accel] ${this.timeUrl} is not a usable accelerated clock:\n  - ${problems.join('\n  - ')}`,
+        `[accel] ${this.timeUrl} is not a usable accelerated clock:\n  - ${all.join('\n  - ')}`,
       );
     }
 
-    return {
+    const reading: ServerTime = {
       virtualTime: virtualTime as Date,
       scale: raw.scale as number,
       zone: raw.zone as string,
@@ -283,6 +286,10 @@ export class VirtualClock {
       readAt,
       remainingDays: remainingVirtualDays(virtualTime as Date, readAt, raw.scale as number),
     };
+    if (spent !== undefined) {
+      throw new ClockConvergedError(reading, spent);
+    }
+    return reading;
   }
 }
 

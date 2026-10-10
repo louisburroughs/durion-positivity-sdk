@@ -129,6 +129,24 @@ describe('VirtualClock', () => {
     );
   });
 
+  it('reports a spent timeline as convergence, so a run reaching it ends rather than fails', async () => {
+    // A year run reads the clock every day; its last day finds less than a day left.
+    // That is the end of the year, which the run treats as `converged`, not a fault.
+    const nearlyNow = new Date(Date.now() - 30_000).toISOString();
+    await expect(clockWith(respond(200, body({ virtualTime: nearlyNow }))).read()).rejects.toThrow(
+      ClockConvergedError,
+    );
+  });
+
+  it('keeps a spent timeline a plain fault when the reading is also broken', async () => {
+    const nearlyNow = new Date(Date.now() - 30_000).toISOString();
+    const error = await clockWith(respond(200, body({ virtualTime: nearlyNow, zone: 'nope' })))
+      .read()
+      .catch((caught: Error) => caught);
+    expect(error).not.toBeInstanceOf(ClockConvergedError);
+    expect((error as Error).message).toMatch(/zone must be an IANA zone id/);
+  });
+
   it('reports what is left rather than what was deployed', async () => {
     // The figure a run can plan against: the anchors say how long the timeline was,
     // this says how much of it survives. Derived from the reading alone, so it stays
