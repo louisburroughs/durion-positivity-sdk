@@ -32,7 +32,7 @@ export interface InventoryBulkIngestRecord {
      */
     quantity: number;
     /**
-     * Optional reason code explaining the ingest
+     * Optional reason code explaining the ingest, at most 100 characters; a longer one fails the row
      * @type {string}
      * @memberof InventoryBulkIngestRecord
      */

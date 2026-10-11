@@ -32,7 +32,7 @@ export interface OpeningStockBulkIngestRecord {
      */
     quantity: number;
     /**
-     * Ledger reason code; defaults to OPENING_BALANCE when omitted
+     * Ledger reason code, at most 100 characters (a longer one fails the row); defaults to OPENING_BALANCE when omitted
      * @type {string}
      * @memberof OpeningStockBulkIngestRecord
      */
