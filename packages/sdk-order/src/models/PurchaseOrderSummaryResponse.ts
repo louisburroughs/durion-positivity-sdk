@@ -45,7 +45,7 @@ export interface PurchaseOrderSummaryResponse {
      */
     lineCount: number;
     /**
-     * Sum of order open balances, in minor currency units
+     * Sum of order open balances (ex-tax), in minor currency units
      * @type {number}
      * @memberof PurchaseOrderSummaryResponse
      */
