@@ -38,7 +38,7 @@ export interface CreateAdjustmentRequestDto {
      */
     quantity: number;
     /**
-     * Mandatory reason code explaining the adjustment, at most 100 characters; a longer reason is refused with 400 VALIDATION_ERROR and a field error on reasonCode
+     * Mandatory reason code explaining the adjustment
      * @type {string}
      * @memberof CreateAdjustmentRequestDto
      */
