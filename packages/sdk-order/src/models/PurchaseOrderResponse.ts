@@ -87,7 +87,7 @@ export interface PurchaseOrderResponse {
      */
     lines?: Array<PurchaseOrderLineResponse>;
     /**
-     * Value of the goods still outstanding, ex-tax, in the smallest currency unit (e.g. cents): the subtotal less the value accrued by each goods receipt, floored at zero. Tax is not part of it; taxMinor and grandTotalMinor describe the document
+     * Remaining unpaid/unreceived balance in the smallest currency unit (e.g. cents)
      * @type {number}
      * @memberof PurchaseOrderResponse
      */
