@@ -18,6 +18,9 @@ import type {
   ApiError,
   AuditExportJobResponse,
   AuditExportRequest,
+  AuditExportWebhookRegistrationResponse,
+  AuditExportWebhookRequest,
+  AuditExportWebhookResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -26,6 +29,12 @@ import {
     AuditExportJobResponseToJSON,
     AuditExportRequestFromJSON,
     AuditExportRequestToJSON,
+    AuditExportWebhookRegistrationResponseFromJSON,
+    AuditExportWebhookRegistrationResponseToJSON,
+    AuditExportWebhookRequestFromJSON,
+    AuditExportWebhookRequestToJSON,
+    AuditExportWebhookResponseFromJSON,
+    AuditExportWebhookResponseToJSON,
 } from '../models/index';
 
 export interface DownloadAuditExportRequest {
@@ -36,6 +45,10 @@ export interface GetAuditExportJobRequest {
     jobId: string;
 }
 
+export interface RegisterAuditExportWebhookRequest {
+    auditExportWebhookRequest: AuditExportWebhookRequest;
+}
+
 export interface RequestAuditExportRequest {
     auditExportRequest: AuditExportRequest;
 }
@@ -44,6 +57,41 @@ export interface RequestAuditExportRequest {
  * 
  */
 export class AuditExportsApi extends runtime.BaseAPI {
+
+    /**
+     * Removes the HTTPS endpoint the caller\'s tenant receives WEBHOOK audit exports at, so no further export is sent outside the shop. Use this tool to stop webhook delivery; use registerAuditExportWebhook instead to point it elsewhere or to rotate the signing secret. Preconditions: the caller must hold security:audit_export:webhook_manage; a WEBHOOK job still being delivered is not sent once its destination is removed, and WEBHOOK requests answer 422 until another destination is registered. Required inputs: none. Emits a SECURITY_AUDIT_EXPORT_WEBHOOK_DELETE event and is idempotent, answering 204 even when nothing is registered. Returns 403 when the caller lacks the permission. 
+     * Remove the Audit Export Webhook
+     */
+    async deleteAuditExportWebhookRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/exports/webhook`,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Removes the HTTPS endpoint the caller\'s tenant receives WEBHOOK audit exports at, so no further export is sent outside the shop. Use this tool to stop webhook delivery; use registerAuditExportWebhook instead to point it elsewhere or to rotate the signing secret. Preconditions: the caller must hold security:audit_export:webhook_manage; a WEBHOOK job still being delivered is not sent once its destination is removed, and WEBHOOK requests answer 422 until another destination is registered. Required inputs: none. Emits a SECURITY_AUDIT_EXPORT_WEBHOOK_DELETE event and is idempotent, answering 204 even when nothing is registered. Returns 403 when the caller lacks the permission. 
+     * Remove the Audit Export Webhook
+     */
+    async deleteAuditExportWebhook(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteAuditExportWebhookRaw(initOverrides);
+    }
 
     /**
      * Downloads the file a COMPLETED audit export job produced, as an attachment in the job\'s format (text/csv or application/json). Use this tool after getAuditExportJob reports COMPLETED; the job\'s downloadUrl is this endpoint\'s gateway path. Preconditions: the caller must hold security:audit:export and the job must belong to the caller\'s tenant. Required inputs: jobId (UUID) as a path parameter. Emits a SECURITY_AUDIT_EXPORT_DOWNLOAD event and changes no state; CSV cells that begin with a formula character are prefixed with a single quote so spreadsheets do not evaluate them. Returns 409 AUDIT_EXPORT_NOT_READY while the job is PENDING, IN_PROGRESS or FAILED, and 404 when the job id is unknown to the caller\'s tenant or the job was purged after the retention period. 
@@ -89,7 +137,7 @@ export class AuditExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current status of an audit export job of the caller\'s tenant (PENDING, IN_PROGRESS, COMPLETED or FAILED) with its completion time, row count, download URL and error message when present. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while the job is still PENDING or IN_PROGRESS. Preconditions: the caller must hold security:audit:export, and the job must belong to the caller\'s tenant, since another tenant\'s job id answers 404. Required inputs: jobId (UUID) as a path parameter. This is a read-only status projection that emits no events; a job interrupted by a service restart is moved to FAILED by a scheduled sweep once the configured timeout passes, so a poll never waits forever. Returns 404 when the job id is unknown to the caller\'s tenant or the job was purged after the configured retention period (seven days by default). 
+     * Returns the current status of an audit export job of the caller\'s tenant (PENDING, IN_PROGRESS, COMPLETED or FAILED) with its completion time, row count, download URL and error message when present, and for a WEBHOOK job its destination and delivery outcome. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while the job is still PENDING or IN_PROGRESS. Preconditions: the caller must hold security:audit:export, and the job must belong to the caller\'s tenant, since another tenant\'s job id answers 404. Required inputs: jobId (UUID) as a path parameter. This is a read-only status projection that emits no events; a job interrupted by a service restart is moved to FAILED by a scheduled sweep once the configured timeout passes, so a poll never waits forever. Returns 404 when the job id is unknown to the caller\'s tenant or the job was purged after the configured retention period (seven days by default). 
      * Get Audit Export Job Status
      */
     async getAuditExportJobRaw(requestParameters: GetAuditExportJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditExportJobResponse>> {
@@ -123,7 +171,7 @@ export class AuditExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current status of an audit export job of the caller\'s tenant (PENDING, IN_PROGRESS, COMPLETED or FAILED) with its completion time, row count, download URL and error message when present. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while the job is still PENDING or IN_PROGRESS. Preconditions: the caller must hold security:audit:export, and the job must belong to the caller\'s tenant, since another tenant\'s job id answers 404. Required inputs: jobId (UUID) as a path parameter. This is a read-only status projection that emits no events; a job interrupted by a service restart is moved to FAILED by a scheduled sweep once the configured timeout passes, so a poll never waits forever. Returns 404 when the job id is unknown to the caller\'s tenant or the job was purged after the configured retention period (seven days by default). 
+     * Returns the current status of an audit export job of the caller\'s tenant (PENDING, IN_PROGRESS, COMPLETED or FAILED) with its completion time, row count, download URL and error message when present, and for a WEBHOOK job its destination and delivery outcome. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while the job is still PENDING or IN_PROGRESS. Preconditions: the caller must hold security:audit:export, and the job must belong to the caller\'s tenant, since another tenant\'s job id answers 404. Required inputs: jobId (UUID) as a path parameter. This is a read-only status projection that emits no events; a job interrupted by a service restart is moved to FAILED by a scheduled sweep once the configured timeout passes, so a poll never waits forever. Returns 404 when the job id is unknown to the caller\'s tenant or the job was purged after the configured retention period (seven days by default). 
      * Get Audit Export Job Status
      */
     async getAuditExportJob(requestParameters: GetAuditExportJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditExportJobResponse> {
@@ -132,7 +180,89 @@ export class AuditExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits an asynchronous audit export job for the caller\'s tenant and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are persisted per tenant, run in the background once the request commits, and are deleted with their file after the configured retention period. Required inputs: format (CSV or JSON) and deliveryMode, which must be DOWNLOAD; filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; poll getAuditExportJob until the job is COMPLETED, then fetch its downloadUrl with downloadAuditExport, or FAILED, where errorMessage says why (for example more matching events than the configured row limit). Returns 400 when format or deliveryMode is missing or invalid or fromDate is not before toDate, and 400 AUDIT_EXPORT_WEBHOOK_UNSUPPORTED for WEBHOOK delivery, which has no configured destination yet. 
+     * Returns the HTTPS endpoint the caller\'s tenant receives WEBHOOK audit exports at, with when and by whom it was registered, and never its signing secret. Use this tool to see where a WEBHOOK export would send audit data, and to name that destination to the user before requesting one; do not use it to change the destination, which is registerAuditExportWebhook. Preconditions: the caller must hold security:audit_export:webhook_manage or security:audit:export. Required inputs: none. This is a read-only lookup and no events are emitted. Returns 404 AUDIT_EXPORT_WEBHOOK_NOT_REGISTERED when the tenant has no destination, in which case a WEBHOOK export is refused. 
+     * Get the Audit Export Webhook
+     */
+    async getAuditExportWebhookRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditExportWebhookResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/exports/webhook`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuditExportWebhookResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the HTTPS endpoint the caller\'s tenant receives WEBHOOK audit exports at, with when and by whom it was registered, and never its signing secret. Use this tool to see where a WEBHOOK export would send audit data, and to name that destination to the user before requesting one; do not use it to change the destination, which is registerAuditExportWebhook. Preconditions: the caller must hold security:audit_export:webhook_manage or security:audit:export. Required inputs: none. This is a read-only lookup and no events are emitted. Returns 404 AUDIT_EXPORT_WEBHOOK_NOT_REGISTERED when the tenant has no destination, in which case a WEBHOOK export is refused. 
+     * Get the Audit Export Webhook
+     */
+    async getAuditExportWebhook(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditExportWebhookResponse> {
+        const response = await this.getAuditExportWebhookRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Registers the HTTPS endpoint the caller\'s tenant receives WEBHOOK audit exports at, replacing any earlier one, and returns it with a newly issued signing secret. Use this tool to set or rotate where audit exports are delivered; do not use it to export anything, which is requestAuditExport with deliveryMode WEBHOOK. Preconditions: the caller must hold security:audit_export:webhook_manage; the url must be an absolute https URL with a DNS host name, no user info and no fragment, at most 2048 characters, and its host must resolve only to publicly routable addresses (never loopback, private, link-local, carrier-grade NAT, multicast, reserved or cloud metadata). Required inputs: url in the request body. Emits a SECURITY_AUDIT_EXPORT_WEBHOOK_REGISTER event; signingSecret appears only in this response, every earlier secret stops working, and each delivery carries X-Audit-Export-Signature, sha256= followed by the hex HMAC-SHA256 of the X-Audit-Export-Timestamp value, a dot and the body, keyed with that secret. Returns 400 VALIDATION_ERROR with one fieldErrors entry on url per broken rule, and 403 without the permission. 
+     * Register the Audit Export Webhook
+     */
+    async registerAuditExportWebhookRaw(requestParameters: RegisterAuditExportWebhookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditExportWebhookRegistrationResponse>> {
+        if (requestParameters['auditExportWebhookRequest'] == null) {
+            throw new runtime.RequiredError(
+                'auditExportWebhookRequest',
+                'Required parameter "auditExportWebhookRequest" was null or undefined when calling registerAuditExportWebhook().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/exports/webhook`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AuditExportWebhookRequestToJSON(requestParameters['auditExportWebhookRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuditExportWebhookRegistrationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Registers the HTTPS endpoint the caller\'s tenant receives WEBHOOK audit exports at, replacing any earlier one, and returns it with a newly issued signing secret. Use this tool to set or rotate where audit exports are delivered; do not use it to export anything, which is requestAuditExport with deliveryMode WEBHOOK. Preconditions: the caller must hold security:audit_export:webhook_manage; the url must be an absolute https URL with a DNS host name, no user info and no fragment, at most 2048 characters, and its host must resolve only to publicly routable addresses (never loopback, private, link-local, carrier-grade NAT, multicast, reserved or cloud metadata). Required inputs: url in the request body. Emits a SECURITY_AUDIT_EXPORT_WEBHOOK_REGISTER event; signingSecret appears only in this response, every earlier secret stops working, and each delivery carries X-Audit-Export-Signature, sha256= followed by the hex HMAC-SHA256 of the X-Audit-Export-Timestamp value, a dot and the body, keyed with that secret. Returns 400 VALIDATION_ERROR with one fieldErrors entry on url per broken rule, and 403 without the permission. 
+     * Register the Audit Export Webhook
+     */
+    async registerAuditExportWebhook(requestParameters: RegisterAuditExportWebhookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditExportWebhookRegistrationResponse> {
+        const response = await this.registerAuditExportWebhookRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Submits an asynchronous audit export job for the caller\'s tenant and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are persisted per tenant, run in the background once the request commits, and are deleted with their file after the configured retention period; deliveryMode WEBHOOK also sends the signed file outside the shop to the tenant\'s registered webhook (read it with getAuditExportWebhook and confirm that destination with the user first). Required inputs: format (CSV or JSON) and deliveryMode (DOWNLOAD or WEBHOOK); filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; poll getAuditExportJob until the job is COMPLETED, then fetch its downloadUrl with downloadAuditExport, or FAILED, where errorMessage says why (for example more matching events than the configured row limit, or a webhook that never answered 2xx within the configured attempts). Returns 400 when format or deliveryMode is missing or invalid or fromDate is not before toDate, and 422 AUDIT_EXPORT_WEBHOOK_NOT_REGISTERED for WEBHOOK delivery when the tenant has no registered webhook, in which case no job is created. 
      * Request an Asynchronous Audit Export
      */
     async requestAuditExportRaw(requestParameters: RequestAuditExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditExportJobResponse>> {
@@ -169,7 +299,7 @@ export class AuditExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits an asynchronous audit export job for the caller\'s tenant and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are persisted per tenant, run in the background once the request commits, and are deleted with their file after the configured retention period. Required inputs: format (CSV or JSON) and deliveryMode, which must be DOWNLOAD; filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; poll getAuditExportJob until the job is COMPLETED, then fetch its downloadUrl with downloadAuditExport, or FAILED, where errorMessage says why (for example more matching events than the configured row limit). Returns 400 when format or deliveryMode is missing or invalid or fromDate is not before toDate, and 400 AUDIT_EXPORT_WEBHOOK_UNSUPPORTED for WEBHOOK delivery, which has no configured destination yet. 
+     * Submits an asynchronous audit export job for the caller\'s tenant and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are persisted per tenant, run in the background once the request commits, and are deleted with their file after the configured retention period; deliveryMode WEBHOOK also sends the signed file outside the shop to the tenant\'s registered webhook (read it with getAuditExportWebhook and confirm that destination with the user first). Required inputs: format (CSV or JSON) and deliveryMode (DOWNLOAD or WEBHOOK); filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; poll getAuditExportJob until the job is COMPLETED, then fetch its downloadUrl with downloadAuditExport, or FAILED, where errorMessage says why (for example more matching events than the configured row limit, or a webhook that never answered 2xx within the configured attempts). Returns 400 when format or deliveryMode is missing or invalid or fromDate is not before toDate, and 422 AUDIT_EXPORT_WEBHOOK_NOT_REGISTERED for WEBHOOK delivery when the tenant has no registered webhook, in which case no job is created. 
      * Request an Asynchronous Audit Export
      */
     async requestAuditExport(requestParameters: RequestAuditExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditExportJobResponse> {
