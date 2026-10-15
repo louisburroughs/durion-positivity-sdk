@@ -26,6 +26,12 @@ export interface Change {
      */
     actor?: string;
     /**
+     * The actor's display name, "First Last", name only; null when it can't be resolved. Never the username (#2608, ADR-0064)
+     * @type {string}
+     * @memberof Change
+     */
+    actorName?: string;
+    /**
      * When
      * @type {Date}
      * @memberof Change
@@ -75,6 +81,7 @@ export function ChangeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Ch
     return {
         
         'actor': json['actor'] == null ? undefined : json['actor'],
+        'actorName': json['actorName'] == null ? undefined : json['actorName'],
         'changedAt': json['changedAt'] == null ? undefined : (new Date(json['changedAt'])),
         'justification': json['justification'] == null ? undefined : json['justification'],
         'newValue': json['newValue'] == null ? undefined : json['newValue'],
@@ -90,6 +97,7 @@ export function ChangeToJSON(value?: Change | null): any {
     return {
         
         'actor': value['actor'],
+        'actorName': value['actorName'],
         'changedAt': value['changedAt'] == null ? undefined : ((value['changedAt']).toISOString()),
         'justification': value['justification'],
         'newValue': value['newValue'],
