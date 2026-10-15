@@ -39,6 +39,12 @@ export interface CashMovementResponse {
      */
     approvedBy?: string;
     /**
+     * The approving manager's display name, "First Last", name only; null when the movement needed no approval, was approved before approver names were kept, or the name can't be resolved. Never the sign-in name (#2608, ADR-0064)
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    approvedByName?: string;
+    /**
      * Deposit bag, for BANK_DROP
      * @type {string}
      * @memberof CashMovementResponse
@@ -104,6 +110,12 @@ export interface CashMovementResponse {
      * @memberof CashMovementResponse
      */
     receiptReference?: string;
+    /**
+     * The cashier's display name, "First Last", name only; null when it can't be resolved. Never the sign-in name (#2608, ADR-0064)
+     * @type {string}
+     * @memberof CashMovementResponse
+     */
+    recordedByName?: string;
     /**
      * The register's idempotency key; null on a movement recorded before the fixed reasons
      * @type {string}
@@ -202,6 +214,7 @@ export function CashMovementResponseFromJSONTyped(json: any, ignoreDiscriminator
         
         'amount': json['amount'] == null ? undefined : json['amount'],
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'approvedByName': json['approvedByName'] == null ? undefined : json['approvedByName'],
         'bagNumber': json['bagNumber'] == null ? undefined : json['bagNumber'],
         'categoryCode': json['categoryCode'] == null ? undefined : json['categoryCode'],
         'clerkId': json['clerkId'] == null ? undefined : json['clerkId'],
@@ -213,6 +226,7 @@ export function CashMovementResponseFromJSONTyped(json: any, ignoreDiscriminator
         'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
         'reason': json['reason'] == null ? undefined : json['reason'],
         'receiptReference': json['receiptReference'] == null ? undefined : json['receiptReference'],
+        'recordedByName': json['recordedByName'] == null ? undefined : json['recordedByName'],
         'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
         'statedTaxes': json['statedTaxes'] == null ? undefined : ((json['statedTaxes'] as Array<any>).map(CashMovementStatedTaxFromJSON)),
@@ -232,6 +246,7 @@ export function CashMovementResponseToJSON(value?: CashMovementResponse | null):
         
         'amount': value['amount'],
         'approvedBy': value['approvedBy'],
+        'approvedByName': value['approvedByName'],
         'bagNumber': value['bagNumber'],
         'categoryCode': value['categoryCode'],
         'clerkId': value['clerkId'],
@@ -243,6 +258,7 @@ export function CashMovementResponseToJSON(value?: CashMovementResponse | null):
         'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
         'reason': value['reason'],
         'receiptReference': value['receiptReference'],
+        'recordedByName': value['recordedByName'],
         'requestId': value['requestId'],
         'sessionId': value['sessionId'],
         'statedTaxes': value['statedTaxes'] == null ? undefined : ((value['statedTaxes'] as Array<any>).map(CashMovementStatedTaxToJSON)),

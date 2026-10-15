@@ -32,6 +32,12 @@ export interface RegisterSessionResponse {
      */
     closedByClerkId?: string;
     /**
+     * The closer's display name, "First Last", name only; null until the session is closed or when it can't be resolved. Never the username (#2608, ADR-0064)
+     * @type {string}
+     * @memberof RegisterSessionResponse
+     */
+    closedByName?: string;
+    /**
      * 
      * @type {Date}
      * @memberof RegisterSessionResponse
@@ -67,6 +73,12 @@ export interface RegisterSessionResponse {
      * @memberof RegisterSessionResponse
      */
     openedByClerkId?: string;
+    /**
+     * The opener's display name, "First Last", name only; null when it can't be resolved. Never the username (#2608, ADR-0064)
+     * @type {string}
+     * @memberof RegisterSessionResponse
+     */
+    openedByName?: string;
     /**
      * 
      * @type {number}
@@ -130,12 +142,14 @@ export function RegisterSessionResponseFromJSONTyped(json: any, ignoreDiscrimina
         
         'closedAt': json['closedAt'] == null ? undefined : (new Date(json['closedAt'])),
         'closedByClerkId': json['closedByClerkId'] == null ? undefined : json['closedByClerkId'],
+        'closedByName': json['closedByName'] == null ? undefined : json['closedByName'],
         'closingStartedAt': json['closingStartedAt'] == null ? undefined : (new Date(json['closingStartedAt'])),
         'countedCash': json['countedCash'] == null ? undefined : json['countedCash'],
         'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'openedAt': json['openedAt'] == null ? undefined : (new Date(json['openedAt'])),
         'openedByClerkId': json['openedByClerkId'] == null ? undefined : json['openedByClerkId'],
+        'openedByName': json['openedByName'] == null ? undefined : json['openedByName'],
         'openingFloat': json['openingFloat'] == null ? undefined : json['openingFloat'],
         'overShort': json['overShort'] == null ? undefined : json['overShort'],
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
@@ -154,12 +168,14 @@ export function RegisterSessionResponseToJSON(value?: RegisterSessionResponse | 
         
         'closedAt': value['closedAt'] == null ? undefined : ((value['closedAt']).toISOString()),
         'closedByClerkId': value['closedByClerkId'],
+        'closedByName': value['closedByName'],
         'closingStartedAt': value['closingStartedAt'] == null ? undefined : ((value['closingStartedAt']).toISOString()),
         'countedCash': value['countedCash'],
         'currencyCode': value['currencyCode'],
         'locationId': value['locationId'],
         'openedAt': value['openedAt'] == null ? undefined : ((value['openedAt']).toISOString()),
         'openedByClerkId': value['openedByClerkId'],
+        'openedByName': value['openedByName'],
         'openingFloat': value['openingFloat'],
         'overShort': value['overShort'],
         'sessionId': value['sessionId'],
