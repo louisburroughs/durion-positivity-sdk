@@ -27,6 +27,12 @@ import {
  */
 export interface UnappliedPaymentRow {
     /**
+     * Why automatic application did not apply the payment when it settled: the reason on its newest automatic-application record. NOT_POSTABLE is a skip (a method other than CASH or CARD, another customer's invoice, or an invoice already paid); INVOICE_NOT_FOUND, INVOICE_NOT_ELIGIBLE, PERIOD_CLOSED and ACCOUNTING_TIME_ZONE_UNSET are holds that are retried or reprocessed. Null when the payment has no such record or the record was later processed
+     * @type {string}
+     * @memberof UnappliedPaymentRow
+     */
+    autoApplicationReason?: UnappliedPaymentRowAutoApplicationReasonEnum;
+    /**
      * Payment currency (ISO 4217)
      * @type {string}
      * @memberof UnappliedPaymentRow
@@ -63,6 +69,12 @@ export interface UnappliedPaymentRow {
      */
     paymentMethod?: string;
     /**
+     * True only when the invoice the payment was taken against is already paid (sourceInvoiceState PAID) and this payment applied nothing to it that is still in force: the payment is possibly a duplicate. False for every other state, and for a payment that itself paid the invoice, in full or in part, and has a remainder waiting
+     * @type {boolean}
+     * @memberof UnappliedPaymentRow
+     */
+    possibleDuplicate: boolean;
+    /**
      * When the payment cleared
      * @type {Date}
      * @memberof UnappliedPaymentRow
@@ -80,6 +92,12 @@ export interface UnappliedPaymentRow {
      * @memberof UnappliedPaymentRow
      */
     sourceInvoiceNumber?: string;
+    /**
+     * State of the invoice the payment was taken against, by the rule automatic application decides with: OPEN (it has an open balance this payment can pay), PAID (no open balance is left; it may have been paid by this payment, see possibleDuplicate), NOT_FOUND (not in accounting's invoice replica yet), NOT_ELIGIBLE (not FINALIZED or POSTED, so it cannot take a payment), OTHER_CUSTOMER (its customer is missing or is not the payment's); null when the payment names no invoice
+     * @type {string}
+     * @memberof UnappliedPaymentRow
+     */
+    sourceInvoiceState?: UnappliedPaymentRowSourceInvoiceStateEnum;
     /**
      * 
      * @type {PaymentMatchSuggestion}
@@ -101,12 +119,37 @@ export interface UnappliedPaymentRow {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum UnappliedPaymentRowAutoApplicationReasonEnum {
+    NotPostable = 'NOT_POSTABLE',
+    InvoiceNotFound = 'INVOICE_NOT_FOUND',
+    InvoiceNotEligible = 'INVOICE_NOT_ELIGIBLE',
+    PeriodClosed = 'PERIOD_CLOSED',
+    AccountingTimeZoneUnset = 'ACCOUNTING_TIME_ZONE_UNSET'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum UnappliedPaymentRowSourceInvoiceStateEnum {
+    Open = 'OPEN',
+    Paid = 'PAID',
+    NotFound = 'NOT_FOUND',
+    NotEligible = 'NOT_ELIGIBLE',
+    OtherCustomer = 'OTHER_CUSTOMER'
+}
+
+
+/**
  * Check if a given object implements the UnappliedPaymentRow interface.
  */
 export function instanceOfUnappliedPaymentRow(value: object): boolean {
     if (!('currency' in value)) return false;
     if (!('customerId' in value)) return false;
     if (!('paymentId' in value)) return false;
+    if (!('possibleDuplicate' in value)) return false;
     if (!('receivedAt' in value)) return false;
     if (!('suggestion' in value)) return false;
     if (!('totalAmount' in value)) return false;
@@ -124,15 +167,18 @@ export function UnappliedPaymentRowFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'autoApplicationReason': json['autoApplicationReason'] == null ? undefined : json['autoApplicationReason'],
         'currency': json['currency'],
         'customerDisplayName': json['customerDisplayName'] == null ? undefined : json['customerDisplayName'],
         'customerId': json['customerId'],
         'customerReference': json['customerReference'] == null ? undefined : json['customerReference'],
         'paymentId': json['paymentId'],
         'paymentMethod': json['paymentMethod'] == null ? undefined : json['paymentMethod'],
+        'possibleDuplicate': json['possibleDuplicate'],
         'receivedAt': (new Date(json['receivedAt'])),
         'sourceInvoiceId': json['sourceInvoiceId'] == null ? undefined : json['sourceInvoiceId'],
         'sourceInvoiceNumber': json['sourceInvoiceNumber'] == null ? undefined : json['sourceInvoiceNumber'],
+        'sourceInvoiceState': json['sourceInvoiceState'] == null ? undefined : json['sourceInvoiceState'],
         'suggestion': PaymentMatchSuggestionFromJSON(json['suggestion']),
         'totalAmount': json['totalAmount'],
         'unappliedAmount': json['unappliedAmount'],
@@ -145,15 +191,18 @@ export function UnappliedPaymentRowToJSON(value?: UnappliedPaymentRow | null): a
     }
     return {
         
+        'autoApplicationReason': value['autoApplicationReason'],
         'currency': value['currency'],
         'customerDisplayName': value['customerDisplayName'],
         'customerId': value['customerId'],
         'customerReference': value['customerReference'],
         'paymentId': value['paymentId'],
         'paymentMethod': value['paymentMethod'],
+        'possibleDuplicate': value['possibleDuplicate'],
         'receivedAt': ((value['receivedAt']).toISOString()),
         'sourceInvoiceId': value['sourceInvoiceId'],
         'sourceInvoiceNumber': value['sourceInvoiceNumber'],
+        'sourceInvoiceState': value['sourceInvoiceState'],
         'suggestion': PaymentMatchSuggestionToJSON(value['suggestion']),
         'totalAmount': value['totalAmount'],
         'unappliedAmount': value['unappliedAmount'],
