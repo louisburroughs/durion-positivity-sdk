@@ -27,7 +27,7 @@ import {
  */
 export interface AuditExportRequest {
     /**
-     * Delivery mode for the exported file; only DOWNLOAD is accepted, WEBHOOK answers 400 AUDIT_EXPORT_WEBHOOK_UNSUPPORTED until a per-tenant webhook destination exists
+     * Delivery mode for the exported file: DOWNLOAD keeps it for downloadAuditExport; WEBHOOK also sends it, signed, to the tenant's registered webhook (getAuditExportWebhook), so audit data leaves the shop, and answers 422 AUDIT_EXPORT_WEBHOOK_NOT_REGISTERED when none is registered
      * @type {string}
      * @memberof AuditExportRequest
      */

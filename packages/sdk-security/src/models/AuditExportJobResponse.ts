@@ -26,7 +26,37 @@ export interface AuditExportJobResponse {
      */
     completedAt?: Date;
     /**
-     * Gateway-relative path that downloads the export file with the same security:audit:export authority (null until COMPLETED)
+     * WEBHOOK only: when the endpoint accepted the file; null unless DELIVERED
+     * @type {Date}
+     * @memberof AuditExportJobResponse
+     */
+    deliveredAt?: Date;
+    /**
+     * WEBHOOK only: how many delivery attempts were made; null until delivery ends
+     * @type {number}
+     * @memberof AuditExportJobResponse
+     */
+    deliveryAttempts?: number;
+    /**
+     * WEBHOOK only: short reason the last attempt failed (an HTTP status such as "HTTP 503", an exception class name, DESTINATION_CHANGED or DESTINATION_REFUSED), never the endpoint's response body; null unless delivery failed
+     * @type {string}
+     * @memberof AuditExportJobResponse
+     */
+    deliveryError?: string;
+    /**
+     * How the export is delivered: DOWNLOAD (fetch downloadUrl) or WEBHOOK (sent to the tenant's registered webhook, webhookUrl)
+     * @type {string}
+     * @memberof AuditExportJobResponse
+     */
+    deliveryMode: AuditExportJobResponseDeliveryModeEnum;
+    /**
+     * WEBHOOK only: DELIVERED (an attempt answered 2xx; the job is COMPLETED) or FAILED (no attempt succeeded, or the destination changed or was refused; the job is FAILED); null for DOWNLOAD and until delivery ends
+     * @type {string}
+     * @memberof AuditExportJobResponse
+     */
+    deliveryStatus?: AuditExportJobResponseDeliveryStatusEnum;
+    /**
+     * Gateway-relative path that downloads the export file with the same security:audit:export authority (null until COMPLETED; a WEBHOOK job whose delivery failed is FAILED and keeps no file)
      * @type {string}
      * @memberof AuditExportJobResponse
      */
@@ -67,8 +97,30 @@ export interface AuditExportJobResponse {
      * @memberof AuditExportJobResponse
      */
     status: AuditExportJobResponseStatusEnum;
+    /**
+     * WEBHOOK only: the destination this job delivers to, pinned when it was requested (a later re-registration to another URL is never used for it); null for DOWNLOAD
+     * @type {string}
+     * @memberof AuditExportJobResponse
+     */
+    webhookUrl?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditExportJobResponseDeliveryModeEnum {
+    Download = 'DOWNLOAD',
+    Webhook = 'WEBHOOK'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditExportJobResponseDeliveryStatusEnum {
+    Delivered = 'DELIVERED',
+    Failed = 'FAILED'
+}
 /**
 * @export
 * @enum {string}
@@ -93,6 +145,7 @@ export enum AuditExportJobResponseStatusEnum {
  * Check if a given object implements the AuditExportJobResponse interface.
  */
 export function instanceOfAuditExportJobResponse(value: object): boolean {
+    if (!('deliveryMode' in value)) return false;
     if (!('format' in value)) return false;
     if (!('jobId' in value)) return false;
     if (!('requestedAt' in value)) return false;
@@ -111,6 +164,11 @@ export function AuditExportJobResponseFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
+        'deliveredAt': json['deliveredAt'] == null ? undefined : (new Date(json['deliveredAt'])),
+        'deliveryAttempts': json['deliveryAttempts'] == null ? undefined : json['deliveryAttempts'],
+        'deliveryError': json['deliveryError'] == null ? undefined : json['deliveryError'],
+        'deliveryMode': json['deliveryMode'],
+        'deliveryStatus': json['deliveryStatus'] == null ? undefined : json['deliveryStatus'],
         'downloadUrl': json['downloadUrl'] == null ? undefined : json['downloadUrl'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
         'format': json['format'],
@@ -118,6 +176,7 @@ export function AuditExportJobResponseFromJSONTyped(json: any, ignoreDiscriminat
         'requestedAt': (new Date(json['requestedAt'])),
         'rowCount': json['rowCount'] == null ? undefined : json['rowCount'],
         'status': json['status'],
+        'webhookUrl': json['webhookUrl'] == null ? undefined : json['webhookUrl'],
     };
 }
 
@@ -128,6 +187,11 @@ export function AuditExportJobResponseToJSON(value?: AuditExportJobResponse | nu
     return {
         
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
+        'deliveredAt': value['deliveredAt'] == null ? undefined : ((value['deliveredAt']).toISOString()),
+        'deliveryAttempts': value['deliveryAttempts'],
+        'deliveryError': value['deliveryError'],
+        'deliveryMode': value['deliveryMode'],
+        'deliveryStatus': value['deliveryStatus'],
         'downloadUrl': value['downloadUrl'],
         'errorMessage': value['errorMessage'],
         'format': value['format'],
@@ -135,6 +199,7 @@ export function AuditExportJobResponseToJSON(value?: AuditExportJobResponse | nu
         'requestedAt': ((value['requestedAt']).toISOString()),
         'rowCount': value['rowCount'],
         'status': value['status'],
+        'webhookUrl': value['webhookUrl'],
     };
 }
 
