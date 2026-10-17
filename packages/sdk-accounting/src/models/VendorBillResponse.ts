@@ -85,6 +85,12 @@ import {
     VendorBillTaxOnResaleOverrideFromJSONTyped,
     VendorBillTaxOnResaleOverrideToJSON,
 } from './VendorBillTaxOnResaleOverride';
+import type { VendorBillTaxTypeChoice } from './VendorBillTaxTypeChoice';
+import {
+    VendorBillTaxTypeChoiceFromJSON,
+    VendorBillTaxTypeChoiceFromJSONTyped,
+    VendorBillTaxTypeChoiceToJSON,
+} from './VendorBillTaxTypeChoice';
 
 /**
  * Vendor bill details
@@ -267,6 +273,12 @@ export interface VendorBillResponse {
      */
     taxOnResaleOverride?: VendorBillTaxOnResaleOverride;
     /**
+     * The tax types the approver may split the stated tax into (CAP:550 #2679, AW51): those of the regimes whose recovery is on as of the date the approval would post on, for the bill's tax country, with their labels. Filled only while the bill is approvable (AWAITING_APPROVAL or MATCH_EXCEPTION) and states tax; otherwise empty, which includes a tenant without recovery. Null when recovery cannot be read now (the tax service did not answer): unknown, not empty. A guide for the client only; approve and ACCEPT validate taxByType[] as before
+     * @type {Array<VendorBillTaxTypeChoice>}
+     * @memberof VendorBillResponse
+     */
+    taxTypeChoices?: Array<VendorBillTaxTypeChoice>;
+    /**
      * Total bill amount
      * @type {number}
      * @memberof VendorBillResponse
@@ -375,6 +387,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
         'taxByType': ((json['taxByType'] as Array<any>).map(VendorBillTaxByTypeFromJSON)),
         'taxOnResaleOverride': json['taxOnResaleOverride'] == null ? undefined : VendorBillTaxOnResaleOverrideFromJSON(json['taxOnResaleOverride']),
+        'taxTypeChoices': json['taxTypeChoices'] == null ? undefined : ((json['taxTypeChoices'] as Array<any>).map(VendorBillTaxTypeChoiceFromJSON)),
         'totalAmount': json['totalAmount'],
         'vendorBillId': json['vendorBillId'],
         'vendorId': json['vendorId'],
@@ -417,6 +430,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'taxAmount': value['taxAmount'],
         'taxByType': ((value['taxByType'] as Array<any>).map(VendorBillTaxByTypeToJSON)),
         'taxOnResaleOverride': VendorBillTaxOnResaleOverrideToJSON(value['taxOnResaleOverride']),
+        'taxTypeChoices': value['taxTypeChoices'] == null ? undefined : ((value['taxTypeChoices'] as Array<any>).map(VendorBillTaxTypeChoiceToJSON)),
         'totalAmount': value['totalAmount'],
         'vendorBillId': value['vendorBillId'],
         'vendorId': value['vendorId'],

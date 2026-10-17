@@ -20,6 +20,18 @@ import { mapValues } from '../runtime';
  */
 export interface APPaymentGLPostingRetryRequest {
     /**
+     * When the payment's own date is now hard-locked (glPostError PERIOD_HARD_LOCKED), post the entry on today's business date instead (#2729, AW42: never back into the original period); the entry's description carries the original payment date and the payment records postingDateRule DEFERRED_PAST_HARD_LOCK. Needs justification. Default false
+     * @type {boolean}
+     * @memberof APPaymentGLPostingRetryRequest
+     */
+    deferPastHardLock?: boolean;
+    /**
+     * Why the posting is deferred past the hard lock; required with deferPastHardLock, audited under the caller
+     * @type {string}
+     * @memberof APPaymentGLPostingRetryRequest
+     */
+    justification?: string;
+    /**
      * Justification for posting into the CLOSED period of the payment's own date; honoured only with the caller's accounting:period:override, and audited under the caller. A retry never reuses the override the payer gave on the pay command. Never bypasses the hard lock.
      * @type {string}
      * @memberof APPaymentGLPostingRetryRequest
@@ -44,6 +56,8 @@ export function APPaymentGLPostingRetryRequestFromJSONTyped(json: any, ignoreDis
     }
     return {
         
+        'deferPastHardLock': json['deferPastHardLock'] == null ? undefined : json['deferPastHardLock'],
+        'justification': json['justification'] == null ? undefined : json['justification'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
     };
 }
@@ -54,6 +68,8 @@ export function APPaymentGLPostingRetryRequestToJSON(value?: APPaymentGLPostingR
     }
     return {
         
+        'deferPastHardLock': value['deferPastHardLock'],
+        'justification': value['justification'],
         'overrideJustification': value['overrideJustification'],
     };
 }

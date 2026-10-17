@@ -26,6 +26,7 @@ import type {
   TaxProviderTransactionResult,
   TaxPurchaseRulesResponse,
   TaxRateLookupResponse,
+  TaxRegistrationSchemesResponse,
   TaxTypesResponse,
 } from '../models/index';
 import {
@@ -51,6 +52,8 @@ import {
     TaxPurchaseRulesResponseToJSON,
     TaxRateLookupResponseFromJSON,
     TaxRateLookupResponseToJSON,
+    TaxRegistrationSchemesResponseFromJSON,
+    TaxRegistrationSchemesResponseToJSON,
     TaxTypesResponseFromJSON,
     TaxTypesResponseToJSON,
 } from '../models/index';
@@ -88,6 +91,10 @@ export interface GetTaxRatesRequest {
     regionCode?: string;
     city?: string;
     asOf?: Date;
+}
+
+export interface GetTaxRegistrationSchemesRequest {
+    countryCode?: string;
 }
 
 export interface GetTaxTypesRequest {
@@ -458,6 +465,46 @@ export class TaxApi extends runtime.BaseAPI {
      */
     async getTaxRates(requestParameters: GetTaxRatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRateLookupResponse> {
         const response = await this.getTaxRatesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the closed vocabulary of tax-registration schemes: per country, each scheme\'s code, label, holder type (BUSINESS or PERSON) and whether a registration under it belongs to one region, with the allowed regions. Codes are unique across countries, so a code alone identifies a scheme. Use this tool when pos-supplier validates a vendor\'s tax registrations at entry or offers the scheme picker of the vendor form; do not use it to read tax rates, evidence rules or information-return forms, which are getTaxRates, getTaxEvidenceRules and getTaxInformationReturnForms instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-supplier with the service authority, never through pos-api-gateway. Required inputs: none; countryCode, two upper-case letters, narrows the answer to one country. No events are emitted, no state changes and no tenant data is read; every value is configuration held for expert advice, so source is always STUB. Returns 200 with an empty list for a well-formed country without a configured scheme, and 400 VALIDATION_ERROR when countryCode is malformed. 
+     * List the tax-registration schemes, per country
+     */
+    async getTaxRegistrationSchemesRaw(requestParameters: GetTaxRegistrationSchemesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRegistrationSchemesResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:rates:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/registration-schemes`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxRegistrationSchemesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the closed vocabulary of tax-registration schemes: per country, each scheme\'s code, label, holder type (BUSINESS or PERSON) and whether a registration under it belongs to one region, with the allowed regions. Codes are unique across countries, so a code alone identifies a scheme. Use this tool when pos-supplier validates a vendor\'s tax registrations at entry or offers the scheme picker of the vendor form; do not use it to read tax rates, evidence rules or information-return forms, which are getTaxRates, getTaxEvidenceRules and getTaxInformationReturnForms instead. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014), reached by direct in-cluster calls from pos-supplier with the service authority, never through pos-api-gateway. Required inputs: none; countryCode, two upper-case letters, narrows the answer to one country. No events are emitted, no state changes and no tenant data is read; every value is configuration held for expert advice, so source is always STUB. Returns 200 with an empty list for a well-formed country without a configured scheme, and 400 VALIDATION_ERROR when countryCode is malformed. 
+     * List the tax-registration schemes, per country
+     */
+    async getTaxRegistrationSchemes(requestParameters: GetTaxRegistrationSchemesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegistrationSchemesResponse> {
+        const response = await this.getTaxRegistrationSchemesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

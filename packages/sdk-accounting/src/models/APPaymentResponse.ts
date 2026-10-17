@@ -39,6 +39,12 @@ export interface APPaymentResponse {
      */
     bankAccountId?: string;
     /**
+     * For a CASH payment: the VENDOR_COD drawer movement it came from (S17)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    cashMovementId?: string;
+    /**
      * Payment created timestamp
      * @type {Date}
      * @memberof APPaymentResponse
@@ -117,11 +123,83 @@ export interface APPaymentResponse {
      */
     paymentId?: string;
     /**
+     * How the vendor was paid; CASH is a drawer cash-on-delivery payment (S17)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    paymentMethod?: APPaymentResponsePaymentMethodEnum;
+    /**
      * Payment reference (idempotency key)
      * @type {string}
      * @memberof APPaymentResponse
      */
     paymentRef?: string;
+    /**
+     * DEFERRED_PAST_HARD_LOCK when the entry was dated the retry's business date because the payment's own date is hard-locked (#2729); null otherwise
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    postingDateRule?: string;
+    /**
+     * For a CASH payment: the register session whose close created it (S17)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    registerSessionId?: string;
+    /**
+     * The date the mirror entry is (or will be) posted on
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    returnDate?: Date;
+    /**
+     * RETURN_DATE (the failure date's period was open) or DETECTION_DATE (it was closed, so the mirror is dated when the return was detected)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    returnDateRule?: string;
+    /**
+     * The gateway's or bank's return code (never free text)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    returnFailureCode?: string;
+    /**
+     * The mirror entry: the reversal of the payment's own journal entry
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    returnJournalEntryId?: string;
+    /**
+     * The return date the bank or the gateway reported, as attested (kept whatever dates the mirror)
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    returnReportedDate?: Date;
+    /**
+     * When the return was recorded
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    returnedAt?: Date;
+    /**
+     * When the gateway answered SUCCEEDED
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    settledAt?: Date;
+    /**
+     * When the settlement job last re-read the gateway
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    settlementCheckedAt?: Date;
+    /**
+     * Whether the gateway settled the charge (#2642): IN_FLIGHT (accepted PENDING, re-read by the settlement job), SETTLED, RETURNED; absent on CASH payments and rows older than the field
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    settlementStatus?: APPaymentResponseSettlementStatusEnum;
     /**
      * Payment status
      * @type {string}
@@ -146,8 +224,47 @@ export interface APPaymentResponse {
      * @memberof APPaymentResponse
      */
     vendorName?: string;
+    /**
+     * Why a VOIDED payment was voided (#2729)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    voidReason?: string;
+    /**
+     * When the payment was voided
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    voidedAt?: Date;
+    /**
+     * Who voided the payment
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    voidedBy?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum APPaymentResponsePaymentMethodEnum {
+    Ach = 'ACH',
+    Check = 'CHECK',
+    Wire = 'WIRE',
+    CreditCard = 'CREDIT_CARD',
+    Cash = 'CASH',
+    Other = 'OTHER'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum APPaymentResponseSettlementStatusEnum {
+    InFlight = 'IN_FLIGHT',
+    Settled = 'SETTLED',
+    Returned = 'RETURNED'
+}
 /**
 * @export
 * @enum {string}
@@ -159,7 +276,10 @@ export enum APPaymentResponseStatusEnum {
     GatewaySucceeded = 'GATEWAY_SUCCEEDED',
     GlPostPending = 'GL_POST_PENDING',
     GlPosted = 'GL_POSTED',
-    GlPostFailed = 'GL_POST_FAILED'
+    GlPostFailed = 'GL_POST_FAILED',
+    Voided = 'VOIDED',
+    ReturnPending = 'RETURN_PENDING',
+    Returned = 'RETURNED'
 }
 
 
@@ -182,6 +302,7 @@ export function APPaymentResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'allocations': json['allocations'] == null ? undefined : ((json['allocations'] as Array<any>).map(AllocationLineResponseFromJSON)),
         'bankAccountId': json['bankAccountId'] == null ? undefined : json['bankAccountId'],
+        'cashMovementId': json['cashMovementId'] == null ? undefined : json['cashMovementId'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'currency': json['currency'] == null ? undefined : json['currency'],
@@ -195,11 +316,26 @@ export function APPaymentResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         'memo': json['memo'] == null ? undefined : json['memo'],
         'paymentDate': json['paymentDate'] == null ? undefined : (new Date(json['paymentDate'])),
         'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
+        'paymentMethod': json['paymentMethod'] == null ? undefined : json['paymentMethod'],
         'paymentRef': json['paymentRef'] == null ? undefined : json['paymentRef'],
+        'postingDateRule': json['postingDateRule'] == null ? undefined : json['postingDateRule'],
+        'registerSessionId': json['registerSessionId'] == null ? undefined : json['registerSessionId'],
+        'returnDate': json['returnDate'] == null ? undefined : (new Date(json['returnDate'])),
+        'returnDateRule': json['returnDateRule'] == null ? undefined : json['returnDateRule'],
+        'returnFailureCode': json['returnFailureCode'] == null ? undefined : json['returnFailureCode'],
+        'returnJournalEntryId': json['returnJournalEntryId'] == null ? undefined : json['returnJournalEntryId'],
+        'returnReportedDate': json['returnReportedDate'] == null ? undefined : (new Date(json['returnReportedDate'])),
+        'returnedAt': json['returnedAt'] == null ? undefined : (new Date(json['returnedAt'])),
+        'settledAt': json['settledAt'] == null ? undefined : (new Date(json['settledAt'])),
+        'settlementCheckedAt': json['settlementCheckedAt'] == null ? undefined : (new Date(json['settlementCheckedAt'])),
+        'settlementStatus': json['settlementStatus'] == null ? undefined : json['settlementStatus'],
         'status': json['status'] == null ? undefined : json['status'],
         'unappliedAmount': json['unappliedAmount'] == null ? undefined : json['unappliedAmount'],
         'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
         'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
+        'voidReason': json['voidReason'] == null ? undefined : json['voidReason'],
+        'voidedAt': json['voidedAt'] == null ? undefined : (new Date(json['voidedAt'])),
+        'voidedBy': json['voidedBy'] == null ? undefined : json['voidedBy'],
     };
 }
 
@@ -211,6 +347,7 @@ export function APPaymentResponseToJSON(value?: APPaymentResponse | null): any {
         
         'allocations': value['allocations'] == null ? undefined : ((value['allocations'] as Array<any>).map(AllocationLineResponseToJSON)),
         'bankAccountId': value['bankAccountId'],
+        'cashMovementId': value['cashMovementId'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'currency': value['currency'],
@@ -224,11 +361,26 @@ export function APPaymentResponseToJSON(value?: APPaymentResponse | null): any {
         'memo': value['memo'],
         'paymentDate': value['paymentDate'] == null ? undefined : ((value['paymentDate']).toISOString().substring(0,10)),
         'paymentId': value['paymentId'],
+        'paymentMethod': value['paymentMethod'],
         'paymentRef': value['paymentRef'],
+        'postingDateRule': value['postingDateRule'],
+        'registerSessionId': value['registerSessionId'],
+        'returnDate': value['returnDate'] == null ? undefined : ((value['returnDate']).toISOString().substring(0,10)),
+        'returnDateRule': value['returnDateRule'],
+        'returnFailureCode': value['returnFailureCode'],
+        'returnJournalEntryId': value['returnJournalEntryId'],
+        'returnReportedDate': value['returnReportedDate'] == null ? undefined : ((value['returnReportedDate']).toISOString().substring(0,10)),
+        'returnedAt': value['returnedAt'] == null ? undefined : ((value['returnedAt']).toISOString()),
+        'settledAt': value['settledAt'] == null ? undefined : ((value['settledAt']).toISOString()),
+        'settlementCheckedAt': value['settlementCheckedAt'] == null ? undefined : ((value['settlementCheckedAt']).toISOString()),
+        'settlementStatus': value['settlementStatus'],
         'status': value['status'],
         'unappliedAmount': value['unappliedAmount'],
         'vendorId': value['vendorId'],
         'vendorName': value['vendorName'],
+        'voidReason': value['voidReason'],
+        'voidedAt': value['voidedAt'] == null ? undefined : ((value['voidedAt']).toISOString()),
+        'voidedBy': value['voidedBy'],
     };
 }
 

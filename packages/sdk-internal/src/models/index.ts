@@ -31,6 +31,8 @@ export * from './TaxRateLookupResponse';
 export * from './TaxRegimeEntry';
 export * from './TaxRegistrationCreateRequest';
 export * from './TaxRegistrationResponse';
+export * from './TaxRegistrationScheme';
+export * from './TaxRegistrationSchemesResponse';
 export * from './TaxRegistrationUpdateRequest';
 export * from './TaxStatedTax';
 export * from './TaxTypeEntry';

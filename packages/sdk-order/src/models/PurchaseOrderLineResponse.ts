@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface PurchaseOrderLineResponse {
     /**
+     * Base units short-closed: the vendor will not ship them (#2635)
+     * @type {number}
+     * @memberof PurchaseOrderLineResponse
+     */
+    cancelledQuantityDecimal?: number;
+    /**
      * Effective base-per-document-unit conversion factor applied at derivation time
      * @type {number}
      * @memberof PurchaseOrderLineResponse
@@ -44,6 +50,12 @@ export interface PurchaseOrderLineResponse {
      */
     documentUom?: string;
     /**
+     * GL account the line was written with; null when none. Returned so a read, edited and revised line keeps it (#2681)
+     * @type {string}
+     * @memberof PurchaseOrderLineResponse
+     */
+    glAccountId?: string;
+    /**
      * Unique identifier of this purchase order line
      * @type {string}
      * @memberof PurchaseOrderLineResponse
@@ -62,7 +74,7 @@ export interface PurchaseOrderLineResponse {
      */
     lineTotalMinor?: number;
     /**
-     * Quantity on this line not yet received
+     * Quantity on this line the vendor still owes: ordered − received − returned − cancelled, never negative (#2635)
      * @type {number}
      * @memberof PurchaseOrderLineResponse
      */
@@ -74,11 +86,29 @@ export interface PurchaseOrderLineResponse {
      */
     quantityDecimal?: number;
     /**
+     * Base units received, net of receipt corrections and returns (#2635)
+     * @type {number}
+     * @memberof PurchaseOrderLineResponse
+     */
+    receivedQuantityDecimal?: number;
+    /**
+     * Base units returned to the vendor for credit; a reopen for replacement takes them back (#2635)
+     * @type {number}
+     * @memberof PurchaseOrderLineResponse
+     */
+    returnedQuantityDecimal?: number;
+    /**
      * Identifier of the SKU on this line
      * @type {string}
      * @memberof PurchaseOrderLineResponse
      */
     skuId?: string;
+    /**
+     * Tax code the line was written with; null when none. Returned so a read, edited and revised line keeps it (#2681)
+     * @type {string}
+     * @memberof PurchaseOrderLineResponse
+     */
+    taxCodeId?: string;
     /**
      * Tax amount for this line in the smallest currency unit (e.g. cents)
      * @type {number}
@@ -112,16 +142,21 @@ export function PurchaseOrderLineResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'cancelledQuantityDecimal': json['cancelledQuantityDecimal'] == null ? undefined : json['cancelledQuantityDecimal'],
         'conversionFactor': json['conversionFactor'] == null ? undefined : json['conversionFactor'],
         'description': json['description'] == null ? undefined : json['description'],
         'documentQuantity': json['documentQuantity'] == null ? undefined : json['documentQuantity'],
         'documentUom': json['documentUom'] == null ? undefined : json['documentUom'],
+        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
         'lineId': json['lineId'],
         'lineNumber': json['lineNumber'],
         'lineTotalMinor': json['lineTotalMinor'] == null ? undefined : json['lineTotalMinor'],
         'openQuantityDecimal': json['openQuantityDecimal'] == null ? undefined : json['openQuantityDecimal'],
         'quantityDecimal': json['quantityDecimal'] == null ? undefined : json['quantityDecimal'],
+        'receivedQuantityDecimal': json['receivedQuantityDecimal'] == null ? undefined : json['receivedQuantityDecimal'],
+        'returnedQuantityDecimal': json['returnedQuantityDecimal'] == null ? undefined : json['returnedQuantityDecimal'],
         'skuId': json['skuId'] == null ? undefined : json['skuId'],
+        'taxCodeId': json['taxCodeId'] == null ? undefined : json['taxCodeId'],
         'taxMinor': json['taxMinor'] == null ? undefined : json['taxMinor'],
         'unitCostMinor': json['unitCostMinor'] == null ? undefined : json['unitCostMinor'],
     };
@@ -133,16 +168,21 @@ export function PurchaseOrderLineResponseToJSON(value?: PurchaseOrderLineRespons
     }
     return {
         
+        'cancelledQuantityDecimal': value['cancelledQuantityDecimal'],
         'conversionFactor': value['conversionFactor'],
         'description': value['description'],
         'documentQuantity': value['documentQuantity'],
         'documentUom': value['documentUom'],
+        'glAccountId': value['glAccountId'],
         'lineId': value['lineId'],
         'lineNumber': value['lineNumber'],
         'lineTotalMinor': value['lineTotalMinor'],
         'openQuantityDecimal': value['openQuantityDecimal'],
         'quantityDecimal': value['quantityDecimal'],
+        'receivedQuantityDecimal': value['receivedQuantityDecimal'],
+        'returnedQuantityDecimal': value['returnedQuantityDecimal'],
         'skuId': value['skuId'],
+        'taxCodeId': value['taxCodeId'],
         'taxMinor': value['taxMinor'],
         'unitCostMinor': value['unitCostMinor'],
     };

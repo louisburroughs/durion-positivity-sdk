@@ -24,6 +24,7 @@ import type {
   RemitRejectionRequest,
   TaxIdRevealRequest,
   TaxIdRevealView,
+  TaxRegistrationSchemes,
   VendorCreateRequest,
   VendorFactReplayResult,
   VendorStatusChangeRequest,
@@ -49,6 +50,8 @@ import {
     TaxIdRevealRequestToJSON,
     TaxIdRevealViewFromJSON,
     TaxIdRevealViewToJSON,
+    TaxRegistrationSchemesFromJSON,
+    TaxRegistrationSchemesToJSON,
     VendorCreateRequestFromJSON,
     VendorCreateRequestToJSON,
     VendorFactReplayResultFromJSON,
@@ -89,6 +92,10 @@ export interface ListSupplierVendorTaxIdRevealsRequest {
     vendorId: string;
     page?: number;
     size?: number;
+}
+
+export interface ListSupplierVendorTaxRegistrationSchemesRequest {
+    countryCode?: string;
 }
 
 export interface ListSupplierVendorsRequest {
@@ -196,7 +203,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4). Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed, and 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use. 
+     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4), and a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes (stored as that code), with region required and listed where the scheme is regional and absent otherwise. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Send a requestId (a UUID the client mints) to make the create idempotent: a retry after a timeout or 5xx with the same requestId and the same payload answers the original 201 body and creates nothing; the same requestId with another payload is refused, so reuse a requestId only for an identical payload. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed or a registration\'s scheme or region is not listed (fieldErrors names taxRegistrations[i].scheme or .region; every violation is reported), 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use, 409 IDEMPOTENCY_CONFLICT when the requestId was used with a different payload or is in use by a concurrent create, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Create vendor
      */
     async createSupplierVendorRaw(requestParameters: CreateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -233,7 +240,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4). Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed, and 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use. 
+     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4), and a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes (stored as that code), with region required and listed where the scheme is regional and absent otherwise. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Send a requestId (a UUID the client mints) to make the create idempotent: a retry after a timeout or 5xx with the same requestId and the same payload answers the original 201 body and creates nothing; the same requestId with another payload is refused, so reuse a requestId only for an identical payload. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed or a registration\'s scheme or region is not listed (fieldErrors names taxRegistrations[i].scheme or .region; every violation is reported), 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use, 409 IDEMPOTENCY_CONFLICT when the requestId was used with a different payload or is in use by a concurrent create, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Create vendor
      */
     async createSupplierVendor(requestParameters: CreateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {
@@ -432,6 +439,46 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
      */
     async listSupplierVendorTaxIdReveals(requestParameters: ListSupplierVendorTaxIdRevealsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseTaxIdRevealRecordView> {
         const response = await this.listSupplierVendorTaxIdRevealsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns pos-tax\'s closed vocabulary of tax-registration schemes, unchanged: per country, each scheme\'s code, label, holder type (BUSINESS or PERSON) and whether a registration under it belongs to one region, with the allowed regions. Codes are unique across countries. Use this tool to fill the vendor form\'s scheme picker (and its region picker where the scheme is regional) before creating or updating a vendor\'s tax registrations; do not use it to read a vendor, which is getSupplierVendor. Preconditions: none; the list is reference configuration, not tenant data, so every holder of supplier:vendor:read may read it. People never call pos-tax directly (ADR-0071). Required inputs: none; countryCode, two upper-case letters, narrows the list to one country. Emits a SUPPLIER_VENDOR_TAX_REGISTRATION_SCHEME_LIST audit event; nothing is changed. Returns 200 with the list (source is STUB while the vocabulary is a placeholder; empty for a country without a scheme), 400 VALIDATION_ERROR for a malformed countryCode, and 503 SERVICE_UNAVAILABLE when pos-tax cannot be reached. 
+     * List the tax-registration schemes a vendor may be filed under
+     */
+    async listSupplierVendorTaxRegistrationSchemesRaw(requestParameters: ListSupplierVendorTaxRegistrationSchemesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRegistrationSchemes>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/vendors/tax-registration-schemes`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxRegistrationSchemesFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns pos-tax\'s closed vocabulary of tax-registration schemes, unchanged: per country, each scheme\'s code, label, holder type (BUSINESS or PERSON) and whether a registration under it belongs to one region, with the allowed regions. Codes are unique across countries. Use this tool to fill the vendor form\'s scheme picker (and its region picker where the scheme is regional) before creating or updating a vendor\'s tax registrations; do not use it to read a vendor, which is getSupplierVendor. Preconditions: none; the list is reference configuration, not tenant data, so every holder of supplier:vendor:read may read it. People never call pos-tax directly (ADR-0071). Required inputs: none; countryCode, two upper-case letters, narrows the list to one country. Emits a SUPPLIER_VENDOR_TAX_REGISTRATION_SCHEME_LIST audit event; nothing is changed. Returns 200 with the list (source is STUB while the vocabulary is a placeholder; empty for a country without a scheme), 400 VALIDATION_ERROR for a malformed countryCode, and 503 SERVICE_UNAVAILABLE when pos-tax cannot be reached. 
+     * List the tax-registration schemes a vendor may be filed under
+     */
+    async listSupplierVendorTaxRegistrationSchemes(requestParameters: ListSupplierVendorTaxRegistrationSchemesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegistrationSchemes> {
+        const response = await this.listSupplierVendorTaxRegistrationSchemesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -758,7 +805,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation. The vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them. Send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region), 404 SUPPLIER_VENDOR_NOT_FOUND, and 409 CONFLICT when version is stale. 
+     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation, and the vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them; send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. A registration entered or re-keyed with a number is filed under a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes, with a region exactly where the scheme is regional; a kept registration (registrationId without number) is not re-checked. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region; every scheme or region violation is reported), 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Update vendor
      */
     async updateSupplierVendorRaw(requestParameters: UpdateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -802,7 +849,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation. The vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them. Send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region), 404 SUPPLIER_VENDOR_NOT_FOUND, and 409 CONFLICT when version is stale. 
+     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation, and the vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them; send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. A registration entered or re-keyed with a number is filed under a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes, with a region exactly where the scheme is regional; a kept registration (registrationId without number) is not re-checked. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region; every scheme or region violation is reported), 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Update vendor
      */
     async updateSupplierVendor(requestParameters: UpdateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {

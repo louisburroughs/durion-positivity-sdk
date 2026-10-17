@@ -16,17 +16,25 @@
 import * as runtime from '../runtime';
 import type {
   APPaymentGLPostingRetryRequest,
+  APPaymentInFlightResponse,
   APPaymentResponse,
+  AllocateAPPaymentRequest,
   ApPayFromAccountListResponse,
   ApiError,
   ExecuteAPPaymentRequest,
   PageVendorBillSummaryResponse,
+  ReconcileAPPaymentGatewayRequest,
+  RecordAPPaymentReturnRequest,
 } from '../models/index';
 import {
     APPaymentGLPostingRetryRequestFromJSON,
     APPaymentGLPostingRetryRequestToJSON,
+    APPaymentInFlightResponseFromJSON,
+    APPaymentInFlightResponseToJSON,
     APPaymentResponseFromJSON,
     APPaymentResponseToJSON,
+    AllocateAPPaymentRequestFromJSON,
+    AllocateAPPaymentRequestToJSON,
     ApPayFromAccountListResponseFromJSON,
     ApPayFromAccountListResponseToJSON,
     ApiErrorFromJSON,
@@ -35,7 +43,16 @@ import {
     ExecuteAPPaymentRequestToJSON,
     PageVendorBillSummaryResponseFromJSON,
     PageVendorBillSummaryResponseToJSON,
+    ReconcileAPPaymentGatewayRequestFromJSON,
+    ReconcileAPPaymentGatewayRequestToJSON,
+    RecordAPPaymentReturnRequestFromJSON,
+    RecordAPPaymentReturnRequestToJSON,
 } from '../models/index';
+
+export interface AllocateApPaymentRequest {
+    paymentId: string;
+    allocateAPPaymentRequest: AllocateAPPaymentRequest;
+}
 
 export interface ExecuteApPaymentRequest {
     executeAPPaymentRequest: ExecuteAPPaymentRequest;
@@ -56,6 +73,16 @@ export interface ListApBillsRequest {
     sort?: Array<string>;
 }
 
+export interface ReconcileApPaymentGatewayRequest {
+    paymentId: string;
+    reconcileAPPaymentGatewayRequest: ReconcileAPPaymentGatewayRequest;
+}
+
+export interface RecordApPaymentReturnRequest {
+    paymentId: string;
+    recordAPPaymentReturnRequest: RecordAPPaymentReturnRequest;
+}
+
 export interface RetryApPaymentGlPostingRequest {
     paymentId: string;
     aPPaymentGLPostingRetryRequest?: APPaymentGLPostingRetryRequest;
@@ -67,7 +94,52 @@ export interface RetryApPaymentGlPostingRequest {
 export class APPaymentsApi extends runtime.BaseAPI {
 
     /**
-     * Executes an AP vendor payment through the payment gateway from a functional-currency BANK_CASH account, optionally allocating it across approved vendor bills; the outbox then posts Dr 2000 the gross, Dr 6030 the fee and Cr the bank account on the payment\'s business date (AP_PAYMENT category). Use this tool to pay a vendor; do not use applyPayment, which is the AR-side application of customer payments to invoices, and use listApBills first to find APPROVED bills to allocate against. Preconditions: checked in this order before the gateway is called, charging nothing, the method is ACH, CHECK or WIRE, the currency is the functional currency, the bank account is eligible (active from the start of the business date, not deactivated before the payment, not in a foreign currency), the vendor is an ACTIVE pos-supplier vendor in accounting\'s copy and not on AP hold, every allocated bill exists, is APPROVED, belongs to the vendor and fits the gross amount, the payer approved none of the bills paid (unless the AP approval policy allows it), every bill was approved at the vendor\'s current remit-to version or someone other than the payer confirmed it, the business date is not hard-locked, its period is open or overridden, and the AP_PAYMENT mappings ACCOUNTS_PAYABLE (and PAYMENT_FEES when a fee is charged) are set up. Required inputs: vendorId (UUID), grossAmount (min 0.01), currency (ISO 4217), paymentRef (max 100 chars, the idempotency key) and paymentMethod; bankAccountId may be omitted only when exactly one eligible account exists, and feeAmount, overrideJustification (10-1000 chars, honoured with accounting:period:override), paymentSource, memo and explicit allocations are optional. Emits an AP_PAYMENT_EXECUTE event; the call is idempotent on paymentRef, replaying the same ref with the same payload (the bank account compared as resolved) as a 200 instead of paying twice, and a gateway failure or timeout leaves no payment behind, so the same paymentRef is simply sent again. Returns 400 VALIDATION_ERROR for a malformed body, an unknown currency code, a refused allocation or fieldErrors[bankAccountId], 403 AP_PAYMENT_SELF_APPROVED_BILL, 409 IDEMPOTENCY_CONFLICT, LOCK_TIMEOUT or VENDOR_PAYMENT_DETAILS_CHANGED (naming each bill and the vendor number), 422 AP_PAYMENT_METHOD_NOT_SUPPORTED, CURRENCY_NOT_SUPPORTED, VENDOR_INACTIVE, VENDOR_ON_AP_HOLD (the message names the vendor number, the reason is on the vendor read), ACCOUNTING_TIME_ZONE_UNSET, PERIOD_HARD_LOCKED, PERIOD_CLOSED or GL_MAPPING_NOT_CONFIGURED, and 500 PAYMENT_GATEWAY_FAILURE when the gateway fails or times out, and 503 VENDOR_REPLICATION_PENDING (Retry-After) when the vendor is not in the copy yet. 
+     * Applies the unapplied amount of a cash-on-delivery AP payment (method CASH, created at session close, CAP:550 S17) to one or more of that vendor\'s APPROVED bills. Use this tool when a vendor was paid cash on delivery from a register drawer and the vendor\'s bill has since been approved; do not use executeApPayment for it, which would pay the vendor twice, and do not use the journal-entry endpoints instead, which would change the ledger. Preconditions: the payment exists, its method is CASH and something of it is unapplied; every bill is APPROVED, belongs to the payment\'s vendor and has at least the applied amount open; the caller did not approve any of the bills (approver is not payer, AW6.2); the lines total at most the unapplied amount. Required inputs: paymentId (UUID) as a path parameter; requestId (UUID, caller-minted) and allocations[] {vendorBillId, appliedAmount} in the body. Emits an ACCOUNTING_AP_PAYMENT_ALLOCATE event. Posts nothing: AP was debited at session close and credited at bill approval, so the allocation only matches the subledger (AW41). Returns 200 with the payment (unappliedAmount reduced); a replay of the same requestId and lines returns the same payment. 400 VALIDATION_ERROR for a bill of another vendor, an unapproved bill, an amount above the bill\'s open amount or a total above the unapplied amount; 403 AP_PAYMENT_SELF_APPROVED_BILL when the caller approved one of the bills; 404 when the payment does not exist; 409 IDEMPOTENCY_CONFLICT when the requestId was used with another body; 422 AP_PAYMENT_NOT_ALLOCATABLE when nothing of the payment is unapplied (only a drawer cash-on-delivery payment or a gateway orphan reconciled CHARGED carries an unapplied amount). 
+     * Allocate an AP payment\'s unapplied amount to the vendor\'s approved bills
+     */
+    async allocateApPaymentRaw(requestParameters: AllocateApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
+        if (requestParameters['paymentId'] == null) {
+            throw new runtime.RequiredError(
+                'paymentId',
+                'Required parameter "paymentId" was null or undefined when calling allocateApPayment().'
+            );
+        }
+
+        if (requestParameters['allocateAPPaymentRequest'] == null) {
+            throw new runtime.RequiredError(
+                'allocateAPPaymentRequest',
+                'Required parameter "allocateAPPaymentRequest" was null or undefined when calling allocateApPayment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/v1/accounting/ap/payments/{paymentId}/allocations`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AllocateAPPaymentRequestToJSON(requestParameters['allocateAPPaymentRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => APPaymentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Applies the unapplied amount of a cash-on-delivery AP payment (method CASH, created at session close, CAP:550 S17) to one or more of that vendor\'s APPROVED bills. Use this tool when a vendor was paid cash on delivery from a register drawer and the vendor\'s bill has since been approved; do not use executeApPayment for it, which would pay the vendor twice, and do not use the journal-entry endpoints instead, which would change the ledger. Preconditions: the payment exists, its method is CASH and something of it is unapplied; every bill is APPROVED, belongs to the payment\'s vendor and has at least the applied amount open; the caller did not approve any of the bills (approver is not payer, AW6.2); the lines total at most the unapplied amount. Required inputs: paymentId (UUID) as a path parameter; requestId (UUID, caller-minted) and allocations[] {vendorBillId, appliedAmount} in the body. Emits an ACCOUNTING_AP_PAYMENT_ALLOCATE event. Posts nothing: AP was debited at session close and credited at bill approval, so the allocation only matches the subledger (AW41). Returns 200 with the payment (unappliedAmount reduced); a replay of the same requestId and lines returns the same payment. 400 VALIDATION_ERROR for a bill of another vendor, an unapproved bill, an amount above the bill\'s open amount or a total above the unapplied amount; 403 AP_PAYMENT_SELF_APPROVED_BILL when the caller approved one of the bills; 404 when the payment does not exist; 409 IDEMPOTENCY_CONFLICT when the requestId was used with another body; 422 AP_PAYMENT_NOT_ALLOCATABLE when nothing of the payment is unapplied (only a drawer cash-on-delivery payment or a gateway orphan reconciled CHARGED carries an unapplied amount). 
+     * Allocate an AP payment\'s unapplied amount to the vendor\'s approved bills
+     */
+    async allocateApPayment(requestParameters: AllocateApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
+        const response = await this.allocateApPaymentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Executes an AP vendor payment through the payment gateway from a functional-currency BANK_CASH account, optionally allocating it across approved vendor bills; the outbox then posts Dr 2000 the gross, Dr 6030 the fee and Cr the bank account on the payment\'s business date (AP_PAYMENT category). Use this tool to pay a vendor; do not use applyPayment, which is the AR-side application of customer payments to invoices, and use listApBills first to find APPROVED bills to allocate against. Preconditions: checked in this order before the gateway is called, charging nothing, the method is ACH, CHECK or WIRE, the currency is the functional currency, the bank account is eligible (active from the start of the business date, not deactivated before the payment, not in a foreign currency), the vendor is an ACTIVE pos-supplier vendor in accounting\'s copy and not on AP hold, every allocated bill exists, is APPROVED, belongs to the vendor and fits the gross amount, the payer approved none of the bills paid (unless the AP approval policy allows it), every bill was approved at the vendor\'s current remit-to version or someone other than the payer confirmed it, the business date is not hard-locked, its period is open or overridden, and the AP_PAYMENT mappings ACCOUNTS_PAYABLE (and PAYMENT_FEES when a fee is charged) are set up. Required inputs: vendorId (UUID), grossAmount (min 0.01), currency (ISO 4217), paymentRef (max 100 chars, the idempotency key) and paymentMethod; bankAccountId may be omitted only when exactly one eligible account exists, and feeAmount, overrideJustification (10-1000 chars, honoured with accounting:period:override), paymentSource, memo and explicit allocations are optional. Emits an AP_PAYMENT_EXECUTE event; the call is idempotent on paymentRef, replaying the same ref with the same payload (the bank account compared as resolved) as a 200 instead of paying twice. A gateway decline leaves the payment GATEWAY_FAILED (the paymentRef is spent at the gateway too); no gateway answer (a timeout) leaves it GATEWAY_PENDING with nothing allocated or posted, and the same paymentRef sent again resumes it (the gateway replays under the same idempotency key), or an operator who knows the outcome reconciles it with reconcileApPaymentGateway (#2729). Returns 400 VALIDATION_ERROR for a malformed body, an unknown currency code, a refused allocation or fieldErrors[bankAccountId], 403 AP_PAYMENT_SELF_APPROVED_BILL, 409 IDEMPOTENCY_CONFLICT, LOCK_TIMEOUT or VENDOR_PAYMENT_DETAILS_CHANGED (naming each bill and the vendor number), 422 AP_PAYMENT_METHOD_NOT_SUPPORTED, CURRENCY_NOT_SUPPORTED, VENDOR_INACTIVE, VENDOR_ON_AP_HOLD (the message names the vendor number, the reason is on the vendor read), ACCOUNTING_TIME_ZONE_UNSET, PERIOD_HARD_LOCKED, PERIOD_CLOSED or GL_MAPPING_NOT_CONFIGURED, and 500 PAYMENT_GATEWAY_FAILURE when the gateway fails or times out, and 503 VENDOR_REPLICATION_PENDING (Retry-After) when the vendor is not in the copy yet. 
      * Execute Vendor Payment
      */
     async executeApPaymentRaw(requestParameters: ExecuteApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
@@ -104,7 +176,7 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Executes an AP vendor payment through the payment gateway from a functional-currency BANK_CASH account, optionally allocating it across approved vendor bills; the outbox then posts Dr 2000 the gross, Dr 6030 the fee and Cr the bank account on the payment\'s business date (AP_PAYMENT category). Use this tool to pay a vendor; do not use applyPayment, which is the AR-side application of customer payments to invoices, and use listApBills first to find APPROVED bills to allocate against. Preconditions: checked in this order before the gateway is called, charging nothing, the method is ACH, CHECK or WIRE, the currency is the functional currency, the bank account is eligible (active from the start of the business date, not deactivated before the payment, not in a foreign currency), the vendor is an ACTIVE pos-supplier vendor in accounting\'s copy and not on AP hold, every allocated bill exists, is APPROVED, belongs to the vendor and fits the gross amount, the payer approved none of the bills paid (unless the AP approval policy allows it), every bill was approved at the vendor\'s current remit-to version or someone other than the payer confirmed it, the business date is not hard-locked, its period is open or overridden, and the AP_PAYMENT mappings ACCOUNTS_PAYABLE (and PAYMENT_FEES when a fee is charged) are set up. Required inputs: vendorId (UUID), grossAmount (min 0.01), currency (ISO 4217), paymentRef (max 100 chars, the idempotency key) and paymentMethod; bankAccountId may be omitted only when exactly one eligible account exists, and feeAmount, overrideJustification (10-1000 chars, honoured with accounting:period:override), paymentSource, memo and explicit allocations are optional. Emits an AP_PAYMENT_EXECUTE event; the call is idempotent on paymentRef, replaying the same ref with the same payload (the bank account compared as resolved) as a 200 instead of paying twice, and a gateway failure or timeout leaves no payment behind, so the same paymentRef is simply sent again. Returns 400 VALIDATION_ERROR for a malformed body, an unknown currency code, a refused allocation or fieldErrors[bankAccountId], 403 AP_PAYMENT_SELF_APPROVED_BILL, 409 IDEMPOTENCY_CONFLICT, LOCK_TIMEOUT or VENDOR_PAYMENT_DETAILS_CHANGED (naming each bill and the vendor number), 422 AP_PAYMENT_METHOD_NOT_SUPPORTED, CURRENCY_NOT_SUPPORTED, VENDOR_INACTIVE, VENDOR_ON_AP_HOLD (the message names the vendor number, the reason is on the vendor read), ACCOUNTING_TIME_ZONE_UNSET, PERIOD_HARD_LOCKED, PERIOD_CLOSED or GL_MAPPING_NOT_CONFIGURED, and 500 PAYMENT_GATEWAY_FAILURE when the gateway fails or times out, and 503 VENDOR_REPLICATION_PENDING (Retry-After) when the vendor is not in the copy yet. 
+     * Executes an AP vendor payment through the payment gateway from a functional-currency BANK_CASH account, optionally allocating it across approved vendor bills; the outbox then posts Dr 2000 the gross, Dr 6030 the fee and Cr the bank account on the payment\'s business date (AP_PAYMENT category). Use this tool to pay a vendor; do not use applyPayment, which is the AR-side application of customer payments to invoices, and use listApBills first to find APPROVED bills to allocate against. Preconditions: checked in this order before the gateway is called, charging nothing, the method is ACH, CHECK or WIRE, the currency is the functional currency, the bank account is eligible (active from the start of the business date, not deactivated before the payment, not in a foreign currency), the vendor is an ACTIVE pos-supplier vendor in accounting\'s copy and not on AP hold, every allocated bill exists, is APPROVED, belongs to the vendor and fits the gross amount, the payer approved none of the bills paid (unless the AP approval policy allows it), every bill was approved at the vendor\'s current remit-to version or someone other than the payer confirmed it, the business date is not hard-locked, its period is open or overridden, and the AP_PAYMENT mappings ACCOUNTS_PAYABLE (and PAYMENT_FEES when a fee is charged) are set up. Required inputs: vendorId (UUID), grossAmount (min 0.01), currency (ISO 4217), paymentRef (max 100 chars, the idempotency key) and paymentMethod; bankAccountId may be omitted only when exactly one eligible account exists, and feeAmount, overrideJustification (10-1000 chars, honoured with accounting:period:override), paymentSource, memo and explicit allocations are optional. Emits an AP_PAYMENT_EXECUTE event; the call is idempotent on paymentRef, replaying the same ref with the same payload (the bank account compared as resolved) as a 200 instead of paying twice. A gateway decline leaves the payment GATEWAY_FAILED (the paymentRef is spent at the gateway too); no gateway answer (a timeout) leaves it GATEWAY_PENDING with nothing allocated or posted, and the same paymentRef sent again resumes it (the gateway replays under the same idempotency key), or an operator who knows the outcome reconciles it with reconcileApPaymentGateway (#2729). Returns 400 VALIDATION_ERROR for a malformed body, an unknown currency code, a refused allocation or fieldErrors[bankAccountId], 403 AP_PAYMENT_SELF_APPROVED_BILL, 409 IDEMPOTENCY_CONFLICT, LOCK_TIMEOUT or VENDOR_PAYMENT_DETAILS_CHANGED (naming each bill and the vendor number), 422 AP_PAYMENT_METHOD_NOT_SUPPORTED, CURRENCY_NOT_SUPPORTED, VENDOR_INACTIVE, VENDOR_ON_AP_HOLD (the message names the vendor number, the reason is on the vendor read), ACCOUNTING_TIME_ZONE_UNSET, PERIOD_HARD_LOCKED, PERIOD_CLOSED or GL_MAPPING_NOT_CONFIGURED, and 500 PAYMENT_GATEWAY_FAILURE when the gateway fails or times out, and 503 VENDOR_REPLICATION_PENDING (Retry-After) when the vendor is not in the copy yet. 
      * Execute Vendor Payment
      */
     async executeApPayment(requestParameters: ExecuteApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
@@ -287,7 +359,149 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Posts again the ledger entry of an executed AP payment whose posting was refused, on the payment\'s own stored date: Dr 2000 the gross, Dr 6030 the fee, Cr the bank account it was paid from. Use this tool once the reason in glPostError is fixed (a GL mapping set up, a period reopened, or with an override); do not use executeApPayment again, which would pay the vendor twice, and do not use the journal-entry endpoints instead, which would post the payment outside its own record. Preconditions: the payment exists and is GL_POST_FAILED; the payment row is locked for the retry, and the entry is never re-dated, so a payment whose date is now hard-locked stays GL_POST_FAILED. Required inputs: paymentId (UUID) as a path parameter and an optional body with overrideJustification (10-1000 chars, honoured with the caller\'s accounting:period:override and audited under the caller); a retry never reuses the override the payer gave on the pay command. Emits ACCOUNTING_AP_PAYMENT_GL_POSTING_RETRY; on success the payment is GL_POSTED with its journal entry id, and a refused retry leaves it GL_POST_FAILED with the new reason in glPostError. Returns 404 NOT_FOUND when no such payment exists, 409 AP_PAYMENT_NOT_RETRYABLE when it is not GL_POST_FAILED (already posted, pending, or a gateway state), 409 LOCK_TIMEOUT when another request holds it, and 422 GL_MAPPING_NOT_CONFIGURED, GL_ACCOUNT_NOT_ACTIVE, PERIOD_CLOSED, PERIOD_HARD_LOCKED or ACCOUNTING_TIME_ZONE_UNSET when the posting is still refused. 
+     * Lists the AP payments whose charge the gateway accepted as PENDING or AUTHORIZED (an ACH in flight), or that an operator reconciled as CHARGED, and that the settlement job has not yet seen settled or returned (#2642): settlementStatus IN_FLIGHT, oldest payment date first. Each row carries its age in days on today\'s business date, aged = true once older than the in-flight warning (seven days by default; ACH settles in three to five banking days), and settlementCheckedAt, the job\'s last re-read. Use this tool to see what money is still on its way to vendors and which charges have taken too long; from here the operator waits or checks with the bank or the processor. Do not use it to re-send a payment (the charge exists); use recordApPaymentReturn instead when the bank reports a return. Preconditions: none; a tenant with no in-flight charge gets an empty list. Required inputs: none; the read is tenant-scoped and takes no parameters. Emits ACCOUNTING_AP_PAYMENT_IN_FLIGHT_LIST and returns 200 with the list. 
+     * AP payments the gateway has not settled yet
+     */
+    async listApPaymentsInFlightRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<APPaymentInFlightResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/ap/payments/in-flight`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(APPaymentInFlightResponseFromJSON));
+    }
+
+    /**
+     * Lists the AP payments whose charge the gateway accepted as PENDING or AUTHORIZED (an ACH in flight), or that an operator reconciled as CHARGED, and that the settlement job has not yet seen settled or returned (#2642): settlementStatus IN_FLIGHT, oldest payment date first. Each row carries its age in days on today\'s business date, aged = true once older than the in-flight warning (seven days by default; ACH settles in three to five banking days), and settlementCheckedAt, the job\'s last re-read. Use this tool to see what money is still on its way to vendors and which charges have taken too long; from here the operator waits or checks with the bank or the processor. Do not use it to re-send a payment (the charge exists); use recordApPaymentReturn instead when the bank reports a return. Preconditions: none; a tenant with no in-flight charge gets an empty list. Required inputs: none; the read is tenant-scoped and takes no parameters. Emits ACCOUNTING_AP_PAYMENT_IN_FLIGHT_LIST and returns 200 with the list. 
+     * AP payments the gateway has not settled yet
+     */
+    async listApPaymentsInFlight(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<APPaymentInFlightResponse>> {
+        const response = await this.listApPaymentsInFlightRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Settles an AP payment stuck GATEWAY_PENDING (a crash or timeout between the gateway call and its answer, so whether money moved is unknown) with what the gateway actually did (#2729). NOT_CHARGED voids the payment: nothing was posted and no allocation exists yet, so there is nothing to reverse or reopen; the payment is VOIDED with the justification and may be re-issued. CHARGED records the gateway\'s transaction id and posts the payment as an unapplied payment (Dr 2000 / Cr bank through the outbox); the vendor\'s approved bills are allocated to it later with allocateApPayment. Use this tool for a payment that reads GATEWAY_PENDING with no gateway timestamp; do not use it for a GL_POST_FAILED payment (retryApPaymentGlPosting) or for a charge that must be undone (#2642). Preconditions: the payment is GATEWAY_PENDING; the outcome is what the operator verified at the gateway (until #2642 lets this service verify it); with CHARGED the gateway\'s transaction id is given. Required inputs: paymentId; gatewayOutcome (NOT_CHARGED or CHARGED), justification (10-1000 characters), gatewayTransactionId with CHARGED. Emits ACCOUNTING_AP_PAYMENT_RECONCILE_GATEWAY and writes an audit row (old and new status, the asserted outcome, the actor, the justification). Returns 200 with the payment (VOIDED, or GL_POST_PENDING with unappliedAmount = grossAmount), 400 VALIDATION_ERROR for a missing field, 404 NOT_FOUND, 409 AP_PAYMENT_NOT_VOIDABLE when the payment is in any other status (nextAction names the remedy: the retry, its deferPastHardLock, or #2642), 409 LOCK_TIMEOUT, and 422 AP_PAYMENT_GATEWAY_OUTCOME_REQUIRED for CHARGED without a transaction id. 
+     * Reconcile a GATEWAY_PENDING AP payment with the gateway\'s outcome
+     */
+    async reconcileApPaymentGatewayRaw(requestParameters: ReconcileApPaymentGatewayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
+        if (requestParameters['paymentId'] == null) {
+            throw new runtime.RequiredError(
+                'paymentId',
+                'Required parameter "paymentId" was null or undefined when calling reconcileApPaymentGateway().'
+            );
+        }
+
+        if (requestParameters['reconcileAPPaymentGatewayRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reconcileAPPaymentGatewayRequest',
+                'Required parameter "reconcileAPPaymentGatewayRequest" was null or undefined when calling reconcileApPaymentGateway().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:pay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/ap/payments/{paymentId}/reconcile-gateway`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconcileAPPaymentGatewayRequestToJSON(requestParameters['reconcileAPPaymentGatewayRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => APPaymentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Settles an AP payment stuck GATEWAY_PENDING (a crash or timeout between the gateway call and its answer, so whether money moved is unknown) with what the gateway actually did (#2729). NOT_CHARGED voids the payment: nothing was posted and no allocation exists yet, so there is nothing to reverse or reopen; the payment is VOIDED with the justification and may be re-issued. CHARGED records the gateway\'s transaction id and posts the payment as an unapplied payment (Dr 2000 / Cr bank through the outbox); the vendor\'s approved bills are allocated to it later with allocateApPayment. Use this tool for a payment that reads GATEWAY_PENDING with no gateway timestamp; do not use it for a GL_POST_FAILED payment (retryApPaymentGlPosting) or for a charge that must be undone (#2642). Preconditions: the payment is GATEWAY_PENDING; the outcome is what the operator verified at the gateway (until #2642 lets this service verify it); with CHARGED the gateway\'s transaction id is given. Required inputs: paymentId; gatewayOutcome (NOT_CHARGED or CHARGED), justification (10-1000 characters), gatewayTransactionId with CHARGED. Emits ACCOUNTING_AP_PAYMENT_RECONCILE_GATEWAY and writes an audit row (old and new status, the asserted outcome, the actor, the justification). Returns 200 with the payment (VOIDED, or GL_POST_PENDING with unappliedAmount = grossAmount), 400 VALIDATION_ERROR for a missing field, 404 NOT_FOUND, 409 AP_PAYMENT_NOT_VOIDABLE when the payment is in any other status (nextAction names the remedy: the retry, its deferPastHardLock, or #2642), 409 LOCK_TIMEOUT, and 422 AP_PAYMENT_GATEWAY_OUTCOME_REQUIRED for CHARGED without a transaction id. 
+     * Reconcile a GATEWAY_PENDING AP payment with the gateway\'s outcome
+     */
+    async reconcileApPaymentGateway(requestParameters: ReconcileApPaymentGatewayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
+        const response = await this.reconcileApPaymentGatewayRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Records a charge the bank or the processor sent back after it had moved money (#2642, AW42 applied to a payment): a statement return, or a processor notice the settlement job could not read from the gateway. In one transaction the payment\'s allocations are reopened (kept as history; each bill\'s open amount is restored and the bills are payable again), unappliedAmount becomes zero, and the mirror entry, the reversal of the payment\'s own entry (Dr the bank gross + fee / Cr 2000 / Cr the fee account), is posted on the return date when that period is open, else on today\'s business date (returnDateRule RETURN_DATE or DETECTION_DATE). The payment ends RETURNED, or RETURN_PENDING while its original posting is still pending or failed (the mirror follows the original, posted by the outbox or retryApPaymentGlPosting); a CLOSED period on today\'s business date is 422 PERIOD_CLOSED unless the caller holds accounting:period:override and gives overrideJustification. Use this tool for a late return of a settled charge or for a gateway this service cannot re-read; do not use it for a GATEWAY_PENDING orphan (reconcileApPaymentGateway) or to cancel a payment that never moved money, and never re-send the payment (pay the bills again with a new paymentRef). Preconditions: the payment is GL_POST_PENDING, GL_POSTED or GL_POST_FAILED and not CASH; the return is what the bank or the processor reported (the gateway\'s current answer is recorded with the attestation but never refuses the command). Required inputs: paymentId; requestId (the caller\'s idempotency key) and justification (10-1000 characters); optional returnDate (not after today; today when omitted), failureCode (a code such as R01, never free text) and overrideJustification for a CLOSED detection date. Emits ACCOUNTING_AP_PAYMENT_RECORD_RETURN and writes audit rows AP_PAYMENT_RETURN (the reopened bills and amounts, the gateway\'s answer) and AP_PAYMENT_RETURN_GL_POSTING (the mirror). Returns 200 with the payment (RETURNED or RETURN_PENDING), 400 VALIDATION_ERROR (a missing field, a return date after today), 404 NOT_FOUND, 409 AP_PAYMENT_NOT_RETURNABLE when the charge never moved money or the payment is CASH (nextAction names the remedy), 409 AP_PAYMENT_ALREADY_RETURNED, 409 IDEMPOTENCY_CONFLICT (the requestId was used with another body), 409 LOCK_TIMEOUT, 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED. 
+     * Record a returned AP payment charge: reverse its entry, reopen its allocations
+     */
+    async recordApPaymentReturnRaw(requestParameters: RecordApPaymentReturnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
+        if (requestParameters['paymentId'] == null) {
+            throw new runtime.RequiredError(
+                'paymentId',
+                'Required parameter "paymentId" was null or undefined when calling recordApPaymentReturn().'
+            );
+        }
+
+        if (requestParameters['recordAPPaymentReturnRequest'] == null) {
+            throw new runtime.RequiredError(
+                'recordAPPaymentReturnRequest',
+                'Required parameter "recordAPPaymentReturnRequest" was null or undefined when calling recordApPaymentReturn().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:pay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/ap/payments/{paymentId}/record-return`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecordAPPaymentReturnRequestToJSON(requestParameters['recordAPPaymentReturnRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => APPaymentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records a charge the bank or the processor sent back after it had moved money (#2642, AW42 applied to a payment): a statement return, or a processor notice the settlement job could not read from the gateway. In one transaction the payment\'s allocations are reopened (kept as history; each bill\'s open amount is restored and the bills are payable again), unappliedAmount becomes zero, and the mirror entry, the reversal of the payment\'s own entry (Dr the bank gross + fee / Cr 2000 / Cr the fee account), is posted on the return date when that period is open, else on today\'s business date (returnDateRule RETURN_DATE or DETECTION_DATE). The payment ends RETURNED, or RETURN_PENDING while its original posting is still pending or failed (the mirror follows the original, posted by the outbox or retryApPaymentGlPosting); a CLOSED period on today\'s business date is 422 PERIOD_CLOSED unless the caller holds accounting:period:override and gives overrideJustification. Use this tool for a late return of a settled charge or for a gateway this service cannot re-read; do not use it for a GATEWAY_PENDING orphan (reconcileApPaymentGateway) or to cancel a payment that never moved money, and never re-send the payment (pay the bills again with a new paymentRef). Preconditions: the payment is GL_POST_PENDING, GL_POSTED or GL_POST_FAILED and not CASH; the return is what the bank or the processor reported (the gateway\'s current answer is recorded with the attestation but never refuses the command). Required inputs: paymentId; requestId (the caller\'s idempotency key) and justification (10-1000 characters); optional returnDate (not after today; today when omitted), failureCode (a code such as R01, never free text) and overrideJustification for a CLOSED detection date. Emits ACCOUNTING_AP_PAYMENT_RECORD_RETURN and writes audit rows AP_PAYMENT_RETURN (the reopened bills and amounts, the gateway\'s answer) and AP_PAYMENT_RETURN_GL_POSTING (the mirror). Returns 200 with the payment (RETURNED or RETURN_PENDING), 400 VALIDATION_ERROR (a missing field, a return date after today), 404 NOT_FOUND, 409 AP_PAYMENT_NOT_RETURNABLE when the charge never moved money or the payment is CASH (nextAction names the remedy), 409 AP_PAYMENT_ALREADY_RETURNED, 409 IDEMPOTENCY_CONFLICT (the requestId was used with another body), 409 LOCK_TIMEOUT, 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED. 
+     * Record a returned AP payment charge: reverse its entry, reopen its allocations
+     */
+    async recordApPaymentReturn(requestParameters: RecordApPaymentReturnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
+        const response = await this.recordApPaymentReturnRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Posts again the ledger entry of an executed AP payment whose posting was refused, on the payment\'s own stored date: Dr 2000 the gross, Dr 6030 the fee, Cr the bank account it was paid from. Use this tool once the reason in glPostError is fixed (a GL mapping set up, a period reopened, or with an override); do not use executeApPayment again, which would pay the vendor twice, and do not use the journal-entry endpoints instead, which would post the payment outside its own record. Preconditions: the payment exists and is GL_POST_FAILED, or GL_POST_PENDING with its outbox row FAILED (#2729); the payment row is locked for the retry. The entry keeps the payment\'s own date unless deferPastHardLock is true and that date is hard-locked: it is then dated today\'s business date (AW42: never back into the original period), its description names the original date, and the payment records postingDateRule DEFERRED_PAST_HARD_LOCK. Required inputs: paymentId (UUID) as a path parameter and an optional body with overrideJustification (10-1000 chars, honoured with the caller\'s accounting:period:override and audited under the caller), deferPastHardLock (with justification, audited); a retry never reuses the override the payer gave on the pay command. Emits ACCOUNTING_AP_PAYMENT_GL_POSTING_RETRY; on success the payment is GL_POSTED with its journal entry id, and a refused retry leaves it GL_POST_FAILED with the new reason in glPostError. Returns 404 NOT_FOUND when no such payment exists, 409 AP_PAYMENT_NOT_RETRYABLE when it is neither GL_POST_FAILED nor GL_POST_PENDING with a FAILED outbox row (already posted, a live delivery, or a gateway state: a GATEWAY_PENDING orphan is reconcileApPaymentGateway), 409 LOCK_TIMEOUT when another request holds it, 422 AP_PAYMENT_DEFER_JUSTIFICATION_REQUIRED for deferPastHardLock without a justification, and 422 GL_MAPPING_NOT_CONFIGURED, GL_ACCOUNT_NOT_ACTIVE, PERIOD_CLOSED, PERIOD_HARD_LOCKED (without deferPastHardLock) or ACCOUNTING_TIME_ZONE_UNSET when the posting is still refused. 
      * Retry AP Payment GL Posting
      */
     async retryApPaymentGlPostingRaw(requestParameters: RetryApPaymentGlPostingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
@@ -324,7 +538,7 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Posts again the ledger entry of an executed AP payment whose posting was refused, on the payment\'s own stored date: Dr 2000 the gross, Dr 6030 the fee, Cr the bank account it was paid from. Use this tool once the reason in glPostError is fixed (a GL mapping set up, a period reopened, or with an override); do not use executeApPayment again, which would pay the vendor twice, and do not use the journal-entry endpoints instead, which would post the payment outside its own record. Preconditions: the payment exists and is GL_POST_FAILED; the payment row is locked for the retry, and the entry is never re-dated, so a payment whose date is now hard-locked stays GL_POST_FAILED. Required inputs: paymentId (UUID) as a path parameter and an optional body with overrideJustification (10-1000 chars, honoured with the caller\'s accounting:period:override and audited under the caller); a retry never reuses the override the payer gave on the pay command. Emits ACCOUNTING_AP_PAYMENT_GL_POSTING_RETRY; on success the payment is GL_POSTED with its journal entry id, and a refused retry leaves it GL_POST_FAILED with the new reason in glPostError. Returns 404 NOT_FOUND when no such payment exists, 409 AP_PAYMENT_NOT_RETRYABLE when it is not GL_POST_FAILED (already posted, pending, or a gateway state), 409 LOCK_TIMEOUT when another request holds it, and 422 GL_MAPPING_NOT_CONFIGURED, GL_ACCOUNT_NOT_ACTIVE, PERIOD_CLOSED, PERIOD_HARD_LOCKED or ACCOUNTING_TIME_ZONE_UNSET when the posting is still refused. 
+     * Posts again the ledger entry of an executed AP payment whose posting was refused, on the payment\'s own stored date: Dr 2000 the gross, Dr 6030 the fee, Cr the bank account it was paid from. Use this tool once the reason in glPostError is fixed (a GL mapping set up, a period reopened, or with an override); do not use executeApPayment again, which would pay the vendor twice, and do not use the journal-entry endpoints instead, which would post the payment outside its own record. Preconditions: the payment exists and is GL_POST_FAILED, or GL_POST_PENDING with its outbox row FAILED (#2729); the payment row is locked for the retry. The entry keeps the payment\'s own date unless deferPastHardLock is true and that date is hard-locked: it is then dated today\'s business date (AW42: never back into the original period), its description names the original date, and the payment records postingDateRule DEFERRED_PAST_HARD_LOCK. Required inputs: paymentId (UUID) as a path parameter and an optional body with overrideJustification (10-1000 chars, honoured with the caller\'s accounting:period:override and audited under the caller), deferPastHardLock (with justification, audited); a retry never reuses the override the payer gave on the pay command. Emits ACCOUNTING_AP_PAYMENT_GL_POSTING_RETRY; on success the payment is GL_POSTED with its journal entry id, and a refused retry leaves it GL_POST_FAILED with the new reason in glPostError. Returns 404 NOT_FOUND when no such payment exists, 409 AP_PAYMENT_NOT_RETRYABLE when it is neither GL_POST_FAILED nor GL_POST_PENDING with a FAILED outbox row (already posted, a live delivery, or a gateway state: a GATEWAY_PENDING orphan is reconcileApPaymentGateway), 409 LOCK_TIMEOUT when another request holds it, 422 AP_PAYMENT_DEFER_JUSTIFICATION_REQUIRED for deferPastHardLock without a justification, and 422 GL_MAPPING_NOT_CONFIGURED, GL_ACCOUNT_NOT_ACTIVE, PERIOD_CLOSED, PERIOD_HARD_LOCKED (without deferPastHardLock) or ACCOUNTING_TIME_ZONE_UNSET when the posting is still refused. 
      * Retry AP Payment GL Posting
      */
     async retryApPaymentGlPosting(requestParameters: RetryApPaymentGlPostingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {

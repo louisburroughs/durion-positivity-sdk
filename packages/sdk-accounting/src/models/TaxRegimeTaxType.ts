@@ -26,6 +26,12 @@ export interface TaxRegimeTaxType {
      */
     jurisdictionType: TaxRegimeTaxTypeJurisdictionTypeEnum;
     /**
+     * The tax type's configured display label; null when the profile sets none, never the code (#2679)
+     * @type {string}
+     * @memberof TaxRegimeTaxType
+     */
+    label?: string;
+    /**
      * The configured tax-type code
      * @type {string}
      * @memberof TaxRegimeTaxType
@@ -68,6 +74,7 @@ export function TaxRegimeTaxTypeFromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'jurisdictionType': json['jurisdictionType'],
+        'label': json['label'] == null ? undefined : json['label'],
         'taxType': json['taxType'],
     };
 }
@@ -79,6 +86,7 @@ export function TaxRegimeTaxTypeToJSON(value?: TaxRegimeTaxType | null): any {
     return {
         
         'jurisdictionType': value['jurisdictionType'],
+        'label': value['label'],
         'taxType': value['taxType'],
     };
 }

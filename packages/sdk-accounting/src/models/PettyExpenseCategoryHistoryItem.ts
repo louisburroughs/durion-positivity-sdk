@@ -44,17 +44,71 @@ export interface PettyExpenseCategoryHistoryItem {
      */
     changedAt?: Date;
     /**
+     * CREATE: the business date the category posts from; REMAP: the requested effectiveFrom
+     * @type {Date}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    effectiveFrom?: Date;
+    /**
      * Why
      * @type {string}
      * @memberof PettyExpenseCategoryHistoryItem
      */
     justification?: string;
     /**
+     * CREATE and REMAP: that account's name at that moment
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    newAccountName?: string;
+    /**
+     * CREATE and REMAP: the number of the account the category posts to from effectiveFrom
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    newAccountNumber?: string;
+    /**
+     * CREATE and RELABEL: the examples after
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    newExamples?: string;
+    /**
+     * CREATE and RELABEL: the label after
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    newLabel?: string;
+    /**
      * The value after
      * @type {string}
      * @memberof PettyExpenseCategoryHistoryItem
      */
     newValue?: string;
+    /**
+     * REMAP: the name of the account replaced, as it was at that moment
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    oldAccountName?: string;
+    /**
+     * REMAP: the number of the account replaced; null when none was in effect
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    oldAccountNumber?: string;
+    /**
+     * RELABEL: the examples before
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    oldExamples?: string;
+    /**
+     * RELABEL: the label before. Null on other rows and on rows written before #2675
+     * @type {string}
+     * @memberof PettyExpenseCategoryHistoryItem
+     */
+    oldLabel?: string;
     /**
      * The value before
      * @type {string}
@@ -96,8 +150,17 @@ export function PettyExpenseCategoryHistoryItemFromJSONTyped(json: any, ignoreDi
         'actorName': json['actorName'] == null ? undefined : json['actorName'],
         'changeType': json['changeType'] == null ? undefined : json['changeType'],
         'changedAt': json['changedAt'] == null ? undefined : (new Date(json['changedAt'])),
+        'effectiveFrom': json['effectiveFrom'] == null ? undefined : (new Date(json['effectiveFrom'])),
         'justification': json['justification'] == null ? undefined : json['justification'],
+        'newAccountName': json['newAccountName'] == null ? undefined : json['newAccountName'],
+        'newAccountNumber': json['newAccountNumber'] == null ? undefined : json['newAccountNumber'],
+        'newExamples': json['newExamples'] == null ? undefined : json['newExamples'],
+        'newLabel': json['newLabel'] == null ? undefined : json['newLabel'],
         'newValue': json['newValue'] == null ? undefined : json['newValue'],
+        'oldAccountName': json['oldAccountName'] == null ? undefined : json['oldAccountName'],
+        'oldAccountNumber': json['oldAccountNumber'] == null ? undefined : json['oldAccountNumber'],
+        'oldExamples': json['oldExamples'] == null ? undefined : json['oldExamples'],
+        'oldLabel': json['oldLabel'] == null ? undefined : json['oldLabel'],
         'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
     };
 }
@@ -112,8 +175,17 @@ export function PettyExpenseCategoryHistoryItemToJSON(value?: PettyExpenseCatego
         'actorName': value['actorName'],
         'changeType': value['changeType'],
         'changedAt': value['changedAt'] == null ? undefined : ((value['changedAt']).toISOString()),
+        'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
         'justification': value['justification'],
+        'newAccountName': value['newAccountName'],
+        'newAccountNumber': value['newAccountNumber'],
+        'newExamples': value['newExamples'],
+        'newLabel': value['newLabel'],
         'newValue': value['newValue'],
+        'oldAccountName': value['oldAccountName'],
+        'oldAccountNumber': value['oldAccountNumber'],
+        'oldExamples': value['oldExamples'],
+        'oldLabel': value['oldLabel'],
         'oldValue': value['oldValue'],
     };
 }

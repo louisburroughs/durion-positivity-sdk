@@ -27,6 +27,12 @@ import {
  */
 export interface TaxRegime {
     /**
+     * The regime's configured display label; null when the profile sets none, never the code (#2679)
+     * @type {string}
+     * @memberof TaxRegime
+     */
+    label?: string;
+    /**
      * The regime code, as a tax registration names it
      * @type {string}
      * @memberof TaxRegime
@@ -66,6 +72,7 @@ export function TaxRegimeFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
+        'label': json['label'] == null ? undefined : json['label'],
         'regime': json['regime'],
         'regions': json['regions'],
         'taxTypes': ((json['taxTypes'] as Array<any>).map(TaxRegimeTaxTypeFromJSON)),
@@ -78,6 +85,7 @@ export function TaxRegimeToJSON(value?: TaxRegime | null): any {
     }
     return {
         
+        'label': value['label'],
         'regime': value['regime'],
         'regions': value['regions'],
         'taxTypes': ((value['taxTypes'] as Array<any>).map(TaxRegimeTaxTypeToJSON)),

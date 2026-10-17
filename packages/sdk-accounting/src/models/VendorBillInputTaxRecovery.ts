@@ -50,6 +50,12 @@ export interface VendorBillInputTaxRecovery {
      */
     regime?: string;
     /**
+     * The regime's configured display label; null when unknown, never the code (#2679)
+     * @type {string}
+     * @memberof VendorBillInputTaxRecovery
+     */
+    regimeLabel?: string;
+    /**
      * The stated amount, signed like the bill
      * @type {number}
      * @memberof VendorBillInputTaxRecovery
@@ -61,6 +67,12 @@ export interface VendorBillInputTaxRecovery {
      * @memberof VendorBillInputTaxRecovery
      */
     taxType?: string;
+    /**
+     * The tax type's configured display label; null when unknown, never the code (#2679)
+     * @type {string}
+     * @memberof VendorBillInputTaxRecovery
+     */
+    taxTypeLabel?: string;
 }
 
 /**
@@ -87,8 +99,10 @@ export function VendorBillInputTaxRecoveryFromJSONTyped(json: any, ignoreDiscrim
         'recoveredAmount': json['recoveredAmount'],
         'recoveryWithheldReason': json['recoveryWithheldReason'] == null ? undefined : json['recoveryWithheldReason'],
         'regime': json['regime'] == null ? undefined : json['regime'],
+        'regimeLabel': json['regimeLabel'] == null ? undefined : json['regimeLabel'],
         'statedAmount': json['statedAmount'],
         'taxType': json['taxType'] == null ? undefined : json['taxType'],
+        'taxTypeLabel': json['taxTypeLabel'] == null ? undefined : json['taxTypeLabel'],
     };
 }
 
@@ -103,8 +117,10 @@ export function VendorBillInputTaxRecoveryToJSON(value?: VendorBillInputTaxRecov
         'recoveredAmount': value['recoveredAmount'],
         'recoveryWithheldReason': value['recoveryWithheldReason'],
         'regime': value['regime'],
+        'regimeLabel': value['regimeLabel'],
         'statedAmount': value['statedAmount'],
         'taxType': value['taxType'],
+        'taxTypeLabel': value['taxTypeLabel'],
     };
 }
 
