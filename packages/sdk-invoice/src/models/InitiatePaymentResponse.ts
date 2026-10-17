@@ -32,6 +32,18 @@ export interface InitiatePaymentResponse {
      */
     capturedAmount?: number;
     /**
+     * Cash tender only: the increment applied; absent when the currency has none
+     * @type {number}
+     * @memberof InitiatePaymentResponse
+     */
+    cashIncrement?: number;
+    /**
+     * Cash tender only: signed rounding, settledAmount minus the amount applied
+     * @type {number}
+     * @memberof InitiatePaymentResponse
+     */
+    cashRoundingAmount?: number;
+    /**
      * Gateway provider identifier (e.g., stripe)
      * @type {string}
      * @memberof InitiatePaymentResponse
@@ -44,11 +56,23 @@ export interface InitiatePaymentResponse {
      */
     gatewayResponse?: string;
     /**
+     * CARD (gateway capture) or CASH (register tender, ADR-0067 A8)
+     * @type {string}
+     * @memberof InitiatePaymentResponse
+     */
+    methodType?: InitiatePaymentResponseMethodTypeEnum;
+    /**
      * Payment intent identifier
      * @type {string}
      * @memberof InitiatePaymentResponse
      */
     paymentIntentId: string;
+    /**
+     * Cash tender only: the cash actually taken after rounding to the currency's cash increment
+     * @type {number}
+     * @memberof InitiatePaymentResponse
+     */
+    settledAmount?: number;
     /**
      * Current lifecycle status of the payment intent
      * @type {string}
@@ -63,6 +87,14 @@ export interface InitiatePaymentResponse {
     voidedRemainderAmount?: number;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum InitiatePaymentResponseMethodTypeEnum {
+    Card = 'CARD',
+    Cash = 'CASH'
+}
 /**
 * @export
 * @enum {string}
@@ -98,9 +130,13 @@ export function InitiatePaymentResponseFromJSONTyped(json: any, ignoreDiscrimina
         
         'authorizedAmount': json['authorizedAmount'] == null ? undefined : json['authorizedAmount'],
         'capturedAmount': json['capturedAmount'] == null ? undefined : json['capturedAmount'],
+        'cashIncrement': json['cashIncrement'] == null ? undefined : json['cashIncrement'],
+        'cashRoundingAmount': json['cashRoundingAmount'] == null ? undefined : json['cashRoundingAmount'],
         'gatewayProvider': json['gatewayProvider'] == null ? undefined : json['gatewayProvider'],
         'gatewayResponse': json['gatewayResponse'] == null ? undefined : json['gatewayResponse'],
+        'methodType': json['methodType'] == null ? undefined : json['methodType'],
         'paymentIntentId': json['paymentIntentId'],
+        'settledAmount': json['settledAmount'] == null ? undefined : json['settledAmount'],
         'status': json['status'],
         'voidedRemainderAmount': json['voidedRemainderAmount'] == null ? undefined : json['voidedRemainderAmount'],
     };
@@ -114,9 +150,13 @@ export function InitiatePaymentResponseToJSON(value?: InitiatePaymentResponse | 
         
         'authorizedAmount': value['authorizedAmount'],
         'capturedAmount': value['capturedAmount'],
+        'cashIncrement': value['cashIncrement'],
+        'cashRoundingAmount': value['cashRoundingAmount'],
         'gatewayProvider': value['gatewayProvider'],
         'gatewayResponse': value['gatewayResponse'],
+        'methodType': value['methodType'],
         'paymentIntentId': value['paymentIntentId'],
+        'settledAmount': value['settledAmount'],
         'status': value['status'],
         'voidedRemainderAmount': value['voidedRemainderAmount'],
     };

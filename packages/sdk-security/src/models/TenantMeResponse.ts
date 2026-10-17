@@ -32,6 +32,12 @@ export interface TenantMeResponse {
      */
     id: string;
     /**
+     * The tenant's locale (BCP 47, ADR-0030 §2); null while the replica has not learned it
+     * @type {string}
+     * @memberof TenantMeResponse
+     */
+    locale?: string;
+    /**
      * URL-safe unique name
      * @type {string}
      * @memberof TenantMeResponse
@@ -67,6 +73,7 @@ export function TenantMeResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
         
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'id': json['id'],
+        'locale': json['locale'] == null ? undefined : json['locale'],
         'slug': json['slug'],
         'status': json['status'],
     };
@@ -80,6 +87,7 @@ export function TenantMeResponseToJSON(value?: TenantMeResponse | null): any {
         
         'displayName': value['displayName'],
         'id': value['id'],
+        'locale': value['locale'],
         'slug': value['slug'],
         'status': value['status'],
     };

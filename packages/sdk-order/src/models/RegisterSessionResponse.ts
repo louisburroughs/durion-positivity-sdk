@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface RegisterSessionResponse {
     /**
+     * ADR-0067 A8: the cash increment a cash tender in the drawer's currency rounds to (pos.order.cash-increments); null when the currency does not round
+     * @type {number}
+     * @memberof RegisterSessionResponse
+     */
+    cashIncrement?: number;
+    /**
      * 
      * @type {Date}
      * @memberof RegisterSessionResponse
@@ -140,6 +146,7 @@ export function RegisterSessionResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'cashIncrement': json['cashIncrement'] == null ? undefined : json['cashIncrement'],
         'closedAt': json['closedAt'] == null ? undefined : (new Date(json['closedAt'])),
         'closedByClerkId': json['closedByClerkId'] == null ? undefined : json['closedByClerkId'],
         'closedByName': json['closedByName'] == null ? undefined : json['closedByName'],
@@ -166,6 +173,7 @@ export function RegisterSessionResponseToJSON(value?: RegisterSessionResponse | 
     }
     return {
         
+        'cashIncrement': value['cashIncrement'],
         'closedAt': value['closedAt'] == null ? undefined : ((value['closedAt']).toISOString()),
         'closedByClerkId': value['closedByClerkId'],
         'closedByName': value['closedByName'],
