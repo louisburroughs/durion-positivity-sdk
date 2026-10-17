@@ -17,25 +17,117 @@ import * as runtime from '../runtime';
 import type {
   AccountingTimeZoneResponse,
   AccountingTimeZoneUpdateRequest,
+  AgedThresholdsRequest,
+  AgedThresholdsResponse,
   ApiError,
+  CashSafetyCushionRequest,
+  CashSafetyCushionResponse,
 } from '../models/index';
 import {
     AccountingTimeZoneResponseFromJSON,
     AccountingTimeZoneResponseToJSON,
     AccountingTimeZoneUpdateRequestFromJSON,
     AccountingTimeZoneUpdateRequestToJSON,
+    AgedThresholdsRequestFromJSON,
+    AgedThresholdsRequestToJSON,
+    AgedThresholdsResponseFromJSON,
+    AgedThresholdsResponseToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    CashSafetyCushionRequestFromJSON,
+    CashSafetyCushionRequestToJSON,
+    CashSafetyCushionResponseFromJSON,
+    CashSafetyCushionResponseToJSON,
 } from '../models/index';
 
 export interface SetAccountingTimeZoneRequest {
     accountingTimeZoneUpdateRequest: AccountingTimeZoneUpdateRequest;
 }
 
+export interface SetAgedThresholdsRequest {
+    agedThresholdsRequest: AgedThresholdsRequest;
+}
+
+export interface SetCashSafetyCushionRequest {
+    cashSafetyCushionRequest: CashSafetyCushionRequest;
+}
+
 /**
  * 
  */
 export class AccountingConfigurationApi extends runtime.BaseAPI {
+
+    /**
+     * Returns the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (default 3), vendorCodUnappliedAgedDays (default 14) and deliveriesNotBilledDays (default 30). They decide when undeposited register cash, an unapplied vendor cash-on-delivery payment and a delivery with no approved bill become to-do items. Use this tool to read the current thresholds before changing them; use setAgedThresholds instead to change them, and do not use it to list the aged items themselves. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_VIEW audit event; nothing is changed. Returns 200 with the three effective values; a value never written reads as its default. 
+     * Get Aged Thresholds
+     */
+    async getAgedThresholdsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AgedThresholdsResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:period:hard_lock"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/configuration/aged-thresholds`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AgedThresholdsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (default 3), vendorCodUnappliedAgedDays (default 14) and deliveriesNotBilledDays (default 30). They decide when undeposited register cash, an unapplied vendor cash-on-delivery payment and a delivery with no approved bill become to-do items. Use this tool to read the current thresholds before changing them; use setAgedThresholds instead to change them, and do not use it to list the aged items themselves. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_VIEW audit event; nothing is changed. Returns 200 with the three effective values; a value never written reads as its default. 
+     * Get Aged Thresholds
+     */
+    async getAgedThresholds(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AgedThresholdsResponse> {
+        const response = await this.getAgedThresholdsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the tenant\'s cash safety cushion: a management threshold in the functional currency that the 30-day cash outlook compares its lowest projected balance against. The amount is null while the cushion is unset, and 0 is a real value. Use this tool to read the current cushion before changing it; use setCashSafetyCushion instead to change or clear it, and do not use it to read cash balances. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_VIEW audit event; nothing is changed. Returns 200 with the amount (null when unset) and the functional currency code. 
+     * Get Cash Safety Cushion
+     */
+    async getCashSafetyCushionRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CashSafetyCushionResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:period:hard_lock"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/configuration/cash-safety-cushion`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CashSafetyCushionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the tenant\'s cash safety cushion: a management threshold in the functional currency that the 30-day cash outlook compares its lowest projected balance against. The amount is null while the cushion is unset, and 0 is a real value. Use this tool to read the current cushion before changing it; use setCashSafetyCushion instead to change or clear it, and do not use it to read cash balances. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_VIEW audit event; nothing is changed. Returns 200 with the amount (null when unset) and the functional currency code. 
+     * Get Cash Safety Cushion
+     */
+    async getCashSafetyCushion(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CashSafetyCushionResponse> {
+        const response = await this.getCashSafetyCushionRaw(initOverrides);
+        return await response.value();
+    }
 
     /**
      * Sets the tenant\'s accounting-calendar time zone: the zone in which every settlement, payment application and posting is dated and every accounting period begins and ends. A tenant without a zone posts nothing; its facts are held SUSPENDED with ACCOUNTING_TIME_ZONE_UNSET. Use this tool once, before the tenant\'s first period close, to set the zone of the legal entity\'s books; use setAccountingHardLockDate to lock history instead. Preconditions: the tenant has never closed an accounting period and has no hard-lock date; after either the zone is fixed. Entries already posted keep their dates and periods. Required inputs: timeZone, an IANA region id such as America/Chicago; fixed offsets such as +05:00 or Etc/GMT+5 and SystemV ids are rejected, UTC is accepted. Emits an ACCOUNTING_CONFIGURATION_TIME_ZONE_SET event; the change is audited with the old zone, the new zone and the acting user, and setting the current zone again changes nothing. Returns 400 INVALID_ACCOUNTING_TIME_ZONE for an invalid id and 409 ACCOUNTING_TIME_ZONE_LOCKED once a period was closed or a hard-lock date was set. 
@@ -80,6 +172,98 @@ export class AccountingConfigurationApi extends runtime.BaseAPI {
      */
     async setAccountingTimeZone(requestParameters: SetAccountingTimeZoneRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingTimeZoneResponse> {
         const response = await this.setAccountingTimeZoneRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (1 to 30), vendorCodUnappliedAgedDays (1 to 90) and deliveriesNotBilledDays (7 to 120). Use this tool when Finance changes how long undeposited register cash, an unapplied vendor cash-on-delivery payment or a delivery with no approved bill may wait before it is flagged; use getAgedThresholds instead to read them, and do not use it to act on an aged item. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: all three day counts, a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_SET event and writes one audit row per threshold whose value changes (old and new value, justification, requestId); an unchanged threshold writes nothing, and a replayed requestId changes nothing. Returns 400 VALIDATION_ERROR for a missing field or a value outside its range, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 409 for a requestId already used with another body. 
+     * Set Aged Thresholds
+     */
+    async setAgedThresholdsRaw(requestParameters: SetAgedThresholdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AgedThresholdsResponse>> {
+        if (requestParameters['agedThresholdsRequest'] == null) {
+            throw new runtime.RequiredError(
+                'agedThresholdsRequest',
+                'Required parameter "agedThresholdsRequest" was null or undefined when calling setAgedThresholds().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:period:hard_lock"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/configuration/aged-thresholds`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AgedThresholdsRequestToJSON(requestParameters['agedThresholdsRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AgedThresholdsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (1 to 30), vendorCodUnappliedAgedDays (1 to 90) and deliveriesNotBilledDays (7 to 120). Use this tool when Finance changes how long undeposited register cash, an unapplied vendor cash-on-delivery payment or a delivery with no approved bill may wait before it is flagged; use getAgedThresholds instead to read them, and do not use it to act on an aged item. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: all three day counts, a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_SET event and writes one audit row per threshold whose value changes (old and new value, justification, requestId); an unchanged threshold writes nothing, and a replayed requestId changes nothing. Returns 400 VALIDATION_ERROR for a missing field or a value outside its range, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 409 for a requestId already used with another body. 
+     * Set Aged Thresholds
+     */
+    async setAgedThresholds(requestParameters: SetAgedThresholdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AgedThresholdsResponse> {
+        const response = await this.setAgedThresholdsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sets or clears the tenant\'s cash safety cushion: the amount, in the functional currency, below which the 30-day cash outlook warns that the lowest projected balance falls short. It is only a threshold: it is never posted, never reserved and never taken off the cash shown, and it refuses nothing. Use this tool when Finance sets, raises, lowers or removes the cushion; use getCashSafetyCushion instead to read it, and do not use it to move money. Preconditions: the caller holds accounting:period:hard_lock, and currencyCode is the tenant\'s functional currency. Required inputs: amount (not negative, at the currency\'s minor-unit precision, 0 allowed; null clears the cushion), currencyCode (ISO 4217), a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_SET event and audits the old and new amount with the justification and requestId; setting the current value again, or replaying a requestId, changes nothing. Returns 400 VALIDATION_ERROR for a missing field, an unknown currency code, a negative amount or too many decimal places, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, 409 for a requestId already used with another body, and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional one. 
+     * Set Cash Safety Cushion
+     */
+    async setCashSafetyCushionRaw(requestParameters: SetCashSafetyCushionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CashSafetyCushionResponse>> {
+        if (requestParameters['cashSafetyCushionRequest'] == null) {
+            throw new runtime.RequiredError(
+                'cashSafetyCushionRequest',
+                'Required parameter "cashSafetyCushionRequest" was null or undefined when calling setCashSafetyCushion().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:period:hard_lock"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/configuration/cash-safety-cushion`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CashSafetyCushionRequestToJSON(requestParameters['cashSafetyCushionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CashSafetyCushionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Sets or clears the tenant\'s cash safety cushion: the amount, in the functional currency, below which the 30-day cash outlook warns that the lowest projected balance falls short. It is only a threshold: it is never posted, never reserved and never taken off the cash shown, and it refuses nothing. Use this tool when Finance sets, raises, lowers or removes the cushion; use getCashSafetyCushion instead to read it, and do not use it to move money. Preconditions: the caller holds accounting:period:hard_lock, and currencyCode is the tenant\'s functional currency. Required inputs: amount (not negative, at the currency\'s minor-unit precision, 0 allowed; null clears the cushion), currencyCode (ISO 4217), a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_SET event and audits the old and new amount with the justification and requestId; setting the current value again, or replaying a requestId, changes nothing. Returns 400 VALIDATION_ERROR for a missing field, an unknown currency code, a negative amount or too many decimal places, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, 409 for a requestId already used with another body, and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional one. 
+     * Set Cash Safety Cushion
+     */
+    async setCashSafetyCushion(requestParameters: SetCashSafetyCushionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CashSafetyCushionResponse> {
+        const response = await this.setCashSafetyCushionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -20,6 +20,7 @@ export * from './BankImportsApi';
 export * from './BankReconciliationApi';
 export * from './BankStatementsApi';
 export * from './BankTransactionsApi';
+export * from './CashPositionApi';
 export * from './CreditMemosApi';
 export * from './CustomerCreditsApi';
 export * from './DefaultGLMappingsApi';

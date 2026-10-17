@@ -39,11 +39,23 @@ export interface AgedPayablesReport {
      */
     asOfDate: Date;
     /**
+     * Open amount of approved bills aged on an estimated due date across all vendors; part of totals.totalOutstanding, not added to it
+     * @type {number}
+     * @memberof AgedPayablesReport
+     */
+    estimatedDueDateAmount: number;
+    /**
      * Timestamp when the report was generated (ISO 8601)
      * @type {Date}
      * @memberof AgedPayablesReport
      */
     generatedAt: Date;
+    /**
+     * totals.totalOutstanding + unappliedPayments: approved open bills less unapplied AP payments only; credit notes and unapproved bills are not netted
+     * @type {number}
+     * @memberof AgedPayablesReport
+     */
+    netOwed: number;
     /**
      * Per-vendor aging rows ordered by vendor name; empty when no open payables exist
      * @type {Array<AgedPayablesRow>}
@@ -63,6 +75,12 @@ export interface AgedPayablesReport {
      */
     totals: AgingSummary;
     /**
+     * Minus the sum of every vendor's unapplied AP payments (not voided, functional currency only); zero or negative
+     * @type {number}
+     * @memberof AgedPayablesReport
+     */
+    unappliedPayments: number;
+    /**
      * Open amount on bills not yet approved (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION) across all vendors; never aged
      * @type {number}
      * @memberof AgedPayablesReport
@@ -81,10 +99,13 @@ export interface AgedPayablesReport {
  */
 export function instanceOfAgedPayablesReport(value: object): boolean {
     if (!('asOfDate' in value)) return false;
+    if (!('estimatedDueDateAmount' in value)) return false;
     if (!('generatedAt' in value)) return false;
+    if (!('netOwed' in value)) return false;
     if (!('rows' in value)) return false;
     if (!('totalIncludingUnapproved' in value)) return false;
     if (!('totals' in value)) return false;
+    if (!('unappliedPayments' in value)) return false;
     if (!('unapproved' in value)) return false;
     if (!('unapprovedBillCount' in value)) return false;
     return true;
@@ -101,10 +122,13 @@ export function AgedPayablesReportFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'asOfDate': (new Date(json['asOfDate'])),
+        'estimatedDueDateAmount': json['estimatedDueDateAmount'],
         'generatedAt': (new Date(json['generatedAt'])),
+        'netOwed': json['netOwed'],
         'rows': ((json['rows'] as Array<any>).map(AgedPayablesRowFromJSON)),
         'totalIncludingUnapproved': json['totalIncludingUnapproved'],
         'totals': AgingSummaryFromJSON(json['totals']),
+        'unappliedPayments': json['unappliedPayments'],
         'unapproved': json['unapproved'],
         'unapprovedBillCount': json['unapprovedBillCount'],
     };
@@ -117,10 +141,13 @@ export function AgedPayablesReportToJSON(value?: AgedPayablesReport | null): any
     return {
         
         'asOfDate': ((value['asOfDate']).toISOString().substring(0,10)),
+        'estimatedDueDateAmount': value['estimatedDueDateAmount'],
         'generatedAt': ((value['generatedAt']).toISOString()),
+        'netOwed': value['netOwed'],
         'rows': ((value['rows'] as Array<any>).map(AgedPayablesRowToJSON)),
         'totalIncludingUnapproved': value['totalIncludingUnapproved'],
         'totals': AgingSummaryToJSON(value['totals']),
+        'unappliedPayments': value['unappliedPayments'],
         'unapproved': value['unapproved'],
         'unapprovedBillCount': value['unapprovedBillCount'],
     };
