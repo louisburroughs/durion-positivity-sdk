@@ -44,6 +44,12 @@ export interface PurchaseSuggestionResponse {
      */
     earliestExpectedDate?: Date;
     /**
+     * The feed's own vendor id: the manufacturer UUID or the distributor id as its feed carries it; null when no vendor was selectable
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    feedVendorRef?: string;
+    /**
      * Stock item (SKU) to purchase
      * @type {string}
      * @memberof PurchaseSuggestionResponse
@@ -61,6 +67,18 @@ export interface PurchaseSuggestionResponse {
      * @memberof PurchaseSuggestionResponse
      */
     locationId: string;
+    /**
+     * CAP:550 S36: computed on read for a CONVERTED suggestion; ORDER_VENDOR_INACTIVE or ORDER_VENDOR_NOT_IN_COPY when the open order's vendor would be refused at approval or transmission, ORDER_NOT_PLACED when no order has appeared within the placement grace; null otherwise
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    orderAttention?: string;
+    /**
+     * CAP:550 S36: the requested order's status as pos-inventory's copy of pos-order shows it (DRAFT, APPROVED, ...); null until the order's fact arrives or when not converted
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    orderStatus?: string;
     /**
      * Replenishment policy the suggestion was computed for
      * @type {string}
@@ -116,17 +134,35 @@ export interface PurchaseSuggestionResponse {
      */
     updatedAt: Date;
     /**
+     * The mapped vendor's display name from the local vendor copy; null while unmapped or when the vendor is not in the copy
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    vendorDisplayName?: string;
+    /**
+     * The pos-supplier vendor the feed vendor is mapped to; null while it is unmapped
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    vendorId?: string;
+    /**
+     * The mapped vendor's number from the local vendor copy; null while unmapped or when the vendor is not in the copy
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    vendorNumber?: string;
+    /**
      * Selected vendor's pack size captured at suggestion time
      * @type {number}
      * @memberof PurchaseSuggestionResponse
      */
     vendorPackSize?: number;
     /**
-     * Selected manufacturer or distributor identifier; null when no vendor was selectable
+     * The mapped vendor's status from the local vendor copy; null while unmapped or when the vendor is not in the copy
      * @type {string}
      * @memberof PurchaseSuggestionResponse
      */
-    vendorRefId?: string;
+    vendorStatus?: PurchaseSuggestionResponseVendorStatusEnum;
 }
 
 /**
@@ -146,6 +182,14 @@ export enum PurchaseSuggestionResponseStatusEnum {
 export enum PurchaseSuggestionResponseSuggestedVendorTypeEnum {
     Manufacturer = 'MANUFACTURER',
     Distributor = 'DISTRIBUTOR'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum PurchaseSuggestionResponseVendorStatusEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE'
 }
 
 
@@ -179,9 +223,12 @@ export function PurchaseSuggestionResponseFromJSONTyped(json: any, ignoreDiscrim
         'createdAt': (new Date(json['createdAt'])),
         'dismissalReason': json['dismissalReason'] == null ? undefined : json['dismissalReason'],
         'earliestExpectedDate': json['earliestExpectedDate'] == null ? undefined : (new Date(json['earliestExpectedDate'])),
+        'feedVendorRef': json['feedVendorRef'] == null ? undefined : json['feedVendorRef'],
         'itemSKU': json['itemSKU'],
         'leadTimeDays': json['leadTimeDays'] == null ? undefined : json['leadTimeDays'],
         'locationId': json['locationId'],
+        'orderAttention': json['orderAttention'] == null ? undefined : json['orderAttention'],
+        'orderStatus': json['orderStatus'] == null ? undefined : json['orderStatus'],
         'policyId': json['policyId'],
         'selectionReason': json['selectionReason'],
         'status': json['status'],
@@ -191,8 +238,11 @@ export function PurchaseSuggestionResponseFromJSONTyped(json: any, ignoreDiscrim
         'unitCostCurrency': json['unitCostCurrency'] == null ? undefined : json['unitCostCurrency'],
         'unitCostMinor': json['unitCostMinor'] == null ? undefined : json['unitCostMinor'],
         'updatedAt': (new Date(json['updatedAt'])),
+        'vendorDisplayName': json['vendorDisplayName'] == null ? undefined : json['vendorDisplayName'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
+        'vendorNumber': json['vendorNumber'] == null ? undefined : json['vendorNumber'],
         'vendorPackSize': json['vendorPackSize'] == null ? undefined : json['vendorPackSize'],
-        'vendorRefId': json['vendorRefId'] == null ? undefined : json['vendorRefId'],
+        'vendorStatus': json['vendorStatus'] == null ? undefined : json['vendorStatus'],
     };
 }
 
@@ -206,9 +256,12 @@ export function PurchaseSuggestionResponseToJSON(value?: PurchaseSuggestionRespo
         'createdAt': ((value['createdAt']).toISOString()),
         'dismissalReason': value['dismissalReason'],
         'earliestExpectedDate': value['earliestExpectedDate'] == null ? undefined : ((value['earliestExpectedDate']).toISOString().substring(0,10)),
+        'feedVendorRef': value['feedVendorRef'],
         'itemSKU': value['itemSKU'],
         'leadTimeDays': value['leadTimeDays'],
         'locationId': value['locationId'],
+        'orderAttention': value['orderAttention'],
+        'orderStatus': value['orderStatus'],
         'policyId': value['policyId'],
         'selectionReason': value['selectionReason'],
         'status': value['status'],
@@ -218,8 +271,11 @@ export function PurchaseSuggestionResponseToJSON(value?: PurchaseSuggestionRespo
         'unitCostCurrency': value['unitCostCurrency'],
         'unitCostMinor': value['unitCostMinor'],
         'updatedAt': ((value['updatedAt']).toISOString()),
+        'vendorDisplayName': value['vendorDisplayName'],
+        'vendorId': value['vendorId'],
+        'vendorNumber': value['vendorNumber'],
         'vendorPackSize': value['vendorPackSize'],
-        'vendorRefId': value['vendorRefId'],
+        'vendorStatus': value['vendorStatus'],
     };
 }
 
