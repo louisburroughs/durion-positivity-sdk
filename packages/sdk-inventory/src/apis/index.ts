@@ -43,3 +43,4 @@ export * from './SupplierStockHintsApi';
 export * from './TraceabilityApi';
 export * from './TransferOrdersApi';
 export * from './ValuationMethodsApi';
+export * from './VendorFeedMappingsApi';
