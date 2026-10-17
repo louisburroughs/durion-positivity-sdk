@@ -147,6 +147,12 @@ export interface PurchaseOrderResponse {
      */
     taxMinor?: number;
     /**
+     * Whether the order has a purchasing channel to be sent through: its vendor's designated transmission profile, stamped at create, vendor-changing revise, approve and (until the first send) transmit (#2713); while nothing was sent it also reflects a channel the vendor gained since, which transmit would stamp. False predicts 422 SUPPLIER_REF_MISSING on transmit; the vendor's administrator designates a purchasing profile in pos-supplier
+     * @type {boolean}
+     * @memberof PurchaseOrderResponse
+     */
+    transmittable: boolean;
+    /**
      * Timestamp at which the purchase order was last updated
      * @type {Date}
      * @memberof PurchaseOrderResponse
@@ -195,6 +201,7 @@ export function instanceOfPurchaseOrderResponse(value: object): boolean {
     if (!('poNumber' in value)) return false;
     if (!('purchaseOrderId' in value)) return false;
     if (!('status' in value)) return false;
+    if (!('transmittable' in value)) return false;
     if (!('updatedAt' in value)) return false;
     if (!('vendorId' in value)) return false;
     if (!('versionNumber' in value)) return false;
@@ -231,6 +238,7 @@ export function PurchaseOrderResponseFromJSONTyped(json: any, ignoreDiscriminato
         'status': json['status'],
         'subtotalMinor': json['subtotalMinor'] == null ? undefined : json['subtotalMinor'],
         'taxMinor': json['taxMinor'] == null ? undefined : json['taxMinor'],
+        'transmittable': json['transmittable'],
         'updatedAt': (new Date(json['updatedAt'])),
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
         'vendorId': json['vendorId'],
@@ -264,6 +272,7 @@ export function PurchaseOrderResponseToJSON(value?: PurchaseOrderResponse | null
         'status': value['status'],
         'subtotalMinor': value['subtotalMinor'],
         'taxMinor': value['taxMinor'],
+        'transmittable': value['transmittable'],
         'updatedAt': ((value['updatedAt']).toISOString()),
         'updatedBy': value['updatedBy'],
         'vendorId': value['vendorId'],

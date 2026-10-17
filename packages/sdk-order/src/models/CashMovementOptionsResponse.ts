@@ -31,6 +31,12 @@ import {
     ReasonOptionFromJSONTyped,
     ReasonOptionToJSON,
 } from './ReasonOption';
+import type { VendorOption } from './VendorOption';
+import {
+    VendorOptionFromJSON,
+    VendorOptionFromJSONTyped,
+    VendorOptionToJSON,
+} from './VendorOption';
 
 /**
  * Cash movement reasons, limits, running totals and petty-expense categories for one session
@@ -68,6 +74,12 @@ export interface CashMovementOptionsResponse {
      * @memberof CashMovementOptionsResponse
      */
     sessionId?: string;
+    /**
+     * The ACTIVE vendors a drawer may pay cash on delivery (VENDOR_COD), by display name; pos-order's copy of the pos-supplier vendor master (#2576)
+     * @type {Array<VendorOption>}
+     * @memberof CashMovementOptionsResponse
+     */
+    vendors?: Array<VendorOption>;
 }
 
 /**
@@ -92,6 +104,7 @@ export function CashMovementOptionsResponseFromJSONTyped(json: any, ignoreDiscri
         'evidenceRule': json['evidenceRule'] == null ? undefined : CashMovementEvidenceRuleFromJSON(json['evidenceRule']),
         'reasons': json['reasons'] == null ? undefined : ((json['reasons'] as Array<any>).map(ReasonOptionFromJSON)),
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
+        'vendors': json['vendors'] == null ? undefined : ((json['vendors'] as Array<any>).map(VendorOptionFromJSON)),
     };
 }
 
@@ -106,6 +119,7 @@ export function CashMovementOptionsResponseToJSON(value?: CashMovementOptionsRes
         'evidenceRule': CashMovementEvidenceRuleToJSON(value['evidenceRule']),
         'reasons': value['reasons'] == null ? undefined : ((value['reasons'] as Array<any>).map(ReasonOptionToJSON)),
         'sessionId': value['sessionId'],
+        'vendors': value['vendors'] == null ? undefined : ((value['vendors'] as Array<any>).map(VendorOptionToJSON)),
     };
 }
 

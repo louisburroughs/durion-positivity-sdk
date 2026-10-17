@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface TaxRegimeEntry {
     /**
+     * Configured display label; null when the profile sets none (never the code)
+     * @type {string}
+     * @memberof TaxRegimeEntry
+     */
+    label?: string;
+    /**
      * Regime name
      * @type {string}
      * @memberof TaxRegimeEntry
@@ -52,6 +58,7 @@ export function TaxRegimeEntryFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
+        'label': json['label'] == null ? undefined : json['label'],
         'regime': json['regime'],
         'regions': json['regions'],
     };
@@ -63,6 +70,7 @@ export function TaxRegimeEntryToJSON(value?: TaxRegimeEntry | null): any {
     }
     return {
         
+        'label': value['label'],
         'regime': value['regime'],
         'regions': value['regions'],
     };

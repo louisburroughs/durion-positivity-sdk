@@ -39,6 +39,12 @@ export interface RevisePurchaseOrderRequest {
      */
     expectedDeliveryDate?: Date;
     /**
+     * The versionNumber of the order this revision was built on, as the last read returned it. The revise is applied only if the order is still at that version; otherwise 409 PURCHASE_ORDER_VERSION_CONFLICT and nothing changes (#2681)
+     * @type {number}
+     * @memberof RevisePurchaseOrderRequest
+     */
+    expectedVersionNumber: number;
+    /**
      * Order lines replacing the existing purchase order lines
      * @type {Array<PurchaseOrderLineRequest>}
      * @memberof RevisePurchaseOrderRequest
@@ -57,7 +63,7 @@ export interface RevisePurchaseOrderRequest {
      */
     poDate: Date;
     /**
-     * Identifier or name of the person who requested the revision
+     * The order's requester: the person the goods are for, as on create. Not the reviser, who is the authenticated caller. Omitted keeps the order's current requester, blank clears it, a value corrects it
      * @type {string}
      * @memberof RevisePurchaseOrderRequest
      */
@@ -86,6 +92,7 @@ export interface RevisePurchaseOrderRequest {
  * Check if a given object implements the RevisePurchaseOrderRequest interface.
  */
 export function instanceOfRevisePurchaseOrderRequest(value: object): boolean {
+    if (!('expectedVersionNumber' in value)) return false;
     if (!('lines' in value)) return false;
     if (!('poDate' in value)) return false;
     if (!('revisionReason' in value)) return false;
@@ -104,6 +111,7 @@ export function RevisePurchaseOrderRequestFromJSONTyped(json: any, ignoreDiscrim
         
         'comment': json['comment'] == null ? undefined : json['comment'],
         'expectedDeliveryDate': json['expectedDeliveryDate'] == null ? undefined : (new Date(json['expectedDeliveryDate'])),
+        'expectedVersionNumber': json['expectedVersionNumber'],
         'lines': ((json['lines'] as Array<any>).map(PurchaseOrderLineRequestFromJSON)),
         'paymentTermsId': json['paymentTermsId'] == null ? undefined : json['paymentTermsId'],
         'poDate': (new Date(json['poDate'])),
@@ -122,6 +130,7 @@ export function RevisePurchaseOrderRequestToJSON(value?: RevisePurchaseOrderRequ
         
         'comment': value['comment'],
         'expectedDeliveryDate': value['expectedDeliveryDate'] == null ? undefined : ((value['expectedDeliveryDate']).toISOString().substring(0,10)),
+        'expectedVersionNumber': value['expectedVersionNumber'],
         'lines': ((value['lines'] as Array<any>).map(PurchaseOrderLineRequestToJSON)),
         'paymentTermsId': value['paymentTermsId'],
         'poDate': ((value['poDate']).toISOString().substring(0,10)),

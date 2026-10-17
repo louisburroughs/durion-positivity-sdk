@@ -51,6 +51,12 @@ export interface InputTaxRecoveryRegime {
      */
     enabled: boolean | null;
     /**
+     * The regime's configured display label; null when the profile sets none or the tax service did not answer, never the code (#2679)
+     * @type {string}
+     * @memberof InputTaxRecoveryRegime
+     */
+    label?: string;
+    /**
      * Regime code, as the country profile names it
      * @type {string}
      * @memberof InputTaxRecoveryRegime
@@ -89,6 +95,7 @@ export function InputTaxRecoveryRegimeFromJSONTyped(json: any, ignoreDiscriminat
         'account': InputTaxRecoveryAccountFromJSON(json['account']),
         'countryCode': json['countryCode'],
         'enabled': json['enabled'],
+        'label': json['label'] == null ? undefined : json['label'],
         'regime': json['regime'],
         'registration': InputTaxRecoveryRegistrationFromJSON(json['registration']),
     };
@@ -103,6 +110,7 @@ export function InputTaxRecoveryRegimeToJSON(value?: InputTaxRecoveryRegime | nu
         'account': InputTaxRecoveryAccountToJSON(value['account']),
         'countryCode': value['countryCode'],
         'enabled': value['enabled'],
+        'label': value['label'],
         'regime': value['regime'],
         'registration': InputTaxRecoveryRegistrationToJSON(value['registration']),
     };

@@ -27,7 +27,7 @@ import {
  */
 export interface ProcessingStatusesContract {
     /**
-     * Status sequence for a Kafka-consumed posting fact: exactly one row is written per consumed fact, never RECEIVED or PROCESSING. It is terminal (PROCESSED or SKIPPED), except a hold. A fact held for its currency is SUSPENDED with failureReasonCode CURRENCY_NOT_SUPPORTED, and a malformed goods receipt is SUSPENDED with VALIDATION_ERROR; neither is auto-retried. A settled payment its automatic application could not complete is SUSPENDED or FAILED with its own reason. A manual reprocess re-runs a goods receipt's or a settled payment's own path from the stored fact, never the posting rules
+     * Status sequence for a Kafka-consumed posting fact: exactly one row is written per consumed fact, never RECEIVED or PROCESSING. It is terminal (PROCESSED or SKIPPED), except a hold. A fact held for its currency is SUSPENDED with failureReasonCode CURRENCY_NOT_SUPPORTED, and a malformed goods receipt is SUSPENDED with VALIDATION_ERROR; neither is auto-retried. A settled payment its automatic application could not complete is SUSPENDED or FAILED with its own reason. A manual reprocess re-runs a held goods receipt's, register session's, invoice's or settled payment's own path from the stored fact, never the posting rules; a held Kafka row with no such path (a settled payment held for its currency) is refused with 409 ACCOUNTING_EVENT_HOLD_NOT_RELEASABLE and keeps its reason: a currency hold is released only when the ledger accepts the currency (ADR-0067 Stage B1), never by reprocess (#2620)
      * @type {Array<string>}
      * @memberof ProcessingStatusesContract
      */

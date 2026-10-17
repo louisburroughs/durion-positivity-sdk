@@ -25,6 +25,12 @@ export interface ApprovePurchaseOrderRequest {
      * @memberof ApprovePurchaseOrderRequest
      */
     approvalNotes?: string;
+    /**
+     * Optional: the versionNumber of the order the approver read. When given, the approval is applied only if the order is still at that version, so a person approves the content they saw; otherwise 409 PURCHASE_ORDER_VERSION_CONFLICT and nothing changes (#2681). Absent approves the current version
+     * @type {number}
+     * @memberof ApprovePurchaseOrderRequest
+     */
+    expectedVersionNumber?: number;
 }
 
 /**
@@ -45,6 +51,7 @@ export function ApprovePurchaseOrderRequestFromJSONTyped(json: any, ignoreDiscri
     return {
         
         'approvalNotes': json['approvalNotes'] == null ? undefined : json['approvalNotes'],
+        'expectedVersionNumber': json['expectedVersionNumber'] == null ? undefined : json['expectedVersionNumber'],
     };
 }
 
@@ -55,6 +62,7 @@ export function ApprovePurchaseOrderRequestToJSON(value?: ApprovePurchaseOrderRe
     return {
         
         'approvalNotes': value['approvalNotes'],
+        'expectedVersionNumber': value['expectedVersionNumber'],
     };
 }
 

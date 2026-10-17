@@ -56,6 +56,12 @@ export interface TaxRegistrationView {
      */
     regime: string;
     /**
+     * The regime's configured display label; null when the profile sets none or the tax service did not answer, never the code (#2679)
+     * @type {string}
+     * @memberof TaxRegistrationView
+     */
+    regimeLabel?: string;
+    /**
      * Registration id (pos-tax's)
      * @type {string}
      * @memberof TaxRegistrationView
@@ -113,6 +119,7 @@ export function TaxRegistrationViewFromJSONTyped(json: any, ignoreDiscriminator:
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'jurisdictionCode': json['jurisdictionCode'],
         'regime': json['regime'],
+        'regimeLabel': json['regimeLabel'] == null ? undefined : json['regimeLabel'],
         'registrationId': json['registrationId'],
         'registrationNumber': json['registrationNumber'],
         'status': json['status'],
@@ -132,6 +139,7 @@ export function TaxRegistrationViewToJSON(value?: TaxRegistrationView | null): a
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'jurisdictionCode': value['jurisdictionCode'],
         'regime': value['regime'],
+        'regimeLabel': value['regimeLabel'],
         'registrationId': value['registrationId'],
         'registrationNumber': value['registrationNumber'],
         'status': value['status'],

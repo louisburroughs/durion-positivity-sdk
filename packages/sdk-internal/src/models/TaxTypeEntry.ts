@@ -32,6 +32,12 @@ export interface TaxTypeEntry {
      */
     jurisdictionType: TaxTypeEntryJurisdictionTypeEnum;
     /**
+     * Configured display label; null when the profile sets none (never the code)
+     * @type {string}
+     * @memberof TaxTypeEntry
+     */
+    label?: string;
+    /**
      * Regime the tax type is registered and recovered under; null when it has none
      * @type {string}
      * @memberof TaxTypeEntry
@@ -82,6 +88,7 @@ export function TaxTypeEntryFromJSONTyped(json: any, ignoreDiscriminator: boolea
         
         'inputTaxRecoverable': json['inputTaxRecoverable'],
         'jurisdictionType': json['jurisdictionType'],
+        'label': json['label'] == null ? undefined : json['label'],
         'regime': json['regime'] == null ? undefined : json['regime'],
         'taxType': json['taxType'],
     };
@@ -95,6 +102,7 @@ export function TaxTypeEntryToJSON(value?: TaxTypeEntry | null): any {
         
         'inputTaxRecoverable': value['inputTaxRecoverable'],
         'jurisdictionType': value['jurisdictionType'],
+        'label': value['label'],
         'regime': value['regime'],
         'taxType': value['taxType'],
     };

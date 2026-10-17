@@ -17,12 +17,17 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   ApprovePurchaseOrderRequest,
+  CancelPurchaseOrderLineRequest,
+  ClosePurchaseOrderRequest,
   CreatePurchaseOrderRequest,
   PagePurchaseOrderResponse,
   PagePurchaseOrderTransmissionEvent,
+  PagePurchaseOrderVendorResponse,
   ProcurementAvailability,
   PurchaseOrderResponse,
   PurchaseOrderSummaryResponse,
+  PurchaseOrderVendorResponse,
+  ReopenPurchaseOrderLineRequest,
   RevisePurchaseOrderRequest,
 } from '../models/index';
 import {
@@ -30,18 +35,28 @@ import {
     ApiErrorToJSON,
     ApprovePurchaseOrderRequestFromJSON,
     ApprovePurchaseOrderRequestToJSON,
+    CancelPurchaseOrderLineRequestFromJSON,
+    CancelPurchaseOrderLineRequestToJSON,
+    ClosePurchaseOrderRequestFromJSON,
+    ClosePurchaseOrderRequestToJSON,
     CreatePurchaseOrderRequestFromJSON,
     CreatePurchaseOrderRequestToJSON,
     PagePurchaseOrderResponseFromJSON,
     PagePurchaseOrderResponseToJSON,
     PagePurchaseOrderTransmissionEventFromJSON,
     PagePurchaseOrderTransmissionEventToJSON,
+    PagePurchaseOrderVendorResponseFromJSON,
+    PagePurchaseOrderVendorResponseToJSON,
     ProcurementAvailabilityFromJSON,
     ProcurementAvailabilityToJSON,
     PurchaseOrderResponseFromJSON,
     PurchaseOrderResponseToJSON,
     PurchaseOrderSummaryResponseFromJSON,
     PurchaseOrderSummaryResponseToJSON,
+    PurchaseOrderVendorResponseFromJSON,
+    PurchaseOrderVendorResponseToJSON,
+    ReopenPurchaseOrderLineRequestFromJSON,
+    ReopenPurchaseOrderLineRequestToJSON,
     RevisePurchaseOrderRequestFromJSON,
     RevisePurchaseOrderRequestToJSON,
 } from '../models/index';
@@ -53,6 +68,17 @@ export interface ApprovePurchaseOrderOperationRequest {
 
 export interface CancelPurchaseOrderRequest {
     poId: string;
+}
+
+export interface CancelPurchaseOrderLineOperationRequest {
+    poId: string;
+    lineId: string;
+    cancelPurchaseOrderLineRequest: CancelPurchaseOrderLineRequest;
+}
+
+export interface ClosePurchaseOrderOperationRequest {
+    poId: string;
+    closePurchaseOrderRequest: ClosePurchaseOrderRequest;
 }
 
 export interface CreatePurchaseOrderOperationRequest {
@@ -69,8 +95,20 @@ export interface GetPurchaseOrderSupplierAvailabilityRequest {
     deliveryLocationId: string;
 }
 
+export interface GetPurchaseOrderVendorRequest {
+    vendorId: string;
+}
+
 export interface ListPurchaseOrderTransmissionEventsRequest {
     poId: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
+}
+
+export interface ListPurchaseOrderVendorsRequest {
+    status?: ListPurchaseOrderVendorsStatusEnum;
+    q?: string;
     page?: number;
     size?: number;
     sort?: Array<string>;
@@ -84,6 +122,12 @@ export interface ListPurchaseOrdersRequest {
     page?: number;
     size?: number;
     sort?: Array<string>;
+}
+
+export interface ReopenPurchaseOrderLineOperationRequest {
+    poId: string;
+    lineId: string;
+    reopenPurchaseOrderLineRequest: ReopenPurchaseOrderLineRequest;
 }
 
 export interface RevisePurchaseOrderOperationRequest {
@@ -106,7 +150,7 @@ export interface TransmitPurchaseOrderRequest {
 export class PurchaseOrdersApi extends runtime.BaseAPI {
 
     /**
-     * Approves a DRAFT purchase order, moving it to APPROVED and recording the approver, timestamp and optional notes. Use this tool to release a drafted order for receiving; do not use cancelPurchaseOrder, which terminates the order, and note that receiving happens in pos-inventory, whose createGoodsReceipt rejects orders that were never approved. Preconditions: the purchase order must exist and be in DRAFT status, and its vendor must be ACTIVE in pos-order\'s vendor copy; an order requested by pos-inventory may name another vendor and is revised to a valid one first. Required inputs: poId (UUIDv7) path parameter and a JSON body where approvalNotes is optional, so an empty object is acceptable. Emits an ORDER_PURCHASE_ORDER_APPROVE event; the order becomes eligible for ASNs, goods receipts and receiving sessions. Returns 404 when the purchase order does not exist, 409 when it is not in DRAFT status, 422 VENDOR_INACTIVE when its vendor is inactive, and 503 VENDOR_REPLICATION_PENDING with Retry-After when its vendor has not reached the copy yet. 
+     * Approves a DRAFT purchase order, moving it to APPROVED and recording the approver, timestamp and optional notes. Use this tool to release a drafted order for receiving; do not use cancelPurchaseOrder, which terminates the order, and note that receiving happens in pos-inventory, whose createGoodsReceipt rejects orders that were never approved. Preconditions: the purchase order must exist and be in DRAFT status, and its vendor must be ACTIVE in pos-order\'s vendor copy; an order requested by pos-inventory may name another vendor and is revised to a valid one first. Required inputs: poId (UUIDv7) path parameter and a JSON body where approvalNotes and expectedVersionNumber are optional, so an empty object is acceptable; send expectedVersionNumber (the versionNumber the approver read) so the approval applies only to the content they saw. Emits an ORDER_PURCHASE_ORDER_APPROVE event; the order becomes eligible for ASNs, goods receipts and receiving sessions. Returns 404 when the purchase order does not exist, 409 PURCHASE_ORDER_INVALID_STATE when it is not in DRAFT status, 409 PURCHASE_ORDER_VERSION_CONFLICT when expectedVersionNumber is not the order\'s current versionNumber (nothing changes; re-read and approve again), 422 VENDOR_INACTIVE when its vendor is inactive, and 503 VENDOR_REPLICATION_PENDING with Retry-After when its vendor has not reached the copy yet. 
      * Approve Purchase Order
      */
     async approvePurchaseOrderRaw(requestParameters: ApprovePurchaseOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderResponse>> {
@@ -150,7 +194,7 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves a DRAFT purchase order, moving it to APPROVED and recording the approver, timestamp and optional notes. Use this tool to release a drafted order for receiving; do not use cancelPurchaseOrder, which terminates the order, and note that receiving happens in pos-inventory, whose createGoodsReceipt rejects orders that were never approved. Preconditions: the purchase order must exist and be in DRAFT status, and its vendor must be ACTIVE in pos-order\'s vendor copy; an order requested by pos-inventory may name another vendor and is revised to a valid one first. Required inputs: poId (UUIDv7) path parameter and a JSON body where approvalNotes is optional, so an empty object is acceptable. Emits an ORDER_PURCHASE_ORDER_APPROVE event; the order becomes eligible for ASNs, goods receipts and receiving sessions. Returns 404 when the purchase order does not exist, 409 when it is not in DRAFT status, 422 VENDOR_INACTIVE when its vendor is inactive, and 503 VENDOR_REPLICATION_PENDING with Retry-After when its vendor has not reached the copy yet. 
+     * Approves a DRAFT purchase order, moving it to APPROVED and recording the approver, timestamp and optional notes. Use this tool to release a drafted order for receiving; do not use cancelPurchaseOrder, which terminates the order, and note that receiving happens in pos-inventory, whose createGoodsReceipt rejects orders that were never approved. Preconditions: the purchase order must exist and be in DRAFT status, and its vendor must be ACTIVE in pos-order\'s vendor copy; an order requested by pos-inventory may name another vendor and is revised to a valid one first. Required inputs: poId (UUIDv7) path parameter and a JSON body where approvalNotes and expectedVersionNumber are optional, so an empty object is acceptable; send expectedVersionNumber (the versionNumber the approver read) so the approval applies only to the content they saw. Emits an ORDER_PURCHASE_ORDER_APPROVE event; the order becomes eligible for ASNs, goods receipts and receiving sessions. Returns 404 when the purchase order does not exist, 409 PURCHASE_ORDER_INVALID_STATE when it is not in DRAFT status, 409 PURCHASE_ORDER_VERSION_CONFLICT when expectedVersionNumber is not the order\'s current versionNumber (nothing changes; re-read and approve again), 422 VENDOR_INACTIVE when its vendor is inactive, and 503 VENDOR_REPLICATION_PENDING with Retry-After when its vendor has not reached the copy yet. 
      * Approve Purchase Order
      */
     async approvePurchaseOrder(requestParameters: ApprovePurchaseOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderResponse> {
@@ -198,6 +242,119 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
      */
     async cancelPurchaseOrder(requestParameters: CancelPurchaseOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderResponse> {
         const response = await this.cancelPurchaseOrderRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Cancels part or all of one line\'s open quantity because the vendor will not ship it (CAP:550 #2635): the line\'s cancelled figures take the quantity and its value, open and balance fall by the same, the status is re-derived (CLOSED once every line is settled with a short-closed remainder) and the order\'s state is published, so receiving expects nothing more for it. Use this tool for one line; do not use it for every remainder at once (closePurchaseOrder) or for an order nothing arrived on (cancelPurchaseOrder instead). Preconditions: the order is APPROVED, PARTIALLY_RECEIVED or FULLY_RECEIVED (a DRAFT is revised, not short-closed); the line belongs to the order; quantity is at most the line\'s open quantity. Required inputs: poId and lineId path parameters; quantity (base units, > 0) and a reason. Emits an ORDER_PURCHASE_ORDER_LINE_CANCEL event and publishes purchaseorder.updated. Returns 200 with the order, 400 PURCHASE_ORDER_BAD_REQUEST for a missing reason or a quantity that is not positive, 404 PURCHASE_ORDER_NOT_FOUND for an unknown order or line, and 409 PURCHASE_ORDER_INVALID_STATE on a DRAFT (nextAction: revise), CANCELLED or CLOSED order or a quantity above the open quantity. 
+     * Cancel a remainder of a purchase-order line
+     */
+    async cancelPurchaseOrderLineRaw(requestParameters: CancelPurchaseOrderLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderResponse>> {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError(
+                'poId',
+                'Required parameter "poId" was null or undefined when calling cancelPurchaseOrderLine().'
+            );
+        }
+
+        if (requestParameters['lineId'] == null) {
+            throw new runtime.RequiredError(
+                'lineId',
+                'Required parameter "lineId" was null or undefined when calling cancelPurchaseOrderLine().'
+            );
+        }
+
+        if (requestParameters['cancelPurchaseOrderLineRequest'] == null) {
+            throw new runtime.RequiredError(
+                'cancelPurchaseOrderLineRequest',
+                'Required parameter "cancelPurchaseOrderLineRequest" was null or undefined when calling cancelPurchaseOrderLine().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-orders/{poId}/lines/{lineId}/cancel`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CancelPurchaseOrderLineRequestToJSON(requestParameters['cancelPurchaseOrderLineRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Cancels part or all of one line\'s open quantity because the vendor will not ship it (CAP:550 #2635): the line\'s cancelled figures take the quantity and its value, open and balance fall by the same, the status is re-derived (CLOSED once every line is settled with a short-closed remainder) and the order\'s state is published, so receiving expects nothing more for it. Use this tool for one line; do not use it for every remainder at once (closePurchaseOrder) or for an order nothing arrived on (cancelPurchaseOrder instead). Preconditions: the order is APPROVED, PARTIALLY_RECEIVED or FULLY_RECEIVED (a DRAFT is revised, not short-closed); the line belongs to the order; quantity is at most the line\'s open quantity. Required inputs: poId and lineId path parameters; quantity (base units, > 0) and a reason. Emits an ORDER_PURCHASE_ORDER_LINE_CANCEL event and publishes purchaseorder.updated. Returns 200 with the order, 400 PURCHASE_ORDER_BAD_REQUEST for a missing reason or a quantity that is not positive, 404 PURCHASE_ORDER_NOT_FOUND for an unknown order or line, and 409 PURCHASE_ORDER_INVALID_STATE on a DRAFT (nextAction: revise), CANCELLED or CLOSED order or a quantity above the open quantity. 
+     * Cancel a remainder of a purchase-order line
+     */
+    async cancelPurchaseOrderLine(requestParameters: CancelPurchaseOrderLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderResponse> {
+        const response = await this.cancelPurchaseOrderLineRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Short-closes a purchase order something was received on (CAP:550 #2635): every remaining open quantity on every line is cancelled with its value, the balance falls to what was received, the order is CLOSED and its state is published, so receiving expects nothing more. Use this tool when the vendor will not ship the rest; do not use it for one line (cancelPurchaseOrderLine) or for an order nothing arrived on (cancelPurchaseOrder instead). Preconditions: the order is APPROVED, PARTIALLY_RECEIVED or FULLY_RECEIVED and something was received on it. Required inputs: poId path parameter and a reason. Emits an ORDER_PURCHASE_ORDER_CLOSE event and publishes purchaseorder.updated. Returns 200 with the order, 400 PURCHASE_ORDER_BAD_REQUEST for a missing reason, 404 PURCHASE_ORDER_NOT_FOUND, and 409 PURCHASE_ORDER_INVALID_STATE on a DRAFT, CANCELLED or CLOSED order, or on an order with nothing received (nextAction names cancelPurchaseOrder). 
+     * Close a purchase order: cancel every remaining open quantity
+     */
+    async closePurchaseOrderRaw(requestParameters: ClosePurchaseOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderResponse>> {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError(
+                'poId',
+                'Required parameter "poId" was null or undefined when calling closePurchaseOrder().'
+            );
+        }
+
+        if (requestParameters['closePurchaseOrderRequest'] == null) {
+            throw new runtime.RequiredError(
+                'closePurchaseOrderRequest',
+                'Required parameter "closePurchaseOrderRequest" was null or undefined when calling closePurchaseOrder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-orders/{poId}/close`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ClosePurchaseOrderRequestToJSON(requestParameters['closePurchaseOrderRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Short-closes a purchase order something was received on (CAP:550 #2635): every remaining open quantity on every line is cancelled with its value, the balance falls to what was received, the order is CLOSED and its state is published, so receiving expects nothing more. Use this tool when the vendor will not ship the rest; do not use it for one line (cancelPurchaseOrderLine) or for an order nothing arrived on (cancelPurchaseOrder instead). Preconditions: the order is APPROVED, PARTIALLY_RECEIVED or FULLY_RECEIVED and something was received on it. Required inputs: poId path parameter and a reason. Emits an ORDER_PURCHASE_ORDER_CLOSE event and publishes purchaseorder.updated. Returns 200 with the order, 400 PURCHASE_ORDER_BAD_REQUEST for a missing reason, 404 PURCHASE_ORDER_NOT_FOUND, and 409 PURCHASE_ORDER_INVALID_STATE on a DRAFT, CANCELLED or CLOSED order, or on an order with nothing received (nextAction names cancelPurchaseOrder). 
+     * Close a purchase order: cancel every remaining open quantity
+     */
+    async closePurchaseOrder(requestParameters: ClosePurchaseOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderResponse> {
+        const response = await this.closePurchaseOrderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -356,6 +513,49 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns one vendor of pos-order\'s vendor copy by its pos-supplier vendor id: vendorNumber, displayName and status. Use this tool to name the vendor on a purchase-order screen when the vendorId is already known; do not use it to search, use listPurchaseOrderVendors instead to find one. Preconditions: none. An INACTIVE vendor is returned as such (200), since that is a fact about the vendor, not a refusal of this read. Required inputs: vendorId (path). Emits an ORDER_PURCHASE_ORDER_VENDOR_GET audit event; read-only, never calls pos-supplier. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the copy does not hold the id: pos-order cannot tell a vendor that does not exist from one whose fact has not arrived, so it never answers 404 (ADR-0017 §1). A malformed vendorId is 400. 
+     * Get Purchase-Order Vendor
+     */
+    async getPurchaseOrderVendorRaw(requestParameters: GetPurchaseOrderVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderVendorResponse>> {
+        if (requestParameters['vendorId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorId',
+                'Required parameter "vendorId" was null or undefined when calling getPurchaseOrderVendor().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-order-vendors/{vendorId}`.replace(`{${"vendorId"}}`, encodeURIComponent(String(requestParameters['vendorId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseOrderVendorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one vendor of pos-order\'s vendor copy by its pos-supplier vendor id: vendorNumber, displayName and status. Use this tool to name the vendor on a purchase-order screen when the vendorId is already known; do not use it to search, use listPurchaseOrderVendors instead to find one. Preconditions: none. An INACTIVE vendor is returned as such (200), since that is a fact about the vendor, not a refusal of this read. Required inputs: vendorId (path). Emits an ORDER_PURCHASE_ORDER_VENDOR_GET audit event; read-only, never calls pos-supplier. Returns 503 VENDOR_REPLICATION_PENDING with Retry-After when the copy does not hold the id: pos-order cannot tell a vendor that does not exist from one whose fact has not arrived, so it never answers 404 (ADR-0017 §1). A malformed vendorId is 400. 
+     * Get Purchase-Order Vendor
+     */
+    async getPurchaseOrderVendor(requestParameters: GetPurchaseOrderVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderVendorResponse> {
+        const response = await this.getPurchaseOrderVendorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns a page of the purchase order\'s append-only vendor transmission timeline: every confirmation, rejection, status observation, not-dispatched notice and review escalation heard about the order, including the despatchDate and estimatedDeliveryDate a status observation may carry. Use this tool when a buyer chasing an order needs what happened to it, not just where it stands; use getPurchaseOrder instead for the order\'s current transmission state, which this timeline never collapses to. Preconditions: the purchase order must exist; an order that was never transmitted simply has an empty timeline. Required inputs: poId (UUIDv7) path parameter; standard page and size parameters control pagination, and the sort parameter is ignored because the ordering is the semantics of the timeline. Entries are ordered by the vendor\'s clock (observedAt ascending), with ties broken by platform receipt time (recordedAt) and then by event id, so a late-arriving observation sits where the vendor observed it and the sequence is stable across reads. Emits an ORDER_PURCHASE_ORDER_TRANSMISSION_EVENTS audit event; no state changes, this is a read-only projection. Returns 200 with an empty page when the order has no timeline yet, and 404 when the purchase order does not exist. 
      * List Purchase Order Transmission Events
      */
@@ -407,6 +607,62 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
      */
     async listPurchaseOrderTransmissionEvents(requestParameters: ListPurchaseOrderTransmissionEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagePurchaseOrderTransmissionEvent> {
         const response = await this.listPurchaseOrderTransmissionEventsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a page of the vendors a purchase order may name, from pos-order\'s own copy of the pos-supplier vendor master: vendorId, vendorNumber, displayName and status, nothing else. Use this tool to pick the vendorId for createPurchaseOrder or a vendor-changing revision; do not use it to read or change the vendor master itself, which is supplier-owned (use the pos-supplier vendor endpoints instead). A vendor listed here as ACTIVE never answers 503 VENDOR_REPLICATION_PENDING on create, and a DRAFT order whose vendor is not in the ACTIVE list is one approvePurchaseOrder will refuse. Preconditions: none; the copy is fed by supplier.vendor.updated, so a vendor created in pos-supplier moments ago may not be listed yet. Required inputs: none; status (ACTIVE or INACTIVE, upper case) and q (a case-insensitive substring of the vendor number or display name, at most 255 characters) narrow the result, and page, size and sort (vendorNumber, displayName, status or vendorId; default displayName,asc) control pagination. Emits an ORDER_PURCHASE_ORDER_VENDOR_LIST audit event; a read-only projection that never calls pos-supplier. Returns 200 with an empty page when nothing matches; 400 PURCHASE_ORDER_BAD_REQUEST on a sort property outside the four listed, and 400 VALIDATION_ERROR (with fieldErrors) on a status that is not ACTIVE or INACTIVE or a q over 255 characters. 
+     * List Purchase-Order Vendors
+     */
+    async listPurchaseOrderVendorsRaw(requestParameters: ListPurchaseOrderVendorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagePurchaseOrderVendorResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-order-vendors`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagePurchaseOrderVendorResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a page of the vendors a purchase order may name, from pos-order\'s own copy of the pos-supplier vendor master: vendorId, vendorNumber, displayName and status, nothing else. Use this tool to pick the vendorId for createPurchaseOrder or a vendor-changing revision; do not use it to read or change the vendor master itself, which is supplier-owned (use the pos-supplier vendor endpoints instead). A vendor listed here as ACTIVE never answers 503 VENDOR_REPLICATION_PENDING on create, and a DRAFT order whose vendor is not in the ACTIVE list is one approvePurchaseOrder will refuse. Preconditions: none; the copy is fed by supplier.vendor.updated, so a vendor created in pos-supplier moments ago may not be listed yet. Required inputs: none; status (ACTIVE or INACTIVE, upper case) and q (a case-insensitive substring of the vendor number or display name, at most 255 characters) narrow the result, and page, size and sort (vendorNumber, displayName, status or vendorId; default displayName,asc) control pagination. Emits an ORDER_PURCHASE_ORDER_VENDOR_LIST audit event; a read-only projection that never calls pos-supplier. Returns 200 with an empty page when nothing matches; 400 PURCHASE_ORDER_BAD_REQUEST on a sort property outside the four listed, and 400 VALIDATION_ERROR (with fieldErrors) on a status that is not ACTIVE or INACTIVE or a q over 255 characters. 
+     * List Purchase-Order Vendors
+     */
+    async listPurchaseOrderVendors(requestParameters: ListPurchaseOrderVendorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagePurchaseOrderVendorResponse> {
+        const response = await this.listPurchaseOrderVendorsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -475,7 +731,67 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Revises an existing purchase order in place: the version number increments, the header fields and every line are replaced, totals are recomputed, and the open balance resets to the ex-tax value (subtotal) of the new lines. Use this tool to change quantities, costs or delivery terms on an order; do not use createPurchaseOrder, which starts a new order, and use cancelPurchaseOrder instead when the order should be terminated rather than changed. Preconditions: the purchase order must exist and be DRAFT, or APPROVED with nothing received on any line (every line\'s open quantity still equals its ordered quantity), because a revision replaces every line with new line ids; from PARTIALLY_RECEIVED on, and on CLOSED or CANCELLED orders, revise is refused and nothing changes. Required inputs: poId (UUIDv7) path parameter plus poDate, revisionReason and the full replacement lines list, because every line is replaced rather than merged; paymentTermsId, expectedDeliveryDate, shipToLocationId, requestedBy and comment overwrite the stored values even when omitted, while an optional vendorId changes the vendor of a DRAFT order only. Emits an ORDER_PURCHASE_ORDER_REVISE event carrying the field-level delta and the revision reason. Returns 404 when the purchase order does not exist, 409 PURCHASE_ORDER_INVALID_STATE when the order is not DRAFT or APPROVED or has received goods on any line, or when vendorId changes the vendor of an order past DRAFT, 422 VENDOR_INACTIVE for an inactive new vendor or when a line\'s documentUom has no conversion path to the product\'s base UoM, and 503 VENDOR_REPLICATION_PENDING with Retry-After when the new vendor has not reached the copy yet. 
+     * Reopens part or all of a line\'s returned quantity because the vendor will replace the goods on this order (CAP:550 #2635): the quantity leaves the line\'s returned figures and is open again, the open balance rises by its value, the status is re-derived (FULLY_RECEIVED becomes PARTIALLY_RECEIVED) and the order\'s state is published, so receiving expects the replacement on the original line. Never a new purchase order (ADR-0052). Use this tool after pos-inventory recorded a RETURN_TO_VENDOR and the vendor agreed to replace; do not use it for a receipt correction, which reopens the line by itself. Preconditions: the order is not CANCELLED or CLOSED; the line belongs to the order; quantity is at most the line\'s returned quantity. Required inputs: poId and lineId path parameters; quantity (base units, > 0); vendorReturnId is optional, kept for the audit trail. Emits an ORDER_PURCHASE_ORDER_LINE_REOPEN event and publishes purchaseorder.updated. Returns 200 with the order, 400 PURCHASE_ORDER_BAD_REQUEST for a quantity that is not positive, 404 PURCHASE_ORDER_NOT_FOUND for an unknown order or line, and 409 PURCHASE_ORDER_INVALID_STATE on a CANCELLED or CLOSED order or a quantity above what was returned. 
+     * Reopen a returned quantity of a purchase-order line for a replacement
+     */
+    async reopenPurchaseOrderLineRaw(requestParameters: ReopenPurchaseOrderLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderResponse>> {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError(
+                'poId',
+                'Required parameter "poId" was null or undefined when calling reopenPurchaseOrderLine().'
+            );
+        }
+
+        if (requestParameters['lineId'] == null) {
+            throw new runtime.RequiredError(
+                'lineId',
+                'Required parameter "lineId" was null or undefined when calling reopenPurchaseOrderLine().'
+            );
+        }
+
+        if (requestParameters['reopenPurchaseOrderLineRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reopenPurchaseOrderLineRequest',
+                'Required parameter "reopenPurchaseOrderLineRequest" was null or undefined when calling reopenPurchaseOrderLine().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:reopen"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-orders/{poId}/lines/{lineId}/reopen`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReopenPurchaseOrderLineRequestToJSON(requestParameters['reopenPurchaseOrderLineRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reopens part or all of a line\'s returned quantity because the vendor will replace the goods on this order (CAP:550 #2635): the quantity leaves the line\'s returned figures and is open again, the open balance rises by its value, the status is re-derived (FULLY_RECEIVED becomes PARTIALLY_RECEIVED) and the order\'s state is published, so receiving expects the replacement on the original line. Never a new purchase order (ADR-0052). Use this tool after pos-inventory recorded a RETURN_TO_VENDOR and the vendor agreed to replace; do not use it for a receipt correction, which reopens the line by itself. Preconditions: the order is not CANCELLED or CLOSED; the line belongs to the order; quantity is at most the line\'s returned quantity. Required inputs: poId and lineId path parameters; quantity (base units, > 0); vendorReturnId is optional, kept for the audit trail. Emits an ORDER_PURCHASE_ORDER_LINE_REOPEN event and publishes purchaseorder.updated. Returns 200 with the order, 400 PURCHASE_ORDER_BAD_REQUEST for a quantity that is not positive, 404 PURCHASE_ORDER_NOT_FOUND for an unknown order or line, and 409 PURCHASE_ORDER_INVALID_STATE on a CANCELLED or CLOSED order or a quantity above what was returned. 
+     * Reopen a returned quantity of a purchase-order line for a replacement
+     */
+    async reopenPurchaseOrderLine(requestParameters: ReopenPurchaseOrderLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderResponse> {
+        const response = await this.reopenPurchaseOrderLineRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Revises an existing purchase order in place: the version number increments, the header fields and every line are replaced, totals are recomputed, and the open balance resets to the ex-tax value (subtotal) of the new lines. Use this tool to change quantities, costs or delivery terms on an order; do not use createPurchaseOrder, which starts a new order, and use cancelPurchaseOrder instead when the order should be terminated rather than changed. Preconditions: the purchase order must exist and be DRAFT, or APPROVED with nothing received on any line (every line\'s open quantity still equals its ordered quantity), because a revision replaces every line with new line ids; from PARTIALLY_RECEIVED on, and on CLOSED or CANCELLED orders, revise is refused and nothing changes. Required inputs: poId (UUIDv7) path parameter plus expectedVersionNumber (the versionNumber the last read returned; the revise applies only if the order is still at that version), poDate, revisionReason and the full replacement lines list, because every line is replaced rather than merged; each line\'s taxCodeId and glAccountId are returned by getPurchaseOrder, so a read, edited and revised line keeps them. paymentTermsId, expectedDeliveryDate, shipToLocationId and comment overwrite the stored values even when omitted; requestedBy is the order\'s requester (not the reviser, who is the caller): omitted keeps it, blank clears it, a value corrects it; an optional vendorId changes the vendor of a DRAFT order only. Emits an ORDER_PURCHASE_ORDER_REVISE event carrying the field-level delta and the revision reason. Returns 404 when the purchase order does not exist, 409 PURCHASE_ORDER_VERSION_CONFLICT when expectedVersionNumber is not the order\'s current versionNumber (nothing changes, no fact is published; re-read the order and revise again), 409 PURCHASE_ORDER_INVALID_STATE when the order is not DRAFT or APPROVED or has received goods on any line, or when vendorId changes the vendor of an order past DRAFT, 422 VENDOR_INACTIVE for an inactive new vendor or when a line\'s documentUom has no conversion path to the product\'s base UoM, and 503 VENDOR_REPLICATION_PENDING with Retry-After when the new vendor has not reached the copy yet. 
      * Revise Purchase Order
      */
     async revisePurchaseOrderRaw(requestParameters: RevisePurchaseOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderResponse>> {
@@ -519,7 +835,7 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Revises an existing purchase order in place: the version number increments, the header fields and every line are replaced, totals are recomputed, and the open balance resets to the ex-tax value (subtotal) of the new lines. Use this tool to change quantities, costs or delivery terms on an order; do not use createPurchaseOrder, which starts a new order, and use cancelPurchaseOrder instead when the order should be terminated rather than changed. Preconditions: the purchase order must exist and be DRAFT, or APPROVED with nothing received on any line (every line\'s open quantity still equals its ordered quantity), because a revision replaces every line with new line ids; from PARTIALLY_RECEIVED on, and on CLOSED or CANCELLED orders, revise is refused and nothing changes. Required inputs: poId (UUIDv7) path parameter plus poDate, revisionReason and the full replacement lines list, because every line is replaced rather than merged; paymentTermsId, expectedDeliveryDate, shipToLocationId, requestedBy and comment overwrite the stored values even when omitted, while an optional vendorId changes the vendor of a DRAFT order only. Emits an ORDER_PURCHASE_ORDER_REVISE event carrying the field-level delta and the revision reason. Returns 404 when the purchase order does not exist, 409 PURCHASE_ORDER_INVALID_STATE when the order is not DRAFT or APPROVED or has received goods on any line, or when vendorId changes the vendor of an order past DRAFT, 422 VENDOR_INACTIVE for an inactive new vendor or when a line\'s documentUom has no conversion path to the product\'s base UoM, and 503 VENDOR_REPLICATION_PENDING with Retry-After when the new vendor has not reached the copy yet. 
+     * Revises an existing purchase order in place: the version number increments, the header fields and every line are replaced, totals are recomputed, and the open balance resets to the ex-tax value (subtotal) of the new lines. Use this tool to change quantities, costs or delivery terms on an order; do not use createPurchaseOrder, which starts a new order, and use cancelPurchaseOrder instead when the order should be terminated rather than changed. Preconditions: the purchase order must exist and be DRAFT, or APPROVED with nothing received on any line (every line\'s open quantity still equals its ordered quantity), because a revision replaces every line with new line ids; from PARTIALLY_RECEIVED on, and on CLOSED or CANCELLED orders, revise is refused and nothing changes. Required inputs: poId (UUIDv7) path parameter plus expectedVersionNumber (the versionNumber the last read returned; the revise applies only if the order is still at that version), poDate, revisionReason and the full replacement lines list, because every line is replaced rather than merged; each line\'s taxCodeId and glAccountId are returned by getPurchaseOrder, so a read, edited and revised line keeps them. paymentTermsId, expectedDeliveryDate, shipToLocationId and comment overwrite the stored values even when omitted; requestedBy is the order\'s requester (not the reviser, who is the caller): omitted keeps it, blank clears it, a value corrects it; an optional vendorId changes the vendor of a DRAFT order only. Emits an ORDER_PURCHASE_ORDER_REVISE event carrying the field-level delta and the revision reason. Returns 404 when the purchase order does not exist, 409 PURCHASE_ORDER_VERSION_CONFLICT when expectedVersionNumber is not the order\'s current versionNumber (nothing changes, no fact is published; re-read the order and revise again), 409 PURCHASE_ORDER_INVALID_STATE when the order is not DRAFT or APPROVED or has received goods on any line, or when vendorId changes the vendor of an order past DRAFT, 422 VENDOR_INACTIVE for an inactive new vendor or when a line\'s documentUom has no conversion path to the product\'s base UoM, and 503 VENDOR_REPLICATION_PENDING with Retry-After when the new vendor has not reached the copy yet. 
      * Revise Purchase Order
      */
     async revisePurchaseOrder(requestParameters: RevisePurchaseOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderResponse> {
@@ -615,6 +931,14 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
 
 }
 
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListPurchaseOrderVendorsStatusEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE'
+}
 /**
   * @export
   * @enum {string}

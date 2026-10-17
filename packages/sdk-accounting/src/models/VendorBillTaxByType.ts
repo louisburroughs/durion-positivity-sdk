@@ -26,6 +26,12 @@ export interface VendorBillTaxByType {
      */
     amount: number;
     /**
+     * The tax type's configured display label; null when the profile sets none or the tax service did not answer, never the code (#2679)
+     * @type {string}
+     * @memberof VendorBillTaxByType
+     */
+    label?: string;
+    /**
      * Where it came from: DOCUMENT, the bill's own channel, or APPROVAL, copied from the document by the approver
      * @type {string}
      * @memberof VendorBillTaxByType
@@ -70,6 +76,7 @@ export function VendorBillTaxByTypeFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'amount': json['amount'],
+        'label': json['label'] == null ? undefined : json['label'],
         'source': json['source'],
         'taxType': json['taxType'],
     };
@@ -82,6 +89,7 @@ export function VendorBillTaxByTypeToJSON(value?: VendorBillTaxByType | null): a
     return {
         
         'amount': value['amount'],
+        'label': value['label'],
         'source': value['source'],
         'taxType': value['taxType'],
     };

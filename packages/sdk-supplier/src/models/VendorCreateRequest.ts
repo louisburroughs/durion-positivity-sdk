@@ -63,6 +63,12 @@ export interface VendorCreateRequest {
      */
     remitTo?: RemitToDto;
     /**
+     * Idempotency key the client mints (UUID). Reuse it only for an identical payload: a retry after a timeout or 5xx then answers the original 201 body instead of creating a second vendor; the same key with another payload is 409 IDEMPOTENCY_CONFLICT. Omit for no idempotency.
+     * @type {string}
+     * @memberof VendorCreateRequest
+     */
+    requestId?: string;
+    /**
      * Tax registrations; omit or leave empty for none.
      * @type {Array<TaxRegistrationDto>}
      * @memberof VendorCreateRequest
@@ -98,6 +104,7 @@ export function VendorCreateRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'legalName': json['legalName'] == null ? undefined : json['legalName'],
         'remitTo': json['remitTo'] == null ? undefined : RemitToDtoFromJSON(json['remitTo']),
+        'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'taxRegistrations': json['taxRegistrations'] == null ? undefined : ((json['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoFromJSON)),
         'vendorNumber': json['vendorNumber'] == null ? undefined : json['vendorNumber'],
     };
@@ -114,6 +121,7 @@ export function VendorCreateRequestToJSON(value?: VendorCreateRequest | null): a
         'displayName': value['displayName'],
         'legalName': value['legalName'],
         'remitTo': RemitToDtoToJSON(value['remitTo']),
+        'requestId': value['requestId'],
         'taxRegistrations': value['taxRegistrations'] == null ? undefined : ((value['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoToJSON)),
         'vendorNumber': value['vendorNumber'],
     };

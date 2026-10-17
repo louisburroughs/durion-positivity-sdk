@@ -38,6 +38,12 @@ export interface AllocationLineResponse {
      */
     appliedAmount?: number;
     /**
+     * Set when the payment was returned (#2642): the row is history and no longer counts towards the bill's allocated amount
+     * @type {Date}
+     * @memberof AllocationLineResponse
+     */
+    reopenedAt?: Date;
+    /**
      * Vendor bill UUID
      * @type {string}
      * @memberof AllocationLineResponse
@@ -65,6 +71,7 @@ export function AllocationLineResponseFromJSONTyped(json: any, ignoreDiscriminat
         'allocationId': json['allocationId'] == null ? undefined : json['allocationId'],
         'allocationSequence': json['allocationSequence'] == null ? undefined : json['allocationSequence'],
         'appliedAmount': json['appliedAmount'] == null ? undefined : json['appliedAmount'],
+        'reopenedAt': json['reopenedAt'] == null ? undefined : (new Date(json['reopenedAt'])),
         'vendorBillId': json['vendorBillId'] == null ? undefined : json['vendorBillId'],
     };
 }
@@ -78,6 +85,7 @@ export function AllocationLineResponseToJSON(value?: AllocationLineResponse | nu
         'allocationId': value['allocationId'],
         'allocationSequence': value['allocationSequence'],
         'appliedAmount': value['appliedAmount'],
+        'reopenedAt': value['reopenedAt'] == null ? undefined : ((value['reopenedAt']).toISOString()),
         'vendorBillId': value['vendorBillId'],
     };
 }
