@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Per-vendor aged payables row with bucketed open vendor-bill balances. Age is measured from the bill due date, falling back to the bill date when no due date is recorded; only APPROVED bills are aged, unapproved bills are reported separately and unaged.
+ * Per-vendor aged payables row with bucketed open vendor-bill balances. Age is measured from the bill due date, or from an estimated due date (bill date plus payment terms) when none is recorded; only APPROVED bills are aged, unapproved bills are reported separately and unaged. Unapplied vendor payments are reported as a negative amount and netted into netOwed.
  * @export
  * @interface AgedPayablesRow
  */
@@ -44,6 +44,18 @@ export interface AgedPayablesRow {
      */
     days90Plus: number;
     /**
+     * Open amount of this vendor's approved bills that have no due date and were aged on an estimated due date (bill date plus payment terms); part of totalOutstanding, not added to it
+     * @type {number}
+     * @memberof AgedPayablesRow
+     */
+    estimatedDueDateAmount: number;
+    /**
+     * Approved open bills less unapplied AP payments only: totalOutstanding + unappliedPayments; credit notes and unapproved bills are not netted; negative when the vendor holds more of our money than it is owed
+     * @type {number}
+     * @memberof AgedPayablesRow
+     */
+    netOwed: number;
+    /**
      * Approved bills outstanding not yet due: due today or later (due today is not overdue)
      * @type {number}
      * @memberof AgedPayablesRow
@@ -67,6 +79,12 @@ export interface AgedPayablesRow {
      * @memberof AgedPayablesRow
      */
     totalOutstanding: number;
+    /**
+     * Minus the sum of this vendor's unapplied AP payments (not voided, unapplied amount above zero, functional currency only); zero or negative
+     * @type {number}
+     * @memberof AgedPayablesRow
+     */
+    unappliedPayments: number;
     /**
      * Open amount on bills not yet approved (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION); never aged
      * @type {number}
@@ -101,10 +119,13 @@ export function instanceOfAgedPayablesRow(value: object): boolean {
     if (!('days31To60' in value)) return false;
     if (!('days61To90' in value)) return false;
     if (!('days90Plus' in value)) return false;
+    if (!('estimatedDueDateAmount' in value)) return false;
+    if (!('netOwed' in value)) return false;
     if (!('notYetDue' in value)) return false;
     if (!('overdue' in value)) return false;
     if (!('totalIncludingUnapproved' in value)) return false;
     if (!('totalOutstanding' in value)) return false;
+    if (!('unappliedPayments' in value)) return false;
     if (!('unapproved' in value)) return false;
     if (!('unapprovedBillCount' in value)) return false;
     if (!('vendorId' in value)) return false;
@@ -125,10 +146,13 @@ export function AgedPayablesRowFromJSONTyped(json: any, ignoreDiscriminator: boo
         'days31To60': json['days31To60'],
         'days61To90': json['days61To90'],
         'days90Plus': json['days90Plus'],
+        'estimatedDueDateAmount': json['estimatedDueDateAmount'],
+        'netOwed': json['netOwed'],
         'notYetDue': json['notYetDue'],
         'overdue': json['overdue'],
         'totalIncludingUnapproved': json['totalIncludingUnapproved'],
         'totalOutstanding': json['totalOutstanding'],
+        'unappliedPayments': json['unappliedPayments'],
         'unapproved': json['unapproved'],
         'unapprovedBillCount': json['unapprovedBillCount'],
         'vendorId': json['vendorId'],
@@ -146,10 +170,13 @@ export function AgedPayablesRowToJSON(value?: AgedPayablesRow | null): any {
         'days31To60': value['days31To60'],
         'days61To90': value['days61To90'],
         'days90Plus': value['days90Plus'],
+        'estimatedDueDateAmount': value['estimatedDueDateAmount'],
+        'netOwed': value['netOwed'],
         'notYetDue': value['notYetDue'],
         'overdue': value['overdue'],
         'totalIncludingUnapproved': value['totalIncludingUnapproved'],
         'totalOutstanding': value['totalOutstanding'],
+        'unappliedPayments': value['unappliedPayments'],
         'unapproved': value['unapproved'],
         'unapprovedBillCount': value['unapprovedBillCount'],
         'vendorId': value['vendorId'],
