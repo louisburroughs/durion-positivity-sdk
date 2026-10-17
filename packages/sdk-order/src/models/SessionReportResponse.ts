@@ -45,6 +45,12 @@ export interface SessionReportResponse {
      */
     cashMovements?: number;
     /**
+     * ADR-0067 A8: signed sum of the cash rounding over the session's cash tenders (positive when customers paid more than due); informational, never part of over/short
+     * @type {number}
+     * @memberof SessionReportResponse
+     */
+    cashRoundingTotal?: number;
+    /**
      * 
      * @type {number}
      * @memberof SessionReportResponse
@@ -160,6 +166,7 @@ export function SessionReportResponseFromJSONTyped(json: any, ignoreDiscriminato
     return {
         
         'cashMovements': json['cashMovements'] == null ? undefined : json['cashMovements'],
+        'cashRoundingTotal': json['cashRoundingTotal'] == null ? undefined : json['cashRoundingTotal'],
         'cashSettlements': json['cashSettlements'] == null ? undefined : json['cashSettlements'],
         'countedCash': json['countedCash'] == null ? undefined : json['countedCash'],
         'generatedAt': json['generatedAt'] == null ? undefined : (new Date(json['generatedAt'])),
@@ -186,6 +193,7 @@ export function SessionReportResponseToJSON(value?: SessionReportResponse | null
     return {
         
         'cashMovements': value['cashMovements'],
+        'cashRoundingTotal': value['cashRoundingTotal'],
         'cashSettlements': value['cashSettlements'],
         'countedCash': value['countedCash'],
         'generatedAt': value['generatedAt'] == null ? undefined : ((value['generatedAt']).toISOString()),

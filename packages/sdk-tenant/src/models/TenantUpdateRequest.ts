@@ -31,6 +31,18 @@ export interface TenantUpdateRequest {
      * @memberof TenantUpdateRequest
      */
     displayName?: string;
+    /**
+     * New locale, a BCP 47 tag with a region from pos.tenant.supported-locales; omitted or null leaves it unchanged
+     * @type {string}
+     * @memberof TenantUpdateRequest
+     */
+    locale?: string;
+    /**
+     * Move the tenant to another reading tier (CAP:550 S45); omitted or null leaves it. Must name an active tier, else 422 READING_TIER_NOT_ASSIGNABLE; publishes tenant.reading-allowance.changed
+     * @type {string}
+     * @memberof TenantUpdateRequest
+     */
+    readingTierCode?: string;
 }
 
 /**
@@ -52,6 +64,8 @@ export function TenantUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator:
         
         'cell': json['cell'] == null ? undefined : json['cell'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'locale': json['locale'] == null ? undefined : json['locale'],
+        'readingTierCode': json['readingTierCode'] == null ? undefined : json['readingTierCode'],
     };
 }
 
@@ -63,6 +77,8 @@ export function TenantUpdateRequestToJSON(value?: TenantUpdateRequest | null): a
         
         'cell': value['cell'],
         'displayName': value['displayName'],
+        'locale': value['locale'],
+        'readingTierCode': value['readingTierCode'],
     };
 }
 

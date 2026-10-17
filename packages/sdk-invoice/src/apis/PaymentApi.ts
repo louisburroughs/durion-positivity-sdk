@@ -20,6 +20,7 @@ import type {
   InitiatePaymentRequest,
   InitiatePaymentResponse,
   PaymentIntentResponse,
+  RecordCashPaymentRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -32,6 +33,8 @@ import {
     InitiatePaymentResponseToJSON,
     PaymentIntentResponseFromJSON,
     PaymentIntentResponseToJSON,
+    RecordCashPaymentRequestFromJSON,
+    RecordCashPaymentRequestToJSON,
 } from '../models/index';
 
 export interface CapturePaymentRequest {
@@ -52,6 +55,11 @@ export interface InitiatePaymentOperationRequest {
 
 export interface ListInvoicePaymentsRequest {
     invoiceId: string;
+}
+
+export interface RecordCashPaymentOperationRequest {
+    invoiceId: string;
+    recordCashPaymentRequest: RecordCashPaymentRequest;
 }
 
 /**
@@ -262,6 +270,59 @@ export class PaymentApi extends runtime.BaseAPI {
      */
     async listInvoicePayments(requestParameters: ListInvoicePaymentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PaymentIntentResponse>> {
         const response = await this.listInvoicePaymentsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Records a cash tender taken at the register against an invoice as a CAPTURED payment intent without calling the payment gateway, keeping the invoice amount and the cash that changed hands apart (settledAmount, cashRoundingAmount, cashIncrement). Use this tool when the register has already rounded the cash to the currency\'s smallest coin; do not use initiatePayment, which takes card tender through the gateway, and do not round here, because pos-order owns the cash increment and the HALF_UP rounding at the register. Preconditions: the invoice must exist and must name a customer (partyId); currencyCode must be the functional currency pos-invoice records in; the caller needs the invoice:payment:process authority scoped to the invoice\'s location (ADR-0061) and invoice:payment:limit_override when the amount exceeds 500.00. Required inputs: idempotencyKey, amount (the invoice amount applied), settledAmount (the cash taken), cashRoundingAmount (settledAmount minus amount, 0 when no increment applies), currencyCode and, when the currency rounds, cashIncrement; sessionId, terminalId and cashierId are optional receipt context. The rounding triple is checked, not trusted: settledAmount must be amount rounded HALF_UP to a multiple of cashIncrement, the difference may not exceed half an increment, and without a cashIncrement the three must agree exactly. Emits an INVOICE_PAYMENT_CASH_RECORD event and publishes payment.payment.settled with the three additive fields so pos-accounting can post the rounding. Returns 201 with the intent, 403 when the authority is missing or the location is outside the caller\'s reach, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload or is being recorded concurrently, 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer and 422 with CASH_ROUNDING_INVALID when the triple or the currency does not hold together. 
+     * Record Cash Payment on Invoice
+     */
+    async recordCashPaymentRaw(requestParameters: RecordCashPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InitiatePaymentResponse>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling recordCashPayment().'
+            );
+        }
+
+        if (requestParameters['recordCashPaymentRequest'] == null) {
+            throw new runtime.RequiredError(
+                'recordCashPaymentRequest',
+                'Required parameter "recordCashPaymentRequest" was null or undefined when calling recordCashPayment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/payments/cash`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecordCashPaymentRequestToJSON(requestParameters['recordCashPaymentRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InitiatePaymentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records a cash tender taken at the register against an invoice as a CAPTURED payment intent without calling the payment gateway, keeping the invoice amount and the cash that changed hands apart (settledAmount, cashRoundingAmount, cashIncrement). Use this tool when the register has already rounded the cash to the currency\'s smallest coin; do not use initiatePayment, which takes card tender through the gateway, and do not round here, because pos-order owns the cash increment and the HALF_UP rounding at the register. Preconditions: the invoice must exist and must name a customer (partyId); currencyCode must be the functional currency pos-invoice records in; the caller needs the invoice:payment:process authority scoped to the invoice\'s location (ADR-0061) and invoice:payment:limit_override when the amount exceeds 500.00. Required inputs: idempotencyKey, amount (the invoice amount applied), settledAmount (the cash taken), cashRoundingAmount (settledAmount minus amount, 0 when no increment applies), currencyCode and, when the currency rounds, cashIncrement; sessionId, terminalId and cashierId are optional receipt context. The rounding triple is checked, not trusted: settledAmount must be amount rounded HALF_UP to a multiple of cashIncrement, the difference may not exceed half an increment, and without a cashIncrement the three must agree exactly. Emits an INVOICE_PAYMENT_CASH_RECORD event and publishes payment.payment.settled with the three additive fields so pos-accounting can post the rounding. Returns 201 with the intent, 403 when the authority is missing or the location is outside the caller\'s reach, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload or is being recorded concurrently, 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer and 422 with CASH_ROUNDING_INVALID when the triple or the currency does not hold together. 
+     * Record Cash Payment on Invoice
+     */
+    async recordCashPayment(requestParameters: RecordCashPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {
+        const response = await this.recordCashPaymentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

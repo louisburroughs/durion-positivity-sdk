@@ -44,6 +44,18 @@ export interface TenantCreateRequest {
      */
     initialAdminEmail: string;
     /**
+     * The shop's locale as a BCP 47 tag with a region (en-US, es-US, es-MX, fr-CA, fr-FR by default; pos.tenant.supported-locales); case is normalised (fr-ca becomes fr-CA). A bare language or an unlisted tag is 400 VALIDATION_ERROR with fieldErrors[locale]
+     * @type {string}
+     * @memberof TenantCreateRequest
+     */
+    locale: string;
+    /**
+     * The reading tier the tenant starts on (CAP:550 S45); STANDARD when omitted. Must name an active tier, else 422 READING_TIER_NOT_ASSIGNABLE
+     * @type {string}
+     * @memberof TenantCreateRequest
+     */
+    readingTierCode?: string;
+    /**
      * URL-safe unique name; lowercase letters, digits and hyphens, 3 to 63 characters
      * @type {string}
      * @memberof TenantCreateRequest
@@ -57,6 +69,7 @@ export interface TenantCreateRequest {
 export function instanceOfTenantCreateRequest(value: object): boolean {
     if (!('accountId' in value)) return false;
     if (!('initialAdminEmail' in value)) return false;
+    if (!('locale' in value)) return false;
     if (!('slug' in value)) return false;
     return true;
 }
@@ -75,6 +88,8 @@ export function TenantCreateRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'cell': json['cell'] == null ? undefined : json['cell'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'initialAdminEmail': json['initialAdminEmail'],
+        'locale': json['locale'],
+        'readingTierCode': json['readingTierCode'] == null ? undefined : json['readingTierCode'],
         'slug': json['slug'],
     };
 }
@@ -89,6 +104,8 @@ export function TenantCreateRequestToJSON(value?: TenantCreateRequest | null): a
         'cell': value['cell'],
         'displayName': value['displayName'],
         'initialAdminEmail': value['initialAdminEmail'],
+        'locale': value['locale'],
+        'readingTierCode': value['readingTierCode'],
         'slug': value['slug'],
     };
 }

@@ -31,7 +31,7 @@ import {
 export class TenantAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns the tenant the caller\'s token belongs to (its tid claim) as the security service knows it from the tenant registry\'s published projection: id, slug, display name and lifecycle status. Use this tool to show the tenant name in the header or to check the tenant is ACTIVE; do not use it to look up another tenant, which only platform staff can do through the pos-tenant registry. Preconditions: an authenticated caller whose tenant has been published to the replica. Required inputs: none; the tenant comes from the token. Emits a SECURITY_TENANT_ME_GET event. Returns 200 with the tenant, 401 without a bound tenant and 404 when the replica does not know it yet. 
+     * Returns the tenant the caller\'s token belongs to (its tid claim) as the security service knows it from the tenant registry\'s published projection: id, slug, display name, lifecycle status and locale. Use this tool to show the tenant name in the header or to check the tenant is ACTIVE; do not use it to look up another tenant, which only platform staff can do through the pos-tenant registry. Preconditions: an authenticated caller whose tenant has been published to the replica. Required inputs: none; the tenant comes from the token. Emits a SECURITY_TENANT_ME_GET event. Returns 200 with the tenant, 401 without a bound tenant and 404 when the replica does not know it yet. 
      * Get the Caller\'s Tenant
      */
     async getMyTenantRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TenantMeResponse>> {
@@ -58,7 +58,7 @@ export class TenantAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the tenant the caller\'s token belongs to (its tid claim) as the security service knows it from the tenant registry\'s published projection: id, slug, display name and lifecycle status. Use this tool to show the tenant name in the header or to check the tenant is ACTIVE; do not use it to look up another tenant, which only platform staff can do through the pos-tenant registry. Preconditions: an authenticated caller whose tenant has been published to the replica. Required inputs: none; the tenant comes from the token. Emits a SECURITY_TENANT_ME_GET event. Returns 200 with the tenant, 401 without a bound tenant and 404 when the replica does not know it yet. 
+     * Returns the tenant the caller\'s token belongs to (its tid claim) as the security service knows it from the tenant registry\'s published projection: id, slug, display name, lifecycle status and locale. Use this tool to show the tenant name in the header or to check the tenant is ACTIVE; do not use it to look up another tenant, which only platform staff can do through the pos-tenant registry. Preconditions: an authenticated caller whose tenant has been published to the replica. Required inputs: none; the tenant comes from the token. Emits a SECURITY_TENANT_ME_GET event. Returns 200 with the tenant, 401 without a bound tenant and 404 when the replica does not know it yet. 
      * Get the Caller\'s Tenant
      */
     async getMyTenant(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TenantMeResponse> {

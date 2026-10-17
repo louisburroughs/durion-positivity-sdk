@@ -68,6 +68,18 @@ export interface TenantResponse {
      */
     initialAdminEmail: string;
     /**
+     * The shop's locale (BCP 47)
+     * @type {string}
+     * @memberof TenantResponse
+     */
+    locale: string;
+    /**
+     * The reading tier the tenant is on (CAP:550 S45)
+     * @type {string}
+     * @memberof TenantResponse
+     */
+    readingTierCode: string;
+    /**
      * URL-safe unique name
      * @type {string}
      * @memberof TenantResponse
@@ -114,6 +126,8 @@ export function instanceOfTenantResponse(value: object): boolean {
     if (!('displayName' in value)) return false;
     if (!('id' in value)) return false;
     if (!('initialAdminEmail' in value)) return false;
+    if (!('locale' in value)) return false;
+    if (!('readingTierCode' in value)) return false;
     if (!('slug' in value)) return false;
     if (!('status' in value)) return false;
     if (!('updatedAt' in value)) return false;
@@ -138,6 +152,8 @@ export function TenantResponseFromJSONTyped(json: any, ignoreDiscriminator: bool
         'displayName': json['displayName'],
         'id': json['id'],
         'initialAdminEmail': json['initialAdminEmail'],
+        'locale': json['locale'],
+        'readingTierCode': json['readingTierCode'],
         'slug': json['slug'],
         'status': json['status'],
         'suspendedAt': json['suspendedAt'] == null ? undefined : (new Date(json['suspendedAt'])),
@@ -159,6 +175,8 @@ export function TenantResponseToJSON(value?: TenantResponse | null): any {
         'displayName': value['displayName'],
         'id': value['id'],
         'initialAdminEmail': value['initialAdminEmail'],
+        'locale': value['locale'],
+        'readingTierCode': value['readingTierCode'],
         'slug': value['slug'],
         'status': value['status'],
         'suspendedAt': value['suspendedAt'] == null ? undefined : ((value['suspendedAt']).toISOString()),

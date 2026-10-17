@@ -32,6 +32,18 @@ export interface PaymentIntentResponse {
      */
     capturedAmount?: number;
     /**
+     * Cash tender only: the increment applied; absent when the currency has none
+     * @type {number}
+     * @memberof PaymentIntentResponse
+     */
+    cashIncrement?: number;
+    /**
+     * Cash tender only: signed rounding, settledAmount minus the amount applied
+     * @type {number}
+     * @memberof PaymentIntentResponse
+     */
+    cashRoundingAmount?: number;
+    /**
      * When the payment intent was created
      * @type {Date}
      * @memberof PaymentIntentResponse
@@ -55,6 +67,12 @@ export interface PaymentIntentResponse {
      * @memberof PaymentIntentResponse
      */
     invoiceId: string;
+    /**
+     * CARD (gateway capture) or CASH (register tender, ADR-0067 A8)
+     * @type {string}
+     * @memberof PaymentIntentResponse
+     */
+    methodType?: PaymentIntentResponseMethodTypeEnum;
     /**
      * SALE_CAPTURE or AUTH_ONLY
      * @type {string}
@@ -80,6 +98,12 @@ export interface PaymentIntentResponse {
      */
     refundedAmount?: number;
     /**
+     * Cash tender only: the cash actually taken after rounding to the currency's cash increment
+     * @type {number}
+     * @memberof PaymentIntentResponse
+     */
+    settledAmount?: number;
+    /**
      * Current lifecycle status of the payment intent
      * @type {string}
      * @memberof PaymentIntentResponse
@@ -99,6 +123,14 @@ export interface PaymentIntentResponse {
     voidedRemainderAmount?: number;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum PaymentIntentResponseMethodTypeEnum {
+    Card = 'CARD',
+    Cash = 'CASH'
+}
 /**
 * @export
 * @enum {string}
@@ -146,14 +178,18 @@ export function PaymentIntentResponseFromJSONTyped(json: any, ignoreDiscriminato
         
         'authorizedAmount': json['authorizedAmount'] == null ? undefined : json['authorizedAmount'],
         'capturedAmount': json['capturedAmount'] == null ? undefined : json['capturedAmount'],
+        'cashIncrement': json['cashIncrement'] == null ? undefined : json['cashIncrement'],
+        'cashRoundingAmount': json['cashRoundingAmount'] == null ? undefined : json['cashRoundingAmount'],
         'createdAt': (new Date(json['createdAt'])),
         'gatewayProvider': json['gatewayProvider'] == null ? undefined : json['gatewayProvider'],
         'gatewayReference': json['gatewayReference'] == null ? undefined : json['gatewayReference'],
         'invoiceId': json['invoiceId'],
+        'methodType': json['methodType'] == null ? undefined : json['methodType'],
         'paymentFlow': json['paymentFlow'],
         'paymentId': json['paymentId'],
         'refundableAmount': json['refundableAmount'] == null ? undefined : json['refundableAmount'],
         'refundedAmount': json['refundedAmount'] == null ? undefined : json['refundedAmount'],
+        'settledAmount': json['settledAmount'] == null ? undefined : json['settledAmount'],
         'status': json['status'],
         'updatedAt': (new Date(json['updatedAt'])),
         'voidedRemainderAmount': json['voidedRemainderAmount'] == null ? undefined : json['voidedRemainderAmount'],
@@ -168,14 +204,18 @@ export function PaymentIntentResponseToJSON(value?: PaymentIntentResponse | null
         
         'authorizedAmount': value['authorizedAmount'],
         'capturedAmount': value['capturedAmount'],
+        'cashIncrement': value['cashIncrement'],
+        'cashRoundingAmount': value['cashRoundingAmount'],
         'createdAt': ((value['createdAt']).toISOString()),
         'gatewayProvider': value['gatewayProvider'],
         'gatewayReference': value['gatewayReference'],
         'invoiceId': value['invoiceId'],
+        'methodType': value['methodType'],
         'paymentFlow': value['paymentFlow'],
         'paymentId': value['paymentId'],
         'refundableAmount': value['refundableAmount'],
         'refundedAmount': value['refundedAmount'],
+        'settledAmount': value['settledAmount'],
         'status': value['status'],
         'updatedAt': ((value['updatedAt']).toISOString()),
         'voidedRemainderAmount': value['voidedRemainderAmount'],

@@ -17,6 +17,8 @@ import * as runtime from '../runtime';
 import type {
   AddItemRequest,
   ApiError,
+  CashTenderRequest,
+  CashTenderResponse,
   CheckoutRequest,
   CreateCartRequest,
   LinkSourceRequest,
@@ -32,6 +34,10 @@ import {
     AddItemRequestToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    CashTenderRequestFromJSON,
+    CashTenderRequestToJSON,
+    CashTenderResponseFromJSON,
+    CashTenderResponseToJSON,
     CheckoutRequestFromJSON,
     CheckoutRequestToJSON,
     CreateCartRequestFromJSON,
@@ -96,6 +102,12 @@ export interface ListCartsRequest {
 
 export interface QuoteCartRequest {
     orderId: string;
+}
+
+export interface RecordCashTenderRequest {
+    orderId: string;
+    idempotencyKey: string;
+    cashTenderRequest: CashTenderRequest;
 }
 
 export interface RemoveCartItemRequest {
@@ -576,6 +588,70 @@ export class SalesOrdersApi extends runtime.BaseAPI {
      */
     async quoteCart(requestParameters: QuoteCartRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
         const response = await this.quoteCartRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Records a cash tender taken at the register against a checked-out order: pos-order computes the amount due, rounds the cash due HALF_UP to the currency\'s cash increment (CAD 0.05; USD and JPY do not round), checks the tender covers it and records the tender on the order\'s invoice through pos-invoice, which publishes the settled fact that completes the order. Use this tool when the customer pays cash at the counter; do not use checkout, which freezes the cart and declares the tender without recording it, and do not round the amount yourself, because the register owns the increment and the rounding. Preconditions: the order is PENDING_PAYMENT with an invoice; it belongs to an OPEN register session; currencyCode is the drawer\'s currency; the caller holds order:order:checkout for the order\'s location. Required inputs: the Idempotency-Key header (a replay with the same payload returns the same tender, another payload is 409), cashTendered (what the customer handed over, at the currency\'s exponent) and currencyCode; cashApplied is optional and names a partial cash amount for a split tender, which rounds nothing and must be a whole multiple of the increment. Only a cash tender that closes the balance rounds; the rounding is signed (positive when the customer paid more than due) and is posted by pos-accounting, never to the customer\'s balance. Emits an ORDER_CASH_TENDER_RECORD event. Returns 201 with amountDue, cashIncrement, cashDue, cashRoundingAmount, cashTendered, changeDue and the recorded payment intent; 400 when the header is missing or cashApplied exceeds the balance (ORDER_INVALID_ARGUMENT) or the body fails validation (VALIDATION_ERROR); 403 when the authority is missing or, above 500.00, the clerk lacks invoice:payment:limit_override; 404 when the order does not exist; 409 when the order is not PENDING_PAYMENT (ORDER_INVALID_STATE_TRANSITION), the session is not OPEN (REGISTER_SESSION_CONFLICT), the key was reused with another payload (ORDER_IDEMPOTENCY_CONFLICT) or pos-invoice\'s balance disagrees (ORDER_CONFLICT); 422 with CASH_TENDER_INSUFFICIENT, CASH_AMOUNT_NOT_IN_INCREMENT, CASH_TENDER_SESSION_REQUIRED, CURRENCY_NOT_SUPPORTED or AMOUNT_PRECISION_EXCEEDS_CURRENCY; 503 when pos-invoice is unreachable. 
+     * Record Cash Tender on Order
+     */
+    async recordCashTenderRaw(requestParameters: RecordCashTenderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CashTenderResponse>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling recordCashTender().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling recordCashTender().'
+            );
+        }
+
+        if (requestParameters['cashTenderRequest'] == null) {
+            throw new runtime.RequiredError(
+                'cashTenderRequest',
+                'Required parameter "cashTenderRequest" was null or undefined when calling recordCashTender().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/{orderId}/payments/cash`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CashTenderRequestToJSON(requestParameters['cashTenderRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CashTenderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records a cash tender taken at the register against a checked-out order: pos-order computes the amount due, rounds the cash due HALF_UP to the currency\'s cash increment (CAD 0.05; USD and JPY do not round), checks the tender covers it and records the tender on the order\'s invoice through pos-invoice, which publishes the settled fact that completes the order. Use this tool when the customer pays cash at the counter; do not use checkout, which freezes the cart and declares the tender without recording it, and do not round the amount yourself, because the register owns the increment and the rounding. Preconditions: the order is PENDING_PAYMENT with an invoice; it belongs to an OPEN register session; currencyCode is the drawer\'s currency; the caller holds order:order:checkout for the order\'s location. Required inputs: the Idempotency-Key header (a replay with the same payload returns the same tender, another payload is 409), cashTendered (what the customer handed over, at the currency\'s exponent) and currencyCode; cashApplied is optional and names a partial cash amount for a split tender, which rounds nothing and must be a whole multiple of the increment. Only a cash tender that closes the balance rounds; the rounding is signed (positive when the customer paid more than due) and is posted by pos-accounting, never to the customer\'s balance. Emits an ORDER_CASH_TENDER_RECORD event. Returns 201 with amountDue, cashIncrement, cashDue, cashRoundingAmount, cashTendered, changeDue and the recorded payment intent; 400 when the header is missing or cashApplied exceeds the balance (ORDER_INVALID_ARGUMENT) or the body fails validation (VALIDATION_ERROR); 403 when the authority is missing or, above 500.00, the clerk lacks invoice:payment:limit_override; 404 when the order does not exist; 409 when the order is not PENDING_PAYMENT (ORDER_INVALID_STATE_TRANSITION), the session is not OPEN (REGISTER_SESSION_CONFLICT), the key was reused with another payload (ORDER_IDEMPOTENCY_CONFLICT) or pos-invoice\'s balance disagrees (ORDER_CONFLICT); 422 with CASH_TENDER_INSUFFICIENT, CASH_AMOUNT_NOT_IN_INCREMENT, CASH_TENDER_SESSION_REQUIRED, CURRENCY_NOT_SUPPORTED or AMOUNT_PRECISION_EXCEEDS_CURRENCY; 503 when pos-invoice is unreachable. 
+     * Record Cash Tender on Order
+     */
+    async recordCashTender(requestParameters: RecordCashTenderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CashTenderResponse> {
+        const response = await this.recordCashTenderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

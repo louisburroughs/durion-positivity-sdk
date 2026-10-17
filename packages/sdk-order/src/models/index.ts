@@ -16,6 +16,8 @@ export * from './CashMovementOptionsResponse';
 export * from './CashMovementRequest';
 export * from './CashMovementResponse';
 export * from './CashMovementStatedTax';
+export * from './CashTenderRequest';
+export * from './CashTenderResponse';
 export * from './CategoryOption';
 export * from './Change';
 export * from './CheckoutRequest';
