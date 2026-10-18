@@ -25,6 +25,12 @@ export interface FieldEdit {
      * @memberof FieldEdit
      */
     state?: FieldEditStateEnum;
+    /**
+     * The new value as text (dates yyyy-MM-dd, amounts as decimal text); omitted when ACCEPTED
+     * @type {string}
+     * @memberof FieldEdit
+     */
+    value?: string;
 }
 
 /**
@@ -57,6 +63,7 @@ export function FieldEditFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return {
         
         'state': json['state'] == null ? undefined : json['state'],
+        'value': json['value'] == null ? undefined : json['value'],
     };
 }
 
@@ -67,6 +74,7 @@ export function FieldEditToJSON(value?: FieldEdit | null): any {
     return {
         
         'state': value['state'],
+        'value': value['value'],
     };
 }
 
