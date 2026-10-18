@@ -38,3 +38,4 @@ export * from './PostingRulesApi';
 export * from './SettlementReconciliationApi';
 export * from './VendorBillAPIApi';
 export * from './VendorDirectoryAPIApi';
+export * from './WorkItemsApi';
