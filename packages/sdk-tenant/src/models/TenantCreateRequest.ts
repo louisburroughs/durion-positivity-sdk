@@ -38,6 +38,12 @@ export interface TenantCreateRequest {
      */
     displayName?: string;
     /**
+     * The shop's functional currency (ADR-0067 PC-1): the ISO 4217 code every module books, prices and invoices this tenant's money in. Any code with a defined exponent is accepted (USD, CAD, EUR, JPY, KWD), in upper case; there is no allow-list and no default. It is set once and never changes; a wrong value is corrected by decommissioning the PENDING tenant and creating another. Missing, lower-case, unknown or exponent-less codes (XXX) are 400 VALIDATION_ERROR with fieldErrors[functionalCurrency]
+     * @type {string}
+     * @memberof TenantCreateRequest
+     */
+    functionalCurrency: string;
+    /**
      * Email of the initial administrator pos-security-service creates while provisioning
      * @type {string}
      * @memberof TenantCreateRequest
@@ -68,6 +74,7 @@ export interface TenantCreateRequest {
  */
 export function instanceOfTenantCreateRequest(value: object): boolean {
     if (!('accountId' in value)) return false;
+    if (!('functionalCurrency' in value)) return false;
     if (!('initialAdminEmail' in value)) return false;
     if (!('locale' in value)) return false;
     if (!('slug' in value)) return false;
@@ -87,6 +94,7 @@ export function TenantCreateRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'accountId': json['accountId'],
         'cell': json['cell'] == null ? undefined : json['cell'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'functionalCurrency': json['functionalCurrency'],
         'initialAdminEmail': json['initialAdminEmail'],
         'locale': json['locale'],
         'readingTierCode': json['readingTierCode'] == null ? undefined : json['readingTierCode'],
@@ -103,6 +111,7 @@ export function TenantCreateRequestToJSON(value?: TenantCreateRequest | null): a
         'accountId': value['accountId'],
         'cell': value['cell'],
         'displayName': value['displayName'],
+        'functionalCurrency': value['functionalCurrency'],
         'initialAdminEmail': value['initialAdminEmail'],
         'locale': value['locale'],
         'readingTierCode': value['readingTierCode'],

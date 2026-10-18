@@ -32,6 +32,12 @@ export interface TenantUpdateRequest {
      */
     displayName?: string;
     /**
+     * Declared only so that a change can be refused: the functional currency is immutable (ADR-0067 OP-1). Omitted, null or equal to the stored code leaves the tenant as it is; any other value, compared verbatim and including a blank one, is 409 TENANT_FUNCTIONAL_CURRENCY_IMMUTABLE and nothing in the request is applied. Leave it out unless you mean to confirm the stored code
+     * @type {string}
+     * @memberof TenantUpdateRequest
+     */
+    functionalCurrency?: string;
+    /**
      * New locale, a BCP 47 tag with a region from pos.tenant.supported-locales; omitted or null leaves it unchanged
      * @type {string}
      * @memberof TenantUpdateRequest
@@ -64,6 +70,7 @@ export function TenantUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator:
         
         'cell': json['cell'] == null ? undefined : json['cell'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'functionalCurrency': json['functionalCurrency'] == null ? undefined : json['functionalCurrency'],
         'locale': json['locale'] == null ? undefined : json['locale'],
         'readingTierCode': json['readingTierCode'] == null ? undefined : json['readingTierCode'],
     };
@@ -77,6 +84,7 @@ export function TenantUpdateRequestToJSON(value?: TenantUpdateRequest | null): a
         
         'cell': value['cell'],
         'displayName': value['displayName'],
+        'functionalCurrency': value['functionalCurrency'],
         'locale': value['locale'],
         'readingTierCode': value['readingTierCode'],
     };
