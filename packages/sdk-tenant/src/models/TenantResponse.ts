@@ -56,6 +56,12 @@ export interface TenantResponse {
      */
     displayName: string;
     /**
+     * The tenant's functional currency, an ISO 4217 code chosen at creation and never changed (ADR-0067); USD for every tenant that existed before it was introduced
+     * @type {string}
+     * @memberof TenantResponse
+     */
+    functionalCurrency: string;
+    /**
      * Tenant id; the value every module's tenant_id refers to
      * @type {string}
      * @memberof TenantResponse
@@ -124,6 +130,7 @@ export function instanceOfTenantResponse(value: object): boolean {
     if (!('accountId' in value)) return false;
     if (!('createdAt' in value)) return false;
     if (!('displayName' in value)) return false;
+    if (!('functionalCurrency' in value)) return false;
     if (!('id' in value)) return false;
     if (!('initialAdminEmail' in value)) return false;
     if (!('locale' in value)) return false;
@@ -150,6 +157,7 @@ export function TenantResponseFromJSONTyped(json: any, ignoreDiscriminator: bool
         'createdAt': (new Date(json['createdAt'])),
         'decommissionedAt': json['decommissionedAt'] == null ? undefined : (new Date(json['decommissionedAt'])),
         'displayName': json['displayName'],
+        'functionalCurrency': json['functionalCurrency'],
         'id': json['id'],
         'initialAdminEmail': json['initialAdminEmail'],
         'locale': json['locale'],
@@ -173,6 +181,7 @@ export function TenantResponseToJSON(value?: TenantResponse | null): any {
         'createdAt': ((value['createdAt']).toISOString()),
         'decommissionedAt': value['decommissionedAt'] == null ? undefined : ((value['decommissionedAt']).toISOString()),
         'displayName': value['displayName'],
+        'functionalCurrency': value['functionalCurrency'],
         'id': value['id'],
         'initialAdminEmail': value['initialAdminEmail'],
         'locale': value['locale'],

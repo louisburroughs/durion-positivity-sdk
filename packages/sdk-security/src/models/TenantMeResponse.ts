@@ -26,6 +26,12 @@ export interface TenantMeResponse {
      */
     displayName?: string;
     /**
+     * The tenant's functional currency, an ISO 4217 code chosen at creation and never changed (ADR-0067); null while the replica has not learned it
+     * @type {string}
+     * @memberof TenantMeResponse
+     */
+    functionalCurrency?: string;
+    /**
      * Tenant id, the token's tid claim
      * @type {string}
      * @memberof TenantMeResponse
@@ -72,6 +78,7 @@ export function TenantMeResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'functionalCurrency': json['functionalCurrency'] == null ? undefined : json['functionalCurrency'],
         'id': json['id'],
         'locale': json['locale'] == null ? undefined : json['locale'],
         'slug': json['slug'],
@@ -86,6 +93,7 @@ export function TenantMeResponseToJSON(value?: TenantMeResponse | null): any {
     return {
         
         'displayName': value['displayName'],
+        'functionalCurrency': value['functionalCurrency'],
         'id': value['id'],
         'locale': value['locale'],
         'slug': value['slug'],
