@@ -159,6 +159,12 @@ export interface VendorBillResponse {
      */
     currency?: string;
     /**
+     * INVOICE, or CREDIT_NOTE when the vendor issued a credit: its totalAmount, netAmount and taxAmount are then negative. A credit note is never matched to a delivery, never approved automatically and never allocated a payment
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    documentType?: VendorBillResponseDocumentTypeEnum;
+    /**
      * Due date
      * @type {Date}
      * @memberof VendorBillResponse
@@ -316,6 +322,14 @@ export enum VendorBillResponseChannelEnum {
 * @export
 * @enum {string}
 */
+export enum VendorBillResponseDocumentTypeEnum {
+    Invoice = 'INVOICE',
+    CreditNote = 'CREDIT_NOTE'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillResponseStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
@@ -368,6 +382,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'createdByName': json['createdByName'] == null ? undefined : json['createdByName'],
         'currency': json['currency'] == null ? undefined : json['currency'],
+        'documentType': json['documentType'] == null ? undefined : json['documentType'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'inputTaxRecovery': json['inputTaxRecovery'] == null ? undefined : ((json['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryFromJSON)),
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
@@ -411,6 +426,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'createdBy': value['createdBy'],
         'createdByName': value['createdByName'],
         'currency': value['currency'],
+        'documentType': value['documentType'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'inputTaxRecovery': value['inputTaxRecovery'] == null ? undefined : ((value['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryToJSON)),
         'journalEntryId': value['journalEntryId'],

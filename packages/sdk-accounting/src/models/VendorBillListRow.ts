@@ -38,6 +38,12 @@ export interface VendorBillListRow {
      */
     billNumber: string;
     /**
+     * INVOICE, or CREDIT_NOTE when the vendor issued a credit: its amounts are then negative
+     * @type {string}
+     * @memberof VendorBillListRow
+     */
+    documentType: VendorBillListRowDocumentTypeEnum;
+    /**
      * Bill due date; bills matched by this endpoint always have a due date in the requested window
      * @type {Date}
      * @memberof VendorBillListRow
@@ -67,6 +73,14 @@ export interface VendorBillListRow {
 * @export
 * @enum {string}
 */
+export enum VendorBillListRowDocumentTypeEnum {
+    Invoice = 'INVOICE',
+    CreditNote = 'CREDIT_NOTE'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillListRowStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
@@ -86,6 +100,7 @@ export function instanceOfVendorBillListRow(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('billId' in value)) return false;
     if (!('billNumber' in value)) return false;
+    if (!('documentType' in value)) return false;
     if (!('status' in value)) return false;
     if (!('vendorId' in value)) return false;
     return true;
@@ -104,6 +119,7 @@ export function VendorBillListRowFromJSONTyped(json: any, ignoreDiscriminator: b
         'amount': json['amount'],
         'billId': json['billId'],
         'billNumber': json['billNumber'],
+        'documentType': json['documentType'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'status': json['status'],
         'vendorId': json['vendorId'],
@@ -120,6 +136,7 @@ export function VendorBillListRowToJSON(value?: VendorBillListRow | null): any {
         'amount': value['amount'],
         'billId': value['billId'],
         'billNumber': value['billNumber'],
+        'documentType': value['documentType'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'status': value['status'],
         'vendorId': value['vendorId'],

@@ -105,7 +105,7 @@ export interface BillIntakeResponse {
      */
     extractionOutcome?: BillIntakeResponseExtractionOutcomeEnum;
     /**
-     * Header fields by name: billNumber, billDate, dueDate, terms, currency, netAmount, taxAmount, freight, totalAmount, purchaseOrderNumber, deliveryReference, debitClass, expenseMappingKey
+     * Header fields by name: documentType (INVOICE or CREDIT_NOTE), billNumber, billDate, dueDate, terms, currency, netAmount, taxAmount, freight, totalAmount, purchaseOrderNumber, deliveryReference, debitClass, expenseMappingKey
      * @type {{ [key: string]: BillIntakeFieldView; }}
      * @memberof BillIntakeResponse
      */
@@ -135,6 +135,12 @@ export interface BillIntakeResponse {
      */
     lines?: Array<{ [key: string]: BillIntakeFieldView; }>;
     /**
+     * True for an import still waiting for its column mapping (PUT .../mapping)
+     * @type {boolean}
+     * @memberof BillIntakeResponse
+     */
+    mappingRequired?: boolean;
+    /**
      * Possible duplicates found by the checks
      * @type {Array<BillIntakeDuplicateView>}
      * @memberof BillIntakeResponse
@@ -152,6 +158,30 @@ export interface BillIntakeResponse {
      * @memberof BillIntakeResponse
      */
     rowErrors?: Array<object>;
+    /**
+     * First physical row of an import this draft was read from
+     * @type {number}
+     * @memberof BillIntakeResponse
+     */
+    rowFrom?: number;
+    /**
+     * Last physical row of an import this draft was read from
+     * @type {number}
+     * @memberof BillIntakeResponse
+     */
+    rowTo?: number;
+    /**
+     * The header row of an imported spreadsheet, to map from
+     * @type {Array<string>}
+     * @memberof BillIntakeResponse
+     */
+    sourceColumns?: Array<string>;
+    /**
+     * The import draft this one was split from, when a sheet held several invoices
+     * @type {string}
+     * @memberof BillIntakeResponse
+     */
+    splitOf?: string;
     /**
      * 
      * @type {string}
@@ -275,9 +305,14 @@ export function BillIntakeResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'intakeReference': json['intakeReference'] == null ? undefined : json['intakeReference'],
         'lastExtractionFailed': json['lastExtractionFailed'] == null ? undefined : json['lastExtractionFailed'],
         'lines': json['lines'] == null ? undefined : json['lines'],
+        'mappingRequired': json['mappingRequired'] == null ? undefined : json['mappingRequired'],
         'possibleDuplicates': json['possibleDuplicates'] == null ? undefined : ((json['possibleDuplicates'] as Array<any>).map(BillIntakeDuplicateViewFromJSON)),
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
         'rowErrors': json['rowErrors'] == null ? undefined : json['rowErrors'],
+        'rowFrom': json['rowFrom'] == null ? undefined : json['rowFrom'],
+        'rowTo': json['rowTo'] == null ? undefined : json['rowTo'],
+        'sourceColumns': json['sourceColumns'] == null ? undefined : json['sourceColumns'],
+        'splitOf': json['splitOf'] == null ? undefined : json['splitOf'],
         'status': json['status'] == null ? undefined : json['status'],
         'taxByType': json['taxByType'] == null ? undefined : ((json['taxByType'] as Array<any>).map(BillIntakeTaxViewFromJSON)),
         'uploadedAt': json['uploadedAt'] == null ? undefined : (new Date(json['uploadedAt'])),
@@ -309,9 +344,14 @@ export function BillIntakeResponseToJSON(value?: BillIntakeResponse | null): any
         'intakeReference': value['intakeReference'],
         'lastExtractionFailed': value['lastExtractionFailed'],
         'lines': value['lines'],
+        'mappingRequired': value['mappingRequired'],
         'possibleDuplicates': value['possibleDuplicates'] == null ? undefined : ((value['possibleDuplicates'] as Array<any>).map(BillIntakeDuplicateViewToJSON)),
         'rejectionReason': value['rejectionReason'],
         'rowErrors': value['rowErrors'],
+        'rowFrom': value['rowFrom'],
+        'rowTo': value['rowTo'],
+        'sourceColumns': value['sourceColumns'],
+        'splitOf': value['splitOf'],
         'status': value['status'],
         'taxByType': value['taxByType'] == null ? undefined : ((value['taxByType'] as Array<any>).map(BillIntakeTaxViewToJSON)),
         'uploadedAt': value['uploadedAt'] == null ? undefined : ((value['uploadedAt']).toISOString()),
