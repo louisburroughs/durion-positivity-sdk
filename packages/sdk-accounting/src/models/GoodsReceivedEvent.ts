@@ -27,6 +27,12 @@ import {
  */
 export interface GoodsReceivedEvent {
     /**
+     * The vendor's delivery-note or ASN number for this receipt; optional. Compared after the same normalisation as a bill number (case, spacing, punctuation and leading zeros ignored).
+     * @type {string}
+     * @memberof GoodsReceivedEvent
+     */
+    deliveryReference?: string;
+    /**
      * Optional dimensional context for GL mapping
      * @type {{ [key: string]: string; }}
      * @memberof GoodsReceivedEvent
@@ -56,6 +62,12 @@ export interface GoodsReceivedEvent {
      * @memberof GoodsReceivedEvent
      */
     purchaseOrderId: string;
+    /**
+     * The purchase order's number as the vendor knows it; optional. With deliveryReference it lets a later bill for the same delivery be recognised as a duplicate of this one.
+     * @type {string}
+     * @memberof GoodsReceivedEvent
+     */
+    purchaseOrderNumber?: string;
     /**
      * Date goods were received
      * @type {Date}
@@ -99,11 +111,13 @@ export function GoodsReceivedEventFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'deliveryReference': json['deliveryReference'] == null ? undefined : json['deliveryReference'],
         'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
         'eventId': json['eventId'],
         'lineItems': ((json['lineItems'] as Array<any>).map(ReceivedLineItemFromJSON)),
         'organizationId': json['organizationId'],
         'purchaseOrderId': json['purchaseOrderId'],
+        'purchaseOrderNumber': json['purchaseOrderNumber'] == null ? undefined : json['purchaseOrderNumber'],
         'receivedDate': (new Date(json['receivedDate'])),
         'vendorId': json['vendorId'],
         'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
@@ -116,11 +130,13 @@ export function GoodsReceivedEventToJSON(value?: GoodsReceivedEvent | null): any
     }
     return {
         
+        'deliveryReference': value['deliveryReference'],
         'dimensions': value['dimensions'],
         'eventId': value['eventId'],
         'lineItems': ((value['lineItems'] as Array<any>).map(ReceivedLineItemToJSON)),
         'organizationId': value['organizationId'],
         'purchaseOrderId': value['purchaseOrderId'],
+        'purchaseOrderNumber': value['purchaseOrderNumber'],
         'receivedDate': ((value['receivedDate']).toISOString()),
         'vendorId': value['vendorId'],
         'vendorName': value['vendorName'],
