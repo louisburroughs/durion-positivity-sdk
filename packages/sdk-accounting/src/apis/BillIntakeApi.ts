@@ -19,6 +19,8 @@ import type {
   BillIntakeConfirmRequest,
   BillIntakeDiscardRequest,
   BillIntakeEditRequest,
+  BillIntakeMappingRequest,
+  BillIntakeMappingTemplateList,
   BillIntakePage,
   BillIntakeResponse,
   BillIntakeUploadResponse,
@@ -33,6 +35,10 @@ import {
     BillIntakeDiscardRequestToJSON,
     BillIntakeEditRequestFromJSON,
     BillIntakeEditRequestToJSON,
+    BillIntakeMappingRequestFromJSON,
+    BillIntakeMappingRequestToJSON,
+    BillIntakeMappingTemplateListFromJSON,
+    BillIntakeMappingTemplateListToJSON,
     BillIntakePageFromJSON,
     BillIntakePageToJSON,
     BillIntakeResponseFromJSON,
@@ -57,11 +63,25 @@ export interface GetBillIntakeRequest {
     intakeId: string;
 }
 
+export interface ImportBillSpreadsheetRequest {
+    requestId: string;
+    file: Blob;
+    mapping?: string;
+    templateId?: string;
+    saveMappingAs?: string;
+    replace?: boolean;
+}
+
 export interface ListBillIntakeRequest {
     status?: ListBillIntakeStatusEnum;
     channel?: ListBillIntakeChannelEnum;
     page?: number;
     size?: number;
+}
+
+export interface MapBillIntakeColumnsRequest {
+    intakeId: string;
+    billIntakeMappingRequest: BillIntakeMappingRequest;
 }
 
 export interface RetryBillIntakeExtractionRequest {
@@ -84,7 +104,7 @@ export interface UploadBillDocumentsRequest {
 export class BillIntakeApi extends runtime.BaseAPI {
 
     /**
-     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it. A due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version; an optional requestId (UUIDv7) makes a retry answer the same bill. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, or a total that is not above zero); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), CREDIT_NOTE_NOT_CONFIRMABLE (the draft is a credit note), VENDOR_NOT_FOUND or VENDOR_INACTIVE. 
+     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it; a due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version; an optional requestId (UUIDv7) makes a retry answer the same bill. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, or a total that is not above zero); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), VENDOR_NOT_FOUND or VENDOR_INACTIVE; a draft whose documentType is CREDIT_NOTE becomes a credit note, a bill with negative amounts, that waits to be sent for approval. 
      * Confirm Bill Draft
      */
     async confirmBillIntakeRaw(requestParameters: ConfirmBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -128,7 +148,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it. A due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version; an optional requestId (UUIDv7) makes a retry answer the same bill. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, or a total that is not above zero); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), CREDIT_NOTE_NOT_CONFIRMABLE (the draft is a credit note), VENDOR_NOT_FOUND or VENDOR_INACTIVE. 
+     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it; a due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version; an optional requestId (UUIDv7) makes a retry answer the same bill. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, or a total that is not above zero); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), VENDOR_NOT_FOUND or VENDOR_INACTIVE; a draft whose documentType is CREDIT_NOTE becomes a credit note, a bill with negative amounts, that waits to be sent for approval. 
      * Confirm Bill Draft
      */
     async confirmBillIntake(requestParameters: ConfirmBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
@@ -233,6 +253,97 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Imports one CSV or XLSX file of supplier bills and creates one bill draft per invoice: rows are grouped by supplier, invoice number and invoice date, header fields repeat on each line row, and a row that cannot be read is listed in the draft\'s rowErrors with its field marked CHECK_THIS. A person checks each draft before any bill exists, and nothing posts. Use this tool to bring in many bills at once from a spreadsheet; do not use it for a PDF or a photo of one bill (uploadBillDocuments), for a bank statement (createBankImport) or for a vendor statement. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the file is judged by its content, never by its name or declared type, and a file that is neither text nor a workbook is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one CSV or XLSX, at most 25 MB) and a UUIDv7 requestId; optional: mapping (a JSON object of import column to the file\'s header), templateId (a saved mapping), saveMappingAs (a name to save the mapping under; a name that is taken is 409 MAPPING_TEMPLATE_EXISTS unless replace is true) and replace; an optional document_type column says what a row is: credit memo or credit note (any case) makes a credit note, invoice or blank an invoice, anything else is marked CHECK_THIS; amounts in a row are never negative; required columns: supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms; with none of mapping and templateId the file\'s headers are matched against a saved template, then against the column names themselves; when none fits the draft waits in EXTRACTING with mappingRequired and the file\'s sourceColumns until mapping is sent; a replay of the same requestId with the same file returns the same drafts. Emits an ACCOUNTING_BILL_INTAKE_IMPORT event and one BILL_INTAKE audit row naming the file\'s sha-256. Returns 201 with the draft of the import (the first invoice; the others appear as READY_FOR_REVIEW drafts once the sheet is read); 400 VALIDATION_ERROR for no file, a malformed mapping or an unknown templateId; 403 without the permission (or saveMappingAs without manage); 409 IDEMPOTENCY_CONFLICT when the requestId was used with another file; 409 MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true; 413 PAYLOAD_TOO_LARGE over 25 MB. 
+     * Import Bills From A Spreadsheet
+     */
+    async importBillSpreadsheetRaw(requestParameters: ImportBillSpreadsheetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeUploadResponse>> {
+        if (requestParameters['requestId'] == null) {
+            throw new runtime.RequiredError(
+                'requestId',
+                'Required parameter "requestId" was null or undefined when calling importBillSpreadsheet().'
+            );
+        }
+
+        if (requestParameters['file'] == null) {
+            throw new runtime.RequiredError(
+                'file',
+                'Required parameter "file" was null or undefined when calling importBillSpreadsheet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['requestId'] != null) {
+            queryParameters['requestId'] = requestParameters['requestId'];
+        }
+
+        if (requestParameters['mapping'] != null) {
+            queryParameters['mapping'] = requestParameters['mapping'];
+        }
+
+        if (requestParameters['templateId'] != null) {
+            queryParameters['templateId'] = requestParameters['templateId'];
+        }
+
+        if (requestParameters['saveMappingAs'] != null) {
+            queryParameters['saveMappingAs'] = requestParameters['saveMappingAs'];
+        }
+
+        if (requestParameters['replace'] != null) {
+            queryParameters['replace'] = requestParameters['replace'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:bill_intake:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['file'] != null) {
+            formParams.append('file', requestParameters['file'] as any);
+        }
+
+        const response = await this.request({
+            path: `/v1/accounting/bill-intake/imports`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillIntakeUploadResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Imports one CSV or XLSX file of supplier bills and creates one bill draft per invoice: rows are grouped by supplier, invoice number and invoice date, header fields repeat on each line row, and a row that cannot be read is listed in the draft\'s rowErrors with its field marked CHECK_THIS. A person checks each draft before any bill exists, and nothing posts. Use this tool to bring in many bills at once from a spreadsheet; do not use it for a PDF or a photo of one bill (uploadBillDocuments), for a bank statement (createBankImport) or for a vendor statement. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the file is judged by its content, never by its name or declared type, and a file that is neither text nor a workbook is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one CSV or XLSX, at most 25 MB) and a UUIDv7 requestId; optional: mapping (a JSON object of import column to the file\'s header), templateId (a saved mapping), saveMappingAs (a name to save the mapping under; a name that is taken is 409 MAPPING_TEMPLATE_EXISTS unless replace is true) and replace; an optional document_type column says what a row is: credit memo or credit note (any case) makes a credit note, invoice or blank an invoice, anything else is marked CHECK_THIS; amounts in a row are never negative; required columns: supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms; with none of mapping and templateId the file\'s headers are matched against a saved template, then against the column names themselves; when none fits the draft waits in EXTRACTING with mappingRequired and the file\'s sourceColumns until mapping is sent; a replay of the same requestId with the same file returns the same drafts. Emits an ACCOUNTING_BILL_INTAKE_IMPORT event and one BILL_INTAKE audit row naming the file\'s sha-256. Returns 201 with the draft of the import (the first invoice; the others appear as READY_FOR_REVIEW drafts once the sheet is read); 400 VALIDATION_ERROR for no file, a malformed mapping or an unknown templateId; 403 without the permission (or saveMappingAs without manage); 409 IDEMPOTENCY_CONFLICT when the requestId was used with another file; 409 MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true; 413 PAYLOAD_TOO_LARGE over 25 MB. 
+     * Import Bills From A Spreadsheet
+     */
+    async importBillSpreadsheet(requestParameters: ImportBillSpreadsheetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeUploadResponse> {
+        const response = await this.importBillSpreadsheetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Lists bill drafts, newest first, optionally for one status or one channel, a page at a time, each with its reference, vendor, bill number, total and status. Use this tool to find the drafts waiting for review or the files that were refused; do not use it for bills, use listVendorBills instead, and read one draft with getBillIntake before editing it. Preconditions: the caller holds accounting:ap:view. Inputs: optional status (QUARANTINED, FILE_REJECTED, EXTRACTING, READY_FOR_REVIEW, CONFIRMED, DISCARDED), optional channel (UPLOAD, IMPORT, EDI, EMAIL_IN), page (0-based) and size (1 to 200). Emits an ACCOUNTING_BILL_INTAKE_LIST event and changes nothing. Returns 200 with the page, 400 when the page bounds are invalid, and 403 without accounting:ap:view. 
      * List Bill Drafts
      */
@@ -285,6 +396,95 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Lists the saved column mappings for spreadsheet imports, by name, each with the import column to header map it applies. No event beyond the read is emitted and nothing is stored. Use this tool to find the templateId to send with an import (importBillSpreadsheet); do not use it to read bill drafts (listBillIntake) or to save a mapping (send saveMappingAs with an import or a mapping). Preconditions: the caller holds accounting:ap:view. Required inputs: none. Emits an ACCOUNTING_BILL_INTAKE_MAPPING_TEMPLATE_LIST read event; no data is written. Returns 200 with the templates, an empty list when none is saved; 403 without the permission. 
+     * List Bill Import Mapping Templates
+     */
+    async listBillIntakeMappingTemplatesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeMappingTemplateList>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/bill-intake/mapping-templates`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillIntakeMappingTemplateListFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists the saved column mappings for spreadsheet imports, by name, each with the import column to header map it applies. No event beyond the read is emitted and nothing is stored. Use this tool to find the templateId to send with an import (importBillSpreadsheet); do not use it to read bill drafts (listBillIntake) or to save a mapping (send saveMappingAs with an import or a mapping). Preconditions: the caller holds accounting:ap:view. Required inputs: none. Emits an ACCOUNTING_BILL_INTAKE_MAPPING_TEMPLATE_LIST read event; no data is written. Returns 200 with the templates, an empty list when none is saved; 403 without the permission. 
+     * List Bill Import Mapping Templates
+     */
+    async listBillIntakeMappingTemplates(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeMappingTemplateList> {
+        const response = await this.listBillIntakeMappingTemplatesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Maps the columns of an imported spreadsheet that could not be mapped on its own and reads its rows into bill drafts: the first invoice stays on this draft, every other becomes a READY_FOR_REVIEW draft. Nothing posts. Use this tool when an import is EXTRACTING with mappingRequired true and sourceColumns listed; do not use it to edit a draft that is READY_FOR_REVIEW (updateBillIntake) or to change the mapping of an import already read. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the draft is an import waiting for its mapping, at the version you read. Required inputs: intakeId, version and mapping, an object of import column to a header of the file, naming at least supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms. Optional: saveMappingAs, a name to save the mapping under so a file with the same headers is mapped without asking, and replace (true replaces a template of that name, which is audited). Emits an ACCOUNTING_BILL_INTAKE_MAPPING event and one BILL_INTAKE audit row. Returns 200 with the draft; 400 VALIDATION_ERROR with fieldErrors naming each unmapped required column or header the file does not have; 403 without the permission (or saveMappingAs without manage); 404 BILL_INTAKE_NOT_FOUND; 409 BILL_INTAKE_INVALID_STATE when the draft is not waiting for a mapping, MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true, or OPTIMISTIC_LOCK. 
+     * Map The Columns Of A Bill Import
+     */
+    async mapBillIntakeColumnsRaw(requestParameters: MapBillIntakeColumnsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeResponse>> {
+        if (requestParameters['intakeId'] == null) {
+            throw new runtime.RequiredError(
+                'intakeId',
+                'Required parameter "intakeId" was null or undefined when calling mapBillIntakeColumns().'
+            );
+        }
+
+        if (requestParameters['billIntakeMappingRequest'] == null) {
+            throw new runtime.RequiredError(
+                'billIntakeMappingRequest',
+                'Required parameter "billIntakeMappingRequest" was null or undefined when calling mapBillIntakeColumns().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:bill_intake:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/bill-intake/{intakeId}/mapping`.replace(`{${"intakeId"}}`, encodeURIComponent(String(requestParameters['intakeId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BillIntakeMappingRequestToJSON(requestParameters['billIntakeMappingRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillIntakeResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Maps the columns of an imported spreadsheet that could not be mapped on its own and reads its rows into bill drafts: the first invoice stays on this draft, every other becomes a READY_FOR_REVIEW draft. Nothing posts. Use this tool when an import is EXTRACTING with mappingRequired true and sourceColumns listed; do not use it to edit a draft that is READY_FOR_REVIEW (updateBillIntake) or to change the mapping of an import already read. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the draft is an import waiting for its mapping, at the version you read. Required inputs: intakeId, version and mapping, an object of import column to a header of the file, naming at least supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms. Optional: saveMappingAs, a name to save the mapping under so a file with the same headers is mapped without asking, and replace (true replaces a template of that name, which is audited). Emits an ACCOUNTING_BILL_INTAKE_MAPPING event and one BILL_INTAKE audit row. Returns 200 with the draft; 400 VALIDATION_ERROR with fieldErrors naming each unmapped required column or header the file does not have; 403 without the permission (or saveMappingAs without manage); 404 BILL_INTAKE_NOT_FOUND; 409 BILL_INTAKE_INVALID_STATE when the draft is not waiting for a mapping, MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true, or OPTIMISTIC_LOCK. 
+     * Map The Columns Of A Bill Import
+     */
+    async mapBillIntakeColumns(requestParameters: MapBillIntakeColumnsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeResponse> {
+        const response = await this.mapBillIntakeColumnsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Sends a bill draft back to be read again: its file goes to EXTRACTING and the reading is retried, the retry window starting now. Use this tool when the reading failed or the reader was down and the draft is still blank; do not use it to redo a reading that succeeded, correct the fields with updateBillIntake instead. Preconditions: the draft is READY_FOR_REVIEW, its last reading failed, and nobody has edited it (an edit would be lost); the caller holds accounting:bill_intake:create. Required inputs: intakeId. Emits an ACCOUNTING_BILL_INTAKE_EXTRACTION_RETRY event and one BILL_INTAKE audit row. Returns 202 with the draft now EXTRACTING, 404 BILL_INTAKE_NOT_FOUND, and 409 BILL_INTAKE_INVALID_STATE when it is not eligible. 
      * Read Bill Draft Again
      */
@@ -328,7 +528,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Edits a bill draft: marks each field you touch ACCEPTED (the value is kept) or CORRECTED (a new value), picks the vendor from accounting\'s vendor list, and replaces the tax by type or the lines. The checks then run again over the whole draft, so totals, tax by type and duplicates are re-judged; a field you accepted or corrected is never taken back by a check. Use this tool to check and key a draft before confirming it; do not use it to change a bill, which does not exist until the draft is confirmed. Preconditions: the draft is READY_FOR_REVIEW; version is the one you read, else 409 OPTIMISTIC_LOCK; the caller holds accounting:bill_intake:create. Required inputs: version, and at least one of fields, vendorId, taxByType or lines; a field\'s state is ACCEPTED or CORRECTED, never READ or CHECK_THIS; dates are yyyy-MM-dd, amounts have at most 4 decimals. Emits an ACCOUNTING_BILL_INTAKE_UPDATE event and one BILL_INTAKE audit row naming the fields, never a value. Returns 200 with the draft, 400 VALIDATION_ERROR with fieldErrors, 404 BILL_INTAKE_NOT_FOUND, 409 BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK. 
+     * Edits a bill draft: marks each field you touch ACCEPTED (the value is kept) or CORRECTED (a new value), picks the vendor from accounting\'s vendor list, and replaces the tax by type or the lines. The checks then run again over the whole draft, so totals, tax by type and duplicates are re-judged; a field you accepted or corrected is never taken back by a check. Use this tool to check and key a draft before confirming it; do not use it to change a bill, which does not exist until the draft is confirmed. Preconditions: the draft is READY_FOR_REVIEW; version is the one you read, else 409 OPTIMISTIC_LOCK; the caller holds accounting:bill_intake:create. Required inputs: version, and at least one of fields, vendorId, taxByType or lines; a field\'s state is ACCEPTED or CORRECTED, never READ or CHECK_THIS; dates are yyyy-MM-dd, amounts have at most 4 decimals and are never negative (the amounts of a draft are magnitudes). documentType is INVOICE or CREDIT_NOTE: a credit note is chosen with it, not with a minus sign, and confirmation then gives its bill negative amounts. Emits an ACCOUNTING_BILL_INTAKE_UPDATE event and one BILL_INTAKE audit row naming the fields, never a value. Returns 200 with the draft, 400 VALIDATION_ERROR with fieldErrors, 404 BILL_INTAKE_NOT_FOUND, 409 BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK. 
      * Edit Bill Draft
      */
     async updateBillIntakeRaw(requestParameters: UpdateBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeResponse>> {
@@ -372,7 +572,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Edits a bill draft: marks each field you touch ACCEPTED (the value is kept) or CORRECTED (a new value), picks the vendor from accounting\'s vendor list, and replaces the tax by type or the lines. The checks then run again over the whole draft, so totals, tax by type and duplicates are re-judged; a field you accepted or corrected is never taken back by a check. Use this tool to check and key a draft before confirming it; do not use it to change a bill, which does not exist until the draft is confirmed. Preconditions: the draft is READY_FOR_REVIEW; version is the one you read, else 409 OPTIMISTIC_LOCK; the caller holds accounting:bill_intake:create. Required inputs: version, and at least one of fields, vendorId, taxByType or lines; a field\'s state is ACCEPTED or CORRECTED, never READ or CHECK_THIS; dates are yyyy-MM-dd, amounts have at most 4 decimals. Emits an ACCOUNTING_BILL_INTAKE_UPDATE event and one BILL_INTAKE audit row naming the fields, never a value. Returns 200 with the draft, 400 VALIDATION_ERROR with fieldErrors, 404 BILL_INTAKE_NOT_FOUND, 409 BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK. 
+     * Edits a bill draft: marks each field you touch ACCEPTED (the value is kept) or CORRECTED (a new value), picks the vendor from accounting\'s vendor list, and replaces the tax by type or the lines. The checks then run again over the whole draft, so totals, tax by type and duplicates are re-judged; a field you accepted or corrected is never taken back by a check. Use this tool to check and key a draft before confirming it; do not use it to change a bill, which does not exist until the draft is confirmed. Preconditions: the draft is READY_FOR_REVIEW; version is the one you read, else 409 OPTIMISTIC_LOCK; the caller holds accounting:bill_intake:create. Required inputs: version, and at least one of fields, vendorId, taxByType or lines; a field\'s state is ACCEPTED or CORRECTED, never READ or CHECK_THIS; dates are yyyy-MM-dd, amounts have at most 4 decimals and are never negative (the amounts of a draft are magnitudes). documentType is INVOICE or CREDIT_NOTE: a credit note is chosen with it, not with a minus sign, and confirmation then gives its bill negative amounts. Emits an ACCOUNTING_BILL_INTAKE_UPDATE event and one BILL_INTAKE audit row naming the fields, never a value. Returns 200 with the draft, 400 VALIDATION_ERROR with fieldErrors, 404 BILL_INTAKE_NOT_FOUND, 409 BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK. 
      * Edit Bill Draft
      */
     async updateBillIntake(requestParameters: UpdateBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeResponse> {

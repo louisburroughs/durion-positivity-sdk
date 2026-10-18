@@ -32,6 +32,12 @@ export interface VendorBillSummaryResponse {
      */
     billNumber: string;
     /**
+     * INVOICE, or CREDIT_NOTE when the vendor issued a credit: its amounts are then negative
+     * @type {string}
+     * @memberof VendorBillSummaryResponse
+     */
+    documentType: VendorBillSummaryResponseDocumentTypeEnum;
+    /**
      * Due date
      * @type {Date}
      * @memberof VendorBillSummaryResponse
@@ -91,6 +97,14 @@ export interface VendorBillSummaryResponse {
 * @export
 * @enum {string}
 */
+export enum VendorBillSummaryResponseDocumentTypeEnum {
+    Invoice = 'INVOICE',
+    CreditNote = 'CREDIT_NOTE'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillSummaryResponseStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
@@ -108,6 +122,7 @@ export enum VendorBillSummaryResponseStatusEnum {
  */
 export function instanceOfVendorBillSummaryResponse(value: object): boolean {
     if (!('billNumber' in value)) return false;
+    if (!('documentType' in value)) return false;
     if (!('status' in value)) return false;
     if (!('totalAmount' in value)) return false;
     if (!('vendorApHold' in value)) return false;
@@ -128,6 +143,7 @@ export function VendorBillSummaryResponseFromJSONTyped(json: any, ignoreDiscrimi
         
         'billDate': json['billDate'] == null ? undefined : (new Date(json['billDate'])),
         'billNumber': json['billNumber'],
+        'documentType': json['documentType'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'openAmount': json['openAmount'] == null ? undefined : json['openAmount'],
         'status': json['status'],
@@ -148,6 +164,7 @@ export function VendorBillSummaryResponseToJSON(value?: VendorBillSummaryRespons
         
         'billDate': value['billDate'] == null ? undefined : ((value['billDate']).toISOString()),
         'billNumber': value['billNumber'],
+        'documentType': value['documentType'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'openAmount': value['openAmount'],
         'status': value['status'],
