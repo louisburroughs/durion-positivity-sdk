@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { BillIntakeStructuredValueView } from './BillIntakeStructuredValueView';
+import {
+    BillIntakeStructuredValueViewFromJSON,
+    BillIntakeStructuredValueViewFromJSONTyped,
+    BillIntakeStructuredValueViewToJSON,
+} from './BillIntakeStructuredValueView';
+
 /**
  * One field of a bill draft: its value and its state. READ is read from the document and not yet looked at, CHECK_THIS must be looked at before the bill exists, ACCEPTED is kept by a person, CORRECTED was changed by one.
  * @export
@@ -26,6 +33,12 @@ export interface BillIntakeFieldView {
      */
     confidence?: number;
     /**
+     * 
+     * @type {BillIntakeStructuredValueView}
+     * @memberof BillIntakeFieldView
+     */
+    objectValue?: BillIntakeStructuredValueView;
+    /**
      * Where on the page the value was read: page and box (fractions of the page)
      * @type {object}
      * @memberof BillIntakeFieldView
@@ -38,11 +51,11 @@ export interface BillIntakeFieldView {
      */
     state?: BillIntakeFieldViewStateEnum;
     /**
-     * The value: text, a date (yyyy-MM-dd) or a number; null when nothing was read
-     * @type {any}
+     * The value as text: a date (yyyy-MM-dd), an amount as plain decimal text or any other text; null when nothing was read
+     * @type {string}
      * @memberof BillIntakeFieldView
      */
-    value?: any;
+    value?: string;
 }
 
 /**
@@ -75,6 +88,7 @@ export function BillIntakeFieldViewFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'confidence': json['confidence'] == null ? undefined : json['confidence'],
+        'objectValue': json['objectValue'] == null ? undefined : BillIntakeStructuredValueViewFromJSON(json['objectValue']),
         'sourceLocation': json['sourceLocation'] == null ? undefined : json['sourceLocation'],
         'state': json['state'] == null ? undefined : json['state'],
         'value': json['value'] == null ? undefined : json['value'],
@@ -88,6 +102,7 @@ export function BillIntakeFieldViewToJSON(value?: BillIntakeFieldView | null): a
     return {
         
         'confidence': value['confidence'],
+        'objectValue': BillIntakeStructuredValueViewToJSON(value['objectValue']),
         'sourceLocation': value['sourceLocation'],
         'state': value['state'],
         'value': value['value'],

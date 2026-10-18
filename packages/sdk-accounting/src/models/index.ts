@@ -87,6 +87,7 @@ export * from './BillIntakeFieldView';
 export * from './BillIntakeItemResponse';
 export * from './BillIntakePage';
 export * from './BillIntakeResponse';
+export * from './BillIntakeStructuredValueView';
 export * from './BillIntakeSummary';
 export * from './BillIntakeTaxView';
 export * from './BillIntakeUploadResponse';
