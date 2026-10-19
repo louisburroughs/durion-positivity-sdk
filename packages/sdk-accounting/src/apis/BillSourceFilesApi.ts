@@ -111,7 +111,7 @@ export class BillSourceFilesApi extends runtime.BaseAPI {
      * Downloads the file a bill draft was read from: the original for a PDF or an image, and for an imported spreadsheet a CSV re-export of its stored rows in which any cell starting with =, +, - or @ is prefixed with an apostrophe. The original spreadsheet is never served. The response is an attachment with nosniff, a sandboxing content-security policy and no-store. Use this tool to keep or print the source of a draft; do not use it to look at a page (previewBillSourceFile). Preconditions: the caller holds accounting:ap:view; the file is stored, belongs to the caller\'s tenant and has not been purged. Required inputs: fileId. Emits an ACCOUNTING_BILL_SOURCE_FILE_CONTENT read event and one audit row naming the file\'s sha-256. Returns 200 with the file; 403 without the permission; 404 BILL_SOURCE_FILE_NOT_FOUND for a file that is missing, another tenant\'s, quarantined, rejected or purged. 
      * Download A Bill Source File
      */
-    async downloadBillSourceFileRaw(requestParameters: DownloadBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async downloadBillSourceFileRaw(requestParameters: DownloadBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
         if (requestParameters['fileId'] == null) {
             throw new runtime.RequiredError(
                 'fileId',
@@ -138,22 +138,23 @@ export class BillSourceFilesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.BlobApiResponse(response);
     }
 
     /**
      * Downloads the file a bill draft was read from: the original for a PDF or an image, and for an imported spreadsheet a CSV re-export of its stored rows in which any cell starting with =, +, - or @ is prefixed with an apostrophe. The original spreadsheet is never served. The response is an attachment with nosniff, a sandboxing content-security policy and no-store. Use this tool to keep or print the source of a draft; do not use it to look at a page (previewBillSourceFile). Preconditions: the caller holds accounting:ap:view; the file is stored, belongs to the caller\'s tenant and has not been purged. Required inputs: fileId. Emits an ACCOUNTING_BILL_SOURCE_FILE_CONTENT read event and one audit row naming the file\'s sha-256. Returns 200 with the file; 403 without the permission; 404 BILL_SOURCE_FILE_NOT_FOUND for a file that is missing, another tenant\'s, quarantined, rejected or purged. 
      * Download A Bill Source File
      */
-    async downloadBillSourceFile(requestParameters: DownloadBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.downloadBillSourceFileRaw(requestParameters, initOverrides);
+    async downloadBillSourceFile(requestParameters: DownloadBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.downloadBillSourceFileRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      * Returns one page of a stored bill document (a PDF, a photo or a scan) as a PNG with its metadata stripped, so a person can check a draft against the original. The first request for a page draws it and stores it; later requests are served from the stored page. Use this tool to show the page a draft was read from; do not use it to download the original (downloadBillSourceFile) or for a spreadsheet, which has no pages. Preconditions: the caller holds accounting:ap:view; the file is stored (scanned clean and inspected), belongs to the caller\'s tenant and has not been purged. Required inputs: fileId and page (1-based, default 1). Emits an ACCOUNTING_BILL_SOURCE_FILE_PREVIEW read event and one audit row naming the file\'s sha-256. Returns 200 with image/png; 403 without the permission; 404 BILL_SOURCE_FILE_NOT_FOUND for a file that is missing, another tenant\'s, quarantined, rejected or purged; 422 BILL_SOURCE_PAGE_UNAVAILABLE for a page the file does not have or cannot be drawn; 503 BILL_SOURCE_PAGE_UNAVAILABLE when the page renderer is down (try again). 
      * Preview A Page Of A Bill File
      */
-    async previewBillSourceFileRaw(requestParameters: PreviewBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async previewBillSourceFileRaw(requestParameters: PreviewBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
         if (requestParameters['fileId'] == null) {
             throw new runtime.RequiredError(
                 'fileId',
@@ -184,15 +185,16 @@ export class BillSourceFilesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.BlobApiResponse(response);
     }
 
     /**
      * Returns one page of a stored bill document (a PDF, a photo or a scan) as a PNG with its metadata stripped, so a person can check a draft against the original. The first request for a page draws it and stores it; later requests are served from the stored page. Use this tool to show the page a draft was read from; do not use it to download the original (downloadBillSourceFile) or for a spreadsheet, which has no pages. Preconditions: the caller holds accounting:ap:view; the file is stored (scanned clean and inspected), belongs to the caller\'s tenant and has not been purged. Required inputs: fileId and page (1-based, default 1). Emits an ACCOUNTING_BILL_SOURCE_FILE_PREVIEW read event and one audit row naming the file\'s sha-256. Returns 200 with image/png; 403 without the permission; 404 BILL_SOURCE_FILE_NOT_FOUND for a file that is missing, another tenant\'s, quarantined, rejected or purged; 422 BILL_SOURCE_PAGE_UNAVAILABLE for a page the file does not have or cannot be drawn; 503 BILL_SOURCE_PAGE_UNAVAILABLE when the page renderer is down (try again). 
      * Preview A Page Of A Bill File
      */
-    async previewBillSourceFile(requestParameters: PreviewBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.previewBillSourceFileRaw(requestParameters, initOverrides);
+    async previewBillSourceFile(requestParameters: PreviewBillSourceFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.previewBillSourceFileRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
