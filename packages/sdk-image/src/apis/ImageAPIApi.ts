@@ -30,10 +30,12 @@ import {
 
 export interface GetImageByFilenameRequest {
     filename: string;
+    ifNoneMatch?: string;
 }
 
 export interface GetImageByIdRequest {
     id: number;
+    ifNoneMatch?: string;
 }
 
 export interface StoreImageOperationRequest {
@@ -46,7 +48,7 @@ export interface StoreImageOperationRequest {
 export class ImageAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns the stored image file matching a filename as a binary attachment. Use this tool when only the filename is known, such as a reference embedded in catalog data; use getImageById instead when the numeric id is available, because filenames are not guaranteed unique over time. Preconditions: an image record with that exact filename must exist and its backing file must still be present on disk. Required inputs: filename path parameter, matched exactly including extension; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record matches the filename or the backing file is missing from storage. 
+     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the numeric image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
      * Get image by filename
      */
     async getImageByFilenameRaw(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -61,6 +63,10 @@ export class ImageAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['ifNoneMatch'] != null) {
+            headerParameters['If-None-Match'] = String(requestParameters['ifNoneMatch']);
+        }
+
         const response = await this.request({
             path: `/v1/images/filename/{filename}`.replace(`{${"filename"}}`, encodeURIComponent(String(requestParameters['filename']))),
             method: 'GET',
@@ -72,7 +78,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the stored image file matching a filename as a binary attachment. Use this tool when only the filename is known, such as a reference embedded in catalog data; use getImageById instead when the numeric id is available, because filenames are not guaranteed unique over time. Preconditions: an image record with that exact filename must exist and its backing file must still be present on disk. Required inputs: filename path parameter, matched exactly including extension; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record matches the filename or the backing file is missing from storage. 
+     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the numeric image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
      * Get image by filename
      */
     async getImageByFilename(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -81,7 +87,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the stored image file for a numeric image id as a binary attachment. Use this tool when the image\'s database id is already known; use getImageByFilename instead when only the filename is known. Preconditions: the image record must exist and its backing file must still be present on disk. Required inputs: id (numeric database id) path parameter; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record has that id or the backing file is missing from storage. 
+     * Returns image bytes inline for a numeric image record ID. Use this operation when the caller has the numeric image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (numeric database ID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
      * Get image by ID
      */
     async getImageByIdRaw(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -96,6 +102,10 @@ export class ImageAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['ifNoneMatch'] != null) {
+            headerParameters['If-None-Match'] = String(requestParameters['ifNoneMatch']);
+        }
+
         const response = await this.request({
             path: `/v1/images/id/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',
@@ -107,7 +117,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the stored image file for a numeric image id as a binary attachment. Use this tool when the image\'s database id is already known; use getImageByFilename instead when only the filename is known. Preconditions: the image record must exist and its backing file must still be present on disk. Required inputs: id (numeric database id) path parameter; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record has that id or the backing file is missing from storage. 
+     * Returns image bytes inline for a numeric image record ID. Use this operation when the caller has the numeric image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (numeric database ID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
      * Get image by ID
      */
     async getImageById(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -116,7 +126,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stores image bytes and returns a reference to them, or returns the reference already held when the same bytes from the same origin have been stored before. Use this tool when ingesting artwork that must not depend on a third party to render, such as manufacturer marketing images; do not use it to register an image that already lives somewhere this service can read, because that needs no copy. Preconditions: the content must not be empty, because an empty body is a failed download and storing one would stop it ever being retried. Required inputs: filename, contentType and content as base64; sourceUri and context are optional, and sourceUri is kept as provenance rather than as a render source. No events are emitted. Returns 200 with the reference, whose newlyStored flag says whether this call did the storing or found the bytes already held, and 400 when the content is empty. 
+     * Stores JPEG, PNG, WebP, or GIF image bytes and returns a reference, reusing the existing reference when the same origin and content hash were already stored. Use this operation when a caller has image bytes that must be served by pos-image; do not use it to register an image that remains at an external URL or an existing legacy filesystem path. Preconditions: decoded content is nonempty, has supported magic bytes, and does not exceed pos.image.max-bytes (10 MiB by default); SVG is not supported. Required inputs: filename, a MIME claim (which may be blank), and base64 content; sourceUri and context are optional, and sourceUri is provenance only. No events are emitted; the operation creates or reuses tenant-scoped image and image_content rows. Returns 413 for content over the configured decoded-size limit and 400 for invalid base64, empty or unsupported bytes, or a claim naming a different supported image type. 
      * Store An Image
      */
     async storeImageRaw(requestParameters: StoreImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StoredImage>> {
@@ -145,7 +155,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stores image bytes and returns a reference to them, or returns the reference already held when the same bytes from the same origin have been stored before. Use this tool when ingesting artwork that must not depend on a third party to render, such as manufacturer marketing images; do not use it to register an image that already lives somewhere this service can read, because that needs no copy. Preconditions: the content must not be empty, because an empty body is a failed download and storing one would stop it ever being retried. Required inputs: filename, contentType and content as base64; sourceUri and context are optional, and sourceUri is kept as provenance rather than as a render source. No events are emitted. Returns 200 with the reference, whose newlyStored flag says whether this call did the storing or found the bytes already held, and 400 when the content is empty. 
+     * Stores JPEG, PNG, WebP, or GIF image bytes and returns a reference, reusing the existing reference when the same origin and content hash were already stored. Use this operation when a caller has image bytes that must be served by pos-image; do not use it to register an image that remains at an external URL or an existing legacy filesystem path. Preconditions: decoded content is nonempty, has supported magic bytes, and does not exceed pos.image.max-bytes (10 MiB by default); SVG is not supported. Required inputs: filename, a MIME claim (which may be blank), and base64 content; sourceUri and context are optional, and sourceUri is provenance only. No events are emitted; the operation creates or reuses tenant-scoped image and image_content rows. Returns 413 for content over the configured decoded-size limit and 400 for invalid base64, empty or unsupported bytes, or a claim naming a different supported image type. 
      * Store An Image
      */
     async storeImage(requestParameters: StoreImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StoredImage> {

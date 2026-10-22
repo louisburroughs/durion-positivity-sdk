@@ -29,6 +29,8 @@ import type {
   WorkorderResponse,
   WorkorderSnapshotResponse,
   WorkorderStateTransitionResponse,
+  WorkorderTransferRequest,
+  WorkorderTransferResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -59,6 +61,10 @@ import {
     WorkorderSnapshotResponseToJSON,
     WorkorderStateTransitionResponseFromJSON,
     WorkorderStateTransitionResponseToJSON,
+    WorkorderTransferRequestFromJSON,
+    WorkorderTransferRequestToJSON,
+    WorkorderTransferResponseFromJSON,
+    WorkorderTransferResponseToJSON,
 } from '../models/index';
 
 export interface ApproveWorkorderOperationRequest {
@@ -119,6 +125,12 @@ export interface GetWorkorderTransitionsRequest {
 export interface ReopenWorkorderOperationRequest {
     workorderId: string;
     reopenWorkorderRequest: ReopenWorkorderRequest;
+}
+
+export interface TransferWorkorderRequest {
+    workorderId: string;
+    workorderTransferRequest: WorkorderTransferRequest;
+    idempotencyKey?: string;
 }
 
 /**
@@ -773,6 +785,63 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
      */
     async reopenWorkorder(requestParameters: ReopenWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReopenWorkorderResponse> {
         const response = await this.reopenWorkorderRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Transfers the same unstarted workorder to a different active location, releasing its current position and technician; an ASSIGNED workorder returns to APPROVED. Use this tool when an unstarted workorder must move to another shop, for example at the customer\'s request or for capacity; do not use it for a workorder that has recorded time, has parts in hand, or is closed. Finish or cancel that work at its current location instead, and create a new workorder at the other location. Preconditions: the caller holds workorder:workorder:transfer in scope for both the current and the target location, the target location is a different active location, the workorder is not closed, and it has no pending change request, no recorded time, and no picked parts. Required inputs: workorderId (UUID) as a path parameter, and toLocationId (UUID) and reasonCode (CUSTOMER_REQUEST, CAPACITY, EQUIPMENT, MOBILE_DEPOT or OTHER) in the body; OTHER requires a non-blank note of at most 500 characters. An optional Idempotency-Key header replays the original transfer response. Emits a WORKORDER_TRANSFER event and the workorder.workorder.transferred domain event. Returns 200, 400 VALIDATION_FAILED, 403 LOCATION_SCOPE_DENIED, 404 NOT_FOUND, 409 WORKORDER_CLOSED or WORKORDER_TRANSFER_NOT_ALLOWED, and 422 WORKORDER_TRANSFER_LOCATION_INVALID, WORKORDER_TRANSFER_LOCATION_INACTIVE, WORKORDER_TRANSFER_CHANGE_REQUEST_PENDING, WORKORDER_TRANSFER_TIME_RECORDED, or WORKORDER_TRANSFER_PARTS_IN_HAND. 
+     * Transfer a Workorder to Another Location
+     */
+    async transferWorkorderRaw(requestParameters: TransferWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderTransferResponse>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling transferWorkorder().'
+            );
+        }
+
+        if (requestParameters['workorderTransferRequest'] == null) {
+            throw new runtime.RequiredError(
+                'workorderTransferRequest',
+                'Required parameter "workorderTransferRequest" was null or undefined when calling transferWorkorder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:transfer"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/transfer`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: WorkorderTransferRequestToJSON(requestParameters['workorderTransferRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderTransferResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Transfers the same unstarted workorder to a different active location, releasing its current position and technician; an ASSIGNED workorder returns to APPROVED. Use this tool when an unstarted workorder must move to another shop, for example at the customer\'s request or for capacity; do not use it for a workorder that has recorded time, has parts in hand, or is closed. Finish or cancel that work at its current location instead, and create a new workorder at the other location. Preconditions: the caller holds workorder:workorder:transfer in scope for both the current and the target location, the target location is a different active location, the workorder is not closed, and it has no pending change request, no recorded time, and no picked parts. Required inputs: workorderId (UUID) as a path parameter, and toLocationId (UUID) and reasonCode (CUSTOMER_REQUEST, CAPACITY, EQUIPMENT, MOBILE_DEPOT or OTHER) in the body; OTHER requires a non-blank note of at most 500 characters. An optional Idempotency-Key header replays the original transfer response. Emits a WORKORDER_TRANSFER event and the workorder.workorder.transferred domain event. Returns 200, 400 VALIDATION_FAILED, 403 LOCATION_SCOPE_DENIED, 404 NOT_FOUND, 409 WORKORDER_CLOSED or WORKORDER_TRANSFER_NOT_ALLOWED, and 422 WORKORDER_TRANSFER_LOCATION_INVALID, WORKORDER_TRANSFER_LOCATION_INACTIVE, WORKORDER_TRANSFER_CHANGE_REQUEST_PENDING, WORKORDER_TRANSFER_TIME_RECORDED, or WORKORDER_TRANSFER_PARTS_IN_HAND. 
+     * Transfer a Workorder to Another Location
+     */
+    async transferWorkorder(requestParameters: TransferWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderTransferResponse> {
+        const response = await this.transferWorkorderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
