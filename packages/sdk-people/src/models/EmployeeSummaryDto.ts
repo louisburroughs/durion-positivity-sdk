@@ -31,6 +31,12 @@ import {
     EmployeeLocationDtoFromJSONTyped,
     EmployeeLocationDtoToJSON,
 } from './EmployeeLocationDto';
+import type { EmployeePropagationDto } from './EmployeePropagationDto';
+import {
+    EmployeePropagationDtoFromJSON,
+    EmployeePropagationDtoFromJSONTyped,
+    EmployeePropagationDtoToJSON,
+} from './EmployeePropagationDto';
 import type { EmployeeRoleAssignmentDto } from './EmployeeRoleAssignmentDto';
 import {
     EmployeeRoleAssignmentDtoFromJSON,
@@ -117,6 +123,12 @@ export interface EmployeeSummaryDto {
      */
     primaryLocation?: EmployeeLocationDto;
     /**
+     * 
+     * @type {EmployeePropagationDto}
+     * @memberof EmployeeSummaryDto
+     */
+    propagation?: EmployeePropagationDto;
+    /**
      * Active application-role assignments (DECISION-PEOPLE-026); null unless `include=ROLE_ASSIGNMENTS` was requested, empty when requested but the person holds none
      * @type {Array<EmployeeRoleAssignmentDto>}
      * @memberof EmployeeSummaryDto
@@ -180,6 +192,7 @@ export function EmployeeSummaryDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         'personId': json['personId'],
         'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
         'primaryLocation': json['primaryLocation'] == null ? undefined : EmployeeLocationDtoFromJSON(json['primaryLocation']),
+        'propagation': json['propagation'] == null ? undefined : EmployeePropagationDtoFromJSON(json['propagation']),
         'roleAssignments': json['roleAssignments'] == null ? undefined : ((json['roleAssignments'] as Array<any>).map(EmployeeRoleAssignmentDtoFromJSON)),
         'status': json['status'] == null ? undefined : json['status'],
         'username': json['username'] == null ? undefined : json['username'],
@@ -204,6 +217,7 @@ export function EmployeeSummaryDtoToJSON(value?: EmployeeSummaryDto | null): any
         'personId': value['personId'],
         'preferredName': value['preferredName'],
         'primaryLocation': EmployeeLocationDtoToJSON(value['primaryLocation']),
+        'propagation': EmployeePropagationDtoToJSON(value['propagation']),
         'roleAssignments': value['roleAssignments'] == null ? undefined : ((value['roleAssignments'] as Array<any>).map(EmployeeRoleAssignmentDtoToJSON)),
         'status': value['status'],
         'username': value['username'],

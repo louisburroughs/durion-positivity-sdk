@@ -20,13 +20,13 @@ import { mapValues } from '../runtime';
  */
 export interface StoreImageRequest {
     /**
-     * The image bytes, base64-encoded
+     * Base64 bytes (max 14,000,000 chars; 10 MiB decoded default). JPEG, PNG, WebP, and GIF only.
      * @type {string}
      * @memberof StoreImageRequest
      */
     content: string;
     /**
-     * MIME type of the bytes
+     * MIME claim (may be blank); detected content type is authoritative
      * @type {string}
      * @memberof StoreImageRequest
      */

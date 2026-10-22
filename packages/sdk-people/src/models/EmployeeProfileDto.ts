@@ -25,6 +25,12 @@ import {
     EmployeeJobRoleDtoFromJSONTyped,
     EmployeeJobRoleDtoToJSON,
 } from './EmployeeJobRoleDto';
+import type { EmployeePropagationDto } from './EmployeePropagationDto';
+import {
+    EmployeePropagationDtoFromJSON,
+    EmployeePropagationDtoFromJSONTyped,
+    EmployeePropagationDtoToJSON,
+} from './EmployeePropagationDto';
 
 /**
  * Employee profile returned by employee read and write operations
@@ -92,6 +98,12 @@ export interface EmployeeProfileDto {
      * @memberof EmployeeProfileDto
      */
     preferredName?: string;
+    /**
+     * 
+     * @type {EmployeePropagationDto}
+     * @memberof EmployeeProfileDto
+     */
+    propagation?: EmployeePropagationDto;
     /**
      * Employment status of the employee
      * @type {string}
@@ -181,6 +193,7 @@ export function EmployeeProfileDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         'jobRole': json['jobRole'] == null ? undefined : EmployeeJobRoleDtoFromJSON(json['jobRole']),
         'lastName': json['lastName'],
         'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
+        'propagation': json['propagation'] == null ? undefined : EmployeePropagationDtoFromJSON(json['propagation']),
         'status': json['status'],
         'statusEffectiveAt': json['statusEffectiveAt'] == null ? undefined : (new Date(json['statusEffectiveAt'])),
         'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
@@ -205,6 +218,7 @@ export function EmployeeProfileDtoToJSON(value?: EmployeeProfileDto | null): any
         'jobRole': EmployeeJobRoleDtoToJSON(value['jobRole']),
         'lastName': value['lastName'],
         'preferredName': value['preferredName'],
+        'propagation': EmployeePropagationDtoToJSON(value['propagation']),
         'status': value['status'],
         'statusEffectiveAt': value['statusEffectiveAt'] == null ? undefined : ((value['statusEffectiveAt']).toISOString()),
         'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),

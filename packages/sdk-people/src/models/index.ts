@@ -24,6 +24,7 @@ export * from './EmployeeIdentityDto';
 export * from './EmployeeJobRoleDto';
 export * from './EmployeeLocationDto';
 export * from './EmployeeProfileDto';
+export * from './EmployeePropagationDto';
 export * from './EmployeeRoleAssignmentDto';
 export * from './EmployeeStatusCountsResponse';
 export * from './EmployeeSummaryDto';
