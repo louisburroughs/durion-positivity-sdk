@@ -141,6 +141,12 @@ export interface BillIntakeResponse {
      */
     mappingRequired?: boolean;
     /**
+     * Pages (or frames) of the document once it is inspected; null before then and when there is no document
+     * @type {number}
+     * @memberof BillIntakeResponse
+     */
+    pageCount?: number;
+    /**
      * Possible duplicates found by the checks
      * @type {Array<BillIntakeDuplicateView>}
      * @memberof BillIntakeResponse
@@ -176,6 +182,12 @@ export interface BillIntakeResponse {
      * @memberof BillIntakeResponse
      */
     sourceColumns?: Array<string>;
+    /**
+     * The uploaded or emailed document, for its page previews (GET /v1/accounting/bill-source-files/{fileId}/preview); null for a spreadsheet import and an EDI draft
+     * @type {string}
+     * @memberof BillIntakeResponse
+     */
+    sourceFileId?: string;
     /**
      * The import draft this one was split from, when a sheet held several invoices
      * @type {string}
@@ -306,12 +318,14 @@ export function BillIntakeResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'lastExtractionFailed': json['lastExtractionFailed'] == null ? undefined : json['lastExtractionFailed'],
         'lines': json['lines'] == null ? undefined : json['lines'],
         'mappingRequired': json['mappingRequired'] == null ? undefined : json['mappingRequired'],
+        'pageCount': json['pageCount'] == null ? undefined : json['pageCount'],
         'possibleDuplicates': json['possibleDuplicates'] == null ? undefined : ((json['possibleDuplicates'] as Array<any>).map(BillIntakeDuplicateViewFromJSON)),
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
         'rowErrors': json['rowErrors'] == null ? undefined : json['rowErrors'],
         'rowFrom': json['rowFrom'] == null ? undefined : json['rowFrom'],
         'rowTo': json['rowTo'] == null ? undefined : json['rowTo'],
         'sourceColumns': json['sourceColumns'] == null ? undefined : json['sourceColumns'],
+        'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
         'splitOf': json['splitOf'] == null ? undefined : json['splitOf'],
         'status': json['status'] == null ? undefined : json['status'],
         'taxByType': json['taxByType'] == null ? undefined : ((json['taxByType'] as Array<any>).map(BillIntakeTaxViewFromJSON)),
@@ -345,12 +359,14 @@ export function BillIntakeResponseToJSON(value?: BillIntakeResponse | null): any
         'lastExtractionFailed': value['lastExtractionFailed'],
         'lines': value['lines'],
         'mappingRequired': value['mappingRequired'],
+        'pageCount': value['pageCount'],
         'possibleDuplicates': value['possibleDuplicates'] == null ? undefined : ((value['possibleDuplicates'] as Array<any>).map(BillIntakeDuplicateViewToJSON)),
         'rejectionReason': value['rejectionReason'],
         'rowErrors': value['rowErrors'],
         'rowFrom': value['rowFrom'],
         'rowTo': value['rowTo'],
         'sourceColumns': value['sourceColumns'],
+        'sourceFileId': value['sourceFileId'],
         'splitOf': value['splitOf'],
         'status': value['status'],
         'taxByType': value['taxByType'] == null ? undefined : ((value['taxByType'] as Array<any>).map(BillIntakeTaxViewToJSON)),

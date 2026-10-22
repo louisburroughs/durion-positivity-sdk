@@ -50,11 +50,23 @@ export interface BillIntakeSummary {
      */
     intakeReference?: string;
     /**
+     * Pages (or frames) of the document once it is inspected; null before then and when there is no document
+     * @type {number}
+     * @memberof BillIntakeSummary
+     */
+    pageCount?: number;
+    /**
      * 
      * @type {string}
      * @memberof BillIntakeSummary
      */
     rejectionReason?: string;
+    /**
+     * The uploaded or emailed document, for its page previews (GET /v1/accounting/bill-source-files/{fileId}/preview); null for a spreadsheet import and an EDI draft
+     * @type {string}
+     * @memberof BillIntakeSummary
+     */
+    sourceFileId?: string;
     /**
      * 
      * @type {string}
@@ -143,7 +155,9 @@ export function BillIntakeSummaryFromJSONTyped(json: any, ignoreDiscriminator: b
         'currency': json['currency'] == null ? undefined : json['currency'],
         'intakeId': json['intakeId'] == null ? undefined : json['intakeId'],
         'intakeReference': json['intakeReference'] == null ? undefined : json['intakeReference'],
+        'pageCount': json['pageCount'] == null ? undefined : json['pageCount'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
+        'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
         'status': json['status'] == null ? undefined : json['status'],
         'totalAmount': json['totalAmount'] == null ? undefined : json['totalAmount'],
         'uploadedAt': json['uploadedAt'] == null ? undefined : (new Date(json['uploadedAt'])),
@@ -163,7 +177,9 @@ export function BillIntakeSummaryToJSON(value?: BillIntakeSummary | null): any {
         'currency': value['currency'],
         'intakeId': value['intakeId'],
         'intakeReference': value['intakeReference'],
+        'pageCount': value['pageCount'],
         'rejectionReason': value['rejectionReason'],
+        'sourceFileId': value['sourceFileId'],
         'status': value['status'],
         'totalAmount': value['totalAmount'],
         'uploadedAt': value['uploadedAt'] == null ? undefined : ((value['uploadedAt']).toISOString()),
