@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface OperationalContextResponse {
     /**
-     * Assigned mechanic identifiers
-     * @type {Array<string>}
-     * @memberof OperationalContextResponse
-     */
-    assignedMechanics?: Array<string>;
-    /**
      * Assigned resource identifiers
      * @type {Array<string>}
      * @memberof OperationalContextResponse
@@ -49,6 +43,12 @@ export interface OperationalContextResponse {
      * @memberof OperationalContextResponse
      */
     locked: boolean;
+    /**
+     * Planned mechanic person ids (scheduling intention, unvalidated). Read-only: never the technician of record, and not written by the override. Read the technician from the technician endpoints.
+     * @type {Array<string>}
+     * @memberof OperationalContextResponse
+     */
+    plannedMechanicIds?: Array<string>;
     /**
      * Identifier of the workorder's primary assigned resource; read together with resourceType, which says whether it is a bay or a mobile unit
      * @type {string}
@@ -110,11 +110,11 @@ export function OperationalContextResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'assignedMechanics': json['assignedMechanics'] == null ? undefined : json['assignedMechanics'],
         'assignedResources': json['assignedResources'] == null ? undefined : json['assignedResources'],
         'constraints': json['constraints'] == null ? undefined : json['constraints'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'locked': json['locked'],
+        'plannedMechanicIds': json['plannedMechanicIds'] == null ? undefined : json['plannedMechanicIds'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
         'scheduledEndAt': json['scheduledEndAt'] == null ? undefined : (new Date(json['scheduledEndAt'])),
@@ -129,11 +129,11 @@ export function OperationalContextResponseToJSON(value?: OperationalContextRespo
     }
     return {
         
-        'assignedMechanics': value['assignedMechanics'],
         'assignedResources': value['assignedResources'],
         'constraints': value['constraints'],
         'locationId': value['locationId'],
         'locked': value['locked'],
+        'plannedMechanicIds': value['plannedMechanicIds'],
         'resourceId': value['resourceId'],
         'resourceType': value['resourceType'],
         'scheduledEndAt': value['scheduledEndAt'] == null ? undefined : ((value['scheduledEndAt']).toISOString()),

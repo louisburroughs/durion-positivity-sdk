@@ -14,17 +14,11 @@
 
 import { mapValues } from '../runtime';
 /**
- * Manager override payload for workorder operational context
+ * Manager override payload for workorder operational context. Re-slots the service position (and location); it never changes the technician of record or the planned mechanics - use the technician endpoints for that. An unknown property, including the removed assignedMechanics, is a 400.
  * @export
  * @interface OperationalContextOverrideRequest
  */
 export interface OperationalContextOverrideRequest {
-    /**
-     * Assigned mechanic identifiers
-     * @type {Array<string>}
-     * @memberof OperationalContextOverrideRequest
-     */
-    assignedMechanics?: Array<string>;
     /**
      * Assigned resource identifiers
      * @type {Array<string>}
@@ -80,7 +74,6 @@ export function OperationalContextOverrideRequestFromJSONTyped(json: any, ignore
     }
     return {
         
-        'assignedMechanics': json['assignedMechanics'] == null ? undefined : json['assignedMechanics'],
         'assignedResources': json['assignedResources'] == null ? undefined : json['assignedResources'],
         'constraints': json['constraints'] == null ? undefined : json['constraints'],
         'locationId': json['locationId'],
@@ -94,7 +87,6 @@ export function OperationalContextOverrideRequestToJSON(value?: OperationalConte
     }
     return {
         
-        'assignedMechanics': value['assignedMechanics'],
         'assignedResources': value['assignedResources'],
         'constraints': value['constraints'],
         'locationId': value['locationId'],
