@@ -140,6 +140,12 @@ export interface AppointmentResponse {
      * @memberof AppointmentResponse
      */
     vehicleSnapshot?: object;
+    /**
+     * The workorder this appointment is linked to (#2118), read from the most current work_order_appointment_mapping row (the same rule as actualStartAt). Read-only. Null when no workorder is linked or none of its replicas has landed yet; while a reopened workorder's newest mapping is still replicating, the superseded workorder's id is returned, as the actuals do (#2089); workexec's assign guards refuse a closed workorder. Use it to dispatch: read the plan from GET /v1/appointments/{appointmentId}/assignments, then call workexec's assignTechnician on this workorder. Cancelling or rescheduling the appointment never changes that workorder's technician of record (DECISION-SHOPMGMT-026).
+     * @type {string}
+     * @memberof AppointmentResponse
+     */
+    workorderId?: string;
 }
 
 /**
@@ -187,6 +193,7 @@ export function AppointmentResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'startAt': (new Date(json['startAt'])),
         'status': json['status'],
         'vehicleSnapshot': json['vehicleSnapshot'] == null ? undefined : json['vehicleSnapshot'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -215,6 +222,7 @@ export function AppointmentResponseToJSON(value?: AppointmentResponse | null): a
         'startAt': ((value['startAt']).toISOString()),
         'status': value['status'],
         'vehicleSnapshot': value['vehicleSnapshot'],
+        'workorderId': value['workorderId'],
     };
 }
 
