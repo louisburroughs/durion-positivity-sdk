@@ -37,12 +37,6 @@ export interface ShopResponse {
      * @memberof ShopResponse
      */
     name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ShopResponse
-     */
-    timezone?: string;
 }
 
 /**
@@ -65,7 +59,6 @@ export function ShopResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'address': json['address'] == null ? undefined : json['address'],
         'id': json['id'] == null ? undefined : json['id'],
         'name': json['name'] == null ? undefined : json['name'],
-        'timezone': json['timezone'] == null ? undefined : json['timezone'],
     };
 }
 
@@ -78,7 +71,6 @@ export function ShopResponseToJSON(value?: ShopResponse | null): any {
         'address': value['address'],
         'id': value['id'],
         'name': value['name'],
-        'timezone': value['timezone'],
     };
 }
 
