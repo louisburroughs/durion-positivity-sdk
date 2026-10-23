@@ -31,12 +31,6 @@ export interface ShopUpsertRequest {
      * @memberof ShopUpsertRequest
      */
     name: string;
-    /**
-     * IANA timezone the shop's day window is computed in
-     * @type {string}
-     * @memberof ShopUpsertRequest
-     */
-    timezone?: string;
 }
 
 /**
@@ -59,7 +53,6 @@ export function ShopUpsertRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'address': json['address'] == null ? undefined : json['address'],
         'name': json['name'],
-        'timezone': json['timezone'] == null ? undefined : json['timezone'],
     };
 }
 
@@ -71,7 +64,6 @@ export function ShopUpsertRequestToJSON(value?: ShopUpsertRequest | null): any {
         
         'address': value['address'],
         'name': value['name'],
-        'timezone': value['timezone'],
     };
 }
 
