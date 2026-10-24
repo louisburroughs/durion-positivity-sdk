@@ -56,6 +56,18 @@ export interface PickTaskResponse {
      */
     quantityRequired: number;
     /**
+     * Cumulative quantity returned from this task
+     * @type {number}
+     * @memberof PickTaskResponse
+     */
+    quantityReturned: number;
+    /**
+     * Picked quantity not yet returned or consumed
+     * @type {number}
+     * @memberof PickTaskResponse
+     */
+    quantityStaged: number;
+    /**
      * Identifier of the SKU to be picked
      * @type {string}
      * @memberof PickTaskResponse
@@ -108,6 +120,8 @@ export function instanceOfPickTaskResponse(value: object): boolean {
     if (!('pickTaskId' in value)) return false;
     if (!('quantityPicked' in value)) return false;
     if (!('quantityRequired' in value)) return false;
+    if (!('quantityReturned' in value)) return false;
+    if (!('quantityStaged' in value)) return false;
     if (!('skuId' in value)) return false;
     if (!('sortOrder' in value)) return false;
     if (!('status' in value)) return false;
@@ -130,6 +144,8 @@ export function PickTaskResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
         'pickedLotId': json['pickedLotId'] == null ? undefined : json['pickedLotId'],
         'quantityPicked': json['quantityPicked'],
         'quantityRequired': json['quantityRequired'],
+        'quantityReturned': json['quantityReturned'],
+        'quantityStaged': json['quantityStaged'],
         'skuId': json['skuId'],
         'sortOrder': json['sortOrder'],
         'status': json['status'],
@@ -150,6 +166,8 @@ export function PickTaskResponseToJSON(value?: PickTaskResponse | null): any {
         'pickedLotId': value['pickedLotId'],
         'quantityPicked': value['quantityPicked'],
         'quantityRequired': value['quantityRequired'],
+        'quantityReturned': value['quantityReturned'],
+        'quantityStaged': value['quantityStaged'],
         'skuId': value['skuId'],
         'sortOrder': value['sortOrder'],
         'status': value['status'],

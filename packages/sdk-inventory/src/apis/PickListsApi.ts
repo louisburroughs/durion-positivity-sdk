@@ -20,6 +20,8 @@ import type {
   CreatePickListRequest,
   PickListResponse,
   PickTaskResponse,
+  ReturnStagedRequest,
+  StagedPickTaskResponse,
   UpdatePickListStatusRequest,
 } from '../models/index';
 import {
@@ -33,6 +35,10 @@ import {
     PickListResponseToJSON,
     PickTaskResponseFromJSON,
     PickTaskResponseToJSON,
+    ReturnStagedRequestFromJSON,
+    ReturnStagedRequestToJSON,
+    StagedPickTaskResponseFromJSON,
+    StagedPickTaskResponseToJSON,
     UpdatePickListStatusRequestFromJSON,
     UpdatePickListStatusRequestToJSON,
 } from '../models/index';
@@ -63,8 +69,21 @@ export interface ListPickTasksForPickListRequest {
     pickListId: string;
 }
 
+export interface ListStagedPickTasksRequest {
+    locationId: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
+}
+
 export interface ReleasePickListRequest {
     pickListId: string;
+}
+
+export interface ReturnStagedPickTaskRequest {
+    pickListId: string;
+    taskId: string;
+    returnStagedRequest: ReturnStagedRequest;
 }
 
 export interface UpdatePickListStatusOperationRequest {
@@ -359,6 +378,69 @@ export class PickListsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns a paginated list of PICKED pick tasks with positive staged quantity for the required site. Use this tool when site staff need to identify picked parts still awaiting return; do not use getPickList, which shows tasks for one known list only. Preconditions: locationId must identify a site and is checked against the caller\'s location scope. Required inputs: locationId (UUID); page and size are optional pagination controls; there is no request body. No events are emitted and the query changes no inventory state. Returns 200 with an empty page when the site has no staged tasks, or 403 when the caller is outside the site\'s scope. 
+     * List staged picked tasks at a site
+     */
+    async listStagedPickTasksRaw(requestParameters: ListStagedPickTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling listStagedPickTasks().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/pick-lists/staged-tasks/by-site`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Returns a paginated list of PICKED pick tasks with positive staged quantity for the required site. Use this tool when site staff need to identify picked parts still awaiting return; do not use getPickList, which shows tasks for one known list only. Preconditions: locationId must identify a site and is checked against the caller\'s location scope. Required inputs: locationId (UUID); page and size are optional pagination controls; there is no request body. No events are emitted and the query changes no inventory state. Returns 200 with an empty page when the site has no staged tasks, or 403 when the caller is outside the site\'s scope. 
+     * List staged picked tasks at a site
+     */
+    async listStagedPickTasks(requestParameters: ListStagedPickTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.listStagedPickTasksRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Releases a pick list by setting its status to READY_TO_PICK so its pick tasks can be executed. Use this tool when planning is done and picking should start, then confirm each task with confirmPickTask; do not use updatePickListStatus for release — it applies any status without this operation\'s intent. Preconditions: the pick list must exist; no prior-status guard is enforced, so releasing an already released or completed list simply re-applies READY_TO_PICK. Required inputs: pickListId (UUID) path parameter; there is no request body. Emits an INVENTORY_PICK_LIST_RELEASE event; no ledger entries are written. Returns 404 when no pick list exists for the supplied id. 
      * Release pick list
      */
@@ -398,6 +480,66 @@ export class PickListsApi extends runtime.BaseAPI {
      */
     async releasePickList(requestParameters: ReleasePickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PickListResponse> {
         const response = await this.releasePickListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns staged, unconsumed quantity from one PICKED task, releases its matching HARD allocation, and leaves the task PICKED. Use this tool when inventory staff return staged goods to stock; do not use submitToStock, which returns consumed goods, or consumePickedItems. Preconditions: the task must exist in the path\'s pick list and be PICKED; requested quantity cannot exceed its staged balance. Required inputs: pickListId and taskId (UUIDs); quantity (positive whole number) and reasonCode; destinationStorageLocationId is optional; notes are required for OTHER and limited to 500 characters; expectedQuantityStaged is optional. Emits INVENTORY_PICK_TASK_RETURN_STAGED and publishes the updated task snapshot; allocation release and any destination movement are atomic. Returns 200 on success, 400 for invalid input, 403 when location scope denies access, 404 for an unknown task, 409 for a stale expectedQuantityStaged, and 422 for invalid task state, excess quantity, or destination. 
+     * Return staged picked quantity to stock
+     */
+    async returnStagedPickTaskRaw(requestParameters: ReturnStagedPickTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StagedPickTaskResponse>> {
+        if (requestParameters['pickListId'] == null) {
+            throw new runtime.RequiredError(
+                'pickListId',
+                'Required parameter "pickListId" was null or undefined when calling returnStagedPickTask().'
+            );
+        }
+
+        if (requestParameters['taskId'] == null) {
+            throw new runtime.RequiredError(
+                'taskId',
+                'Required parameter "taskId" was null or undefined when calling returnStagedPickTask().'
+            );
+        }
+
+        if (requestParameters['returnStagedRequest'] == null) {
+            throw new runtime.RequiredError(
+                'returnStagedRequest',
+                'Required parameter "returnStagedRequest" was null or undefined when calling returnStagedPickTask().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:return_staged"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/pick-lists/{pickListId}/tasks/{taskId}/return-staged`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))).replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReturnStagedRequestToJSON(requestParameters['returnStagedRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => StagedPickTaskResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns staged, unconsumed quantity from one PICKED task, releases its matching HARD allocation, and leaves the task PICKED. Use this tool when inventory staff return staged goods to stock; do not use submitToStock, which returns consumed goods, or consumePickedItems. Preconditions: the task must exist in the path\'s pick list and be PICKED; requested quantity cannot exceed its staged balance. Required inputs: pickListId and taskId (UUIDs); quantity (positive whole number) and reasonCode; destinationStorageLocationId is optional; notes are required for OTHER and limited to 500 characters; expectedQuantityStaged is optional. Emits INVENTORY_PICK_TASK_RETURN_STAGED and publishes the updated task snapshot; allocation release and any destination movement are atomic. Returns 200 on success, 400 for invalid input, 403 when location scope denies access, 404 for an unknown task, 409 for a stale expectedQuantityStaged, and 422 for invalid task state, excess quantity, or destination. 
+     * Return staged picked quantity to stock
+     */
+    async returnStagedPickTask(requestParameters: ReturnStagedPickTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StagedPickTaskResponse> {
+        const response = await this.returnStagedPickTaskRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
