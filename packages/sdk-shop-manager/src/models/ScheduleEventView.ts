@@ -51,7 +51,7 @@ export interface ScheduleEventView {
      */
     eventId: string;
     /**
-     * Event type (e.g. APPOINTMENT, SHIFT, PTO)
+     * Event type (e.g. APPOINTMENT, WORK_ORDER, SHIFT, PTO)
      * @type {string}
      * @memberof ScheduleEventView
      */
@@ -81,11 +81,23 @@ export interface ScheduleEventView {
      */
     subType?: string;
     /**
+     * Assigned technician person identifiers for WORK_ORDER events; empty when unknown
+     * @type {Array<string>}
+     * @memberof ScheduleEventView
+     */
+    technicianIds?: Array<string>;
+    /**
      * Event display title
      * @type {string}
      * @memberof ScheduleEventView
      */
     title?: string;
+    /**
+     * Workorder identifier for WORK_ORDER events; null for other event types
+     * @type {string}
+     * @memberof ScheduleEventView
+     */
+    workorderId?: string;
 }
 
 /**
@@ -120,7 +132,9 @@ export function ScheduleEventViewFromJSONTyped(json: any, ignoreDiscriminator: b
         'severity': json['severity'] == null ? undefined : json['severity'],
         'startTime': (new Date(json['startTime'])),
         'subType': json['subType'] == null ? undefined : json['subType'],
+        'technicianIds': json['technicianIds'] == null ? undefined : json['technicianIds'],
         'title': json['title'] == null ? undefined : json['title'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -139,7 +153,9 @@ export function ScheduleEventViewToJSON(value?: ScheduleEventView | null): any {
         'severity': value['severity'],
         'startTime': ((value['startTime']).toISOString()),
         'subType': value['subType'],
+        'technicianIds': value['technicianIds'],
         'title': value['title'],
+        'workorderId': value['workorderId'],
     };
 }
 
