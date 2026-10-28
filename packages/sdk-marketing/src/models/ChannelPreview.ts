@@ -33,13 +33,13 @@ export interface ChannelPreview {
      */
     channel: ChannelPreviewChannelEnum;
     /**
-     * Of those, how many may actually be sent to; null while PENDING
+     * Eligible after consent and suppression; null while PENDING
      * @type {number}
      * @memberof ChannelPreview
      */
-    eligible: number;
+    eligible?: number;
     /**
-     * A bounded sample of the snapshot with the per-party decision behind the eligible count; identifiers and reason codes only, never contact details
+     * Bounded sample of eligibility decisions
      * @type {Array<SampleRecipient>}
      * @memberof ChannelPreview
      */
@@ -49,9 +49,9 @@ export interface ChannelPreview {
      * @type {number}
      * @memberof ChannelPreview
      */
-    targeted: number;
+    targeted?: number;
     /**
-     * Whether a template is attached for this channel
+     * Whether a template is attached
      * @type {boolean}
      * @memberof ChannelPreview
      */
@@ -73,9 +73,7 @@ export enum ChannelPreviewChannelEnum {
  */
 export function instanceOfChannelPreview(value: object): boolean {
     if (!('channel' in value)) return false;
-    if (!('eligible' in value)) return false;
     if (!('sample' in value)) return false;
-    if (!('targeted' in value)) return false;
     if (!('templateAttached' in value)) return false;
     return true;
 }
@@ -91,9 +89,9 @@ export function ChannelPreviewFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'channel': json['channel'],
-        'eligible': json['eligible'],
+        'eligible': json['eligible'] == null ? undefined : json['eligible'],
         'sample': ((json['sample'] as Array<any>).map(SampleRecipientFromJSON)),
-        'targeted': json['targeted'],
+        'targeted': json['targeted'] == null ? undefined : json['targeted'],
         'templateAttached': json['templateAttached'],
     };
 }

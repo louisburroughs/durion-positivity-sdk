@@ -27,7 +27,7 @@ import {
 } from './ChannelFunnel';
 
 /**
- * Campaign reach funnel and attribution
+ * Campaign reach funnel, engagement, and attribution
  * @export
  * @interface CampaignStatsResponse
  */
@@ -43,7 +43,7 @@ export interface CampaignStatsResponse {
      * @type {string}
      * @memberof CampaignStatsResponse
      */
-    audienceType: CampaignStatsResponseAudienceTypeEnum;
+    audienceType: string;
     /**
      * Bookings credited to this campaign
      * @type {number}
@@ -75,17 +75,17 @@ export interface CampaignStatsResponse {
      */
     channels: Array<ChannelFunnel>;
     /**
-     * Opened divided by delivered; null when nothing was delivered
-     * @type {number}
-     * @memberof CampaignStatsResponse
-     */
-    openRate?: number;
-    /**
      * Campaign code
      * @type {string}
      * @memberof CampaignStatsResponse
      */
     code: string;
+    /**
+     * Opened divided by delivered; null when no email was delivered
+     * @type {number}
+     * @memberof CampaignStatsResponse
+     */
+    openRate?: number;
     /**
      * Redemptions credited to this campaign
      * @type {number}
@@ -93,16 +93,6 @@ export interface CampaignStatsResponse {
      */
     redeemed: number;
 }
-
-/**
-* @export
-* @enum {string}
-*/
-export enum CampaignStatsResponseAudienceTypeEnum {
-    Commercial = 'COMMERCIAL',
-    Individual = 'INDIVIDUAL'
-}
-
 
 /**
  * Check if a given object implements the CampaignStatsResponse interface.
@@ -136,8 +126,8 @@ export function CampaignStatsResponseFromJSONTyped(json: any, ignoreDiscriminato
         'campaignId': json['campaignId'],
         'campaignProgramId': json['campaignProgramId'] == null ? undefined : json['campaignProgramId'],
         'channels': ((json['channels'] as Array<any>).map(ChannelFunnelFromJSON)),
-        'openRate': json['openRate'] == null ? undefined : json['openRate'],
         'code': json['code'],
+        'openRate': json['openRate'] == null ? undefined : json['openRate'],
         'redeemed': json['redeemed'],
     };
 }
@@ -155,8 +145,8 @@ export function CampaignStatsResponseToJSON(value?: CampaignStatsResponse | null
         'campaignId': value['campaignId'],
         'campaignProgramId': value['campaignProgramId'],
         'channels': ((value['channels'] as Array<any>).map(ChannelFunnelToJSON)),
-        'openRate': value['openRate'],
         'code': value['code'],
+        'openRate': value['openRate'],
         'redeemed': value['redeemed'],
     };
 }

@@ -14,31 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * Preview a segment audience before a campaign exists
+ * Request to preview a segment audience before a campaign exists
  * @export
  * @interface AudiencePreviewRequest
  */
 export interface AudiencePreviewRequest {
     /**
-     * 
+     * Targeted party kind
      * @type {string}
      * @memberof AudiencePreviewRequest
      */
     audienceType: AudiencePreviewRequestAudienceTypeEnum;
     /**
-     * 
+     * Channels to evaluate
      * @type {Set<string>}
      * @memberof AudiencePreviewRequest
      */
     channels: Set<AudiencePreviewRequestChannelsEnum>;
     /**
-     * 
+     * Optional email template used only to report attachment in the preview
+     * @type {string}
+     * @memberof AudiencePreviewRequest
+     */
+    emailTemplateId?: string;
+    /**
+     * Segment id to preview; either this or starterKey is required
      * @type {string}
      * @memberof AudiencePreviewRequest
      */
     segmentId?: string;
     /**
-     * 
+     * Optional SMS template used only to report attachment in the preview
+     * @type {string}
+     * @memberof AudiencePreviewRequest
+     */
+    smsTemplateId?: string;
+    /**
+     * Optional catalog starter key. When supplied, it resolves to the current segment replica
      * @type {string}
      * @memberof AudiencePreviewRequest
      */
@@ -85,7 +97,9 @@ export function AudiencePreviewRequestFromJSONTyped(json: any, ignoreDiscriminat
         
         'audienceType': json['audienceType'],
         'channels': json['channels'],
+        'emailTemplateId': json['emailTemplateId'] == null ? undefined : json['emailTemplateId'],
         'segmentId': json['segmentId'] == null ? undefined : json['segmentId'],
+        'smsTemplateId': json['smsTemplateId'] == null ? undefined : json['smsTemplateId'],
         'starterKey': json['starterKey'] == null ? undefined : json['starterKey'],
     };
 }
@@ -98,7 +112,9 @@ export function AudiencePreviewRequestToJSON(value?: AudiencePreviewRequest | nu
         
         'audienceType': value['audienceType'],
         'channels': Array.from(value['channels'] as Set<any>),
+        'emailTemplateId': value['emailTemplateId'],
         'segmentId': value['segmentId'],
+        'smsTemplateId': value['smsTemplateId'],
         'starterKey': value['starterKey'],
     };
 }

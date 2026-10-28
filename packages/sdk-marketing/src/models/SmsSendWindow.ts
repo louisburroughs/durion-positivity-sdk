@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Advisory local-time window for SMS sends
  * @export
  * @interface SmsSendWindow
  */
 export interface SmsSendWindow {
     /**
-     * 
+     * End of the advisory window
      * @type {string}
      * @memberof SmsSendWindow
      */
     end: string;
     /**
-     * 
+     * Whether the window is enforced; false in v1
      * @type {boolean}
      * @memberof SmsSendWindow
      */
     enforced: boolean;
     /**
-     * 
+     * Beginning of the advisory window
      * @type {string}
      * @memberof SmsSendWindow
      */

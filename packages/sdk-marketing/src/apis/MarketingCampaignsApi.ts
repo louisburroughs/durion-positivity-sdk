@@ -57,7 +57,7 @@ export interface GetCampaignByIdRequest {
 }
 
 export interface GetCampaignOverviewRequest {
-    audienceType?: GetCampaignOverviewAudienceTypeEnum;
+    audienceType?: string;
     recent?: number;
 }
 
@@ -278,7 +278,7 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated.
+     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated. 
      * Get Campaign Overview
      */
     async getCampaignOverviewRaw(requestParameters: GetCampaignOverviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CampaignOverviewResponse>> {
@@ -313,7 +313,7 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated.
+     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated. 
      * Get Campaign Overview
      */
     async getCampaignOverview(requestParameters: GetCampaignOverviewRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignOverviewResponse> {
@@ -460,7 +460,7 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves a segment\'s audience size and reach without requiring a saved campaign, so the composer can show live counts before anything is created. Use this tool while drafting a campaign, from either a saved segment id or a starter key; for a campaign that already exists, use the campaign-bound preview endpoint instead. Preconditions: a segment id must name an active replica of a CRM segment in this tenant, and a starter key must be seeded in this tenant\'s starter catalog; until that starter\'s segment has replicated the preview is PENDING. Required inputs: audienceType (COMMERCIAL, INDIVIDUAL or BOTH), channels (one or more of EMAIL and SMS), and exactly one of segmentId or starterKey; emailTemplateId and smsTemplateId only mark a channel as ready to send. Emits a MARKETING_CAMPAIGNLESS_AUDIENCE_PREVIEW event, and asks the CRM for a fresher resolution on every call; no campaign or message is created here. Returns 400 when neither segmentId nor starterKey is supplied, 404 when the segment id is unknown or the starter key is absent from the catalog, and 422 when the segment is inactive or belongs to another audience type. Counts are PENDING with null figures until the asynchronous CRM resolution replies, so null counts mean \"ask again\", not \"nobody to contact\".
+     * Resolves a segment\'s audience size and reach without requiring a saved campaign, so the composer can show live counts before anything is created. Use this tool while drafting a campaign, from either a saved segment id or a starter key; for a campaign that already exists, use the campaign-bound preview endpoint instead. Preconditions: a segment id must name an active replica of a CRM segment in this tenant, and a starter key must be seeded in this tenant\'s starter catalog; until that starter\'s segment has replicated the preview is PENDING. Required inputs: audienceType (COMMERCIAL, INDIVIDUAL or BOTH), channels (one or more of EMAIL and SMS), and exactly one of segmentId or starterKey; emailTemplateId and smsTemplateId only mark a channel as ready to send. Emits a MARKETING_CAMPAIGNLESS_AUDIENCE_PREVIEW event, and asks the CRM for a fresher resolution on every call; no campaign or message is created here. Returns 400 when neither segmentId nor starterKey is supplied, 404 when the segment id is unknown or the starter key is absent from the catalog, and 422 when the segment is inactive or belongs to another audience type. Counts are PENDING with null figures until the asynchronous CRM resolution replies, so null counts mean \"ask again\", not \"nobody to contact\". 
      * Preview Audience Before Campaign
      */
     async previewAudienceBeforeCampaignRaw(requestParameters: PreviewAudienceBeforeCampaignRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AudiencePreviewResponse>> {
@@ -497,7 +497,7 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves a segment\'s audience size and reach without requiring a saved campaign, so the composer can show live counts before anything is created. Use this tool while drafting a campaign, from either a saved segment id or a starter key; for a campaign that already exists, use the campaign-bound preview endpoint instead. Preconditions: a segment id must name an active replica of a CRM segment in this tenant, and a starter key must be seeded in this tenant\'s starter catalog; until that starter\'s segment has replicated the preview is PENDING. Required inputs: audienceType (COMMERCIAL, INDIVIDUAL or BOTH), channels (one or more of EMAIL and SMS), and exactly one of segmentId or starterKey; emailTemplateId and smsTemplateId only mark a channel as ready to send. Emits a MARKETING_CAMPAIGNLESS_AUDIENCE_PREVIEW event, and asks the CRM for a fresher resolution on every call; no campaign or message is created here. Returns 400 when neither segmentId nor starterKey is supplied, 404 when the segment id is unknown or the starter key is absent from the catalog, and 422 when the segment is inactive or belongs to another audience type. Counts are PENDING with null figures until the asynchronous CRM resolution replies, so null counts mean \"ask again\", not \"nobody to contact\".
+     * Resolves a segment\'s audience size and reach without requiring a saved campaign, so the composer can show live counts before anything is created. Use this tool while drafting a campaign, from either a saved segment id or a starter key; for a campaign that already exists, use the campaign-bound preview endpoint instead. Preconditions: a segment id must name an active replica of a CRM segment in this tenant, and a starter key must be seeded in this tenant\'s starter catalog; until that starter\'s segment has replicated the preview is PENDING. Required inputs: audienceType (COMMERCIAL, INDIVIDUAL or BOTH), channels (one or more of EMAIL and SMS), and exactly one of segmentId or starterKey; emailTemplateId and smsTemplateId only mark a channel as ready to send. Emits a MARKETING_CAMPAIGNLESS_AUDIENCE_PREVIEW event, and asks the CRM for a fresher resolution on every call; no campaign or message is created here. Returns 400 when neither segmentId nor starterKey is supplied, 404 when the segment id is unknown or the starter key is absent from the catalog, and 422 when the segment is inactive or belongs to another audience type. Counts are PENDING with null figures until the asynchronous CRM resolution replies, so null counts mean \"ask again\", not \"nobody to contact\". 
      * Preview Audience Before Campaign
      */
     async previewAudienceBeforeCampaign(requestParameters: PreviewAudienceBeforeCampaignRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AudiencePreviewResponse> {
@@ -689,14 +689,6 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
 
 }
 
-/**
-  * @export
-  * @enum {string}
-  */
-export enum GetCampaignOverviewAudienceTypeEnum {
-    Commercial = 'COMMERCIAL',
-    Individual = 'INDIVIDUAL'
-}
 /**
   * @export
   * @enum {string}
