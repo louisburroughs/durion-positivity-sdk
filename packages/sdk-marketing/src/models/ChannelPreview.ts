@@ -37,9 +37,9 @@ export interface ChannelPreview {
      * @type {number}
      * @memberof ChannelPreview
      */
-    eligible?: number;
+    eligible: number | null;
     /**
-     * Bounded sample of eligibility decisions
+     * A bounded sample of the snapshot with the per-party decision behind the eligible count; identifiers and reason codes only, never contact details
      * @type {Array<SampleRecipient>}
      * @memberof ChannelPreview
      */
@@ -49,7 +49,7 @@ export interface ChannelPreview {
      * @type {number}
      * @memberof ChannelPreview
      */
-    targeted?: number;
+    targeted: number | null;
     /**
      * Whether a template is attached
      * @type {boolean}
@@ -73,7 +73,9 @@ export enum ChannelPreviewChannelEnum {
  */
 export function instanceOfChannelPreview(value: object): boolean {
     if (!('channel' in value)) return false;
+    if (!('eligible' in value)) return false;
     if (!('sample' in value)) return false;
+    if (!('targeted' in value)) return false;
     if (!('templateAttached' in value)) return false;
     return true;
 }
@@ -89,9 +91,9 @@ export function ChannelPreviewFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'channel': json['channel'],
-        'eligible': json['eligible'] == null ? undefined : json['eligible'],
+        'eligible': json['eligible'],
         'sample': ((json['sample'] as Array<any>).map(SampleRecipientFromJSON)),
-        'targeted': json['targeted'] == null ? undefined : json['targeted'],
+        'targeted': json['targeted'],
         'templateAttached': json['templateAttached'],
     };
 }

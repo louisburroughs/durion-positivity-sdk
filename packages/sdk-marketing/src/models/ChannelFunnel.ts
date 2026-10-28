@@ -30,7 +30,7 @@ export interface ChannelFunnel {
      * @type {string}
      * @memberof ChannelFunnel
      */
-    channel: string;
+    channel: ChannelFunnelChannelEnum;
     /**
      * Clicked messages; null for SMS
      * @type {number}
@@ -44,7 +44,7 @@ export interface ChannelFunnel {
      */
     complained: number;
     /**
-     * Messages delivered
+     * Messages the provider confirmed delivered
      * @type {number}
      * @memberof ChannelFunnel
      */
@@ -62,13 +62,13 @@ export interface ChannelFunnel {
      */
     opened?: number;
     /**
-     * Messages dispatched
+     * Messages dispatched to the provider
      * @type {number}
      * @memberof ChannelFunnel
      */
     sent: number;
     /**
-     * Recipients blocked at dispatch
+     * Recipients blocked at dispatch by consent, account gate, or suppression
      * @type {number}
      * @memberof ChannelFunnel
      */
@@ -80,6 +80,16 @@ export interface ChannelFunnel {
      */
     targeted: number;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ChannelFunnelChannelEnum {
+    Email = 'EMAIL',
+    Sms = 'SMS'
+}
+
 
 /**
  * Check if a given object implements the ChannelFunnel interface.

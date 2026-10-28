@@ -55,15 +55,15 @@ export interface AudiencePreviewResponse {
      * @type {number}
      * @memberof AudiencePreviewResponse
      */
-    optedOutAllChannels?: number;
+    optedOutAllChannels: number | null;
     /**
      * Deduplicated members eligible on at least one selected channel; null while PENDING
      * @type {number}
      * @memberof AudiencePreviewResponse
      */
-    reachableAny?: number;
+    reachableAny: number | null;
     /**
-     * Resolution time, or null while PENDING
+     * When the CRM resolved this snapshot; null if none has arrived yet. Membership replicates asynchronously, so these counts are as of this moment, not live.
      * @type {Date}
      * @memberof AudiencePreviewResponse
      */
@@ -93,13 +93,13 @@ export interface AudiencePreviewResponse {
      */
     status: AudiencePreviewResponseStatusEnum;
     /**
-     * Whether the snapshot was truncated
+     * Whether the segment resolution hit its candidate ceiling and is partial; when true the real audience is larger than segmentMatched
      * @type {boolean}
      * @memberof AudiencePreviewResponse
      */
     truncated: boolean;
     /**
-     * Warnings
+     * Validation warnings that would block scheduling, e.g. an expired offer
      * @type {Array<string>}
      * @memberof AudiencePreviewResponse
      */
@@ -131,6 +131,8 @@ export enum AudiencePreviewResponseStatusEnum {
 export function instanceOfAudiencePreviewResponse(value: object): boolean {
     if (!('audienceType' in value)) return false;
     if (!('channels' in value)) return false;
+    if (!('optedOutAllChannels' in value)) return false;
+    if (!('reachableAny' in value)) return false;
     if (!('smsSendWindow' in value)) return false;
     if (!('status' in value)) return false;
     if (!('truncated' in value)) return false;
@@ -151,8 +153,8 @@ export function AudiencePreviewResponseFromJSONTyped(json: any, ignoreDiscrimina
         'audienceType': json['audienceType'],
         'campaignId': json['campaignId'] == null ? undefined : json['campaignId'],
         'channels': ((json['channels'] as Array<any>).map(ChannelPreviewFromJSON)),
-        'optedOutAllChannels': json['optedOutAllChannels'] == null ? undefined : json['optedOutAllChannels'],
-        'reachableAny': json['reachableAny'] == null ? undefined : json['reachableAny'],
+        'optedOutAllChannels': json['optedOutAllChannels'],
+        'reachableAny': json['reachableAny'],
         'resolvedAt': json['resolvedAt'] == null ? undefined : (new Date(json['resolvedAt'])),
         'segmentId': json['segmentId'] == null ? undefined : json['segmentId'],
         'segmentMatched': json['segmentMatched'] == null ? undefined : json['segmentMatched'],

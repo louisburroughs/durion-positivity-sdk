@@ -30,13 +30,13 @@ export interface StarterResponse {
      * @type {string}
      * @memberof StarterResponse
      */
-    audienceType?: string;
+    audienceType: StarterResponseAudienceTypeEnum;
     /**
      * 
      * @type {Set<string>}
      * @memberof StarterResponse
      */
-    defaultChannels?: Set<string>;
+    defaultChannels: Set<string>;
     /**
      * 
      * @type {string}
@@ -48,19 +48,19 @@ export interface StarterResponse {
      * @type {string}
      * @memberof StarterResponse
      */
-    icon?: string;
+    icon: string;
     /**
      * 
      * @type {string}
      * @memberof StarterResponse
      */
-    key?: string;
+    key: string;
     /**
      * 
      * @type {string}
      * @memberof StarterResponse
      */
-    segmentId?: string;
+    segmentId: string;
     /**
      * 
      * @type {string}
@@ -70,9 +70,24 @@ export interface StarterResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum StarterResponseAudienceTypeEnum {
+    Commercial = 'COMMERCIAL',
+    Individual = 'INDIVIDUAL'
+}
+
+
+/**
  * Check if a given object implements the StarterResponse interface.
  */
 export function instanceOfStarterResponse(value: object): boolean {
+    if (!('audienceType' in value)) return false;
+    if (!('defaultChannels' in value)) return false;
+    if (!('icon' in value)) return false;
+    if (!('key' in value)) return false;
+    if (!('segmentId' in value)) return false;
     return true;
 }
 
@@ -87,12 +102,12 @@ export function StarterResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'audienceCount': json['audienceCount'] == null ? undefined : json['audienceCount'],
-        'audienceType': json['audienceType'] == null ? undefined : json['audienceType'],
-        'defaultChannels': json['defaultChannels'] == null ? undefined : json['defaultChannels'],
+        'audienceType': json['audienceType'],
+        'defaultChannels': json['defaultChannels'],
         'emailTemplateId': json['emailTemplateId'] == null ? undefined : json['emailTemplateId'],
-        'icon': json['icon'] == null ? undefined : json['icon'],
-        'key': json['key'] == null ? undefined : json['key'],
-        'segmentId': json['segmentId'] == null ? undefined : json['segmentId'],
+        'icon': json['icon'],
+        'key': json['key'],
+        'segmentId': json['segmentId'],
         'smsTemplateId': json['smsTemplateId'] == null ? undefined : json['smsTemplateId'],
     };
 }
@@ -105,7 +120,7 @@ export function StarterResponseToJSON(value?: StarterResponse | null): any {
         
         'audienceCount': value['audienceCount'],
         'audienceType': value['audienceType'],
-        'defaultChannels': value['defaultChannels'] == null ? undefined : Array.from(value['defaultChannels'] as Set<any>),
+        'defaultChannels': Array.from(value['defaultChannels'] as Set<any>),
         'emailTemplateId': value['emailTemplateId'],
         'icon': value['icon'],
         'key': value['key'],

@@ -39,11 +39,11 @@ export interface CampaignStatsResponse {
      */
     attributedDiscount: number;
     /**
-     * Targeted party kind
+     * Targeted party kind; persisted campaigns are never BOTH
      * @type {string}
      * @memberof CampaignStatsResponse
      */
-    audienceType: string;
+    audienceType: CampaignStatsResponseAudienceTypeEnum;
     /**
      * Bookings credited to this campaign
      * @type {number}
@@ -81,7 +81,7 @@ export interface CampaignStatsResponse {
      */
     code: string;
     /**
-     * Opened divided by delivered; null when no email was delivered
+     * Opened divided by delivered; null when nothing was delivered
      * @type {number}
      * @memberof CampaignStatsResponse
      */
@@ -93,6 +93,16 @@ export interface CampaignStatsResponse {
      */
     redeemed: number;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CampaignStatsResponseAudienceTypeEnum {
+    Commercial = 'COMMERCIAL',
+    Individual = 'INDIVIDUAL'
+}
+
 
 /**
  * Check if a given object implements the CampaignStatsResponse interface.
