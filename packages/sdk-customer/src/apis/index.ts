@@ -4,6 +4,7 @@ export * from './CRMAccountsApi';
 export * from './CRMCommunicationPreferencesApi';
 export * from './CRMContactsApi';
 export * from './CRMCustomerLookupApi';
+export * from './CRMDuplicatesApi';
 export * from './CRMFollowUpsApi';
 export * from './CRMInquiriesApi';
 export * from './CRMInsightsApi';
