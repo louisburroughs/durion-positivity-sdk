@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface CancelAppointmentRequest {
     /**
-     * Mandatory cancellation reason code
+     * Mandatory cancellation reason code. WORKORDER_TRANSFERRED is system-only and is never accepted by the cancel endpoint.
      * @type {string}
      * @memberof CancelAppointmentRequest
      */

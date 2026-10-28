@@ -22,6 +22,7 @@ export * from './MechanicAssignmentItem';
 export * from './MechanicRosterEntryResponse';
 export * from './Opening';
 export * from './OpeningSearchResponse';
+export * from './OutboxReplayResponse';
 export * from './OverrideEntry';
 export * from './PageMetadata';
 export * from './PagedModelLocationTechnicianRosterEntryResponse';

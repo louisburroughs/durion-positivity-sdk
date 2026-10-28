@@ -39,6 +39,12 @@ export interface WorkItemsResponse {
      */
     countsByArea: { [key: string]: number; };
     /**
+     * ISO 4217 code of every amount: the functional currency
+     * @type {string}
+     * @memberof WorkItemsResponse
+     */
+    currencyCode: string;
+    /**
      * The items of this page, oldest first
      * @type {Array<WorkItem>}
      * @memberof WorkItemsResponse
@@ -58,6 +64,7 @@ export interface WorkItemsResponse {
 export function instanceOfWorkItemsResponse(value: object): boolean {
     if (!('asOf' in value)) return false;
     if (!('countsByArea' in value)) return false;
+    if (!('currencyCode' in value)) return false;
     if (!('items' in value)) return false;
     return true;
 }
@@ -74,6 +81,7 @@ export function WorkItemsResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'asOf': (new Date(json['asOf'])),
         'countsByArea': json['countsByArea'],
+        'currencyCode': json['currencyCode'],
         'items': ((json['items'] as Array<any>).map(WorkItemFromJSON)),
         'nextCursor': json['nextCursor'] == null ? undefined : json['nextCursor'],
     };
@@ -87,6 +95,7 @@ export function WorkItemsResponseToJSON(value?: WorkItemsResponse | null): any {
         
         'asOf': ((value['asOf']).toISOString()),
         'countsByArea': value['countsByArea'],
+        'currencyCode': value['currencyCode'],
         'items': ((value['items'] as Array<any>).map(WorkItemToJSON)),
         'nextCursor': value['nextCursor'],
     };

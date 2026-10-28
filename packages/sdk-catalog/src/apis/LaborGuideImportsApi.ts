@@ -18,6 +18,8 @@ import type {
   ApiError,
   LaborGuideImportSummaryDto,
   LaborGuideUnmappedOperationDto,
+  ServiceOperationXrefDto,
+  ServiceOperationXrefMapRequestDto,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -26,7 +28,17 @@ import {
     LaborGuideImportSummaryDtoToJSON,
     LaborGuideUnmappedOperationDtoFromJSON,
     LaborGuideUnmappedOperationDtoToJSON,
+    ServiceOperationXrefDtoFromJSON,
+    ServiceOperationXrefDtoToJSON,
+    ServiceOperationXrefMapRequestDtoFromJSON,
+    ServiceOperationXrefMapRequestDtoToJSON,
 } from '../models/index';
+
+export interface MapUnmappedLaborGuideOperationRequest {
+    sourceCode: string;
+    providerOpCode: string;
+    serviceOperationXrefMapRequestDto: ServiceOperationXrefMapRequestDto;
+}
 
 export interface RunLaborGuideImportRequest {
     sourceCode: string;
@@ -74,7 +86,7 @@ export class LaborGuideImportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns vendor operation codes that imports carried but no service_operation_xref row maps, most recently seen first, with occurrence counts so a curator can drain the queue by impact. Use this tool for mapping curation after an import; do not expect entries to clear themselves — adding the xref row is deliberate human work, and the next import then lands the lines. Preconditions: none. Required inputs: none. Emits a CATALOG_LABOR_GUIDE_UNMAPPED_LIST event; no state changes. Returns 200 with an empty array when every code the feeds carry is mapped, and 403 when the caller lacks the view permission. 
+     * Returns vendor operation codes that imports carried but no service_operation_xref row maps, most recently seen first, with occurrence counts so a curator can drain the queue by impact. Use this tool to review unmapped codes after an import and map one with PUT /unmapped/{sourceCode}/{providerOpCode}; do not use it to author a mapping elsewhere. Mappings apply to matching lines in chunks not previously applied by a later import; completed revisions and already-applied chunks are never replayed, so a code seen only there takes effect when a later provider revision carries it. Preconditions: none. Required inputs: none. Emits a CATALOG_LABOR_GUIDE_UNMAPPED_LIST event and returns 200 with an empty array when every code is mapped, or 403 when the caller lacks the view permission. 
      * List Vendor Operation Codes Awaiting Curation
      */
     async listUnmappedLaborGuideOperationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LaborGuideUnmappedOperationDto>>> {
@@ -101,11 +113,71 @@ export class LaborGuideImportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns vendor operation codes that imports carried but no service_operation_xref row maps, most recently seen first, with occurrence counts so a curator can drain the queue by impact. Use this tool for mapping curation after an import; do not expect entries to clear themselves — adding the xref row is deliberate human work, and the next import then lands the lines. Preconditions: none. Required inputs: none. Emits a CATALOG_LABOR_GUIDE_UNMAPPED_LIST event; no state changes. Returns 200 with an empty array when every code the feeds carry is mapped, and 403 when the caller lacks the view permission. 
+     * Returns vendor operation codes that imports carried but no service_operation_xref row maps, most recently seen first, with occurrence counts so a curator can drain the queue by impact. Use this tool to review unmapped codes after an import and map one with PUT /unmapped/{sourceCode}/{providerOpCode}; do not use it to author a mapping elsewhere. Mappings apply to matching lines in chunks not previously applied by a later import; completed revisions and already-applied chunks are never replayed, so a code seen only there takes effect when a later provider revision carries it. Preconditions: none. Required inputs: none. Emits a CATALOG_LABOR_GUIDE_UNMAPPED_LIST event and returns 200 with an empty array when every code is mapped, or 403 when the caller lacks the view permission. 
      * List Vendor Operation Codes Awaiting Curation
      */
     async listUnmappedLaborGuideOperations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LaborGuideUnmappedOperationDto>> {
         const response = await this.listUnmappedLaborGuideOperationsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Maps a vendor operation code to a Durion service and removes its curation-queue entry. Use this tool after reviewing an unmapped code and choosing the service that owns its labor times; do not use it to replay completed imports or already-applied chunks, because a later provider revision is required when the code appeared only in an applied chunk. Preconditions: the service must exist and the code must be queued or already mapped to the same service. Required inputs: sourceCode and providerOpCode path variables plus a body containing serviceId. Emits a CATALOG_LABOR_GUIDE_UNMAPPED_MAP event and returns the mapping; matching lines are resolved only in chunks not previously applied by a later import. Returns 400 for malformed input, 403 without the manage permission, 404 for an unknown service or absent queue entry, and 409 for conflicting mappings. Returns 422 for synthetic time-class codes. 
+     * Map an Unmapped Labor-Guide Operation
+     */
+    async mapUnmappedLaborGuideOperationRaw(requestParameters: MapUnmappedLaborGuideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceOperationXrefDto>> {
+        if (requestParameters['sourceCode'] == null) {
+            throw new runtime.RequiredError(
+                'sourceCode',
+                'Required parameter "sourceCode" was null or undefined when calling mapUnmappedLaborGuideOperation().'
+            );
+        }
+
+        if (requestParameters['providerOpCode'] == null) {
+            throw new runtime.RequiredError(
+                'providerOpCode',
+                'Required parameter "providerOpCode" was null or undefined when calling mapUnmappedLaborGuideOperation().'
+            );
+        }
+
+        if (requestParameters['serviceOperationXrefMapRequestDto'] == null) {
+            throw new runtime.RequiredError(
+                'serviceOperationXrefMapRequestDto',
+                'Required parameter "serviceOperationXrefMapRequestDto" was null or undefined when calling mapUnmappedLaborGuideOperation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:labor_guide:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/catalog/labor-guide-imports/unmapped/{sourceCode}/{providerOpCode}`.replace(`{${"sourceCode"}}`, encodeURIComponent(String(requestParameters['sourceCode']))).replace(`{${"providerOpCode"}}`, encodeURIComponent(String(requestParameters['providerOpCode']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ServiceOperationXrefMapRequestDtoToJSON(requestParameters['serviceOperationXrefMapRequestDto']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceOperationXrefDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Maps a vendor operation code to a Durion service and removes its curation-queue entry. Use this tool after reviewing an unmapped code and choosing the service that owns its labor times; do not use it to replay completed imports or already-applied chunks, because a later provider revision is required when the code appeared only in an applied chunk. Preconditions: the service must exist and the code must be queued or already mapped to the same service. Required inputs: sourceCode and providerOpCode path variables plus a body containing serviceId. Emits a CATALOG_LABOR_GUIDE_UNMAPPED_MAP event and returns the mapping; matching lines are resolved only in chunks not previously applied by a later import. Returns 400 for malformed input, 403 without the manage permission, 404 for an unknown service or absent queue entry, and 409 for conflicting mappings. Returns 422 for synthetic time-class codes. 
+     * Map an Unmapped Labor-Guide Operation
+     */
+    async mapUnmappedLaborGuideOperation(requestParameters: MapUnmappedLaborGuideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceOperationXrefDto> {
+        const response = await this.mapUnmappedLaborGuideOperationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

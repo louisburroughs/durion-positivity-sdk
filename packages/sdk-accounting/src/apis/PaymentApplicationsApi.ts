@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   AutomaticPaymentApplicationsPage,
+  CustomerBalanceFactReplayResult,
   CustomerOpenInvoicesPage,
   PagePaymentApplicationListRow,
   PaymentApplicationRequest,
@@ -31,6 +32,8 @@ import {
     ApiErrorToJSON,
     AutomaticPaymentApplicationsPageFromJSON,
     AutomaticPaymentApplicationsPageToJSON,
+    CustomerBalanceFactReplayResultFromJSON,
+    CustomerBalanceFactReplayResultToJSON,
     CustomerOpenInvoicesPageFromJSON,
     CustomerOpenInvoicesPageToJSON,
     PagePaymentApplicationListRowFromJSON,
@@ -85,6 +88,11 @@ export interface ListUnappliedPaymentsRequest {
     customerId?: string;
     page?: number;
     size?: number;
+}
+
+export interface ReplayCustomerBalanceFactsRequest {
+    afterCustomerId?: string;
+    limit?: number;
 }
 
 export interface ReversePaymentRequest {
@@ -442,6 +450,50 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
      */
     async listUnappliedPayments(requestParameters: ListUnappliedPaymentsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UnappliedPaymentsPage> {
         const response = await this.listUnappliedPaymentsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Re-publishes accounting.customer-balance.changed for one page of customers, each at its current version, so event-fed copies of customer balances (pos-customer\'s) can be seeded or repaired; returns what it queued and a cursor for the next page. Use this tool once after the first deployment of the fact, so customers whose receivables predate it get a balance, and after a consumer outage longer than broker retention; do not use it to fix one customer, whose fact follows their next posting. Preconditions: the caller needs accounting:events:reprocess authority; fact publication must be on, a replay with it off is refused rather than reported as a no-op. Consumers apply an equal version, so a replayed fact repairs a copy and never regresses one. Required inputs: none; afterCustomerId resumes from a previous page\'s nextAfterCustomerId, and limit (default 200) is clamped into 1 to 500 rather than rejected. Emits an ACCOUNTING_CUSTOMER_BALANCE_FACT_REPLAY event; creates the balance row of a customer with an AR-eligible invoice who has none and queues one fact per customer in the page; changes no receivable. Returns 200 with complete=true and a null cursor once the last customer is reached, 403 when the caller lacks the authority, and 422 FACT_PUBLICATION_DISABLED when fact publication is off. 
+     * Re-emit Customer Balance Facts
+     */
+    async replayCustomerBalanceFactsRaw(requestParameters: ReplayCustomerBalanceFactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomerBalanceFactReplayResult>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['afterCustomerId'] != null) {
+            queryParameters['afterCustomerId'] = requestParameters['afterCustomerId'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:events:reprocess"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/customer-balances/facts/replay`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CustomerBalanceFactReplayResultFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-publishes accounting.customer-balance.changed for one page of customers, each at its current version, so event-fed copies of customer balances (pos-customer\'s) can be seeded or repaired; returns what it queued and a cursor for the next page. Use this tool once after the first deployment of the fact, so customers whose receivables predate it get a balance, and after a consumer outage longer than broker retention; do not use it to fix one customer, whose fact follows their next posting. Preconditions: the caller needs accounting:events:reprocess authority; fact publication must be on, a replay with it off is refused rather than reported as a no-op. Consumers apply an equal version, so a replayed fact repairs a copy and never regresses one. Required inputs: none; afterCustomerId resumes from a previous page\'s nextAfterCustomerId, and limit (default 200) is clamped into 1 to 500 rather than rejected. Emits an ACCOUNTING_CUSTOMER_BALANCE_FACT_REPLAY event; creates the balance row of a customer with an AR-eligible invoice who has none and queues one fact per customer in the page; changes no receivable. Returns 200 with complete=true and a null cursor once the last customer is reached, 403 when the caller lacks the authority, and 422 FACT_PUBLICATION_DISABLED when fact publication is off. 
+     * Re-emit Customer Balance Facts
+     */
+    async replayCustomerBalanceFacts(requestParameters: ReplayCustomerBalanceFactsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomerBalanceFactReplayResult> {
+        const response = await this.replayCustomerBalanceFactsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

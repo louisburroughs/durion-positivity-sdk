@@ -132,6 +132,7 @@ export * from './Conflict';
 export * from './ContractField';
 export * from './CreateCreditMemoRequest';
 export * from './CreditMemoResponse';
+export * from './CustomerBalanceFactReplayResult';
 export * from './CustomerCreditApplicationRequest';
 export * from './CustomerCreditInfo';
 export * from './CustomerCreditRefundRequest';

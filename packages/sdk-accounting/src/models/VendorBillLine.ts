@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A received line with what the vendor billed for it
+ * A received or intake document line with its proposed debit class
  * @export
  * @interface VendorBillLine
  */
@@ -38,13 +38,25 @@ export interface VendorBillLine {
      */
     currencyCode: string;
     /**
+     * Proposed per-line debit class; null falls back to the line's existing derivation
+     * @type {string}
+     * @memberof VendorBillLine
+     */
+    debitClass?: VendorBillLineDebitClassEnum;
+    /**
      * Description
      * @type {string}
      * @memberof VendorBillLine
      */
     description?: string;
     /**
-     * Whether the product is stocked
+     * Per-line VENDOR_BILL expense key, when applicable
+     * @type {string}
+     * @memberof VendorBillLine
+     */
+    expenseMappingKey?: string;
+    /**
+     * Whether the product is stocked (true for GOODS, false for EXPENSE)
      * @type {boolean}
      * @memberof VendorBillLine
      */
@@ -56,24 +68,42 @@ export interface VendorBillLine {
      */
     lineNumber: number;
     /**
-     * Product
+     * Product; null on an intake document line
      * @type {string}
      * @memberof VendorBillLine
      */
-    productId: string;
+    productId?: string;
     /**
-     * Quantity received (0 for a billed line with no receipt)
+     * Quantity received (0 for a billed line with no receipt), or the intake document quantity
      * @type {number}
      * @memberof VendorBillLine
      */
     receivedQuantity: number;
     /**
-     * Unit price received
+     * Unit price received, or the intake document unit cost
      * @type {number}
      * @memberof VendorBillLine
      */
     receivedUnitPrice: number;
+    /**
+     * Supplier part/SKU
+     * @type {string}
+     * @memberof VendorBillLine
+     */
+    sku?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum VendorBillLineDebitClassEnum {
+    ReceiptMatched = 'RECEIPT_MATCHED',
+    Goods = 'GOODS',
+    Expense = 'EXPENSE',
+    PriceAllowance = 'PRICE_ALLOWANCE'
+}
+
 
 /**
  * Check if a given object implements the VendorBillLine interface.
@@ -82,7 +112,6 @@ export function instanceOfVendorBillLine(value: object): boolean {
     if (!('currencyCode' in value)) return false;
     if (!('inventoryItem' in value)) return false;
     if (!('lineNumber' in value)) return false;
-    if (!('productId' in value)) return false;
     if (!('receivedQuantity' in value)) return false;
     if (!('receivedUnitPrice' in value)) return false;
     return true;
@@ -101,12 +130,15 @@ export function VendorBillLineFromJSONTyped(json: any, ignoreDiscriminator: bool
         'billedQuantity': json['billedQuantity'] == null ? undefined : json['billedQuantity'],
         'billedUnitPrice': json['billedUnitPrice'] == null ? undefined : json['billedUnitPrice'],
         'currencyCode': json['currencyCode'],
+        'debitClass': json['debitClass'] == null ? undefined : json['debitClass'],
         'description': json['description'] == null ? undefined : json['description'],
+        'expenseMappingKey': json['expenseMappingKey'] == null ? undefined : json['expenseMappingKey'],
         'inventoryItem': json['inventoryItem'],
         'lineNumber': json['lineNumber'],
-        'productId': json['productId'],
+        'productId': json['productId'] == null ? undefined : json['productId'],
         'receivedQuantity': json['receivedQuantity'],
         'receivedUnitPrice': json['receivedUnitPrice'],
+        'sku': json['sku'] == null ? undefined : json['sku'],
     };
 }
 
@@ -119,12 +151,15 @@ export function VendorBillLineToJSON(value?: VendorBillLine | null): any {
         'billedQuantity': value['billedQuantity'],
         'billedUnitPrice': value['billedUnitPrice'],
         'currencyCode': value['currencyCode'],
+        'debitClass': value['debitClass'],
         'description': value['description'],
+        'expenseMappingKey': value['expenseMappingKey'],
         'inventoryItem': value['inventoryItem'],
         'lineNumber': value['lineNumber'],
         'productId': value['productId'],
         'receivedQuantity': value['receivedQuantity'],
         'receivedUnitPrice': value['receivedUnitPrice'],
+        'sku': value['sku'],
     };
 }
 

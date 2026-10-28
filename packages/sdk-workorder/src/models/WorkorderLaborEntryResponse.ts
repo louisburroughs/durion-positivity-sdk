@@ -13,6 +13,19 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ResponseWarning } from './ResponseWarning';
+import {
+    ResponseWarningFromJSON,
+    ResponseWarningFromJSONTyped,
+    ResponseWarningToJSON,
+} from './ResponseWarning';
+import type { WorkorderLaborAdjustmentResponse } from './WorkorderLaborAdjustmentResponse';
+import {
+    WorkorderLaborAdjustmentResponseFromJSON,
+    WorkorderLaborAdjustmentResponseFromJSONTyped,
+    WorkorderLaborAdjustmentResponseToJSON,
+} from './WorkorderLaborAdjustmentResponse';
+
 /**
  * Labor entry response
  * @export
@@ -25,12 +38,6 @@ export interface WorkorderLaborEntryResponse {
      * @memberof WorkorderLaborEntryResponse
      */
     active: boolean;
-    /**
-     * Adjustment reason (if hours were manually adjusted)
-     * @type {string}
-     * @memberof WorkorderLaborEntryResponse
-     */
-    adjustmentReason?: string;
     /**
      * Creation timestamp
      * @type {Date}
@@ -62,6 +69,12 @@ export interface WorkorderLaborEntryResponse {
      */
     id: string;
     /**
+     * 
+     * @type {WorkorderLaborAdjustmentResponse}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    lastAdjustment?: WorkorderLaborAdjustmentResponse;
+    /**
      * Session notes
      * @type {string}
      * @memberof WorkorderLaborEntryResponse
@@ -79,6 +92,12 @@ export interface WorkorderLaborEntryResponse {
      * @memberof WorkorderLaborEntryResponse
      */
     technicianId?: string;
+    /**
+     * Non-blocking warnings
+     * @type {Array<ResponseWarning>}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    warnings: Array<ResponseWarning>;
     /**
      * Workorder ID
      * @type {string}
@@ -99,6 +118,7 @@ export interface WorkorderLaborEntryResponse {
 export function instanceOfWorkorderLaborEntryResponse(value: object): boolean {
     if (!('active' in value)) return false;
     if (!('id' in value)) return false;
+    if (!('warnings' in value)) return false;
     if (!('workorderId' in value)) return false;
     return true;
 }
@@ -114,15 +134,16 @@ export function WorkorderLaborEntryResponseFromJSONTyped(json: any, ignoreDiscri
     return {
         
         'active': json['active'],
-        'adjustmentReason': json['adjustmentReason'] == null ? undefined : json['adjustmentReason'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'endTime': json['endTime'] == null ? undefined : (new Date(json['endTime'])),
         'hoursWorked': json['hoursWorked'] == null ? undefined : json['hoursWorked'],
         'id': json['id'],
+        'lastAdjustment': json['lastAdjustment'] == null ? undefined : WorkorderLaborAdjustmentResponseFromJSON(json['lastAdjustment']),
         'notes': json['notes'] == null ? undefined : json['notes'],
         'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
         'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
+        'warnings': ((json['warnings'] as Array<any>).map(ResponseWarningFromJSON)),
         'workorderId': json['workorderId'],
         'workorderServiceId': json['workorderServiceId'] == null ? undefined : json['workorderServiceId'],
     };
@@ -135,15 +156,16 @@ export function WorkorderLaborEntryResponseToJSON(value?: WorkorderLaborEntryRes
     return {
         
         'active': value['active'],
-        'adjustmentReason': value['adjustmentReason'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'endTime': value['endTime'] == null ? undefined : ((value['endTime']).toISOString()),
         'hoursWorked': value['hoursWorked'],
         'id': value['id'],
+        'lastAdjustment': WorkorderLaborAdjustmentResponseToJSON(value['lastAdjustment']),
         'notes': value['notes'],
         'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
         'technicianId': value['technicianId'],
+        'warnings': ((value['warnings'] as Array<any>).map(ResponseWarningToJSON)),
         'workorderId': value['workorderId'],
         'workorderServiceId': value['workorderServiceId'],
     };

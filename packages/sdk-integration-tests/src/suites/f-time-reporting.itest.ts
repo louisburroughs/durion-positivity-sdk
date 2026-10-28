@@ -281,10 +281,12 @@ describe('Suite F — time reporting and approval', () => {
         },
       }),
     );
-    console.log(`[F5] hours adjusted to ${adjusted.hoursWorked} (${adjusted.adjustmentReason})`);
+    console.log(`[F5] hours adjusted to ${adjusted.hoursWorked} (${adjusted.lastAdjustment?.reason})`);
 
     expect(Number(adjusted.hoursWorked)).toBe(ADJUSTED_HOURS);
-    expect(adjusted.adjustmentReason).toContain(context.runId);
+    // The reason rides the immutable adjustment record (backend CAP:139, #2870),
+    // not the entry itself.
+    expect(adjusted.lastAdjustment?.reason).toContain(context.runId);
   }, 120_000);
 
   // workorder:labor:add is granted to TECHNICIAN and ADMIN only. The manager

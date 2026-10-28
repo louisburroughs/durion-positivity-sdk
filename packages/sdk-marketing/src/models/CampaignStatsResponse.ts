@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { BookedValue } from './BookedValue';
+import {
+    BookedValueFromJSON,
+    BookedValueFromJSONTyped,
+    BookedValueToJSON,
+} from './BookedValue';
 import type { ChannelFunnel } from './ChannelFunnel';
 import {
     ChannelFunnelFromJSON,
@@ -38,6 +44,18 @@ export interface CampaignStatsResponse {
      * @memberof CampaignStatsResponse
      */
     audienceType: CampaignStatsResponseAudienceTypeEnum;
+    /**
+     * Bookings credited to this campaign
+     * @type {number}
+     * @memberof CampaignStatsResponse
+     */
+    booked: number;
+    /**
+     * 
+     * @type {BookedValue}
+     * @memberof CampaignStatsResponse
+     */
+    bookedValue: BookedValue;
     /**
      * Campaign
      * @type {string}
@@ -86,6 +104,8 @@ export enum CampaignStatsResponseAudienceTypeEnum {
 export function instanceOfCampaignStatsResponse(value: object): boolean {
     if (!('attributedDiscount' in value)) return false;
     if (!('audienceType' in value)) return false;
+    if (!('booked' in value)) return false;
+    if (!('bookedValue' in value)) return false;
     if (!('campaignId' in value)) return false;
     if (!('channels' in value)) return false;
     if (!('code' in value)) return false;
@@ -105,6 +125,8 @@ export function CampaignStatsResponseFromJSONTyped(json: any, ignoreDiscriminato
         
         'attributedDiscount': json['attributedDiscount'],
         'audienceType': json['audienceType'],
+        'booked': json['booked'],
+        'bookedValue': BookedValueFromJSON(json['bookedValue']),
         'campaignId': json['campaignId'],
         'campaignProgramId': json['campaignProgramId'] == null ? undefined : json['campaignProgramId'],
         'channels': ((json['channels'] as Array<any>).map(ChannelFunnelFromJSON)),
@@ -121,6 +143,8 @@ export function CampaignStatsResponseToJSON(value?: CampaignStatsResponse | null
         
         'attributedDiscount': value['attributedDiscount'],
         'audienceType': value['audienceType'],
+        'booked': value['booked'],
+        'bookedValue': BookedValueToJSON(value['bookedValue']),
         'campaignId': value['campaignId'],
         'campaignProgramId': value['campaignProgramId'],
         'channels': ((value['channels'] as Array<any>).map(ChannelFunnelToJSON)),

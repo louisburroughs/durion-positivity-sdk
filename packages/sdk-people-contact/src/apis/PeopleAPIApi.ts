@@ -18,6 +18,7 @@ import type {
   ApiError,
   ContactPointDto,
   Person,
+  PersonFactReplayResultDto,
   ResolvePersonRequest,
   ResolvePersonResponse,
 } from '../models/index';
@@ -28,6 +29,8 @@ import {
     ContactPointDtoToJSON,
     PersonFromJSON,
     PersonToJSON,
+    PersonFactReplayResultDtoFromJSON,
+    PersonFactReplayResultDtoToJSON,
     ResolvePersonRequestFromJSON,
     ResolvePersonRequestToJSON,
     ResolvePersonResponseFromJSON,
@@ -57,6 +60,12 @@ export interface ListPeopleRequest {
 export interface ReplaceContactPointsRequest {
     personId: string;
     contactPointDto: Array<ContactPointDto>;
+}
+
+export interface ReplayPersonFactsRequest {
+    afterPersonId?: string;
+    updatedSince?: Date;
+    limit?: number;
 }
 
 export interface ResolvePersonOperationRequest {
@@ -376,6 +385,54 @@ export class PeopleAPIApi extends runtime.BaseAPI {
      */
     async replaceContactPoints(requestParameters: ReplaceContactPointsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.replaceContactPointsRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Re-publishes people-contact.person.updated facts for one bounded page of persons so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this endpoint after a replica\'s first deployment or after an outage longer than broker retention; do not use it to fix one person, which republishes itself on its next ordinary update. Preconditions: fact publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents newer state from regressing. Required inputs: none; afterPersonId resumes a previous page, updatedSince restricts to persons changed at or after an instant, and limit bounds the page — it is clamped into 1..1000 rather than rejected. Emits a PEOPLE_CONTACT_PERSON_FACT_REPLAY event and queues one person fact per person in the page; no people-contact state changes. Returns 200 with complete=true and a null cursor once the person base end is reached, 400 when a parameter is malformed, and 422 when fact publication is disabled. 
+     * Re-emit Person Facts for Replica Consumers
+     */
+    async replayPersonFactsRaw(requestParameters: ReplayPersonFactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PersonFactReplayResultDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['afterPersonId'] != null) {
+            queryParameters['afterPersonId'] = requestParameters['afterPersonId'];
+        }
+
+        if (requestParameters['updatedSince'] != null) {
+            queryParameters['updatedSince'] = (requestParameters['updatedSince'] as any).toISOString();
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "people-contact:fact:replay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/facts/replay`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PersonFactReplayResultDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-publishes people-contact.person.updated facts for one bounded page of persons so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this endpoint after a replica\'s first deployment or after an outage longer than broker retention; do not use it to fix one person, which republishes itself on its next ordinary update. Preconditions: fact publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents newer state from regressing. Required inputs: none; afterPersonId resumes a previous page, updatedSince restricts to persons changed at or after an instant, and limit bounds the page — it is clamped into 1..1000 rather than rejected. Emits a PEOPLE_CONTACT_PERSON_FACT_REPLAY event and queues one person fact per person in the page; no people-contact state changes. Returns 200 with complete=true and a null cursor once the person base end is reached, 400 when a parameter is malformed, and 422 when fact publication is disabled. 
+     * Re-emit Person Facts for Replica Consumers
+     */
+    async replayPersonFacts(requestParameters: ReplayPersonFactsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PersonFactReplayResultDto> {
+        const response = await this.replayPersonFactsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

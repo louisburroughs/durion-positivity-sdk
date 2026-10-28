@@ -18,6 +18,7 @@ import type {
   AdjustLaborRequest,
   ApiError,
   StartLaborRequest,
+  WorkorderLaborAdjustmentResponse,
   WorkorderLaborEntryResponse,
 } from '../models/index';
 import {
@@ -27,6 +28,8 @@ import {
     ApiErrorToJSON,
     StartLaborRequestFromJSON,
     StartLaborRequestToJSON,
+    WorkorderLaborAdjustmentResponseFromJSON,
+    WorkorderLaborAdjustmentResponseToJSON,
     WorkorderLaborEntryResponseFromJSON,
     WorkorderLaborEntryResponseToJSON,
 } from '../models/index';
@@ -36,6 +39,11 @@ export interface AdjustLaborHoursRequest {
     entryId: string;
     adjustLaborRequest: AdjustLaborRequest;
     idempotencyKey?: string;
+}
+
+export interface GetLaborAdjustmentsRequest {
+    workorderId: string;
+    entryId: string;
 }
 
 export interface GetLaborHistoryRequest {
@@ -61,7 +69,7 @@ export interface StopLaborSessionRequest {
 export class WorkorderLaborAPIApi extends runtime.BaseAPI {
 
     /**
-     * Manually overrides the hours worked on a labor entry, recording the adjustment reason and the adjusting user for the audit trail. This is a supervisor-only action; supervisors may adjust their own entries. Use this tool to correct recorded hours after a timesheet review; do not use stopLaborSession, which computes hours from elapsed time when a session ends. Preconditions: the labor entry must exist and its workorder location must be within the caller\'s reach when location scope applies; the entry retains its original times, with the adjusted hours and reason stored alongside them. Required inputs: workorderId and entryId (UUIDs) as path parameters, plus hoursWorked (decimal) and adjustmentReason in the body; an Idempotency-Key header makes retries return the already-adjusted entry. Emits a WORKORDER_LABOR_ADJUST event. Returns 403 when the caller lacks supervisor authority or the workorder location is outside the caller\'s reach, 404 when no labor entry exists for the id, and 400 when the hours value is rejected as invalid. 
+     * Manually corrects the hours on a stopped labor entry, preserving the immutable audit record and the authenticated adjusting user. This is a supervisor-only action; supervisors may adjust their own entries. Use this tool to correct a recorded entry after timesheet review; do not use stopLaborSession, which records elapsed time for a running entry. Preconditions: the entry belongs to workorderId and has an endTime; when location scope applies, an entry on a workorder outside the caller\'s reach is denied. Required inputs: workorderId and entryId (UUIDs) in the path and hoursWorked and adjustmentReason in the body; an optional Idempotency-Key replays the first adjustment. Emits workorder.labor-adjustment.recorded.v1 keyed by laborEntryId. Returns 400 when the hours are invalid or the caller has no authenticated user id, 404 when no entry belongs to the named workorder, 409 when the entry has not stopped, and 422 when the adjusted hours do not change. COMPLETED or CANCELLED workorders succeed with a WORKORDER_CLOSED warning. 
      * Adjust Labor Entry Hours
      */
     async adjustLaborHoursRaw(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
@@ -116,11 +124,61 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Manually overrides the hours worked on a labor entry, recording the adjustment reason and the adjusting user for the audit trail. This is a supervisor-only action; supervisors may adjust their own entries. Use this tool to correct recorded hours after a timesheet review; do not use stopLaborSession, which computes hours from elapsed time when a session ends. Preconditions: the labor entry must exist and its workorder location must be within the caller\'s reach when location scope applies; the entry retains its original times, with the adjusted hours and reason stored alongside them. Required inputs: workorderId and entryId (UUIDs) as path parameters, plus hoursWorked (decimal) and adjustmentReason in the body; an Idempotency-Key header makes retries return the already-adjusted entry. Emits a WORKORDER_LABOR_ADJUST event. Returns 403 when the caller lacks supervisor authority or the workorder location is outside the caller\'s reach, 404 when no labor entry exists for the id, and 400 when the hours value is rejected as invalid. 
+     * Manually corrects the hours on a stopped labor entry, preserving the immutable audit record and the authenticated adjusting user. This is a supervisor-only action; supervisors may adjust their own entries. Use this tool to correct a recorded entry after timesheet review; do not use stopLaborSession, which records elapsed time for a running entry. Preconditions: the entry belongs to workorderId and has an endTime; when location scope applies, an entry on a workorder outside the caller\'s reach is denied. Required inputs: workorderId and entryId (UUIDs) in the path and hoursWorked and adjustmentReason in the body; an optional Idempotency-Key replays the first adjustment. Emits workorder.labor-adjustment.recorded.v1 keyed by laborEntryId. Returns 400 when the hours are invalid or the caller has no authenticated user id, 404 when no entry belongs to the named workorder, 409 when the entry has not stopped, and 422 when the adjusted hours do not change. COMPLETED or CANCELLED workorders succeed with a WORKORDER_CLOSED warning. 
      * Adjust Labor Entry Hours
      */
     async adjustLaborHours(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
         const response = await this.adjustLaborHoursRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns immutable labor adjustment history for a recorded entry, newest first. Use this tool to review how labor hours changed; do not use the labor-entry list when audit details are required. Preconditions: the entry belongs to the named workorder. Required inputs: workorderId and entryId UUID path parameters. No events are emitted. Returns 403 when the caller is outside the workorder\'s location reach and 404 when the labor entry does not belong to the workorder; otherwise returns 200 with adjustment history.
+     * Get labor adjustment history
+     */
+    async getLaborAdjustmentsRaw(requestParameters: GetLaborAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderLaborAdjustmentResponse>>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling getLaborAdjustments().'
+            );
+        }
+
+        if (requestParameters['entryId'] == null) {
+            throw new runtime.RequiredError(
+                'entryId',
+                'Required parameter "entryId" was null or undefined when calling getLaborAdjustments().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/labor/{entryId}/adjustments`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(WorkorderLaborAdjustmentResponseFromJSON));
+    }
+
+    /**
+     * Returns immutable labor adjustment history for a recorded entry, newest first. Use this tool to review how labor hours changed; do not use the labor-entry list when audit details are required. Preconditions: the entry belongs to the named workorder. Required inputs: workorderId and entryId UUID path parameters. No events are emitted. Returns 403 when the caller is outside the workorder\'s location reach and 404 when the labor entry does not belong to the workorder; otherwise returns 200 with adjustment history.
+     * Get labor adjustment history
+     */
+    async getLaborAdjustments(requestParameters: GetLaborAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderLaborAdjustmentResponse>> {
+        const response = await this.getLaborAdjustmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
