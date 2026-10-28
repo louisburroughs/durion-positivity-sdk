@@ -2,4 +2,5 @@
 /* eslint-disable */
 export * from './MarketingAnalyticsApi';
 export * from './MarketingCampaignsApi';
+export * from './MarketingStartersApi';
 export * from './MarketingTemplatesApi';

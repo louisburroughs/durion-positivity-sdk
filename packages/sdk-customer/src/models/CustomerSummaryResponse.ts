@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ActiveAgreement } from './ActiveAgreement';
+import {
+    ActiveAgreementFromJSON,
+    ActiveAgreementFromJSONTyped,
+    ActiveAgreementToJSON,
+} from './ActiveAgreement';
 import type { ContactableBy } from './ContactableBy';
 import {
     ContactableByFromJSON,
@@ -44,6 +50,12 @@ import {
  * @interface CustomerSummaryResponse
  */
 export interface CustomerSummaryResponse {
+    /**
+     * 
+     * @type {ActiveAgreement}
+     * @memberof CustomerSummaryResponse
+     */
+    activeAgreement?: ActiveAgreement;
     /**
      * 
      * @type {ContactableBy}
@@ -151,6 +163,7 @@ export function CustomerSummaryResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'activeAgreement': json['activeAgreement'] == null ? undefined : ActiveAgreementFromJSON(json['activeAgreement']),
         'contactableBy': ContactableByFromJSON(json['contactableBy']),
         'creditLimit': json['creditLimit'] == null ? undefined : MoneyFromJSON(json['creditLimit']),
         'customerSince': json['customerSince'] == null ? undefined : json['customerSince'],
@@ -172,6 +185,7 @@ export function CustomerSummaryResponseToJSON(value?: CustomerSummaryResponse | 
     }
     return {
         
+        'activeAgreement': ActiveAgreementToJSON(value['activeAgreement']),
         'contactableBy': ContactableByToJSON(value['contactableBy']),
         'creditLimit': MoneyToJSON(value['creditLimit']),
         'customerSince': value['customerSince'],

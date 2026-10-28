@@ -50,6 +50,18 @@ export interface ChannelFunnel {
      */
     failed: number;
     /**
+     * Opened messages; null for SMS
+     * @type {number}
+     * @memberof ChannelFunnel
+     */
+    opened?: number;
+    /**
+     * Clicked messages; null for SMS
+     * @type {number}
+     * @memberof ChannelFunnel
+     */
+    clicked?: number;
+    /**
      * Messages dispatched to the provider
      * @type {number}
      * @memberof ChannelFunnel
@@ -109,6 +121,8 @@ export function ChannelFunnelFromJSONTyped(json: any, ignoreDiscriminator: boole
         'complained': json['complained'],
         'delivered': json['delivered'],
         'failed': json['failed'],
+        'opened': json['opened'] == null ? undefined : json['opened'],
+        'clicked': json['clicked'] == null ? undefined : json['clicked'],
         'sent': json['sent'],
         'suppressed': json['suppressed'],
         'targeted': json['targeted'],
@@ -126,6 +140,8 @@ export function ChannelFunnelToJSON(value?: ChannelFunnel | null): any {
         'complained': value['complained'],
         'delivered': value['delivered'],
         'failed': value['failed'],
+        'opened': value['opened'],
+        'clicked': value['clicked'],
         'sent': value['sent'],
         'suppressed': value['suppressed'],
         'targeted': value['targeted'],
