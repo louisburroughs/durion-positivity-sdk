@@ -14,37 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Window a campaign is active in
  * @export
- * @interface Window
+ * @interface CampaignWindow
  */
-export interface Window {
+export interface CampaignWindow {
     /**
      * 
      * @type {Date}
-     * @memberof Window
+     * @memberof CampaignWindow
      */
     from?: Date;
     /**
      * 
      * @type {Date}
-     * @memberof Window
+     * @memberof CampaignWindow
      */
     to?: Date;
 }
 
 /**
- * Check if a given object implements the Window interface.
+ * Check if a given object implements the CampaignWindow interface.
  */
-export function instanceOfWindow(value: object): boolean {
+export function instanceOfCampaignWindow(value: object): boolean {
     return true;
 }
 
-export function WindowFromJSON(json: any): Window {
-    return WindowFromJSONTyped(json, false);
+export function CampaignWindowFromJSON(json: any): CampaignWindow {
+    return CampaignWindowFromJSONTyped(json, false);
 }
 
-export function WindowFromJSONTyped(json: any, ignoreDiscriminator: boolean): Window {
+export function CampaignWindowFromJSONTyped(json: any, ignoreDiscriminator: boolean): CampaignWindow {
     if (json == null) {
         return json;
     }
@@ -55,14 +55,14 @@ export function WindowFromJSONTyped(json: any, ignoreDiscriminator: boolean): Wi
     };
 }
 
-export function WindowToJSON(value?: Window | null): any {
+export function CampaignWindowToJSON(value?: CampaignWindow | null): any {
     if (value == null) {
         return value;
     }
     return {
         
-        'from': value['from'] == null ? undefined : ((value['from']).toISOString()),
-        'to': value['to'] == null ? undefined : ((value['to']).toISOString()),
+        'from': value['from'] == null ? undefined : ((value['from'] as any).toISOString()),
+        'to': value['to'] == null ? undefined : ((value['to'] as any).toISOString()),
     };
 }
 

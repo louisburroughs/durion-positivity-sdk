@@ -57,7 +57,7 @@ export interface GetCampaignByIdRequest {
 }
 
 export interface GetCampaignOverviewRequest {
-    audienceType?: string;
+    audienceType?: GetCampaignOverviewAudienceTypeEnum;
     recent?: number;
 }
 
@@ -278,7 +278,7 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated. 
+     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. A recent value outside 1-20 is clamped to the nearest bound instead of being rejected with a 400. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated. 
      * Get Campaign Overview
      */
     async getCampaignOverviewRaw(requestParameters: GetCampaignOverviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CampaignOverviewResponse>> {
@@ -313,7 +313,7 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated. 
+     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. A recent value outside 1-20 is clamped to the nearest bound instead of being rejected with a 400. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated. 
      * Get Campaign Overview
      */
     async getCampaignOverview(requestParameters: GetCampaignOverviewRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignOverviewResponse> {
@@ -689,6 +689,14 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
 
 }
 
+/**
+  * @export
+  * @enum {string}
+  */
+export enum GetCampaignOverviewAudienceTypeEnum {
+    Commercial = 'COMMERCIAL',
+    Individual = 'INDIVIDUAL'
+}
 /**
   * @export
   * @enum {string}
