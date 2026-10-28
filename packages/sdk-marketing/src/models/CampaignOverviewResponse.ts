@@ -19,12 +19,12 @@ import {
     Booked90dFromJSONTyped,
     Booked90dToJSON,
 } from './Booked90d';
-import type { OverviewCounts } from './OverviewCounts';
+import type { Counts } from './Counts';
 import {
-    OverviewCountsFromJSON,
-    OverviewCountsFromJSONTyped,
-    OverviewCountsToJSON,
-} from './OverviewCounts';
+    CountsFromJSON,
+    CountsFromJSONTyped,
+    CountsToJSON,
+} from './Counts';
 import type { RecentCampaign } from './RecentCampaign';
 import {
     RecentCampaignFromJSON,
@@ -43,28 +43,25 @@ export interface CampaignOverviewResponse {
      * @type {Booked90d}
      * @memberof CampaignOverviewResponse
      */
-    booked90d: Booked90d;
+    booked90d?: Booked90d;
     /**
      * 
-     * @type {OverviewCounts}
+     * @type {Counts}
      * @memberof CampaignOverviewResponse
      */
-    counts: OverviewCounts;
+    counts?: Counts;
     /**
      * 
      * @type {Array<RecentCampaign>}
      * @memberof CampaignOverviewResponse
      */
-    recent: Array<RecentCampaign>;
+    recent?: Array<RecentCampaign>;
 }
 
 /**
  * Check if a given object implements the CampaignOverviewResponse interface.
  */
 export function instanceOfCampaignOverviewResponse(value: object): boolean {
-    if (!('booked90d' in value)) return false;
-    if (!('counts' in value)) return false;
-    if (!('recent' in value)) return false;
     return true;
 }
 
@@ -78,9 +75,9 @@ export function CampaignOverviewResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'booked90d': Booked90dFromJSON(json['booked90d']),
-        'counts': OverviewCountsFromJSON(json['counts']),
-        'recent': ((json['recent'] as Array<any>).map(RecentCampaignFromJSON)),
+        'booked90d': json['booked90d'] == null ? undefined : Booked90dFromJSON(json['booked90d']),
+        'counts': json['counts'] == null ? undefined : CountsFromJSON(json['counts']),
+        'recent': json['recent'] == null ? undefined : ((json['recent'] as Array<any>).map(RecentCampaignFromJSON)),
     };
 }
 
@@ -91,8 +88,8 @@ export function CampaignOverviewResponseToJSON(value?: CampaignOverviewResponse 
     return {
         
         'booked90d': Booked90dToJSON(value['booked90d']),
-        'counts': OverviewCountsToJSON(value['counts']),
-        'recent': ((value['recent'] as Array<any>).map(RecentCampaignToJSON)),
+        'counts': CountsToJSON(value['counts']),
+        'recent': value['recent'] == null ? undefined : ((value['recent'] as Array<any>).map(RecentCampaignToJSON)),
     };
 }
 

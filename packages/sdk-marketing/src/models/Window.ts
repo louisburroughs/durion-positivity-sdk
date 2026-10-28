@@ -16,35 +16,35 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface CampaignWindow
+ * @interface Window
  */
-export interface CampaignWindow {
+export interface Window {
     /**
      * 
      * @type {Date}
-     * @memberof CampaignWindow
+     * @memberof Window
      */
     from?: Date;
     /**
      * 
      * @type {Date}
-     * @memberof CampaignWindow
+     * @memberof Window
      */
     to?: Date;
 }
 
 /**
- * Check if a given object implements the CampaignWindow interface.
+ * Check if a given object implements the Window interface.
  */
-export function instanceOfCampaignWindow(value: object): boolean {
+export function instanceOfWindow(value: object): boolean {
     return true;
 }
 
-export function CampaignWindowFromJSON(json: any): CampaignWindow {
-    return CampaignWindowFromJSONTyped(json, false);
+export function WindowFromJSON(json: any): Window {
+    return WindowFromJSONTyped(json, false);
 }
 
-export function CampaignWindowFromJSONTyped(json: any, ignoreDiscriminator: boolean): CampaignWindow {
+export function WindowFromJSONTyped(json: any, ignoreDiscriminator: boolean): Window {
     if (json == null) {
         return json;
     }
@@ -55,7 +55,7 @@ export function CampaignWindowFromJSONTyped(json: any, ignoreDiscriminator: bool
     };
 }
 
-export function CampaignWindowToJSON(value?: CampaignWindow | null): any {
+export function WindowToJSON(value?: Window | null): any {
     if (value == null) {
         return value;
     }

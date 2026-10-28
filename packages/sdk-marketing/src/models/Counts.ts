@@ -16,64 +16,60 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface OverviewCounts
+ * @interface Counts
  */
-export interface OverviewCounts {
+export interface Counts {
     /**
      * 
      * @type {number}
-     * @memberof OverviewCounts
+     * @memberof Counts
      */
-    drafts: number;
+    drafts?: number;
     /**
      * 
      * @type {number}
-     * @memberof OverviewCounts
+     * @memberof Counts
      */
-    paused: number;
+    paused?: number;
     /**
      * 
      * @type {number}
-     * @memberof OverviewCounts
+     * @memberof Counts
      */
-    running: number;
+    running?: number;
     /**
      * 
      * @type {number}
-     * @memberof OverviewCounts
+     * @memberof Counts
      */
-    scheduled: number;
+    scheduled?: number;
 }
 
 /**
- * Check if a given object implements the OverviewCounts interface.
+ * Check if a given object implements the Counts interface.
  */
-export function instanceOfOverviewCounts(value: object): boolean {
-    if (!('drafts' in value)) return false;
-    if (!('paused' in value)) return false;
-    if (!('running' in value)) return false;
-    if (!('scheduled' in value)) return false;
+export function instanceOfCounts(value: object): boolean {
     return true;
 }
 
-export function OverviewCountsFromJSON(json: any): OverviewCounts {
-    return OverviewCountsFromJSONTyped(json, false);
+export function CountsFromJSON(json: any): Counts {
+    return CountsFromJSONTyped(json, false);
 }
 
-export function OverviewCountsFromJSONTyped(json: any, ignoreDiscriminator: boolean): OverviewCounts {
+export function CountsFromJSONTyped(json: any, ignoreDiscriminator: boolean): Counts {
     if (json == null) {
         return json;
     }
     return {
         
-        'drafts': json['drafts'],
-        'paused': json['paused'],
-        'running': json['running'],
-        'scheduled': json['scheduled'],
+        'drafts': json['drafts'] == null ? undefined : json['drafts'],
+        'paused': json['paused'] == null ? undefined : json['paused'],
+        'running': json['running'] == null ? undefined : json['running'],
+        'scheduled': json['scheduled'] == null ? undefined : json['scheduled'],
     };
 }
 
-export function OverviewCountsToJSON(value?: OverviewCounts | null): any {
+export function CountsToJSON(value?: Counts | null): any {
     if (value == null) {
         return value;
     }

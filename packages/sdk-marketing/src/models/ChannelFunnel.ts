@@ -30,7 +30,13 @@ export interface ChannelFunnel {
      * @type {string}
      * @memberof ChannelFunnel
      */
-    channel: ChannelFunnelChannelEnum;
+    channel: string;
+    /**
+     * Clicked messages; null for SMS
+     * @type {number}
+     * @memberof ChannelFunnel
+     */
+    clicked?: number;
     /**
      * Spam complaints
      * @type {number}
@@ -38,7 +44,7 @@ export interface ChannelFunnel {
      */
     complained: number;
     /**
-     * Messages the provider confirmed delivered
+     * Messages delivered
      * @type {number}
      * @memberof ChannelFunnel
      */
@@ -56,19 +62,13 @@ export interface ChannelFunnel {
      */
     opened?: number;
     /**
-     * Clicked messages; null for SMS
-     * @type {number}
-     * @memberof ChannelFunnel
-     */
-    clicked?: number;
-    /**
-     * Messages dispatched to the provider
+     * Messages dispatched
      * @type {number}
      * @memberof ChannelFunnel
      */
     sent: number;
     /**
-     * Recipients blocked at dispatch by consent, account gate, or suppression
+     * Recipients blocked at dispatch
      * @type {number}
      * @memberof ChannelFunnel
      */
@@ -80,16 +80,6 @@ export interface ChannelFunnel {
      */
     targeted: number;
 }
-
-/**
-* @export
-* @enum {string}
-*/
-export enum ChannelFunnelChannelEnum {
-    Email = 'EMAIL',
-    Sms = 'SMS'
-}
-
 
 /**
  * Check if a given object implements the ChannelFunnel interface.
@@ -118,11 +108,11 @@ export function ChannelFunnelFromJSONTyped(json: any, ignoreDiscriminator: boole
         
         'bounced': json['bounced'],
         'channel': json['channel'],
+        'clicked': json['clicked'] == null ? undefined : json['clicked'],
         'complained': json['complained'],
         'delivered': json['delivered'],
         'failed': json['failed'],
         'opened': json['opened'] == null ? undefined : json['opened'],
-        'clicked': json['clicked'] == null ? undefined : json['clicked'],
         'sent': json['sent'],
         'suppressed': json['suppressed'],
         'targeted': json['targeted'],
@@ -137,11 +127,11 @@ export function ChannelFunnelToJSON(value?: ChannelFunnel | null): any {
         
         'bounced': value['bounced'],
         'channel': value['channel'],
+        'clicked': value['clicked'],
         'complained': value['complained'],
         'delivered': value['delivered'],
         'failed': value['failed'],
         'opened': value['opened'],
-        'clicked': value['clicked'],
         'sent': value['sent'],
         'suppressed': value['suppressed'],
         'targeted': value['targeted'],

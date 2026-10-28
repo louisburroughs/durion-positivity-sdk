@@ -35,7 +35,7 @@ export interface ListMarketingStartersRequest {
 export class MarketingStartersApi extends runtime.BaseAPI {
 
     /**
-     * Lists the tenant\'s campaign starter cards with the segment each one targets and its current audience size, ready for the Customers home page. Use this tool to render the starter row; do not use it to read an arbitrary segment, which the campaign-less audience preview exposes instead. Preconditions: the starter catalog and its message templates must have been seeded for this tenant, and a starter whose segment was deleted is omitted rather than returned empty. Required inputs: none; audienceType optionally filters the cards to COMMERCIAL or INDIVIDUAL. Emits a MARKETING_STARTERS_LIST audit event per call, and enqueues a segment-resolve refresh command through the outbox for each starter row that has no snapshot. Returns 403 when the caller lacks marketing:campaign:view. An audienceCount of null means the CRM has not resolved that segment yet, and a refresh has already been requested.
+     * Lists the tenant\'s campaign starter cards with the segment each one targets and its current audience size, ready for the Customers home page. Use this tool to render the starter row; do not use it to read an arbitrary segment, which the campaign-less audience preview exposes instead. Preconditions: the starter catalog and its message templates must have been seeded for this tenant, and a starter whose segment was deleted is omitted rather than returned empty. Required inputs: none; audienceType optionally filters the cards to COMMERCIAL or INDIVIDUAL. Emits a MARKETING_STARTERS_LIST audit event per call, and enqueues a segment-resolve refresh command through the outbox for each starter row that has no snapshot. Returns 403 when the caller lacks marketing:campaign:view. An audienceCount of null means the CRM has not resolved that segment yet, and a refresh has already been requested. 
      * List Marketing Starters
      */
     async listMarketingStartersRaw(requestParameters: ListMarketingStartersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StarterResponse>>> {
@@ -66,7 +66,7 @@ export class MarketingStartersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the tenant\'s campaign starter cards with the segment each one targets and its current audience size, ready for the Customers home page. Use this tool to render the starter row; do not use it to read an arbitrary segment, which the campaign-less audience preview exposes instead. Preconditions: the starter catalog and its message templates must have been seeded for this tenant, and a starter whose segment was deleted is omitted rather than returned empty. Required inputs: none; audienceType optionally filters the cards to COMMERCIAL or INDIVIDUAL. Emits a MARKETING_STARTERS_LIST audit event per call, and enqueues a segment-resolve refresh command through the outbox for each starter row that has no snapshot. Returns 403 when the caller lacks marketing:campaign:view. An audienceCount of null means the CRM has not resolved that segment yet, and a refresh has already been requested.
+     * Lists the tenant\'s campaign starter cards with the segment each one targets and its current audience size, ready for the Customers home page. Use this tool to render the starter row; do not use it to read an arbitrary segment, which the campaign-less audience preview exposes instead. Preconditions: the starter catalog and its message templates must have been seeded for this tenant, and a starter whose segment was deleted is omitted rather than returned empty. Required inputs: none; audienceType optionally filters the cards to COMMERCIAL or INDIVIDUAL. Emits a MARKETING_STARTERS_LIST audit event per call, and enqueues a segment-resolve refresh command through the outbox for each starter row that has no snapshot. Returns 403 when the caller lacks marketing:campaign:view. An audienceCount of null means the CRM has not resolved that segment yet, and a refresh has already been requested. 
      * List Marketing Starters
      */
     async listMarketingStarters(requestParameters: ListMarketingStartersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StarterResponse>> {
@@ -82,5 +82,6 @@ export class MarketingStartersApi extends runtime.BaseAPI {
   */
 export enum ListMarketingStartersAudienceTypeEnum {
     Commercial = 'COMMERCIAL',
-    Individual = 'INDIVIDUAL'
+    Individual = 'INDIVIDUAL',
+    Both = 'BOTH'
 }

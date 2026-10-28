@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * One sampled audience member and why it was or was not counted as reachable
+ * One sampled audience member and the eligibility decision
  * @export
  * @interface SampleRecipient
  */
 export interface SampleRecipient {
     /**
-     * Party whose consent governed the decision and who would be addressed: the CRM's designated contact for a commercial account, the person themselves for an individual. Null when the CRM has reported no decision for this party.
+     * Contact party addressed for a commercial account
      * @type {string}
      * @memberof SampleRecipient
      */
     contactPartyId?: string;
     /**
-     * Whether this party would be sent to on this channel
+     * Whether this party is eligible
      * @type {boolean}
      * @memberof SampleRecipient
      */
     eligible: boolean;
     /**
-     * Party in the audience snapshot
+     * Party in the snapshot
      * @type {string}
      * @memberof SampleRecipient
      */

@@ -299,5 +299,6 @@ export enum ListMessageTemplatesChannelEnum {
   */
 export enum ListMessageTemplatesAudienceTypeEnum {
     Commercial = 'COMMERCIAL',
-    Individual = 'INDIVIDUAL'
+    Individual = 'INDIVIDUAL',
+    Both = 'BOTH'
 }

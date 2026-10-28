@@ -13,12 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
-import type { CampaignWindow } from './CampaignWindow';
+import type { Window } from './Window';
 import {
-    CampaignWindowFromJSON,
-    CampaignWindowFromJSONTyped,
-    CampaignWindowToJSON,
-} from './CampaignWindow';
+    WindowFromJSON,
+    WindowFromJSONTyped,
+    WindowToJSON,
+} from './Window';
 
 /**
  * 
@@ -31,13 +31,13 @@ export interface RecentCampaign {
      * @type {boolean}
      * @memberof RecentCampaign
      */
-    alwaysOn: boolean;
+    alwaysOn?: boolean;
     /**
      * 
      * @type {string}
      * @memberof RecentCampaign
      */
-    audienceType: string;
+    audienceType?: string;
     /**
      * 
      * @type {number}
@@ -55,7 +55,7 @@ export interface RecentCampaign {
      * @type {string}
      * @memberof RecentCampaign
      */
-    campaignId: string;
+    campaignId?: string;
     /**
      * 
      * @type {string}
@@ -64,22 +64,22 @@ export interface RecentCampaign {
     campaignProgramId?: string;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Set<string>}
      * @memberof RecentCampaign
      */
-    channels: Array<string>;
+    channels?: Set<string>;
     /**
      * 
      * @type {string}
      * @memberof RecentCampaign
      */
-    displayStatus: string;
+    displayStatus?: string;
     /**
      * 
      * @type {string}
      * @memberof RecentCampaign
      */
-    name: string;
+    name?: string;
     /**
      * 
      * @type {number}
@@ -94,23 +94,16 @@ export interface RecentCampaign {
     sent?: number;
     /**
      * 
-     * @type {CampaignWindow}
+     * @type {Window}
      * @memberof RecentCampaign
      */
-    window: CampaignWindow;
+    window?: Window;
 }
 
 /**
  * Check if a given object implements the RecentCampaign interface.
  */
 export function instanceOfRecentCampaign(value: object): boolean {
-    if (!('alwaysOn' in value)) return false;
-    if (!('audienceType' in value)) return false;
-    if (!('campaignId' in value)) return false;
-    if (!('channels' in value)) return false;
-    if (!('displayStatus' in value)) return false;
-    if (!('name' in value)) return false;
-    if (!('window' in value)) return false;
     return true;
 }
 
@@ -124,18 +117,18 @@ export function RecentCampaignFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'alwaysOn': json['alwaysOn'],
-        'audienceType': json['audienceType'],
+        'alwaysOn': json['alwaysOn'] == null ? undefined : json['alwaysOn'],
+        'audienceType': json['audienceType'] == null ? undefined : json['audienceType'],
         'booked': json['booked'] == null ? undefined : json['booked'],
         'bookedValue': json['bookedValue'] == null ? undefined : json['bookedValue'],
-        'campaignId': json['campaignId'],
+        'campaignId': json['campaignId'] == null ? undefined : json['campaignId'],
         'campaignProgramId': json['campaignProgramId'] == null ? undefined : json['campaignProgramId'],
-        'channels': json['channels'],
-        'displayStatus': json['displayStatus'],
-        'name': json['name'],
+        'channels': json['channels'] == null ? undefined : json['channels'],
+        'displayStatus': json['displayStatus'] == null ? undefined : json['displayStatus'],
+        'name': json['name'] == null ? undefined : json['name'],
         'openRate': json['openRate'] == null ? undefined : json['openRate'],
         'sent': json['sent'] == null ? undefined : json['sent'],
-        'window': CampaignWindowFromJSON(json['window']),
+        'window': json['window'] == null ? undefined : WindowFromJSON(json['window']),
     };
 }
 
@@ -151,12 +144,12 @@ export function RecentCampaignToJSON(value?: RecentCampaign | null): any {
         'bookedValue': value['bookedValue'],
         'campaignId': value['campaignId'],
         'campaignProgramId': value['campaignProgramId'],
-        'channels': value['channels'],
+        'channels': value['channels'] == null ? undefined : Array.from(value['channels'] as Set<any>),
         'displayStatus': value['displayStatus'],
         'name': value['name'],
         'openRate': value['openRate'],
         'sent': value['sent'],
-        'window': CampaignWindowToJSON(value['window']),
+        'window': WindowToJSON(value['window']),
     };
 }
 
