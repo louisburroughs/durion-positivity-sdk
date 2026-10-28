@@ -4,6 +4,7 @@ export * from './AppointmentAssignmentsApi';
 export * from './AppointmentsAPIApi';
 export * from './ConflictOverrideAPIApi';
 export * from './MechanicRosterAPIApi';
+export * from './OutboxAdministrationApi';
 export * from './ScheduleAPIApi';
 export * from './ShopAPIApi';
 export * from './ShopAuditApi';

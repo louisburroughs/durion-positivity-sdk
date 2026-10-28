@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './ApiError';
 export * from './AudiencePreviewResponse';
+export * from './BookedValue';
 export * from './CampaignResponse';
 export * from './CampaignStatsResponse';
 export * from './ChannelFunnel';

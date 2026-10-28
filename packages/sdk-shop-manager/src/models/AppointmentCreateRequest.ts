@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to create an appointment from an estimate or workorder source document
+ * Request to create an appointment from an estimate or workorder source document. HARD conflicts refuse the booking with 409 SCHEDULING_CONFLICT and conflicts[]. SOFT conflicts are recorded on the appointment and overridden later through POST /v1/appointments/{appointmentId}/conflict-override by a manager with shop:conflict:override. Idempotency uses the optional Idempotency-Key header, not the request body.
  * @export
  * @interface AppointmentCreateRequest
  */

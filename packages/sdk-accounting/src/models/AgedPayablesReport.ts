@@ -51,11 +51,17 @@ export interface AgedPayablesReport {
      */
     generatedAt: Date;
     /**
-     * totals.totalOutstanding + unappliedPayments: approved open bills less unapplied AP payments only; credit notes and unapproved bills are not netted
+     * totals.totalOutstanding + unappliedPayments + openCreditNotes: approved open bills less unapplied AP payments and open approved vendor credit notes
      * @type {number}
      * @memberof AgedPayablesReport
      */
     netOwed: number;
+    /**
+     * Minus the sum of every vendor's open approved credit notes; zero or negative
+     * @type {number}
+     * @memberof AgedPayablesReport
+     */
+    openCreditNotes: number;
     /**
      * Per-vendor aging rows ordered by vendor name; empty when no open payables exist
      * @type {Array<AgedPayablesRow>}
@@ -102,6 +108,7 @@ export function instanceOfAgedPayablesReport(value: object): boolean {
     if (!('estimatedDueDateAmount' in value)) return false;
     if (!('generatedAt' in value)) return false;
     if (!('netOwed' in value)) return false;
+    if (!('openCreditNotes' in value)) return false;
     if (!('rows' in value)) return false;
     if (!('totalIncludingUnapproved' in value)) return false;
     if (!('totals' in value)) return false;
@@ -125,6 +132,7 @@ export function AgedPayablesReportFromJSONTyped(json: any, ignoreDiscriminator: 
         'estimatedDueDateAmount': json['estimatedDueDateAmount'],
         'generatedAt': (new Date(json['generatedAt'])),
         'netOwed': json['netOwed'],
+        'openCreditNotes': json['openCreditNotes'],
         'rows': ((json['rows'] as Array<any>).map(AgedPayablesRowFromJSON)),
         'totalIncludingUnapproved': json['totalIncludingUnapproved'],
         'totals': AgingSummaryFromJSON(json['totals']),
@@ -144,6 +152,7 @@ export function AgedPayablesReportToJSON(value?: AgedPayablesReport | null): any
         'estimatedDueDateAmount': value['estimatedDueDateAmount'],
         'generatedAt': ((value['generatedAt']).toISOString()),
         'netOwed': value['netOwed'],
+        'openCreditNotes': value['openCreditNotes'],
         'rows': ((value['rows'] as Array<any>).map(AgedPayablesRowToJSON)),
         'totalIncludingUnapproved': value['totalIncludingUnapproved'],
         'totals': AgingSummaryToJSON(value['totals']),

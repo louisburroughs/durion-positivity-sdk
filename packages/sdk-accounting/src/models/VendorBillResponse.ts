@@ -171,6 +171,12 @@ export interface VendorBillResponse {
      */
     dueDate?: Date;
     /**
+     * Freight stated separately on an intake document; included in netAmount and posted to 5060
+     * @type {number}
+     * @memberof VendorBillResponse
+     */
+    freightAmount?: number;
+    /**
      * What the posting did with each stated tax amount for a tenant that recovers input tax: the amount recovered and its account, or why nothing was (CAP:550 S32d); null before the posting and for a tenant without recovery, whose bill books the gross
      * @type {Array<VendorBillInputTaxRecovery>}
      * @memberof VendorBillResponse
@@ -183,7 +189,7 @@ export interface VendorBillResponse {
      */
     journalEntryId?: string;
     /**
-     * Received lines with what the vendor billed; empty for a bill without lines
+     * Received or intake document lines with what the vendor billed; empty for a bill without lines
      * @type {Array<VendorBillLine>}
      * @memberof VendorBillResponse
      */
@@ -384,6 +390,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'currency': json['currency'] == null ? undefined : json['currency'],
         'documentType': json['documentType'] == null ? undefined : json['documentType'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
+        'freightAmount': json['freightAmount'] == null ? undefined : json['freightAmount'],
         'inputTaxRecovery': json['inputTaxRecovery'] == null ? undefined : ((json['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryFromJSON)),
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'lines': ((json['lines'] as Array<any>).map(VendorBillLineFromJSON)),
@@ -428,6 +435,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'currency': value['currency'],
         'documentType': value['documentType'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
+        'freightAmount': value['freightAmount'],
         'inputTaxRecovery': value['inputTaxRecovery'] == null ? undefined : ((value['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryToJSON)),
         'journalEntryId': value['journalEntryId'],
         'lines': ((value['lines'] as Array<any>).map(VendorBillLineToJSON)),

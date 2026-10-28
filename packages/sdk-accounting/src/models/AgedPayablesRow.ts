@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Per-vendor aged payables row with bucketed open vendor-bill balances. Age is measured from the bill due date, or from an estimated due date (bill date plus payment terms) when none is recorded; only APPROVED bills are aged, unapproved bills are reported separately and unaged. Unapplied vendor payments are reported as a negative amount and netted into netOwed.
+ * Per-vendor aged payables row with bucketed open vendor-bill balances. Age is measured from the bill due date, or from an estimated due date (bill date plus payment terms) when none is recorded; only APPROVED bills are aged, unapproved bills are reported separately and unaged. Unapplied vendor payments and open approved vendor credit notes are reported as negative amounts and netted into netOwed.
  * @export
  * @interface AgedPayablesRow
  */
@@ -50,7 +50,7 @@ export interface AgedPayablesRow {
      */
     estimatedDueDateAmount: number;
     /**
-     * Approved open bills less unapplied AP payments only: totalOutstanding + unappliedPayments; credit notes and unapproved bills are not netted; negative when the vendor holds more of our money than it is owed
+     * Approved open bills less unapplied AP payments and open approved vendor credit notes: totalOutstanding + unappliedPayments + openCreditNotes; negative when the vendor holds more of our money than it is owed
      * @type {number}
      * @memberof AgedPayablesRow
      */
@@ -61,6 +61,12 @@ export interface AgedPayablesRow {
      * @memberof AgedPayablesRow
      */
     notYetDue: number;
+    /**
+     * Minus the sum of this vendor's open approved credit notes; zero or negative
+     * @type {number}
+     * @memberof AgedPayablesRow
+     */
+    openCreditNotes: number;
     /**
      * Overdue: the sum of days1To30, days31To60, days61To90 and days90Plus
      * @type {number}
@@ -122,6 +128,7 @@ export function instanceOfAgedPayablesRow(value: object): boolean {
     if (!('estimatedDueDateAmount' in value)) return false;
     if (!('netOwed' in value)) return false;
     if (!('notYetDue' in value)) return false;
+    if (!('openCreditNotes' in value)) return false;
     if (!('overdue' in value)) return false;
     if (!('totalIncludingUnapproved' in value)) return false;
     if (!('totalOutstanding' in value)) return false;
@@ -149,6 +156,7 @@ export function AgedPayablesRowFromJSONTyped(json: any, ignoreDiscriminator: boo
         'estimatedDueDateAmount': json['estimatedDueDateAmount'],
         'netOwed': json['netOwed'],
         'notYetDue': json['notYetDue'],
+        'openCreditNotes': json['openCreditNotes'],
         'overdue': json['overdue'],
         'totalIncludingUnapproved': json['totalIncludingUnapproved'],
         'totalOutstanding': json['totalOutstanding'],
@@ -173,6 +181,7 @@ export function AgedPayablesRowToJSON(value?: AgedPayablesRow | null): any {
         'estimatedDueDateAmount': value['estimatedDueDateAmount'],
         'netOwed': value['netOwed'],
         'notYetDue': value['notYetDue'],
+        'openCreditNotes': value['openCreditNotes'],
         'overdue': value['overdue'],
         'totalIncludingUnapproved': value['totalIncludingUnapproved'],
         'totalOutstanding': value['totalOutstanding'],

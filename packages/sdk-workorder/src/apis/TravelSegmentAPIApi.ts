@@ -15,14 +15,18 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateTravelSegmentAdjustmentRequest,
   StartTravelSegmentRequest,
   StopTravelSegmentRequest,
   SubmitTravelSegmentsRequest,
   TravelSegmentAdjustmentResponse,
+  TravelSegmentDetailResponse,
   TravelSegmentResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateTravelSegmentAdjustmentRequestFromJSON,
     CreateTravelSegmentAdjustmentRequestToJSON,
     StartTravelSegmentRequestFromJSON,
@@ -33,6 +37,8 @@ import {
     SubmitTravelSegmentsRequestToJSON,
     TravelSegmentAdjustmentResponseFromJSON,
     TravelSegmentAdjustmentResponseToJSON,
+    TravelSegmentDetailResponseFromJSON,
+    TravelSegmentDetailResponseToJSON,
     TravelSegmentResponseFromJSON,
     TravelSegmentResponseToJSON,
 } from '../models/index';
@@ -40,6 +46,10 @@ import {
 export interface CreateTravelSegmentAdjustmentOperationRequest {
     travelSegmentId: string;
     createTravelSegmentAdjustmentRequest: CreateTravelSegmentAdjustmentRequest;
+}
+
+export interface ListTravelSegmentsRequest {
+    mobileWorkAssignmentId: string;
 }
 
 export interface StartTravelSegmentOperationRequest {
@@ -111,6 +121,53 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
      */
     async createTravelSegmentAdjustment(requestParameters: CreateTravelSegmentAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentAdjustmentResponse> {
         const response = await this.createTravelSegmentAdjustmentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every travel segment recorded for a mobile work assignment, oldest first by startAt, with each segment\'s status, start and end instants, and adjustments. Use this tool after a page reload or after a start, stop, or submit request has a refusal or unknown outcome so the client can reconcile the server state; do not use it to start, stop, or submit a segment. Preconditions: at least one segment for the assignment must exist in the caller\'s tenant; this module has no separate assignment registry, so an assignment with no recorded segments is treated as not found. Required inputs: mobileWorkAssignmentId (UUID) as a query parameter; the request never supplies a tenant id, which comes from the authenticated request context. No events are emitted and no state changes occur; the response is read-only, and the running segment is identified by status IN_PROGRESS. Returns 200 with the ordered segment details, 400 when the query parameter is missing or malformed, 403 without workorder:labor:view or workorder:labor:add, and 404 TRAVEL_SEGMENT_NOT_FOUND when no segment exists for the assignment in the caller\'s tenant. 
+     * List Travel Segments for Assignment
+     */
+    async listTravelSegmentsRaw(requestParameters: ListTravelSegmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TravelSegmentDetailResponse>>> {
+        if (requestParameters['mobileWorkAssignmentId'] == null) {
+            throw new runtime.RequiredError(
+                'mobileWorkAssignmentId',
+                'Required parameter "mobileWorkAssignmentId" was null or undefined when calling listTravelSegments().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['mobileWorkAssignmentId'] != null) {
+            queryParameters['mobileWorkAssignmentId'] = requestParameters['mobileWorkAssignmentId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/travelSegments`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TravelSegmentDetailResponseFromJSON));
+    }
+
+    /**
+     * Returns every travel segment recorded for a mobile work assignment, oldest first by startAt, with each segment\'s status, start and end instants, and adjustments. Use this tool after a page reload or after a start, stop, or submit request has a refusal or unknown outcome so the client can reconcile the server state; do not use it to start, stop, or submit a segment. Preconditions: at least one segment for the assignment must exist in the caller\'s tenant; this module has no separate assignment registry, so an assignment with no recorded segments is treated as not found. Required inputs: mobileWorkAssignmentId (UUID) as a query parameter; the request never supplies a tenant id, which comes from the authenticated request context. No events are emitted and no state changes occur; the response is read-only, and the running segment is identified by status IN_PROGRESS. Returns 200 with the ordered segment details, 400 when the query parameter is missing or malformed, 403 without workorder:labor:view or workorder:labor:add, and 404 TRAVEL_SEGMENT_NOT_FOUND when no segment exists for the assignment in the caller\'s tenant. 
+     * List Travel Segments for Assignment
+     */
+    async listTravelSegments(requestParameters: ListTravelSegmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TravelSegmentDetailResponse>> {
+        const response = await this.listTravelSegmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

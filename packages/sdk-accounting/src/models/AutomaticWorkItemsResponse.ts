@@ -33,6 +33,12 @@ export interface AutomaticWorkItemsResponse {
      */
     asOf: Date;
     /**
+     * ISO 4217 code of every amount: the functional currency
+     * @type {string}
+     * @memberof AutomaticWorkItemsResponse
+     */
+    currencyCode: string;
+    /**
      * The items of this page, oldest first
      * @type {Array<AutomaticWorkItem>}
      * @memberof AutomaticWorkItemsResponse
@@ -51,6 +57,7 @@ export interface AutomaticWorkItemsResponse {
  */
 export function instanceOfAutomaticWorkItemsResponse(value: object): boolean {
     if (!('asOf' in value)) return false;
+    if (!('currencyCode' in value)) return false;
     if (!('items' in value)) return false;
     return true;
 }
@@ -66,6 +73,7 @@ export function AutomaticWorkItemsResponseFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'asOf': (new Date(json['asOf'])),
+        'currencyCode': json['currencyCode'],
         'items': ((json['items'] as Array<any>).map(AutomaticWorkItemFromJSON)),
         'nextCursor': json['nextCursor'] == null ? undefined : json['nextCursor'],
     };
@@ -78,6 +86,7 @@ export function AutomaticWorkItemsResponseToJSON(value?: AutomaticWorkItemsRespo
     return {
         
         'asOf': ((value['asOf']).toISOString()),
+        'currencyCode': value['currencyCode'],
         'items': ((value['items'] as Array<any>).map(AutomaticWorkItemToJSON)),
         'nextCursor': value['nextCursor'],
     };
