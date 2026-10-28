@@ -19,6 +19,12 @@ import {
     AccountSummaryFromJSONTyped,
     AccountSummaryToJSON,
 } from './AccountSummary';
+import type { ActiveAgreement } from './ActiveAgreement';
+import {
+    ActiveAgreementFromJSON,
+    ActiveAgreementFromJSONTyped,
+    ActiveAgreementToJSON,
+} from './ActiveAgreement';
 import type { BillingPreferences } from './BillingPreferences';
 import {
     BillingPreferencesFromJSON,
@@ -74,6 +80,12 @@ export interface CrmSnapshotDTO {
      * @memberof CrmSnapshotDTO
      */
     account: AccountSummary;
+    /**
+     * 
+     * @type {ActiveAgreement}
+     * @memberof CrmSnapshotDTO
+     */
+    activeAgreement?: ActiveAgreement;
     /**
      * 
      * @type {BillingRuleRef}
@@ -140,6 +152,7 @@ export function CrmSnapshotDTOFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'account': AccountSummaryFromJSON(json['account']),
+        'activeAgreement': json['activeAgreement'] == null ? undefined : ActiveAgreementFromJSON(json['activeAgreement']),
         'billingRules': json['billingRules'] == null ? undefined : BillingRuleRefFromJSON(json['billingRules']),
         'contacts': ((json['contacts'] as Array<any>).map(ContactSummaryFromJSON)),
         'marketingConsent': json['marketingConsent'] == null ? undefined : MarketingConsentSummaryResponseFromJSON(json['marketingConsent']),
@@ -157,6 +170,7 @@ export function CrmSnapshotDTOToJSON(value?: CrmSnapshotDTO | null): any {
     return {
         
         'account': AccountSummaryToJSON(value['account']),
+        'activeAgreement': ActiveAgreementToJSON(value['activeAgreement']),
         'billingRules': BillingRuleRefToJSON(value['billingRules']),
         'contacts': ((value['contacts'] as Array<any>).map(ContactSummaryToJSON)),
         'marketingConsent': MarketingConsentSummaryResponseToJSON(value['marketingConsent']),

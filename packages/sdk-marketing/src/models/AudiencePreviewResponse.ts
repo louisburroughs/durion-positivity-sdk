@@ -19,6 +19,12 @@ import {
     ChannelPreviewFromJSONTyped,
     ChannelPreviewToJSON,
 } from './ChannelPreview';
+import type { SmsSendWindow } from './SmsSendWindow';
+import {
+    SmsSendWindowFromJSON,
+    SmsSendWindowFromJSONTyped,
+    SmsSendWindowToJSON,
+} from './SmsSendWindow';
 
 /**
  * Per-channel audience preview after consent and suppression filtering
@@ -33,11 +39,35 @@ export interface AudiencePreviewResponse {
      */
     audienceType: AudiencePreviewResponseAudienceTypeEnum;
     /**
-     * Campaign previewed
+     * Campaign previewed; null for a campaign-less preview
      * @type {string}
      * @memberof AudiencePreviewResponse
      */
-    campaignId: string;
+    campaignId?: string;
+    /**
+     * Members refused on every selected channel
+     * @type {number}
+     * @memberof AudiencePreviewResponse
+     */
+    optedOutAllChannels: number;
+    /**
+     * Deduplicated members eligible on at least one selected channel
+     * @type {number}
+     * @memberof AudiencePreviewResponse
+     */
+    reachableAny: number;
+    /**
+     * Whether the asynchronous snapshot is ready
+     * @type {string}
+     * @memberof AudiencePreviewResponse
+     */
+    status: AudiencePreviewResponseStatusEnum;
+    /**
+     * 
+     * @type {SmsSendWindow}
+     * @memberof AudiencePreviewResponse
+     */
+    smsSendWindow: SmsSendWindow;
     /**
      * Per-channel reach after consent, account gate, and suppression
      * @type {Array<ChannelPreview>}
@@ -57,11 +87,11 @@ export interface AudiencePreviewResponse {
      */
     segmentId?: string;
     /**
-     * Parties in the current audience snapshot, before consent filtering
+     * Parties in the current audience snapshot, before consent filtering; null while PENDING
      * @type {number}
      * @memberof AudiencePreviewResponse
      */
-    segmentMatched: number;
+    segmentMatched?: number;
     /**
      * Whether the segment resolution hit its candidate ceiling and is partial; when true the real audience is larger than segmentMatched
      * @type {boolean}
@@ -82,7 +112,16 @@ export interface AudiencePreviewResponse {
 */
 export enum AudiencePreviewResponseAudienceTypeEnum {
     Commercial = 'COMMERCIAL',
-    Individual = 'INDIVIDUAL'
+    Individual = 'INDIVIDUAL',
+    Both = 'BOTH'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum AudiencePreviewResponseStatusEnum {
+    Ready = 'READY',
+    Pending = 'PENDING'
 }
 
 
@@ -91,9 +130,11 @@ export enum AudiencePreviewResponseAudienceTypeEnum {
  */
 export function instanceOfAudiencePreviewResponse(value: object): boolean {
     if (!('audienceType' in value)) return false;
-    if (!('campaignId' in value)) return false;
+    if (!('optedOutAllChannels' in value)) return false;
+    if (!('reachableAny' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('smsSendWindow' in value)) return false;
     if (!('channels' in value)) return false;
-    if (!('segmentMatched' in value)) return false;
     if (!('truncated' in value)) return false;
     if (!('warnings' in value)) return false;
     return true;
@@ -110,11 +151,15 @@ export function AudiencePreviewResponseFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'audienceType': json['audienceType'],
-        'campaignId': json['campaignId'],
+        'campaignId': json['campaignId'] == null ? undefined : json['campaignId'],
+        'optedOutAllChannels': json['optedOutAllChannels'],
+        'reachableAny': json['reachableAny'],
+        'status': json['status'],
+        'smsSendWindow': SmsSendWindowFromJSON(json['smsSendWindow']),
         'channels': ((json['channels'] as Array<any>).map(ChannelPreviewFromJSON)),
         'resolvedAt': json['resolvedAt'] == null ? undefined : (new Date(json['resolvedAt'])),
         'segmentId': json['segmentId'] == null ? undefined : json['segmentId'],
-        'segmentMatched': json['segmentMatched'],
+        'segmentMatched': json['segmentMatched'] == null ? undefined : json['segmentMatched'],
         'truncated': json['truncated'],
         'warnings': json['warnings'],
     };
@@ -128,6 +173,10 @@ export function AudiencePreviewResponseToJSON(value?: AudiencePreviewResponse | 
         
         'audienceType': value['audienceType'],
         'campaignId': value['campaignId'],
+        'optedOutAllChannels': value['optedOutAllChannels'],
+        'reachableAny': value['reachableAny'],
+        'status': value['status'],
+        'smsSendWindow': SmsSendWindowToJSON(value['smsSendWindow']),
         'channels': ((value['channels'] as Array<any>).map(ChannelPreviewToJSON)),
         'resolvedAt': value['resolvedAt'] == null ? undefined : ((value['resolvedAt']).toISOString()),
         'segmentId': value['segmentId'],

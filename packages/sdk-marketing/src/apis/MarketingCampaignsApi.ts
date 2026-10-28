@@ -16,7 +16,9 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  AudiencePreviewRequest,
   AudiencePreviewResponse,
+  CampaignOverviewResponse,
   CampaignResponse,
   PagedResponse,
   UpsertCampaignRequest,
@@ -24,8 +26,12 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    AudiencePreviewRequestFromJSON,
+    AudiencePreviewRequestToJSON,
     AudiencePreviewResponseFromJSON,
     AudiencePreviewResponseToJSON,
+    CampaignOverviewResponseFromJSON,
+    CampaignOverviewResponseToJSON,
     CampaignResponseFromJSON,
     CampaignResponseToJSON,
     PagedResponseFromJSON,
@@ -50,6 +56,11 @@ export interface GetCampaignByIdRequest {
     campaignId: string;
 }
 
+export interface GetCampaignOverviewRequest {
+    audienceType?: GetCampaignOverviewAudienceTypeEnum;
+    recent?: number;
+}
+
 export interface ListCampaignSendsRequest {
     campaignId: string;
     page?: number;
@@ -63,6 +74,10 @@ export interface ListCampaignsRequest {
 
 export interface PauseCampaignRequest {
     campaignId: string;
+}
+
+export interface PreviewAudienceBeforeCampaignRequest {
+    audiencePreviewRequest: AudiencePreviewRequest;
 }
 
 export interface PreviewCampaignAudienceRequest {
@@ -263,6 +278,50 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated.
+     * Get Campaign Overview
+     */
+    async getCampaignOverviewRaw(requestParameters: GetCampaignOverviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CampaignOverviewResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['audienceType'] != null) {
+            queryParameters['audienceType'] = requestParameters['audienceType'];
+        }
+
+        if (requestParameters['recent'] != null) {
+            queryParameters['recent'] = requestParameters['recent'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["marketing:campaign:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/marketing/campaigns/overview`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CampaignOverviewResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the campaign launchpad summary the Customers home page renders: lifecycle counts, a bounded list of recent campaigns and their per-row funnel figures. Use this tool to paint the whole table in one call; do not use the per-campaign stats endpoint for each row, which would cost one request per campaign. Preconditions: none, because a tenant with no campaigns simply returns zero counts and an empty recent list. Required inputs: none; audienceType optionally narrows every count and row to COMMERCIAL or INDIVIDUAL, and recent bounds the row list to between 1 and 20 campaigns. Emits a MARKETING_CAMPAIGN_OVERVIEW_GET audit event per call and otherwise only reads the campaign read model. Returns 403 when the caller lacks marketing:campaign:view. Per-row sent, openRate and booking figures are null for a caller without marketing:stats:view, while the counts stay populated.
+     * Get Campaign Overview
+     */
+    async getCampaignOverview(requestParameters: GetCampaignOverviewRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignOverviewResponse> {
+        const response = await this.getCampaignOverviewRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Lists the per-recipient, per-channel send rows a campaign dispatch queued, including status, failure reason, provider message id, attempts and timestamps. Use this tool to inspect individual delivery outcomes; use getCampaignStats instead for aggregate funnel and attribution numbers. Preconditions: none; an unknown campaignId yields an empty page rather than an error. Required inputs: campaignId (UUID) as a path parameter; page defaults to 0 and size defaults to 50, clamped between 1 and 200, ordered by queuedAt ascending. Emits a MARKETING_CAMPAIGN_SENDS_LIST audit event; no marketing state is changed and this is a read-only projection. Returns 200 with an empty page when the campaign has no send rows, so an empty result is not an error condition. 
      * List Campaign Send Records
      */
@@ -397,6 +456,52 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
      */
     async pauseCampaign(requestParameters: PauseCampaignRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CampaignResponse> {
         const response = await this.pauseCampaignRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Resolves a segment\'s audience size and reach without requiring a saved campaign, so the composer can show live counts before anything is created. Use this tool while drafting a campaign, from either a saved segment id or a starter key; for a campaign that already exists, use the campaign-bound preview endpoint instead. Preconditions: a segment id must name an active replica of a CRM segment in this tenant, and a starter key must be seeded in this tenant\'s starter catalog; until that starter\'s segment has replicated the preview is PENDING. Required inputs: audienceType (COMMERCIAL, INDIVIDUAL or BOTH), channels (one or more of EMAIL and SMS), and exactly one of segmentId or starterKey; emailTemplateId and smsTemplateId only mark a channel as ready to send. Emits a MARKETING_CAMPAIGNLESS_AUDIENCE_PREVIEW event, and asks the CRM for a fresher resolution on every call; no campaign or message is created here. Returns 400 when neither segmentId nor starterKey is supplied, 404 when the segment id is unknown or the starter key is absent from the catalog, and 422 when the segment is inactive or belongs to another audience type. Counts are PENDING with null figures until the asynchronous CRM resolution replies, so null counts mean \"ask again\", not \"nobody to contact\".
+     * Preview Audience Before Campaign
+     */
+    async previewAudienceBeforeCampaignRaw(requestParameters: PreviewAudienceBeforeCampaignRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AudiencePreviewResponse>> {
+        if (requestParameters['audiencePreviewRequest'] == null) {
+            throw new runtime.RequiredError(
+                'audiencePreviewRequest',
+                'Required parameter "audiencePreviewRequest" was null or undefined when calling previewAudienceBeforeCampaign().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["marketing:campaign:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/marketing/campaigns/audience-preview`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AudiencePreviewRequestToJSON(requestParameters['audiencePreviewRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AudiencePreviewResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Resolves a segment\'s audience size and reach without requiring a saved campaign, so the composer can show live counts before anything is created. Use this tool while drafting a campaign, from either a saved segment id or a starter key; for a campaign that already exists, use the campaign-bound preview endpoint instead. Preconditions: a segment id must name an active replica of a CRM segment in this tenant, and a starter key must be seeded in this tenant\'s starter catalog; until that starter\'s segment has replicated the preview is PENDING. Required inputs: audienceType (COMMERCIAL, INDIVIDUAL or BOTH), channels (one or more of EMAIL and SMS), and exactly one of segmentId or starterKey; emailTemplateId and smsTemplateId only mark a channel as ready to send. Emits a MARKETING_CAMPAIGNLESS_AUDIENCE_PREVIEW event, and asks the CRM for a fresher resolution on every call; no campaign or message is created here. Returns 400 when neither segmentId nor starterKey is supplied, 404 when the segment id is unknown or the starter key is absent from the catalog, and 422 when the segment is inactive or belongs to another audience type. Counts are PENDING with null figures until the asynchronous CRM resolution replies, so null counts mean \"ask again\", not \"nobody to contact\".
+     * Preview Audience Before Campaign
+     */
+    async previewAudienceBeforeCampaign(requestParameters: PreviewAudienceBeforeCampaignRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AudiencePreviewResponse> {
+        const response = await this.previewAudienceBeforeCampaignRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -584,6 +689,14 @@ export class MarketingCampaignsApi extends runtime.BaseAPI {
 
 }
 
+/**
+  * @export
+  * @enum {string}
+  */
+export enum GetCampaignOverviewAudienceTypeEnum {
+    Commercial = 'COMMERCIAL',
+    Individual = 'INDIVIDUAL'
+}
 /**
   * @export
   * @enum {string}

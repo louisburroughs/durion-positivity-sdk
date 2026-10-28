@@ -15,6 +15,7 @@ export * from './CRMPersonLinkReconciliationApi';
 export * from './CRMPersonsApi';
 export * from './CRMPublicInquiryApi';
 export * from './CRMSegmentsApi';
+export * from './CRMServiceAgreementsApi';
 export * from './CRMSnapshotsApi';
 export * from './CRMSuppressionApi';
 export * from './CRMTagsApi';

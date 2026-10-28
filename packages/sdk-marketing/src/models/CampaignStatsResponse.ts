@@ -75,6 +75,12 @@ export interface CampaignStatsResponse {
      */
     channels: Array<ChannelFunnel>;
     /**
+     * Opened divided by delivered; null when nothing was delivered
+     * @type {number}
+     * @memberof CampaignStatsResponse
+     */
+    openRate?: number;
+    /**
      * Campaign code
      * @type {string}
      * @memberof CampaignStatsResponse
@@ -130,6 +136,7 @@ export function CampaignStatsResponseFromJSONTyped(json: any, ignoreDiscriminato
         'campaignId': json['campaignId'],
         'campaignProgramId': json['campaignProgramId'] == null ? undefined : json['campaignProgramId'],
         'channels': ((json['channels'] as Array<any>).map(ChannelFunnelFromJSON)),
+        'openRate': json['openRate'] == null ? undefined : json['openRate'],
         'code': json['code'],
         'redeemed': json['redeemed'],
     };
@@ -148,6 +155,7 @@ export function CampaignStatsResponseToJSON(value?: CampaignStatsResponse | null
         'campaignId': value['campaignId'],
         'campaignProgramId': value['campaignProgramId'],
         'channels': ((value['channels'] as Array<any>).map(ChannelFunnelToJSON)),
+        'openRate': value['openRate'],
         'code': value['code'],
         'redeemed': value['redeemed'],
     };
