@@ -133,7 +133,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns immutable labor adjustment history for a recorded entry, newest first. Use this tool to review how labor hours changed; do not use the labor-entry list when audit details are required. Preconditions: the entry belongs to the named workorder. Required inputs: workorderId and entryId UUID path parameters. No events are emitted. Returns 403 when the caller is outside the workorder\'s location reach and 404 when the labor entry does not belong to the workorder; otherwise returns 200 with adjustment history.
+     * Returns immutable labor adjustment history for a recorded entry, newest first. Use this tool to review how labor hours changed; do not use the labor-entry list when audit details are required. Preconditions: the entry belongs to the named workorder. Required inputs: workorderId and entryId UUID path parameters. Emits a WORKORDER_LABOR_ADJUSTMENT_LIST view event; no labor state changes. Returns 403 when the caller is outside the workorder\'s location reach and 404 when the labor entry does not belong to the workorder; otherwise returns 200 with adjustment history.
      * Get labor adjustment history
      */
     async getLaborAdjustmentsRaw(requestParameters: GetLaborAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderLaborAdjustmentResponse>>> {
@@ -174,7 +174,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns immutable labor adjustment history for a recorded entry, newest first. Use this tool to review how labor hours changed; do not use the labor-entry list when audit details are required. Preconditions: the entry belongs to the named workorder. Required inputs: workorderId and entryId UUID path parameters. No events are emitted. Returns 403 when the caller is outside the workorder\'s location reach and 404 when the labor entry does not belong to the workorder; otherwise returns 200 with adjustment history.
+     * Returns immutable labor adjustment history for a recorded entry, newest first. Use this tool to review how labor hours changed; do not use the labor-entry list when audit details are required. Preconditions: the entry belongs to the named workorder. Required inputs: workorderId and entryId UUID path parameters. Emits a WORKORDER_LABOR_ADJUSTMENT_LIST view event; no labor state changes. Returns 403 when the caller is outside the workorder\'s location reach and 404 when the labor entry does not belong to the workorder; otherwise returns 200 with adjustment history.
      * Get labor adjustment history
      */
     async getLaborAdjustments(requestParameters: GetLaborAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderLaborAdjustmentResponse>> {

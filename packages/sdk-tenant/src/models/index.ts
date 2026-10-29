@@ -16,6 +16,8 @@ export * from './ReadingTierCreateRequest';
 export * from './ReadingTierResponse';
 export * from './ReadingTierUpdateRequest';
 export * from './SuggestedAlternative';
+export * from './TaxProviderBindingRequest';
+export * from './TaxProviderBindingResponse';
 export * from './TenantCreateRequest';
 export * from './TenantReEmitResponse';
 export * from './TenantResponse';
