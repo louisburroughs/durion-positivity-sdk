@@ -32,6 +32,18 @@ export interface VehicleBulkIngestRecord {
      */
     description: string;
     /**
+     * Emissions test due date
+     * @type {Date}
+     * @memberof VehicleBulkIngestRecord
+     */
+    emissionsDueOn?: Date;
+    /**
+     * State inspection due date
+     * @type {Date}
+     * @memberof VehicleBulkIngestRecord
+     */
+    inspectionDueOn?: Date;
+    /**
      * License plate number
      * @type {string}
      * @memberof VehicleBulkIngestRecord
@@ -55,6 +67,12 @@ export interface VehicleBulkIngestRecord {
      * @memberof VehicleBulkIngestRecord
      */
     model?: string;
+    /**
+     * Registration renewal due date
+     * @type {Date}
+     * @memberof VehicleBulkIngestRecord
+     */
+    registrationDueOn?: Date;
     /**
      * Trim level of the vehicle
      * @type {string}
@@ -104,10 +122,13 @@ export function VehicleBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimina
         
         'accountId': json['accountId'],
         'description': json['description'],
+        'emissionsDueOn': json['emissionsDueOn'] == null ? undefined : (new Date(json['emissionsDueOn'])),
+        'inspectionDueOn': json['inspectionDueOn'] == null ? undefined : (new Date(json['inspectionDueOn'])),
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
+        'registrationDueOn': json['registrationDueOn'] == null ? undefined : (new Date(json['registrationDueOn'])),
         'trim': json['trim'] == null ? undefined : json['trim'],
         'unitNumber': json['unitNumber'],
         'vin': json['vin'],
@@ -123,10 +144,13 @@ export function VehicleBulkIngestRecordToJSON(value?: VehicleBulkIngestRecord | 
         
         'accountId': value['accountId'],
         'description': value['description'],
+        'emissionsDueOn': value['emissionsDueOn'] == null ? undefined : ((value['emissionsDueOn']).toISOString().substring(0,10)),
+        'inspectionDueOn': value['inspectionDueOn'] == null ? undefined : ((value['inspectionDueOn']).toISOString().substring(0,10)),
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],
         'make': value['make'],
         'model': value['model'],
+        'registrationDueOn': value['registrationDueOn'] == null ? undefined : ((value['registrationDueOn']).toISOString().substring(0,10)),
         'trim': value['trim'],
         'unitNumber': value['unitNumber'],
         'vin': value['vin'],

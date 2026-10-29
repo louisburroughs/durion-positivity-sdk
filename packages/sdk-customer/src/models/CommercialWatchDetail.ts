@@ -19,6 +19,12 @@ import {
     CommercialWatchCreditDetailFromJSONTyped,
     CommercialWatchCreditDetailToJSON,
 } from './CommercialWatchCreditDetail';
+import type { CommercialWatchInspectionsDueDetail } from './CommercialWatchInspectionsDueDetail';
+import {
+    CommercialWatchInspectionsDueDetailFromJSON,
+    CommercialWatchInspectionsDueDetailFromJSONTyped,
+    CommercialWatchInspectionsDueDetailToJSON,
+} from './CommercialWatchInspectionsDueDetail';
 import type { CommercialWatchLapsedDetail } from './CommercialWatchLapsedDetail';
 import {
     CommercialWatchLapsedDetailFromJSON,
@@ -38,6 +44,12 @@ import {
  * @interface CommercialWatchDetail
  */
 export interface CommercialWatchDetail {
+    /**
+     * 
+     * @type {CommercialWatchInspectionsDueDetail}
+     * @memberof CommercialWatchDetail
+     */
+    inspectionsDue?: CommercialWatchInspectionsDueDetail;
     /**
      * 
      * @type {CommercialWatchLapsedDetail}
@@ -75,6 +87,7 @@ export function CommercialWatchDetailFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
+        'inspectionsDue': json['inspectionsDue'] == null ? undefined : CommercialWatchInspectionsDueDetailFromJSON(json['inspectionsDue']),
         'lapsed': json['lapsed'] == null ? undefined : CommercialWatchLapsedDetailFromJSON(json['lapsed']),
         'overCreditLimit': json['overCreditLimit'] == null ? undefined : CommercialWatchCreditDetailFromJSON(json['overCreditLimit']),
         'spendDeclining': json['spendDeclining'] == null ? undefined : CommercialWatchSpendDetailFromJSON(json['spendDeclining']),
@@ -87,6 +100,7 @@ export function CommercialWatchDetailToJSON(value?: CommercialWatchDetail | null
     }
     return {
         
+        'inspectionsDue': CommercialWatchInspectionsDueDetailToJSON(value['inspectionsDue']),
         'lapsed': CommercialWatchLapsedDetailToJSON(value['lapsed']),
         'overCreditLimit': CommercialWatchCreditDetailToJSON(value['overCreditLimit']),
         'spendDeclining': CommercialWatchSpendDetailToJSON(value['spendDeclining']),
