@@ -19,6 +19,7 @@ export * from './CloseFollowUpTaskRequest';
 export * from './CommercialBulkIngestRecord';
 export * from './CommercialWatchCreditDetail';
 export * from './CommercialWatchDetail';
+export * from './CommercialWatchInspectionsDueDetail';
 export * from './CommercialWatchItem';
 export * from './CommercialWatchLapsedDetail';
 export * from './CommercialWatchResponse';

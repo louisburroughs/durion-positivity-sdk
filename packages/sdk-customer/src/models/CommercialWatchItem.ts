@@ -63,7 +63,7 @@ export interface CommercialWatchItem {
      */
     partyId: string;
     /**
-     * The most urgent reason, by priority OVER_CREDIT_LIMIT > AGREEMENT_RENEWAL > INSPECTIONS_DUE > SPEND_DECLINING > LAPSED. AGREEMENT_RENEWAL and INSPECTIONS_DUE are not emitted until their sources exist (#2825, #2826)
+     * The most urgent reason, by priority OVER_CREDIT_LIMIT > AGREEMENT_RENEWAL > INSPECTIONS_DUE > SPEND_DECLINING > LAPSED. AGREEMENT_RENEWAL is not emitted until its source exists (#2825)
      * @type {string}
      * @memberof CommercialWatchItem
      */
