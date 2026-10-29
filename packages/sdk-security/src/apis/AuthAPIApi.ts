@@ -22,6 +22,9 @@ import type {
   SelfRegistrationRequest,
   SelfRegistrationResponse,
   TenantSearchResponse,
+  TenantSignupRequest,
+  TenantSignupResponse,
+  TenantSignupStatusResponse,
   TokenPairResponse,
 } from '../models/index';
 import {
@@ -39,6 +42,12 @@ import {
     SelfRegistrationResponseToJSON,
     TenantSearchResponseFromJSON,
     TenantSearchResponseToJSON,
+    TenantSignupRequestFromJSON,
+    TenantSignupRequestToJSON,
+    TenantSignupResponseFromJSON,
+    TenantSignupResponseToJSON,
+    TenantSignupStatusResponseFromJSON,
+    TenantSignupStatusResponseToJSON,
     TokenPairResponseFromJSON,
     TokenPairResponseToJSON,
 } from '../models/index';
@@ -52,8 +61,16 @@ export interface ActivateAccountWithStarterPasswordRequest {
     xTenantSlug?: string;
 }
 
+export interface GetTenantSignupRequest {
+    signupId: string;
+}
+
 export interface LoginUserRequest {
     loginRequest: LoginRequest;
+}
+
+export interface RegisterTenantRequest {
+    tenantSignupRequest: TenantSignupRequest;
 }
 
 export interface SearchTenantsRequest {
@@ -148,6 +165,41 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Answers the signup\'s lifecycle status (PENDING, ACTIVE or FAILED), its id and its slug, and nothing else: it never says whether a slug or organization name exists, and a FAILED row carries no failure code — that code went to the request that failed. Use this tool on the signup page to learn when provisioning has completed and the person can sign in; do not use it to read the tenant, which is getTenant, or to poll login. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED). Required inputs: signupId (UUID) as a path parameter. Emits a SECURITY_AUTH_REGISTER_TENANT_STATUS event. Returns 200 with the status and slug; 404 TENANT_SIGNUP_NOT_FOUND for an unknown id. 
+     * Read a Self-Service Signup\'s Status
+     */
+    async getTenantSignupRaw(requestParameters: GetTenantSignupRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TenantSignupStatusResponse>> {
+        if (requestParameters['signupId'] == null) {
+            throw new runtime.RequiredError(
+                'signupId',
+                'Required parameter "signupId" was null or undefined when calling getTenantSignup().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/auth/register-tenant/{signupId}`.replace(`{${"signupId"}}`, encodeURIComponent(String(requestParameters['signupId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TenantSignupStatusResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Answers the signup\'s lifecycle status (PENDING, ACTIVE or FAILED), its id and its slug, and nothing else: it never says whether a slug or organization name exists, and a FAILED row carries no failure code — that code went to the request that failed. Use this tool on the signup page to learn when provisioning has completed and the person can sign in; do not use it to read the tenant, which is getTenant, or to poll login. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED). Required inputs: signupId (UUID) as a path parameter. Emits a SECURITY_AUTH_REGISTER_TENANT_STATUS event. Returns 200 with the status and slug; 404 TENANT_SIGNUP_NOT_FOUND for an unknown id. 
+     * Read a Self-Service Signup\'s Status
+     */
+    async getTenantSignup(requestParameters: GetTenantSignupRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TenantSignupStatusResponse> {
+        const response = await this.getTenantSignupRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Authenticates a user with username and password and returns a JWT access token (1-hour) and refresh token (7-day) carrying uid, roles, perm_bits, and perm_ver claims. Use this tool when a person signs in with credentials; do not use refreshTokenPair, which exchanges an existing refresh token, and do not use issueInternalToken, which mints tokens for trusted internal callers without a password. Preconditions: the user account must exist, be enabled, non-expired, hold unexpired credentials, and not be inside an active failed-login lockout window. Required inputs: username and password, both non-blank. Emits a SECURITY_AUTH_LOGIN event, resets the failed-attempt counter on success, and persists the issued token pair for later validation and revocation. Returns 401 with code ACCOUNT_LOCKED while the lockout window is active, INVALID_CREDENTIALS on a bad password, and ACCOUNT_DISABLED, ACCOUNT_EXPIRED, or CREDENTIALS_EXPIRED for the matching account states; and 403 with USER_HAS_NO_ROLES when the credentials are valid but the account currently has no roles assigned. 
      * Authenticate User and Issue Tokens
      */
@@ -182,6 +234,44 @@ export class AuthAPIApi extends runtime.BaseAPI {
      */
     async loginUser(requestParameters: LoginUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
         const response = await this.loginUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates the customer account, the tenant in PENDING and the person\'s own administrator login in one anonymous request: the password chosen here is hashed before anything is written, stored only until provisioning applies it to the ADMIN user, and never carried on an event. Use this tool when a person starts a new business on Durion with no account yet; do not use it to add a tenant to an existing account, which is an operator action (createTenant), and do not use selfRegisterUser, which creates a customer account inside an existing tenant. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED before any validation), the signup secret must be configured, the slug and the account\'s legal name must be free, and the locale, currency and country must be valid. Required inputs: organizationName, slug, locale, functionalCurrency, homeCountry, firstName, lastName, email and password; idempotencyKey is optional and replays the stored response instead of creating a second account and tenant. Emits a SECURITY_AUTH_REGISTER_TENANT event; on success the tenant is PENDING until provisioning completes, and its status is read with getTenantSignup. Returns 202 with the signup id, the tenant id and status PENDING; 400 VALIDATION_ERROR with fieldErrors; 404 TENANT_SIGNUP_DISABLED; 409 TENANT_SLUG_TAKEN, ACCOUNT_LEGAL_NAME_TAKEN or IDEMPOTENCY_KEY_REUSED; 503 TENANT_SIGNUP_UNAVAILABLE when pos-tenant cannot create the tenant, which is retryable with a new idempotency key. 
+     * Create a Tenant and Its First Administrator from a Self-Service Signup
+     */
+    async registerTenantRaw(requestParameters: RegisterTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TenantSignupResponse>> {
+        if (requestParameters['tenantSignupRequest'] == null) {
+            throw new runtime.RequiredError(
+                'tenantSignupRequest',
+                'Required parameter "tenantSignupRequest" was null or undefined when calling registerTenant().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/v1/auth/register-tenant`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TenantSignupRequestToJSON(requestParameters['tenantSignupRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TenantSignupResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates the customer account, the tenant in PENDING and the person\'s own administrator login in one anonymous request: the password chosen here is hashed before anything is written, stored only until provisioning applies it to the ADMIN user, and never carried on an event. Use this tool when a person starts a new business on Durion with no account yet; do not use it to add a tenant to an existing account, which is an operator action (createTenant), and do not use selfRegisterUser, which creates a customer account inside an existing tenant. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED before any validation), the signup secret must be configured, the slug and the account\'s legal name must be free, and the locale, currency and country must be valid. Required inputs: organizationName, slug, locale, functionalCurrency, homeCountry, firstName, lastName, email and password; idempotencyKey is optional and replays the stored response instead of creating a second account and tenant. Emits a SECURITY_AUTH_REGISTER_TENANT event; on success the tenant is PENDING until provisioning completes, and its status is read with getTenantSignup. Returns 202 with the signup id, the tenant id and status PENDING; 400 VALIDATION_ERROR with fieldErrors; 404 TENANT_SIGNUP_DISABLED; 409 TENANT_SLUG_TAKEN, ACCOUNT_LEGAL_NAME_TAKEN or IDEMPOTENCY_KEY_REUSED; 503 TENANT_SIGNUP_UNAVAILABLE when pos-tenant cannot create the tenant, which is retryable with a new idempotency key. 
+     * Create a Tenant and Its First Administrator from a Self-Service Signup
+     */
+    async registerTenant(requestParameters: RegisterTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TenantSignupResponse> {
+        const response = await this.registerTenantRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
