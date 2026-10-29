@@ -90,6 +90,7 @@ export * from './SupplierPriceEntryDto';
 export * from './SupplierPriceImportStatusDto';
 export * from './TreadDesignCandidateDto';
 export * from './TreadDesignDto';
+export * from './TreadDesignImageAltTextDto';
 export * from './TreadDesignImageDto';
 export * from './TreadDesignResolveRequest';
 export * from './TreadDesignTextDto';

@@ -13,12 +13,25 @@
  */
 
 import { mapValues } from '../runtime';
+import type { TreadDesignImageAltTextDto } from './TreadDesignImageAltTextDto';
+import {
+    TreadDesignImageAltTextDtoFromJSON,
+    TreadDesignImageAltTextDtoFromJSONTyped,
+    TreadDesignImageAltTextDtoToJSON,
+} from './TreadDesignImageAltTextDto';
+
 /**
  * Vendor-supplied artwork reference.
  * @export
  * @interface TreadDesignImageDto
  */
 export interface TreadDesignImageDto {
+    /**
+     * Alt text per language, derived from the vendor's per-language product name and a localized label for imageType. A language is absent when the design has no product name in it; empty for an unresolved image. Never an empty string.
+     * @type {Array<TreadDesignImageAltTextDto>}
+     * @memberof TreadDesignImageDto
+     */
+    altTexts?: Array<TreadDesignImageAltTextDto>;
     /**
      * pos-image identifier for the stored bytes; absent when unresolved.
      * @type {number}
@@ -56,6 +69,7 @@ export function TreadDesignImageDtoFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'altTexts': json['altTexts'] == null ? undefined : ((json['altTexts'] as Array<any>).map(TreadDesignImageAltTextDtoFromJSON)),
         'imageId': json['imageId'] == null ? undefined : json['imageId'],
         'imageType': json['imageType'] == null ? undefined : json['imageType'],
         'unresolved': json['unresolved'] == null ? undefined : json['unresolved'],
@@ -68,6 +82,7 @@ export function TreadDesignImageDtoToJSON(value?: TreadDesignImageDto | null): a
     }
     return {
         
+        'altTexts': value['altTexts'] == null ? undefined : ((value['altTexts'] as Array<any>).map(TreadDesignImageAltTextDtoToJSON)),
         'imageId': value['imageId'],
         'imageType': value['imageType'],
         'unresolved': value['unresolved'],

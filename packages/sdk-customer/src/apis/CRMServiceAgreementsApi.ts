@@ -244,7 +244,7 @@ export class CRMServiceAgreementsApi extends runtime.BaseAPI {
      * Lists ACTIVE agreements ending within the requested tenant-wide date window, including overdue agreements. Use this tool for the Customers home renewal watch list; use listServiceAgreements for a party\'s complete history. Preconditions: none; the caller needs crm:agreement:view, and the tenant clock decides which day counts as today. Required inputs: withinDays as a query parameter, defaulting to 60 and accepting 0 through 365; there is no request body. No events are emitted and results are ordered by endDate ascending with party display names resolved in one batch. Returns 400 for an out-of-range window and 403 without crm:agreement:view; do not use it as a general agreement search. 
      * List Agreement Renewals
      */
-    async listServiceAgreementRenewalsRaw(requestParameters: ListServiceAgreementRenewalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAgreementRenewalResponse>> {
+    async listServiceAgreementRenewalsRaw(requestParameters: ListServiceAgreementRenewalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServiceAgreementRenewalResponse>>> {
         const queryParameters: any = {};
 
         if (requestParameters['withinDays'] != null) {
@@ -268,14 +268,14 @@ export class CRMServiceAgreementsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceAgreementRenewalResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceAgreementRenewalResponseFromJSON));
     }
 
     /**
      * Lists ACTIVE agreements ending within the requested tenant-wide date window, including overdue agreements. Use this tool for the Customers home renewal watch list; use listServiceAgreements for a party\'s complete history. Preconditions: none; the caller needs crm:agreement:view, and the tenant clock decides which day counts as today. Required inputs: withinDays as a query parameter, defaulting to 60 and accepting 0 through 365; there is no request body. No events are emitted and results are ordered by endDate ascending with party display names resolved in one batch. Returns 400 for an out-of-range window and 403 without crm:agreement:view; do not use it as a general agreement search. 
      * List Agreement Renewals
      */
-    async listServiceAgreementRenewals(requestParameters: ListServiceAgreementRenewalsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAgreementRenewalResponse> {
+    async listServiceAgreementRenewals(requestParameters: ListServiceAgreementRenewalsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServiceAgreementRenewalResponse>> {
         const response = await this.listServiceAgreementRenewalsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -284,7 +284,7 @@ export class CRMServiceAgreementsApi extends runtime.BaseAPI {
      * Lists service agreements for a commercial party, newest first. Use this tool when reviewing one party\'s agreement history; use listServiceAgreementRenewals for the tenant-wide renewal watch list. Preconditions: partyId must identify a COMMERCIAL party that exists. Required inputs: none beyond the UUID path parameter; the optional status filter accepts DRAFT, ACTIVE, EXPIRED, TERMINATED or RENEWED. No events are emitted and no state changes occur. Returns 404 PARTY_NOT_FOUND for an unknown party, 422 for a person party, and 403 when crm:agreement:view is absent; do not use this endpoint to create or change an agreement. 
      * List Party Service Agreements
      */
-    async listServiceAgreementsRaw(requestParameters: ListServiceAgreementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAgreementResponse>> {
+    async listServiceAgreementsRaw(requestParameters: ListServiceAgreementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServiceAgreementResponse>>> {
         if (requestParameters['partyId'] == null) {
             throw new runtime.RequiredError(
                 'partyId',
@@ -315,14 +315,14 @@ export class CRMServiceAgreementsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceAgreementResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceAgreementResponseFromJSON));
     }
 
     /**
      * Lists service agreements for a commercial party, newest first. Use this tool when reviewing one party\'s agreement history; use listServiceAgreementRenewals for the tenant-wide renewal watch list. Preconditions: partyId must identify a COMMERCIAL party that exists. Required inputs: none beyond the UUID path parameter; the optional status filter accepts DRAFT, ACTIVE, EXPIRED, TERMINATED or RENEWED. No events are emitted and no state changes occur. Returns 404 PARTY_NOT_FOUND for an unknown party, 422 for a person party, and 403 when crm:agreement:view is absent; do not use this endpoint to create or change an agreement. 
      * List Party Service Agreements
      */
-    async listServiceAgreements(requestParameters: ListServiceAgreementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAgreementResponse> {
+    async listServiceAgreements(requestParameters: ListServiceAgreementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServiceAgreementResponse>> {
         const response = await this.listServiceAgreementsRaw(requestParameters, initOverrides);
         return await response.value();
     }
