@@ -16,8 +16,6 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  TaxProviderBindingRequest,
-  TaxProviderBindingResponse,
   TenantCreateRequest,
   TenantReEmitResponse,
   TenantResponse,
@@ -26,10 +24,6 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    TaxProviderBindingRequestFromJSON,
-    TaxProviderBindingRequestToJSON,
-    TaxProviderBindingResponseFromJSON,
-    TaxProviderBindingResponseToJSON,
     TenantCreateRequestFromJSON,
     TenantCreateRequestToJSON,
     TenantReEmitResponseFromJSON,
@@ -58,11 +52,6 @@ export interface ListTenantsRequest {
 
 export interface ReactivateTenantRequest {
     id: string;
-}
-
-export interface SetTenantTaxProviderBindingRequest {
-    tenantId: string;
-    taxProviderBindingRequest: TaxProviderBindingRequest;
 }
 
 export interface SuspendTenantRequest {
@@ -327,59 +316,6 @@ export class PlatformTenantAPIApi extends runtime.BaseAPI {
      */
     async reactivateTenant(requestParameters: ReactivateTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TenantResponse> {
         const response = await this.reactivateTenantRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Sets the plug-in that prices one tenant\'s documents in one country from a date in pos-tax\'s registry, through this module\'s operator front door (ADR-0071 step 1, #2629); the binding that begins on the same day is replaced, and the change is recorded in pos-tax\'s binding history under the operator\'s id. Use this tool as the platform operator to bind a tenant to a plug-in; do not use it to price a document, which reads the binding in pos-tax, and do not expect a tax:* authority, which does not exist. Preconditions: the caller is bound to the platform tenant (403 otherwise) and holds platform:tenant_tax_provider:manage. Required inputs: tenantId (path), countryCode, providerId, effectiveFrom and requestId; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The target tenant comes only from the path and the actor only from the authenticated principal; neither is read from the body. Emits a TENANT_TAX_PROVIDER_BINDING_SET event and returns 200 with the binding pos-tax stored, also for a replayed requestId. pos-tax\'s 400 VALIDATION_ERROR, 409 TAX_PROVIDER_BINDING_OVERLAP or IDEMPOTENCY_CONFLICT and 422 TAX_PROVIDER_NOT_REGISTERED are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached; nothing is stored here. 
-     * Set a Tenant\'s Tax-Provider Binding
-     */
-    async setTenantTaxProviderBindingRaw(requestParameters: SetTenantTaxProviderBindingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxProviderBindingResponse>> {
-        if (requestParameters['tenantId'] == null) {
-            throw new runtime.RequiredError(
-                'tenantId',
-                'Required parameter "tenantId" was null or undefined when calling setTenantTaxProviderBinding().'
-            );
-        }
-
-        if (requestParameters['taxProviderBindingRequest'] == null) {
-            throw new runtime.RequiredError(
-                'taxProviderBindingRequest',
-                'Required parameter "taxProviderBindingRequest" was null or undefined when calling setTenantTaxProviderBinding().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["platform:tenant_tax_provider:manage"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/platform/tenants/{tenantId}/tax-provider-bindings`.replace(`{${"tenantId"}}`, encodeURIComponent(String(requestParameters['tenantId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: TaxProviderBindingRequestToJSON(requestParameters['taxProviderBindingRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => TaxProviderBindingResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Sets the plug-in that prices one tenant\'s documents in one country from a date in pos-tax\'s registry, through this module\'s operator front door (ADR-0071 step 1, #2629); the binding that begins on the same day is replaced, and the change is recorded in pos-tax\'s binding history under the operator\'s id. Use this tool as the platform operator to bind a tenant to a plug-in; do not use it to price a document, which reads the binding in pos-tax, and do not expect a tax:* authority, which does not exist. Preconditions: the caller is bound to the platform tenant (403 otherwise) and holds platform:tenant_tax_provider:manage. Required inputs: tenantId (path), countryCode, providerId, effectiveFrom and requestId; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The target tenant comes only from the path and the actor only from the authenticated principal; neither is read from the body. Emits a TENANT_TAX_PROVIDER_BINDING_SET event and returns 200 with the binding pos-tax stored, also for a replayed requestId. pos-tax\'s 400 VALIDATION_ERROR, 409 TAX_PROVIDER_BINDING_OVERLAP or IDEMPOTENCY_CONFLICT and 422 TAX_PROVIDER_NOT_REGISTERED are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached; nothing is stored here. 
-     * Set a Tenant\'s Tax-Provider Binding
-     */
-    async setTenantTaxProviderBinding(requestParameters: SetTenantTaxProviderBindingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxProviderBindingResponse> {
-        const response = await this.setTenantTaxProviderBindingRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
