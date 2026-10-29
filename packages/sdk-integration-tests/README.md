@@ -25,7 +25,7 @@ file is the operator's guide.
 | `c-workorder-execution` | Approve → start → timers → assignment → pick → change request → complete → invoice → payment |
 | `d-receiving` | PO → ASN → receipt → availability → putaway, and workorder-directed receiving |
 | `e-cycle-count` | Plan → generate tasks → count → recount → adjustment → approve → post, in an isolated bin |
-| `f-time-reporting` | Labor sessions and timers, the payroll clock, and who decides on reported time |
+| `f-time-reporting` | Labor sessions and timers, supervisor-only labor adjustment with its audit trail (and its arrival in pos-people's totals), the payroll clock, and attendance approval |
 | `h-service-position` | A workorder's bay / mobile unit / HOLD position and its technician: one open workorder per bay or unit, HOLD unbounded, the two assignments independent |
 
 Each of these has an accelerated copy under `src/suites-accelerated`
