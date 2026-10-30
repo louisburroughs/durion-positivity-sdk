@@ -150,6 +150,24 @@ describe('InventoryBootstrap idempotency check', () => {
     expect(purchaseOrdersApi.createPurchaseOrder).toHaveBeenCalledTimes(1);
   });
 
+  it('retries the ASN while the purchase order is still replicating (503 since backend #1994)', async () => {
+    mockPurchaseOrderPage([]);
+    const clients = mockClients();
+    clients.inventoryAvailabilityApi.getAvailabilityBySku.mockImplementation(notFound);
+    const replicationPending = Object.assign(new Error('Response returned an error code'), {
+      response: new Response('{"code":"PURCHASE_ORDER_REPLICATION_PENDING"}', { status: 503 }),
+    });
+    clients.asnApi.createAsn
+      .mockRejectedValueOnce(replicationPending)
+      .mockResolvedValueOnce({ asnId: 'asn-1' });
+
+    const { result, asnApi } = await run(clients);
+
+    expect(result.created).toEqual([PRODUCT_NAME]);
+    expect(asnApi.createAsn).toHaveBeenCalledTimes(2);
+    expect(asnApi.createGoodsReceipt).toHaveBeenCalledTimes(1);
+  });
+
   describe('when availability cannot be read', () => {
     const unavailable = () =>
       Promise.reject(Object.assign(new Error('Bad Gateway'), { response: { status: 502 } }));
