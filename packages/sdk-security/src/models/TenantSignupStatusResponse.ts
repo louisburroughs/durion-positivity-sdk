@@ -32,7 +32,7 @@ export interface TenantSignupStatusResponse {
      */
     slug: string;
     /**
-     * PENDING until provisioning applies the administrator's credential, then ACTIVE; FAILED when pos-tenant refused the create or could not be reached
+     * PENDING until provisioning applies the administrator's credential — or while an unknown pos-tenant outcome waits for its tenant.created fact; then ACTIVE; FAILED when pos-tenant refused the create, never received it, or the signup expired
      * @type {string}
      * @memberof TenantSignupStatusResponse
      */
