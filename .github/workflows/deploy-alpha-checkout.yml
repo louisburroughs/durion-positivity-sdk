@@ -14,6 +14,17 @@ name: Build, Smoke Test and Deploy to Alpha
 #
 # So the deployment step is a pull and a build on the host, over SSM. Nothing is
 # packaged, because nothing consumes a package.
+#
+# The repository is private, so the host cannot fetch it anonymously: it has no
+# GitHub credential of its own, and when the repository was made private every
+# deploy failed on `git fetch` with "could not read Username for
+# 'https://github.com'" — git asking a terminal that is not there. The fetch is
+# therefore authenticated with this run's own `GITHUB_TOKEN`, read-only on this
+# repository and dead the moment the job ends, passed for that one git command
+# only and never written to the host's config. It does travel in the SSM
+# command text, which SSM keeps for 30 days; that is accepted because the token
+# is worthless by the time anyone could read it there, and it is the reason
+# nothing long-lived (a PAT, a deploy key) is ever sent the same way.
 on:
   push:
     branches: [main]
@@ -141,10 +152,17 @@ jobs:
         id: deploy
         env:
           INSTANCE_ID: ${{ steps.host.outputs.instance_id }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          # Three things this has to get right, each of which bit the first
+          # The fetch credential, in the form actions/checkout sends it: a basic
+          # auth header for the `x-access-token` user. Masked because the log
+          # scrubber knows the token, not its base64 form.
+          AUTH_B64="$(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)"
+          echo "::add-mask::${AUTH_B64}"
+
+          # Four things this has to get right, each of which bit an earlier
           # version of it:
           #
           #   - It deploys *this* commit. `git pull` would fast-forward to
@@ -158,15 +176,26 @@ jobs:
           #     `npm ci` leaves a root-owned node_modules in a checkout whose
           #     whole purpose is to be run by hand from that account. `-l` because
           #     node is on ec2-user's profile PATH, not root's.
+          #   - It brings its own credential. The host has none for GitHub and the
+          #     repository is private, so a bare `git fetch origin` hangs on a
+          #     username prompt and dies. The token rides in a per-command
+          #     `http.extraheader` (`-c`, so nothing lands in the checkout's
+          #     config) on an explicit URL, so it is sent to github.com and
+          #     nowhere else whatever `origin` on the host points at; the refspec
+          #     still updates `origin/main` for whoever reads it by hand next.
+          #     `GIT_TERMINAL_PROMPT=0` turns any future credential failure into
+          #     an immediate "Authentication failed" instead of a prompt to
+          #     nobody.
           #
-          # The heredoc is unquoted so the sha and the path are fixed here rather
-          # than resolved on the host; there is deliberately no `$` left inside.
+          # The heredoc is unquoted so the sha, the path, the repository and the
+          # credential are fixed here rather than resolved on the host; there is
+          # deliberately no `$` left inside.
           read -r -d '' SCRIPT <<REMOTE || true
           set -euo pipefail
           sudo -u ec2-user -H bash -lc '
             set -euo pipefail
             cd ${CHECKOUT_DIR}
-            git fetch origin main
+            GIT_TERMINAL_PROMPT=0 git -c http.extraheader="AUTHORIZATION: basic ${AUTH_B64}" fetch https://github.com/${GITHUB_REPOSITORY}.git +refs/heads/main:refs/remotes/origin/main
             git checkout main
             git merge --ff-only ${GITHUB_SHA}
             npm ci
