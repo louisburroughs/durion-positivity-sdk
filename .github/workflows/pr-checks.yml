@@ -18,9 +18,9 @@ on:
     types: [opened, synchronize, reopened]
 
 # Read the repository and nothing else. `permissions: {}` would be tighter
-# still, but it drops the `contents` scope actions/checkout fetches with —
-# which survives here only because the repository is public. Nothing in this
-# job writes through the API.
+# still, but it drops the `contents` scope actions/checkout fetches with, and
+# the repository is private, so the checkout needs it. Nothing in this job
+# writes through the API.
 permissions:
   contents: read
 
