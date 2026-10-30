@@ -14,10 +14,11 @@ import {
   type CreatedCustomer,
   type PromotedWorkorder,
 } from '../harness/builders';
-import { call, expectHttpError, isHttpStatus, retryWhileReplicating } from '../harness/http';
+import { call, expectApiError, expectHttpError, isHttpStatus, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
+import { waitFor } from '../harness/waitFor';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
 /** Pay periods are per tenant; scoping the list keeps F10 off any other tenant's periods. */
@@ -25,36 +26,67 @@ const TENANT_ID = ItestConfig.fromEnv().tenant.id;
 const itInRoleMode = ROLE_MODE ? it : it.skip;
 
 /**
- * Suite F — reporting time and deciding on it, across the two clocks the
- * backend keeps.
+ * Reads one claim out of a JWT without verifying it. Not a security decision -
+ * the backend verifies. The suite only needs to know which user id the gateway
+ * forwards as X-User-Id, which is the token's `uid` claim, so it can check that
+ * an adjustment record names the supervisor who made it.
+ */
+const jwtClaim = (token: string, name: string): string => {
+  const payload = token.split('.')[1] ?? '';
+  const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+  const claims = JSON.parse(Buffer.from(padded, 'base64url').toString('utf8')) as Record<string, unknown>;
+  const value = claims[name];
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`token carries no "${name}" claim`);
+  }
+  return value;
+};
+
+/**
+ * Suite F — reporting time across the two clocks the backend keeps, and what
+ * each one lets a supervisor decide.
  *
  * They are genuinely different things and the suite treats them separately.
- * pos-workorder's labor entries bill a technician's time to one service line on
- * one workorder; pos-people's work sessions are the payroll clock — clock in,
- * break, clock out, submit — and know nothing about workorders. F1-F7 cover the
- * first, F8-F9 the second.
+ * pos-workorder's labor entries are time on task (ADR-0059): they record a
+ * technician's time against one service line on one workorder, and pos-people
+ * totals them per employee from the job-time facts pos-workorder publishes.
+ * pos-people's work sessions are the payroll clock - clock in, break, clock out,
+ * submit - and know nothing about workorders. F1-F7 cover the first, F8-F9 the
+ * second.
  *
- * **A gap the approval tests are shaped around.** Nothing in either service
- * creates a decidable time entry. pos-workorder's `time_entry` table has an
- * approve and a reject endpoint and no writer at all; pos-people's
- * `timekeeping_entry` is fed by `TimekeepingIngestionService.ingestWorkSession`,
- * whose `WorkSessionCompletedEvent` is published nowhere outside that service's
- * own unit tests — submitting a work session does not raise it. So no call this
+ * **Time on task is record-keeping, not an approval workflow** (backend #2282).
+ * pos-workorder has no per-entry approve or reject and none is wanted. What it
+ * has is a supervisor-only correction with an audit trail: only SHOP_MANAGER,
+ * LOCATION_MANAGER, MANAGER, GENERAL_MANAGER and ADMIN hold
+ * `workorder:labor:adjust`; an entry can be adjusted only once it is stopped,
+ * which is when its `workorder.job-time.recorded.v1` is sent; every adjustment
+ * writes an immutable record and sends `workorder.labor-adjustment.recorded.v1`
+ * for pos-people to apply to its totals; and adjusting on a closed workorder
+ * succeeds with a `WORKORDER_CLOSED` warning. F2b, F5, F6, F6b, F7b and F7c pin
+ * each of those in turn.
+ *
+ * **Attendance approval is pos-people's, and a gap shapes its tests.** Nothing
+ * creates a decidable attendance entry: `timekeeping_entry` is fed by
+ * `TimekeepingIngestionService.ingestWorkSession`, whose
+ * `WorkSessionCompletedEvent` is published nowhere outside that service's own
+ * unit tests - submitting a work session does not raise it. So no call this
  * suite can make will ever move an entry to APPROVED, and a test that waited for
- * one would hang rather than report the cause.
- *
- * F10-F12 therefore assert what *is* reachable and stays true either way: who
- * the decision belongs to, and the documented shapes of the batch contract —
- * an unknown entry comes back as a per-entry failure rather than a failed
- * batch, a rejection with no reason is refused outright. When the ingestion
- * bridge lands, those tests keep passing and a positive approval belongs
- * alongside them.
+ * one would hang rather than report the cause. F10-F12 therefore assert what
+ * *is* reachable and stays true either way: who the decision belongs to, and the
+ * documented shapes of the batch contract - an unknown entry comes back as a
+ * per-entry failure rather than a failed batch, a rejection with no reason is
+ * refused outright. When the ingestion bridge lands, those tests keep passing
+ * and a positive approval belongs alongside them.
  */
-describe('Suite F — time reporting and approval', () => {
+describe('Suite F — attendance approval and workorder time on task', () => {
   const LABOR_PRICE = 132.5;
   const ADJUSTED_HOURS = 2.25;
   const BILLABLE_MINUTES = 135;
   const BREAK_MINUTES = 30;
+  /** F7b: what the second labor entry is corrected to, and so what pos-people must add to its totals. */
+  const E2E_HOURS = 1.5;
+  /** F7c: the correction made once the workorder is closed. Distinct from F6's, so it is a change. */
+  const CLOSED_HOURS = 3;
 
   let context: ItestContext;
   let personas: Personas;
@@ -63,6 +95,8 @@ describe('Suite F — time reporting and approval', () => {
   let admin: DomainClients;
   let manager: DomainClients;
   let tech: DomainClients;
+  /** Holds accounting:time:export, which is what reads pos-people's job-time totals (F7b). */
+  let controller: DomainClients;
 
   let customer: CreatedCustomer;
   let promoted: PromotedWorkorder;
@@ -73,6 +107,10 @@ describe('Suite F — time reporting and approval', () => {
   let locationId: string;
 
   let laborEntryId: string;
+  /** The user id behind the manager's token: what an adjustment record must name as its author. */
+  let managerUserId: string;
+  /** Hours F3 recorded, before any correction: the `originalHours` F6b expects on the record. */
+  let stoppedHours: number;
   let workSessionId: string;
 
   /**
@@ -127,6 +165,8 @@ describe('Suite F — time reporting and approval', () => {
     admin = personas.as('admin');
     manager = personas.as('manager');
     tech = personas.as('tech');
+    controller = personas.as('controller');
+    managerUserId = jwtClaim(manager.auth.getToken(), 'uid');
     ctx = {
       runId: context.runId,
       // Seeded per suite, not per run: a shared seed makes every suite generate
@@ -171,7 +211,7 @@ describe('Suite F — time reporting and approval', () => {
     );
     // Work is assigned before it starts: the technician above and a bay (backend
     // #2011). The run's own bay, since a shared one may hold another open
-    // workorder. F never completes its workorder, so it stays on the bay.
+    // workorder. F7c completes the workorder, which frees the bay again.
     const bay = await call('createBay', () =>
       admin.location.bayApi.createBay({
         locationId,
@@ -241,6 +281,26 @@ describe('Suite F — time reporting and approval', () => {
     console.log(`[F2] a concurrent labor session on one service is rejected with HTTP ${status}`);
   }, 120_000);
 
+  // An entry is adjustable only once it is recorded, and "recorded" means the
+  // clock has stopped: that is the moment pos-workorder writes the entry's
+  // workorder.job-time.recorded.v1 to its outbox (backend #2292, #2294), so a
+  // correction can never be ordered ahead of the fact it corrects.
+  it('F2b — a running entry cannot be adjusted: stop it first', async () => {
+    const refused = await expectApiError(
+      manager.workorder.workorderLaborAPIApi.adjustLaborHours({
+        workorderId,
+        entryId: laborEntryId,
+        adjustLaborRequest: {
+          hoursWorked: ADJUSTED_HOURS,
+          adjustmentReason: `Integration test: too early [${context.runId}]`,
+        },
+      }),
+      409,
+      'LABOR_ENTRY_NOT_RECORDED',
+    );
+    console.log(`[F2b] adjusting the open entry refused: ${refused.code} (${refused.message})`);
+  }, 120_000);
+
   it('F3 — stopping the session records the hours worked', async () => {
     // Real elapsed time: hoursWorked is derived from the wall clock, and a stop
     // in the same millisecond as the start proves nothing.
@@ -256,6 +316,7 @@ describe('Suite F — time reporting and approval', () => {
     expect(stopped.endTime).toBeDefined();
     expect(stopped.hoursWorked).toBeDefined();
     expect(Number(stopped.hoursWorked)).toBeGreaterThanOrEqual(0);
+    stoppedHours = Number(stopped.hoursWorked);
   }, 180_000);
 
   it('F4 — the manager can read the labor history the technician recorded', async () => {
@@ -270,9 +331,30 @@ describe('Suite F — time reporting and approval', () => {
     expect(entry?.technicianId).toBe(technicianId);
   }, 120_000);
 
-  it('F5 — the technician adjusts the recorded hours and the adjustment carries its reason', async () => {
-    const adjusted = await call('adjustLaborHours', () =>
+  // Adjusting labor is a supervisor's act (backend #2282, #2293): only
+  // SHOP_MANAGER, LOCATION_MANAGER, MANAGER, GENERAL_MANAGER and ADMIN hold
+  // workorder:labor:adjust. The technician starts and stops the clock
+  // (workorder:labor:add) and reads it back, but never rewrites it - not even
+  // their own entry.
+  itInRoleMode('F5 — the technician cannot adjust the recorded hours', async () => {
+    const status = await expectHttpError(
       tech.workorder.workorderLaborAPIApi.adjustLaborHours({
+        workorderId,
+        entryId: laborEntryId,
+        adjustLaborRequest: {
+          hoursWorked: ADJUSTED_HOURS,
+          adjustmentReason: 'Integration test: should be refused',
+        },
+      }),
+      401,
+      403,
+    );
+    console.log(`[F5] TECHNICIAN refused workorder:labor:adjust with HTTP ${status}`);
+  }, 120_000);
+
+  it('F6 — the manager adjusts the technician\'s hours, and the record names the manager and the reason', async () => {
+    const adjusted = await call('adjustLaborHours', () =>
+      manager.workorder.workorderLaborAPIApi.adjustLaborHours({
         workorderId,
         entryId: laborEntryId,
         adjustLaborRequest: {
@@ -281,31 +363,38 @@ describe('Suite F — time reporting and approval', () => {
         },
       }),
     );
-    console.log(`[F5] hours adjusted to ${adjusted.hoursWorked} (${adjusted.lastAdjustment?.reason})`);
+    console.log(
+      `[F6] hours ${stoppedHours} -> ${adjusted.hoursWorked} by ${adjusted.lastAdjustment?.adjustedByUserId} ` +
+        `(${adjusted.lastAdjustment?.reason})`,
+    );
 
     expect(Number(adjusted.hoursWorked)).toBe(ADJUSTED_HOURS);
-    // The reason rides the immutable adjustment record (backend CAP:139, #2870),
-    // not the entry itself.
+    // The entry holds the current value; the reason and the author ride the
+    // immutable adjustment record (backend #2294), not the entry itself.
     expect(adjusted.lastAdjustment?.reason).toContain(context.runId);
+    expect(adjusted.lastAdjustment?.adjustedByUserId?.toLowerCase()).toBe(managerUserId.toLowerCase());
+    expect(adjusted.lastAdjustment?.technicianId).toBe(technicianId);
+    // The workorder is still open, so there is nothing to warn about yet; F7c
+    // is where WORKORDER_CLOSED appears.
+    expect(adjusted.warnings).toEqual([]);
   }, 120_000);
 
-  // workorder:labor:add is granted to TECHNICIAN and ADMIN only. The manager
-  // reads labor (F4) but does not write it, which is why the correction above
-  // is the technician's to make.
-  itInRoleMode('F6 — the manager cannot rewrite the technician\'s hours', async () => {
-    const status = await expectHttpError(
-      manager.workorder.workorderLaborAPIApi.adjustLaborHours({
-        workorderId,
-        entryId: laborEntryId,
-        adjustLaborRequest: {
-          hoursWorked: 99,
-          adjustmentReason: 'Integration test: should be refused',
-        },
-      }),
-      401,
-      403,
+  it('F6b — the adjustment history is append-only and keeps the original and adjusted hours', async () => {
+    const history = await call('getLaborAdjustments', () =>
+      manager.workorder.workorderLaborAPIApi.getLaborAdjustments({ workorderId, entryId: laborEntryId }),
     );
-    console.log(`[F6] LOCATION_MANAGER refused workorder:labor:add with HTTP ${status}`);
+    console.log(`[F6b] entry ${laborEntryId} adjustments: ${JSON.stringify(history).slice(0, 400)}`);
+
+    // Exactly one: F2b's and F5's refusals wrote nothing, and F6 wrote one row.
+    expect(history).toHaveLength(1);
+    const record = history[0];
+    expect(record.laborEntryId).toBe(laborEntryId);
+    expect(record.workorderId).toBe(workorderId);
+    expect(Number(record.originalHours)).toBe(stoppedHours);
+    expect(Number(record.adjustedHours)).toBe(ADJUSTED_HOURS);
+    expect(record.reason).toContain(context.runId);
+    expect(record.adjustedByUserId?.toLowerCase()).toBe(managerUserId.toLowerCase());
+    expect(record.workorderClosed).toBe(false);
   }, 120_000);
 
   it('F7 — a running timer is visible to its own technician, and job totals report the day', async () => {
@@ -356,6 +445,129 @@ describe('Suite F — time reporting and approval', () => {
     );
     console.log(`[F7] job time totals: ${JSON.stringify(totals).slice(0, 300)}`);
     expect(totals).toBeDefined();
+  }, 240_000);
+
+  /**
+   * The technician's job hours as pos-people reports them for today, read
+   * through the attendance-vs-job-time discrepancy report. Not scoped to a
+   * location: the fact carries the workorder's shop, and the controller's export
+   * permission already bounds what the report returns.
+   */
+  const jobHoursReported = async (): Promise<number> => {
+    const rows = await call('getAttendanceDiscrepancyReport', () =>
+      controller.people.peopleReportsAPIApi.getAttendanceDiscrepancyReport({
+        startDate: isoDate(-1),
+        endDate: isoDate(1),
+        timezone: 'UTC',
+        technicianIds: [technicianId],
+      }),
+    );
+    return rows
+      .filter((row) => row.technicianId.toLowerCase() === technicianId.toLowerCase())
+      .reduce((sum, row) => sum + Number(row.totalJobHours ?? 0), 0);
+  };
+
+  // End to end across the two services (backend #2292, #2294, #2295): a stop
+  // sends workorder.job-time.recorded.v1, pos-people lands it in
+  // ext_workorder_job_time, a supervisor's correction sends
+  // workorder.labor-adjustment.recorded.v1, and pos-people's per-employee totals
+  // move to the adjusted minutes. The read is the discrepancy report, which is
+  // accounting:time:export - the controller's, not the manager's.
+  //
+  // A second labor entry rather than F6's, so this test owns both ends of the
+  // measurement: the baseline is read with this entry stopped and unadjusted,
+  // and the target is that baseline plus the correction. Alpha is shared and
+  // the seeded technician works elsewhere too, so the total is only ever
+  // asserted to have risen by at least the correction, never to equal it.
+  it('F7b — a supervisor\'s correction reaches pos-people\'s job-time totals', async () => {
+    const entry = await call('startLaborSession', () =>
+      tech.workorder.workorderLaborAPIApi.startLaborSession({
+        workorderId,
+        serviceId: serviceItemId,
+        startLaborRequest: {
+          technicianId,
+          notes: `Integration test labor, second entry [${context.runId}]`,
+        },
+      }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1_500));
+    const stopped = await call('stopLaborSession', () =>
+      tech.workorder.workorderLaborAPIApi.stopLaborSession({ workorderId, entryId: entry.id }),
+    );
+    const recordedHours = Number(stopped.hoursWorked);
+    console.log(`[F7b] second entry ${entry.id} recorded ${recordedHours} h`);
+
+    const before = await jobHoursReported();
+    const adjusted = await call('adjustLaborHours', () =>
+      manager.workorder.workorderLaborAPIApi.adjustLaborHours({
+        workorderId,
+        entryId: entry.id,
+        adjustLaborRequest: {
+          hoursWorked: E2E_HOURS,
+          adjustmentReason: `Integration test end-to-end correction [${context.runId}]`,
+        },
+      }),
+    );
+    expect(Number(adjusted.hoursWorked)).toBe(E2E_HOURS);
+
+    // Whether or not the stop's own fact had landed when the baseline was read,
+    // the adjustment replaces those minutes rather than adding to them, so the
+    // floor is the baseline plus the correction less what the stop recorded.
+    const floor = before + E2E_HOURS - recordedHours - 0.01;
+    const after = await waitFor(
+      async () => {
+        const hours = await jobHoursReported();
+        return hours >= floor ? hours : undefined;
+      },
+      { description: `pos-people job hours for ${technicianId} to reach ${floor}`, timeoutMs: 180_000, intervalMs: 5_000 },
+    );
+    console.log(`[F7b] technician job hours reported: ${before} before, ${after} after a ${E2E_HOURS} h correction`);
+    expect(after).toBeGreaterThanOrEqual(floor);
+  }, 300_000);
+
+  // Adjusting is never blocked by workorder status (backend #2282 decision 2):
+  // a correction on a COMPLETED or CANCELLED workorder succeeds, the record is
+  // flagged, and the 200 carries a WORKORDER_CLOSED warning rather than a 409.
+  // This is the last thing the suite does to its workorder, so it closes it for
+  // real - the one service line, then the workorder - which also frees the bay
+  // beforeAll put it on. F's estimate carries one labor line and no parts.
+  it('F7c — adjusting on a completed workorder succeeds with a WORKORDER_CLOSED warning', async () => {
+    const completable = new Set(['OPEN', 'READY_TO_EXECUTE', 'IN_PROGRESS']);
+    const current = await call('getWorkorderDetail', () =>
+      manager.workorder.workorderDetailApi.getWorkorderDetail({ workorderId }),
+    );
+    for (const service of current.services ?? []) {
+      if (!service.id || !completable.has(String(service.status))) continue;
+      await call(`completeServiceItem ${service.id}`, () =>
+        manager.workorder.workOrderAPIApi.completeServiceItem({ workorderId, serviceLineId: service.id as string }),
+      );
+    }
+    const completed = await call('completeWorkorder', () =>
+      manager.workorder.workOrderAPIApi.completeWorkorder({
+        workorderId,
+        completeWorkorderRequest: { completionNotes: `Completed by integration test [${context.runId}]` },
+      }),
+    );
+    console.log(`[F7c] workorder ${workorderId}: ${completed.previousStatus} -> ${completed.currentStatus}`);
+    expect(String(completed.currentStatus).toUpperCase()).toContain('COMPLET');
+
+    const adjusted = await call('adjustLaborHours', () =>
+      manager.workorder.workorderLaborAPIApi.adjustLaborHours({
+        workorderId,
+        entryId: laborEntryId,
+        adjustLaborRequest: {
+          hoursWorked: CLOSED_HOURS,
+          adjustmentReason: `Integration test correction after close [${context.runId}]`,
+        },
+      }),
+    );
+    console.log(
+      `[F7c] adjusted on a closed workorder: hours=${adjusted.hoursWorked} warnings=${JSON.stringify(adjusted.warnings)}`,
+    );
+    expect(Number(adjusted.hoursWorked)).toBe(CLOSED_HOURS);
+    expect(adjusted.warnings.map((warning) => warning.code)).toContain('WORKORDER_CLOSED');
+    expect(adjusted.lastAdjustment?.workorderClosed).toBe(true);
+    expect(String(adjusted.lastAdjustment?.workorderStatusAtAdjust).toUpperCase()).toContain('COMPLET');
   }, 240_000);
 
   // The payroll clock is managed by the person themself or by a caller holding
@@ -534,43 +746,10 @@ describe('Suite F — time reporting and approval', () => {
     console.log(`[F12] an empty decision batch refused with HTTP ${empty}`);
   }, 180_000);
 
-  // F13 is skipped rather than deleted, as a standing marker that workorder-side
-  // time-entry approval is wanted.
-  //
-  // It cannot run today: pos-workorder implements no approve or reject endpoint
-  // for time entries. There is no such controller, and neither TimeEntryResponse
-  // nor RejectTimeEntryRequest is defined in its OpenAPI spec, so the generated
-  // client this drove — workorder's timeEntryAPIApi — was removed as output of a
-  // spec that no longer produces it. Against a real deployment these assertions
-  // could only ever have failed.
-  //
-  // Note that the neighbouring F12 covers the approval surface that *does*
-  // exist, in pos-people, through people.timeEntryApprovalAPIApi. What is
-  // missing is specifically the workorder-side per-entry decision.
-  //
-  // The body is empty because this file is type-checked and the client it called
-  // no longer exists. Once pos-workorder serves the endpoints and the client is
-  // regenerated, lift the assertions back verbatim:
-  //
-  //   const refused = await expectHttpError(
-  //     tech.workorder.timeEntryAPIApi.approveTimeEntry({ timeEntryId: randomUUID() }),
-  //     401,
-  //     403,
-  //   );
-  //   const missing = await expectHttpError(
-  //     manager.workorder.timeEntryAPIApi.approveTimeEntry({ timeEntryId: randomUUID() }),
-  //     404,
-  //   );
-  //   const reasonless = await expectHttpError(
-  //     manager.workorder.timeEntryAPIApi.rejectTimeEntry({
-  //       timeEntryId: randomUUID(),
-  //       rejectTimeEntryRequest: { rejectionReason: 'Integration test: unknown entry' },
-  //     }),
-  //     404,
-  //   );
-  it.skip('F13 — deciding on workorder time entries belongs to the manager, and an unknown entry is a 404', () => {
-    // Intentionally empty; see the note above.
-  });
+  // There is no F13. Per-entry approve/reject of workorder time was retired by
+  // backend #2282: time on task is record-keeping, corrected by supervisors with
+  // an audit trail (F2b, F5, F6, F6b, F7b, F7c). Attendance approval stays in
+  // pos-people (F10-F12).
 
   // Both clocks outlive the process that started them, and alpha is shared.
   // Leaving either running strands state that fails the *next* run rather than

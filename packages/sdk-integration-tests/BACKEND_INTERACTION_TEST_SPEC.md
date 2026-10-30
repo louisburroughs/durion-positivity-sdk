@@ -869,39 +869,52 @@ cost. Gains credit
   1300 exactly once: every ingestion record for the scrap points at one entry.
 - [ ] **E27 — Uncosted write-off.** E14's scrap is `SKIPPED`, with no entry.
 
-## Task 11: Suite F — Time Reporting and Approval
+## Task 11: Suite F — Attendance Approval and Workorder Time on Task
 
 **File:** `src/suites/f-time-reporting.itest.ts`
 
 SDK surface: `@durion-sdk/workorder` (`WorkorderLaborAPIApi`,
-`WorkexecTimeTrackingAPIApi`, `TimeEntryAPIApi`) and `@durion-sdk/people`
-(`WorkSessionsAPIApi`, `TimekeepingApprovalAPIApi`,
-`TimeEntryApprovalAPIApi`).
+`WorkexecTimeTrackingAPIApi`, `WorkOrderAPIApi` for the completion in F7c) and
+`@durion-sdk/people` (`WorkSessionsAPIApi`, `TimekeepingApprovalAPIApi`,
+`TimeEntryApprovalAPIApi`, `PeopleReportsAPIApi`).
 
-**Two clocks, kept separate.** pos-workorder's labor entries bill a
-technician's time to one service line on one workorder. pos-people's work
-sessions are the payroll clock — in, break, out, submit — and know nothing
-about workorders. F1-F7 cover the first, F8-F9 the second.
+**Two clocks, kept separate.** pos-workorder's labor entries are time on task
+(ADR-0059): a technician's time against one service line on one workorder,
+which pos-people totals per employee from the job-time facts pos-workorder
+publishes. pos-people's work sessions are the payroll clock — in, break, out,
+submit — and know nothing about workorders. F1-F7 cover the first, F8-F9 the
+second.
 
-**The gap the approval tests are shaped around.** Nothing in either service
-creates a decidable time entry. pos-workorder's `time_entry` table has approve
-and reject endpoints and no writer at all. pos-people's `timekeeping_entry` is
-written by `TimekeepingIngestionService.ingestWorkSession`, whose
+**Time on task is record-keeping, not an approval workflow** (backend #2282).
+pos-workorder has no per-entry approve or reject and none is wanted. It has a
+supervisor-only correction with an audit trail instead: only SHOP_MANAGER,
+LOCATION_MANAGER, MANAGER, GENERAL_MANAGER and ADMIN hold
+`workorder:labor:adjust` (#2293); an entry is adjustable only once stopped,
+which is when its `workorder.job-time.recorded.v1` is sent (#2292, #2294);
+every adjustment writes an immutable record and sends
+`workorder.labor-adjustment.recorded.v1`, which pos-people applies to its
+totals (#2295); adjusting on a COMPLETED or CANCELLED workorder succeeds with a
+`WORKORDER_CLOSED` warning.
+
+**The gap the attendance-approval tests are shaped around.** Nothing creates a
+decidable attendance entry. pos-people's `timekeeping_entry` is written by
+`TimekeepingIngestionService.ingestWorkSession`, whose
 `WorkSessionCompletedEvent` is published nowhere outside that service's unit
 tests — `submitWorkSession` only flips the session's own status. So no call
 this suite can make will reach an APPROVED entry, and a test that waited for
-one would hang rather than report the cause. F10-F13 therefore assert what is
+one would hang rather than report the cause. F10-F12 therefore assert what is
 reachable and stays true either way: who the decision belongs to, and the
 documented batch contract. When the ingestion bridge lands, a positive
 approval belongs alongside them.
 
-**Acting personas:** `tech` (TECHNICIAN) reports time —
-`workorder:labor:add` covers starting, stopping *and adjusting* a labor entry
-and is granted to TECHNICIAN and ADMIN only, so the manager reads labor but
-never rewrites it. `manager` (LOCATION_MANAGER) reads
-(`workorder:labor:view`, `people:timekeeping:view`) and decides
-(`people:timeEntry:approve|reject`, `workorder:timeEntry:approve|reject`).
-The payroll clock itself is `isAuthenticated()` — no permission gates it.
+**Acting personas:** `tech` (TECHNICIAN) reports time — `workorder:labor:add`
+covers starting and stopping a labor entry, never adjusting it. `manager`
+(LOCATION_MANAGER) reads (`workorder:labor:view`, `people:timekeeping:view`),
+corrects (`workorder:labor:adjust`) and decides on attendance
+(`people:timekeeping:approve|reject`). `controller` (CONTROLLER) holds
+`accounting:time:export`, which is what reads pos-people's job-time totals
+through the attendance-vs-job-time discrepancy report. The payroll clock
+itself is `isAuthenticated()` — no permission gates it.
 
 **Shared-environment hazard.** The seeder's shift loop clocks the same seeded
 employees in and out, so F8 closes any session already open for the technician
@@ -911,14 +924,27 @@ before starting its own, and F9 leaves the person clocked out.
   technician, no end time.
 - [ ] **F2 — One session per service.** A second concurrent session is
   refused.
+- [ ] **F2b — Not before the stop.** Adjusting the still-running entry is a
+  409 `LABOR_ENTRY_NOT_RECORDED`.
 - [ ] **F3 — Stop records hours.** Real elapsed time, so the entry closes with
   an end time and hours worked.
 - [ ] **F4 — History.** The manager reads the entry the technician recorded.
-- [ ] **F5 — Adjustment.** The technician corrects the hours; the reason is
-  recorded on the entry.
-- [ ] **F6 — RBAC negative.** The manager cannot rewrite the hours.
+- [ ] **F5 — RBAC negative.** The technician cannot adjust the recorded
+  hours (401/403). Role mode only.
+- [ ] **F6 — Supervisor adjustment.** The manager corrects the hours;
+  `hoursWorked` changes and `lastAdjustment` carries the reason, the manager's
+  user id as `adjustedByUserId`, and no warnings while the workorder is open.
+- [ ] **F6b — Adjustment history.** `GET …/labor/{entryId}/adjustments`
+  returns exactly the F6 record, with the original and adjusted hours.
 - [ ] **F7 — Timers and totals.** `getActiveTimers` shows the technician's own
   running timer; `stopTimers` stops it; `getJobTimeTotals` answers for the day.
+- [ ] **F7b — End to end into pos-people.** A second entry is stopped, the
+  controller reads the technician's job hours from the discrepancy report, the
+  manager corrects the entry, and the report rises by at least the correction.
+  Polled, for the eventual consistency; at least, because alpha is shared.
+- [ ] **F7c — Closed workorder warns.** The suite's workorder is completed, then
+  an adjustment on it returns 200 with a `WORKORDER_CLOSED` warning and a
+  record flagged `workorderClosed`.
 - [ ] **F8 — The payroll clock.** Clock in → break start → break stop → clock
   out → submit, asserting `ACTIVE`, the open and closed break, `ENDED`, then
   `SUBMITTED` with the submitted minutes.
@@ -931,8 +957,9 @@ before starting its own, and F9 leaves the person clocked out.
 - [ ] **F12 — Batch decision contract.** An unknown entry comes back as a
   per-entry `NOT_FOUND` inside a 200 rather than a failed batch; a rejection
   with no reason is a 400; an empty batch is a 400.
-- [ ] **F13 — Workorder decisions.** The technician is refused; an unknown
-  entry is 404 for both approve and reject.
+
+There is no F13: per-entry approve/reject of workorder time was retired by
+backend #2282 in favour of the supervisor correction above.
 
 ## SDK client factories were missing generated APIs (2026-08-28)
 
@@ -1199,7 +1226,8 @@ Suite C adds the lifecycle half: **C1b/C1c** (a technician, then a bay the run
 creates, before work starts; status `ASSIGNED`), **C5** (second assign refused
 naming the current technician; reassign away and back) and a check after **C8**
 that completion freed that bay. Suite F puts its workorder on its own run bay
-before starting it and leaves it there (F never completes its workorder).
+before starting it; F7c completes the workorder at the end of the workorder-side
+tests, which frees that bay too.
 
 ## Suites A-D: what alpha actually does (2026-08-23)
 
