@@ -14,6 +14,7 @@ export * from './AuditExportWebhookRequest';
 export * from './AuditExportWebhookResponse';
 export * from './AuditLogEventDto';
 export * from './AuditLogEventRequest';
+export * from './AuthCapabilitiesResponse';
 export * from './AuthorizationDecisionResponse';
 export * from './BulkIngestRequestRoleBulkIngestRecord';
 export * from './BulkIngestRequestRolePermissionBulkIngestRecord';

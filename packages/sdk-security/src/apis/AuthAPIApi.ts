@@ -18,6 +18,7 @@ import type {
   ActivateAccountRequest,
   ActivateWithStarterRequest,
   ApiError,
+  AuthCapabilitiesResponse,
   LoginRequest,
   SelfRegistrationRequest,
   SelfRegistrationResponse,
@@ -34,6 +35,8 @@ import {
     ActivateWithStarterRequestToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    AuthCapabilitiesResponseFromJSON,
+    AuthCapabilitiesResponseToJSON,
     LoginRequestFromJSON,
     LoginRequestToJSON,
     SelfRegistrationRequestFromJSON,
@@ -162,6 +165,34 @@ export class AuthAPIApi extends runtime.BaseAPI {
      */
     async activateAccountWithStarterPassword(requestParameters: ActivateAccountWithStarterPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.activateAccountWithStarterPasswordRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Answers the deployment-wide self-service capabilities — the anonymous tenant signup, the password reset and the username reminder — plus the locale allow-list a self-service signup may name. Use this tool on the sign-in and signup pages before rendering the \"new to Positivity?\" divider, the new-user button, the forgot-password link or the forgot-username link, so a deployment that switched one of them off shows no dead link; do not use it to ask about the caller, who is anonymous here, and do not use it to learn a tenant\'s configuration, which is deliberately never part of this answer. The read is tenant-blind: it takes no X-Tenant-Id and no bearer token, and the response is cacheable for 60 seconds (Cache-Control: public, max-age=60). Preconditions: none — the path is public on the anonymous /v1/auth/_** chain and needs no headers. Required inputs: none; the read takes no path or query parameter, no bearer token and no X-Tenant-Id, because it is deployment-wide and tenant-blind. Emits a SECURITY_AUTH_CAPABILITIES_READ event. Returns 200 with tenantSignupEnabled, passwordResetEnabled, usernameReminderEnabled and supportedLocales; it never answers 4xx or 5xx by design, and an absent or blank property reads as false. 
+     * Read Which Self-Service Auth Entry Points This Deployment Serves
+     */
+    async getAuthCapabilitiesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthCapabilitiesResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/auth/capabilities`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthCapabilitiesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Answers the deployment-wide self-service capabilities — the anonymous tenant signup, the password reset and the username reminder — plus the locale allow-list a self-service signup may name. Use this tool on the sign-in and signup pages before rendering the \"new to Positivity?\" divider, the new-user button, the forgot-password link or the forgot-username link, so a deployment that switched one of them off shows no dead link; do not use it to ask about the caller, who is anonymous here, and do not use it to learn a tenant\'s configuration, which is deliberately never part of this answer. The read is tenant-blind: it takes no X-Tenant-Id and no bearer token, and the response is cacheable for 60 seconds (Cache-Control: public, max-age=60). Preconditions: none — the path is public on the anonymous /v1/auth/_** chain and needs no headers. Required inputs: none; the read takes no path or query parameter, no bearer token and no X-Tenant-Id, because it is deployment-wide and tenant-blind. Emits a SECURITY_AUTH_CAPABILITIES_READ event. Returns 200 with tenantSignupEnabled, passwordResetEnabled, usernameReminderEnabled and supportedLocales; it never answers 4xx or 5xx by design, and an absent or blank property reads as false. 
+     * Read Which Self-Service Auth Entry Points This Deployment Serves
+     */
+    async getAuthCapabilities(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthCapabilitiesResponse> {
+        const response = await this.getAuthCapabilitiesRaw(initOverrides);
+        return await response.value();
     }
 
     /**
