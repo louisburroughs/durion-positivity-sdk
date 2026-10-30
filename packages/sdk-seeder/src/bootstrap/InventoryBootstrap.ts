@@ -159,11 +159,14 @@ export class InventoryBootstrap {
         // purchaseorder.updated on order.events.v1, which pos-inventory folds
         // into ext_purchase_order on its next poll. Validation runs against that
         // replica, so an ASN issued straight after approval loses a race it
-        // cannot see and fails with INVALID_PO_REFERENCE.
+        // cannot see. Since backend #1994 it answers 503
+        // PURCHASE_ORDER_REPLICATION_PENDING; older backends answer 400
+        // INVALID_PO_REFERENCE, so both count as lag.
         const asn = await retryWhileReplicating({
           subject: `purchase order ${poId}`,
           outcome: 'ASN created',
-          isReplicationLag: (error) =>
+          isReplicationLag: async (error) =>
+            (await isResponseErrorMatching(error, 503, 'PURCHASE_ORDER_REPLICATION_PENDING')) ||
             isResponseErrorMatching(error, 400, 'INVALID_PO_REFERENCE'),
           attempt: (initOverrides) =>
             asnApi.createAsn(
