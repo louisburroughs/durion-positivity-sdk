@@ -1,3 +1,6 @@
+// Imported by path, not by package name, for the reason StarterActivation.ts
+// gives: globalSetup does not get the suites' moduleNameMapper.
+import { createSecurityClient } from '../../../sdk-security/src';
 import type { ItestConfig } from './ItestConfig';
 
 /**
@@ -146,20 +149,44 @@ interface RawAssignment {
 }
 
 /**
- * Talks to the security service directly with header auth, the path
- * SecurityBootstrap takes, rather than through an admin login: this runs before
- * starter activation, so the admin account may not be able to log in yet.
+ * Talks to the security service through the gateway as the suite admin. Since
+ * backend #2966 a service accepts only the gateway's signed identity assertion
+ * (ADR-0073), so the old direct header-auth path answers 401.
+ *
+ * This runs before starter activation, so the admin must already log in: its
+ * role is seeded back-dated (admin.alpha holds ADMIN from 2024-01-01), which is
+ * what keeps it usable on a backend anchored a year back. The token is minted
+ * here, used for this stage only, and dropped - activation revokes an
+ * activated account's tokens anyway.
  */
 export function createRoleWindowPort(config: ItestConfig): RoleWindowPort {
-  const baseUrl = config.securityServiceUrl;
-  const headers = (authority: string): Record<string, string> => ({
-    'X-Authorities': authority,
-    'X-User': 'itest-accel-role-windows',
-    'X-Tenant-Id': config.tenant.id,
-    'Content-Type': 'application/json',
-  });
-  const call = async (url: string, authority: string, init: RequestInit = {}): Promise<Response> => {
-    const response = await fetch(url, { ...init, headers: headers(authority) });
+  const baseUrl = `${config.baseUrl}/security-service`;
+  const { authAPIApi } = createSecurityClient({ baseUrl });
+  let token: Promise<string> | null = null;
+  const adminToken = (): Promise<string> => {
+    token ??= authAPIApi
+      .loginUser({
+        loginRequest: {
+          username: config.admin.username,
+          password: config.admin.password,
+          tenantSlug: config.tenant.slug,
+        },
+      })
+      .then(({ accessToken }) => {
+        if (!accessToken) {
+          throw new Error(`login as "${config.admin.username}" returned no access token`);
+        }
+        return accessToken;
+      });
+    return token;
+  };
+  // The authority argument is kept as documentation of what each call needs;
+  // the admin's token carries it.
+  const call = async (url: string, _authority: string, init: RequestInit = {}): Promise<Response> => {
+    const response = await fetch(url, {
+      ...init,
+      headers: { Authorization: `Bearer ${await adminToken()}`, 'Content-Type': 'application/json' },
+    });
     if (!response.ok) {
       const body = (await response.text()).slice(0, 300);
       throw new Error(`${init.method ?? 'GET'} ${url} answered ${response.status}${body ? ` - ${body}` : ''}`);

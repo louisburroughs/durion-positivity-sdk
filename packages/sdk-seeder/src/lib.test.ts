@@ -1,6 +1,5 @@
 import {
   BootstrapOrchestrator,
-  SecurityBootstrap,
   SeederAuth,
   SeederConfig,
   SeederRandom,
@@ -14,7 +13,6 @@ describe('sdk-seeder library barrel', () => {
   it('exports the bootstrap fixtures as constructible classes', () => {
     expect(typeof SeederAuth).toBe('function');
     expect(typeof SeederConfig).toBe('function');
-    expect(typeof SecurityBootstrap).toBe('function');
     expect(typeof BootstrapOrchestrator).toBe('function');
     expect(typeof SeederRandom).toBe('function');
   });

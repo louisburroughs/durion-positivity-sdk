@@ -5,7 +5,6 @@
 // silently run stale bootstrap code while the suites run current sources.
 import {
   BootstrapOrchestrator,
-  SecurityBootstrap,
   SeederAuth,
   SeederConfig,
   type ReferenceCache,
@@ -24,6 +23,7 @@ import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
 import { createPeriodPort, periodCode, reopenClosedPeriods } from './monthEnd';
+import { noRoleHint } from './noRoleHint';
 import { createPersonaPorts, PersonaBootstrap } from './PersonaBootstrap';
 import { createStarterActivationPort, StarterActivation } from './StarterActivation';
 import { createTenantPort, TenantPreflight } from './TenantPreflight';
@@ -94,8 +94,6 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   });
 
   console.log(`[accel] mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
-
-  await stage('security bootstrap', () => new SecurityBootstrap(adminConfig).run());
 
   // Before starter activation, which logs every persona in: roles granted in
   // wall time start in this backend's future, and login refuses an account
@@ -458,7 +456,8 @@ async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
     return await fn();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`[accel] global setup failed during ${name}: ${message}${await describeResponse(error)}`);
+    const detail = await describeResponse(error);
+    throw new Error(`[accel] global setup failed during ${name}: ${message}${detail}${noRoleHint(message + detail)}`);
   }
 }
 

@@ -5,7 +5,6 @@
 // run the current sources.
 import {
   BootstrapOrchestrator,
-  SecurityBootstrap,
   SeederAuth,
   SeederConfig,
 } from '../../../sdk-seeder/src/lib';
@@ -13,6 +12,7 @@ import { assertNonAcceleratedBackend } from './acceleratedClock';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
+import { noRoleHint } from './noRoleHint';
 import { createPersonaPorts, PersonaBootstrap } from './PersonaBootstrap';
 import { createStarterActivationPort, StarterActivation } from './StarterActivation';
 import { createTenantPort, TenantPreflight } from './TenantPreflight';
@@ -49,14 +49,11 @@ export default async function globalSetup(): Promise<void> {
   });
 
   console.log(`[itest] mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
-  // The security bootstrap runs before anything logs in. It uses header auth
-  // against the security service, pinned to the suite tenant by X-Tenant-Id, so
-  // it needs no token and cannot write into another tenant. Running it first is
-  // what lets setup repair an admin with no role: such an account answers login
-  // with 403 USER_HAS_NO_ROLES, which the activation and tenant probes below
-  // would otherwise stop on before ensureSysAdminRole could assign one.
-  await stage('security bootstrap', () => new SecurityBootstrap(adminConfig).run());
-
+  // Setup no longer repairs the admin's roles. Since backend #2966 every service
+  // accepts only a gateway-signed identity assertion (ADR-0073), so the old
+  // header-auth bootstrap answers 401; role and permission grants belong to the
+  // backend's Flyway seed and fixture loader. An admin with no role now stops
+  // setup at its first login with 403 USER_HAS_NO_ROLES - see noRoleHint.
   // Tenant-aware backends load accounts with a shared starter password that
   // login refuses until it is exchanged. Runs before anything logs in, because
   // activation revokes every token the account already holds.
@@ -130,7 +127,8 @@ async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
     return await fn();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`[itest] global setup failed during ${name}: ${message}${await describeResponse(error)}`);
+    const detail = await describeResponse(error);
+    throw new Error(`[itest] global setup failed during ${name}: ${message}${detail}${noRoleHint(message + detail)}`);
   }
 }
 
