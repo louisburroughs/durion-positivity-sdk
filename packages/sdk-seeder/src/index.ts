@@ -1,6 +1,5 @@
 import { SeederAuth } from './SeederAuth';
 import { SeederConfig } from './SeederConfig';
-import { SecurityBootstrap } from './bootstrap/SecurityBootstrap';
 import { BootstrapOrchestrator } from './bootstrap/BootstrapOrchestrator';
 import { DailyLoopRunner } from './loop/DailyLoopRunner';
 import { VirtualClock } from './support/VirtualClock';
@@ -22,10 +21,6 @@ async function main(): Promise<void> {
   logger.info(`Backend ready — virtual time: ${initialTime.virtualTime}, scale: ${initialTime.scale}x, zone: ${initialTime.zone}`);
 
   logger.setPhase('BOOTSTRAP');
-  logger.info('Running security bootstrap...');
-  await new SecurityBootstrap(config).run();
-  logger.info('Security bootstrap complete');
-
   const auth = new SeederAuth(config);
   await auth.login();
   logger.info('Authenticated successfully');

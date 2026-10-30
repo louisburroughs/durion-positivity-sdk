@@ -8,7 +8,6 @@
  */
 export { SeederAuth, renewAllAuths, resetAuthStateForTests } from './SeederAuth';
 export { SeederConfig, type SeederConfigShape, type SeederConfigValues } from './SeederConfig';
-export { SecurityBootstrap } from './bootstrap/SecurityBootstrap';
 export { BootstrapOrchestrator } from './bootstrap/BootstrapOrchestrator';
 export {
   SEED_VENDOR_NUMBER,
