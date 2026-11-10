@@ -9,4 +9,5 @@ export * from './EventTypeRequest';
 export * from './EventTypeResponse';
 export * from './FieldError';
 export * from './PagedResponseEmittedEventResponse';
+export * from './PolicyBlocker';
 export * from './SuggestedAlternative';

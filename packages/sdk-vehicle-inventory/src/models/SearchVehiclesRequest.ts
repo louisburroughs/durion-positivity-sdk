@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for searching vehicles by free-text query with optional pagination
+ * Request payload for searching vehicles by free-text query or by plate and jurisdiction, with optional pagination
  * @export
  * @interface SearchVehiclesRequest
  */
@@ -32,24 +32,35 @@ export interface SearchVehiclesRequest {
      */
     enableContainsMatching?: boolean;
     /**
+     * Jurisdiction that narrows a plate search, as an ISO 3166-2 subdivision code (US-CA) or the stored code (CA); requires plate, and is a validation error without it. At most 50 characters, a bound enforced by the service
+     * @type {string}
+     * @memberof SearchVehiclesRequest
+     */
+    jurisdiction?: string;
+    /**
      * Maximum number of results to return; defaults to 25 when omitted
      * @type {number}
      * @memberof SearchVehiclesRequest
      */
     limit?: number;
     /**
-     * Free-text search query matched against VIN, unit number, plate, and description
+     * License plate matched exactly after normalisation (upper-cased, separators removed); when given, the search is a plate search and query is ignored. At most 50 characters, a bound enforced by the service
      * @type {string}
      * @memberof SearchVehiclesRequest
      */
-    query: string;
+    plate?: string;
+    /**
+     * Free-text search query matched against VIN, unit number, plate, and description; required unless plate is given, and ignored when plate is given
+     * @type {string}
+     * @memberof SearchVehiclesRequest
+     */
+    query?: string;
 }
 
 /**
  * Check if a given object implements the SearchVehiclesRequest interface.
  */
 export function instanceOfSearchVehiclesRequest(value: object): boolean {
-    if (!('query' in value)) return false;
     return true;
 }
 
@@ -65,8 +76,10 @@ export function SearchVehiclesRequestFromJSONTyped(json: any, ignoreDiscriminato
         
         'cursor': json['cursor'] == null ? undefined : json['cursor'],
         'enableContainsMatching': json['enableContainsMatching'] == null ? undefined : json['enableContainsMatching'],
+        'jurisdiction': json['jurisdiction'] == null ? undefined : json['jurisdiction'],
         'limit': json['limit'] == null ? undefined : json['limit'],
-        'query': json['query'],
+        'plate': json['plate'] == null ? undefined : json['plate'],
+        'query': json['query'] == null ? undefined : json['query'],
     };
 }
 
@@ -78,7 +91,9 @@ export function SearchVehiclesRequestToJSON(value?: SearchVehiclesRequest | null
         
         'cursor': value['cursor'],
         'enableContainsMatching': value['enableContainsMatching'],
+        'jurisdiction': value['jurisdiction'],
         'limit': value['limit'],
+        'plate': value['plate'],
         'query': value['query'],
     };
 }

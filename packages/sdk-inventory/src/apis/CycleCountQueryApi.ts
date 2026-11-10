@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   CountEntryResponse,
+  CycleCountQueueResponse,
   CycleCountTaskResponse,
   InterferingMovementResponse,
 } from '../models/index';
@@ -25,11 +26,19 @@ import {
     ApiErrorToJSON,
     CountEntryResponseFromJSON,
     CountEntryResponseToJSON,
+    CycleCountQueueResponseFromJSON,
+    CycleCountQueueResponseToJSON,
     CycleCountTaskResponseFromJSON,
     CycleCountTaskResponseToJSON,
     InterferingMovementResponseFromJSON,
     InterferingMovementResponseToJSON,
 } from '../models/index';
+
+export interface GetCycleCountQueueRequest {
+    locationId: string;
+    pageSize?: number;
+    pageToken?: string;
+}
 
 export interface GetCycleCountTaskRequest {
     taskId: string;
@@ -51,6 +60,61 @@ export interface ListCycleCountInterferingMovementsRequest {
  * 
  */
 export class CycleCountQueryApi extends runtime.BaseAPI {
+
+    /**
+     * Returns one cursor page of the counts due at a site plus the variances waiting for approval there — the Counts queue screen. Use this tool for that screen; do not use listCycleCountPlans, which lists plans regardless of due date, or listPendingCycleCountAdjustments, which lists variances across every site the caller covers. Preconditions: none beyond the caller\'s site reach; everything is computed from the current rows — signing nothing, posting nothing and changing no on-hand. The dueCounts section holds one row per plan in PLANNED or STARTED whose due_date (else scheduled_date) is on or before today in the site\'s time zone, and one row per open ad-hoc task (no plan, ASSIGNED) whose bin sits under the site; a plan row carries its zones, the bins of its ASSIGNED tasks with their count and the generating schedule\'s skuCategory as class (null when it has none; no ABC class exists in this module), while an ad-hoc row carries its single bin, no zone and no class, and rows are overdue first, then by due date, kind and id. The variances section lists the PENDING_APPROVAL adjustments whose resolved location is the site or a bin beneath it, with the counted, expected and delta quantities, the value (delta x the cost the adjustment already captured, signed) and its required approval tier; it is omitted, with variancesVisible false, when the caller holds neither inventory:adjustment:view nor inventory:adjustment:approve or when the site lies outside the location reach attached to those alternates (a global reach covers every site), and FAILED adjustments stay on the list-by-status endpoint. Required inputs: locationId (the site, a UUID) plus optional pageSize (1 to 200, default 50) and pageToken (the previous nextPageToken). No events are emitted and no state changes. Returns 400 when pageSize or pageToken is invalid, and 403 with LOCATION_SCOPE_DENIED when the site is outside the caller\'s reach (ADR-0061). 
+     * Get a site\'s counts queue
+     */
+    async getCycleCountQueueRaw(requestParameters: GetCycleCountQueueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountQueueResponse>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling getCycleCountQueue().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['pageSize'] != null) {
+            queryParameters['pageSize'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['pageToken'] != null) {
+            queryParameters['pageToken'] = requestParameters['pageToken'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/cycleCount/queue`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CycleCountQueueResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one cursor page of the counts due at a site plus the variances waiting for approval there — the Counts queue screen. Use this tool for that screen; do not use listCycleCountPlans, which lists plans regardless of due date, or listPendingCycleCountAdjustments, which lists variances across every site the caller covers. Preconditions: none beyond the caller\'s site reach; everything is computed from the current rows — signing nothing, posting nothing and changing no on-hand. The dueCounts section holds one row per plan in PLANNED or STARTED whose due_date (else scheduled_date) is on or before today in the site\'s time zone, and one row per open ad-hoc task (no plan, ASSIGNED) whose bin sits under the site; a plan row carries its zones, the bins of its ASSIGNED tasks with their count and the generating schedule\'s skuCategory as class (null when it has none; no ABC class exists in this module), while an ad-hoc row carries its single bin, no zone and no class, and rows are overdue first, then by due date, kind and id. The variances section lists the PENDING_APPROVAL adjustments whose resolved location is the site or a bin beneath it, with the counted, expected and delta quantities, the value (delta x the cost the adjustment already captured, signed) and its required approval tier; it is omitted, with variancesVisible false, when the caller holds neither inventory:adjustment:view nor inventory:adjustment:approve or when the site lies outside the location reach attached to those alternates (a global reach covers every site), and FAILED adjustments stay on the list-by-status endpoint. Required inputs: locationId (the site, a UUID) plus optional pageSize (1 to 200, default 50) and pageToken (the previous nextPageToken). No events are emitted and no state changes. Returns 400 when pageSize or pageToken is invalid, and 403 with LOCATION_SCOPE_DENIED when the site is outside the caller\'s reach (ADR-0061). 
+     * Get a site\'s counts queue
+     */
+    async getCycleCountQueue(requestParameters: GetCycleCountQueueRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountQueueResponse> {
+        const response = await this.getCycleCountQueueRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Returns one cycle count task with its expected-quantity snapshot, assigned auditor, lifecycle status, and count-entry bookkeeping. Use this tool when the taskId is already known; use listCycleCountAuditorTasks instead to discover the tasks assigned to an auditor. Preconditions: the task must exist. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no cycle count task exists for the supplied id. 

@@ -38,11 +38,11 @@ export interface TenantSignupRequest {
      */
     functionalCurrency: string;
     /**
-     * The account's home country, ISO 3166-1 alpha-2
+     * The account's home country, ISO 3166-1 alpha-2. Optional: when omitted it is derived from the region of locale (fr-CA -> CA); when sent it wins. Never derived from functionalCurrency. A locale with no region is rejected by @SupportedLocale as an unsupported locale (400 fieldErrors[locale]); this branch is defensive for a configured supported locale whose region is not alpha-2 (for example es-419), in which case fieldErrors[homeCountry] "required when the locale names no region" applies.
      * @type {string}
      * @memberof TenantSignupRequest
      */
-    homeCountry: string;
+    homeCountry?: string;
     /**
      * Optional idempotency key: the same key with the same request replays the stored response instead of creating a second account and tenant; a different request for the same key is 409 IDEMPOTENCY_KEY_REUSED
      * @type {string}
@@ -68,7 +68,7 @@ export interface TenantSignupRequest {
      */
     organizationName: string;
     /**
-     * Password the first administrator signs in with. Hashed before anything is written; never stored or logged in plaintext
+     * Password the first administrator signs in with. Hashed before anything is written; never stored or logged in plaintext. Must meet the password policy GET /v1/auth/capabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the slug, organization name, email local part or administrator's name); a refusal is 400 VALIDATION_ERROR with fieldErrors[password] starting PASSWORD_POLICY_VIOLATION and no signup row is written
      * @type {string}
      * @memberof TenantSignupRequest
      */
@@ -88,7 +88,6 @@ export function instanceOfTenantSignupRequest(value: object): boolean {
     if (!('email' in value)) return false;
     if (!('firstName' in value)) return false;
     if (!('functionalCurrency' in value)) return false;
-    if (!('homeCountry' in value)) return false;
     if (!('lastName' in value)) return false;
     if (!('locale' in value)) return false;
     if (!('organizationName' in value)) return false;
@@ -110,7 +109,7 @@ export function TenantSignupRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'email': json['email'],
         'firstName': json['firstName'],
         'functionalCurrency': json['functionalCurrency'],
-        'homeCountry': json['homeCountry'],
+        'homeCountry': json['homeCountry'] == null ? undefined : json['homeCountry'],
         'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'lastName': json['lastName'],
         'locale': json['locale'],

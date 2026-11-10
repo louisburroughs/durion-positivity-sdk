@@ -39,6 +39,7 @@ import {
 
 export interface ApplyPriceOverrideOperationRequest {
     applyPriceOverrideRequest: ApplyPriceOverrideRequest;
+    idempotencyKey?: string;
 }
 
 export interface ApprovePriceOverrideOperationRequest {
@@ -68,7 +69,7 @@ export interface SearchPriceOverridesRequest {
 export class PriceOverridesApi extends runtime.BaseAPI {
 
     /**
-     * Applies a price override to a single DRAFT order line, auto-approving and repricing the line immediately when the discount is below the approval thresholds (10 percent and 50.00), and otherwise parking it at PENDING_APPROVAL for a manager. Use this tool for a one-line price concession; do not use applyOrderDiscount, which spreads a discount pro-rata across the whole order, and do not use approvePriceOverride, which resolves an override that already exists. Preconditions: the order must exist and be DRAFT, the order line must exist, and overridePrice must be between zero and originalPrice inclusive. Required inputs: orderId, orderLineId, and productId as UUID strings, originalPrice, overridePrice, and reasonCode (for example PRICE_MATCH or GOODWILL_ADJUSTMENT); justification and idempotencyKey are optional, and a replayed key returns the existing override. Emits an ORDER_PRICE_OVERRIDE_APPLY event; an auto-approved override immediately rewrites the line\'s unit price, recomputes the order subtotal, and publishes a commission-impact fact. Returns 201 with status APPROVED or PENDING_APPROVAL, 400 when an id or reasonCode cannot be parsed, 409 when the idempotency key was used with a different payload, and 422 when the order or line cannot be found, the order is not DRAFT, or the override price is negative or above the original. 
+     * Applies a price override to a single DRAFT order line, auto-approving and repricing the line immediately when the discount is below the approval thresholds (10 percent and 50.00), and otherwise parking it at PENDING_APPROVAL for a manager. Use this tool for a one-line price concession; do not use applyOrderDiscount, which spreads a discount pro-rata across the whole order, and do not use approvePriceOverride, which resolves an override that already exists. Preconditions: the order must exist and be DRAFT, the order line must exist, and overridePrice must be between zero and originalPrice inclusive. Required inputs: orderId, orderLineId, and productId as UUID strings, originalPrice, overridePrice, and reasonCode (for example PRICE_MATCH or GOODWILL_ADJUSTMENT); justification is optional, and so is the Idempotency-Key header (a UUID): the same key with the same body replays the original override. Emits an ORDER_PRICE_OVERRIDE_APPLY event; an auto-approved override immediately rewrites the line\'s unit price, recomputes the order subtotal, and publishes a commission-impact fact. Returns 201 with status APPROVED or PENDING_APPROVAL, 400 when an id or reasonCode cannot be parsed or the Idempotency-Key is not a UUID (VALIDATION_ERROR), 409 IDEMPOTENCY_CONFLICT when the key was used with a different request, and 422 when the order or line cannot be found, the order is not DRAFT, or the override price is negative or above the original. 
      * Apply a Price Override
      */
     async applyPriceOverrideRaw(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideResult>> {
@@ -84,6 +85,10 @@ export class PriceOverridesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -105,7 +110,7 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a price override to a single DRAFT order line, auto-approving and repricing the line immediately when the discount is below the approval thresholds (10 percent and 50.00), and otherwise parking it at PENDING_APPROVAL for a manager. Use this tool for a one-line price concession; do not use applyOrderDiscount, which spreads a discount pro-rata across the whole order, and do not use approvePriceOverride, which resolves an override that already exists. Preconditions: the order must exist and be DRAFT, the order line must exist, and overridePrice must be between zero and originalPrice inclusive. Required inputs: orderId, orderLineId, and productId as UUID strings, originalPrice, overridePrice, and reasonCode (for example PRICE_MATCH or GOODWILL_ADJUSTMENT); justification and idempotencyKey are optional, and a replayed key returns the existing override. Emits an ORDER_PRICE_OVERRIDE_APPLY event; an auto-approved override immediately rewrites the line\'s unit price, recomputes the order subtotal, and publishes a commission-impact fact. Returns 201 with status APPROVED or PENDING_APPROVAL, 400 when an id or reasonCode cannot be parsed, 409 when the idempotency key was used with a different payload, and 422 when the order or line cannot be found, the order is not DRAFT, or the override price is negative or above the original. 
+     * Applies a price override to a single DRAFT order line, auto-approving and repricing the line immediately when the discount is below the approval thresholds (10 percent and 50.00), and otherwise parking it at PENDING_APPROVAL for a manager. Use this tool for a one-line price concession; do not use applyOrderDiscount, which spreads a discount pro-rata across the whole order, and do not use approvePriceOverride, which resolves an override that already exists. Preconditions: the order must exist and be DRAFT, the order line must exist, and overridePrice must be between zero and originalPrice inclusive. Required inputs: orderId, orderLineId, and productId as UUID strings, originalPrice, overridePrice, and reasonCode (for example PRICE_MATCH or GOODWILL_ADJUSTMENT); justification is optional, and so is the Idempotency-Key header (a UUID): the same key with the same body replays the original override. Emits an ORDER_PRICE_OVERRIDE_APPLY event; an auto-approved override immediately rewrites the line\'s unit price, recomputes the order subtotal, and publishes a commission-impact fact. Returns 201 with status APPROVED or PENDING_APPROVAL, 400 when an id or reasonCode cannot be parsed or the Idempotency-Key is not a UUID (VALIDATION_ERROR), 409 IDEMPOTENCY_CONFLICT when the key was used with a different request, and 422 when the order or line cannot be found, the order is not DRAFT, or the override price is negative or above the original. 
      * Apply a Price Override
      */
     async applyPriceOverride(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideResult> {

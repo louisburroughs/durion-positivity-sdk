@@ -33,7 +33,9 @@ export interface SearchVehiclesOperationRequest {
 }
 
 export interface SearchVehiclesByQueryRequest {
-    q: string;
+    q?: string;
+    plate?: string;
+    jurisdiction?: string;
     limit?: number;
     enableContains?: boolean;
 }
@@ -44,7 +46,7 @@ export interface SearchVehiclesByQueryRequest {
 export class VehicleSearchApi extends runtime.BaseAPI {
 
     /**
-     * Searches vehicle registry records with a single free-text query, ranking exact matches ahead of prefix matches ahead of optional contains matches. Use this tool for vehicle discovery from a JSON body; use searchVehiclesByQuery for the query-parameter variant, and use getVehicleByVin instead when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape, with six or more alphanumeric characters searched as a VIN (seventeen as an exact VIN), shorter queries searched against license plates, and the remainder searched against unit number plus description. Required inputs: query (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, enableContainsMatching defaults to false, and cursor is reserved and currently ignored. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when the query is empty or shorter than the minimum for its inferred type. 
+     * Searches vehicle registry records with a single free-text query, ranking exact matches ahead of prefix matches ahead of optional contains matches. Use this tool for vehicle discovery from a JSON body; use searchVehiclesByQuery for the query-parameter variant, and use getVehicleByVin instead when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape, with six or more alphanumeric characters searched as a VIN (seventeen as an exact VIN), shorter queries searched against license plates, and the remainder searched against unit number plus description. When plate is given the search is an exact plate search instead: the plate is normalised (upper-cased, separators removed, so 7klm-204 is 7KLM204) and must match the stored plate exactly, query is ignored, and jurisdiction optionally narrows the result to the jurisdiction that issued the plate (an ISO 3166-2 code such as US-CA, or the stored code such as CA; both sides are normalised the same way, so they are interchangeable). Required inputs: query (non-blank, at least 3 characters, or 6 when VIN-shaped) unless plate is given; limit defaults to 25 and is capped at 50, enableContainsMatching defaults to false, and cursor is reserved and currently ignored. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when the query is empty or shorter than the minimum for its inferred type, when jurisdiction is supplied without plate, or when plate contains no letters or digits. 
      * Search vehicles
      */
     async searchVehiclesRaw(requestParameters: SearchVehiclesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchVehiclesResponse>> {
@@ -81,7 +83,7 @@ export class VehicleSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches vehicle registry records with a single free-text query, ranking exact matches ahead of prefix matches ahead of optional contains matches. Use this tool for vehicle discovery from a JSON body; use searchVehiclesByQuery for the query-parameter variant, and use getVehicleByVin instead when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape, with six or more alphanumeric characters searched as a VIN (seventeen as an exact VIN), shorter queries searched against license plates, and the remainder searched against unit number plus description. Required inputs: query (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, enableContainsMatching defaults to false, and cursor is reserved and currently ignored. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when the query is empty or shorter than the minimum for its inferred type. 
+     * Searches vehicle registry records with a single free-text query, ranking exact matches ahead of prefix matches ahead of optional contains matches. Use this tool for vehicle discovery from a JSON body; use searchVehiclesByQuery for the query-parameter variant, and use getVehicleByVin instead when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape, with six or more alphanumeric characters searched as a VIN (seventeen as an exact VIN), shorter queries searched against license plates, and the remainder searched against unit number plus description. When plate is given the search is an exact plate search instead: the plate is normalised (upper-cased, separators removed, so 7klm-204 is 7KLM204) and must match the stored plate exactly, query is ignored, and jurisdiction optionally narrows the result to the jurisdiction that issued the plate (an ISO 3166-2 code such as US-CA, or the stored code such as CA; both sides are normalised the same way, so they are interchangeable). Required inputs: query (non-blank, at least 3 characters, or 6 when VIN-shaped) unless plate is given; limit defaults to 25 and is capped at 50, enableContainsMatching defaults to false, and cursor is reserved and currently ignored. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when the query is empty or shorter than the minimum for its inferred type, when jurisdiction is supplied without plate, or when plate contains no letters or digits. 
      * Search vehicles
      */
     async searchVehicles(requestParameters: SearchVehiclesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchVehiclesResponse> {
@@ -90,21 +92,22 @@ export class VehicleSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches vehicle registry records using query parameters, applying the same ranking as searchVehicles with exact matches first, then prefix matches, then optional contains matches. Use this tool for browser-friendly or link-style searches; use searchVehicles instead when the client can send a JSON body, and use getVehicleByVin when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape exactly as in searchVehicles. Required inputs: q (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, and enableContains defaults to false. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when q is empty or shorter than the minimum for its inferred type. 
+     * Searches vehicle registry records using query parameters, applying the same ranking as searchVehicles with exact matches first, then prefix matches, then optional contains matches. Use this tool for browser-friendly or link-style searches; use searchVehicles instead when the client can send a JSON body, and use getVehicleByVin when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape exactly as in searchVehicles. When plate is given the search is an exact plate search instead: the plate is normalised (upper-cased, separators removed, so 7klm-204 is 7KLM204) and must match the stored plate exactly, q is ignored, and jurisdiction optionally narrows the result to the jurisdiction that issued the plate (an ISO 3166-2 code such as US-CA, or the stored code such as CA; both sides are normalised the same way, so they are interchangeable). Required inputs: q (non-blank, at least 3 characters, or 6 when VIN-shaped) unless plate is given; limit defaults to 25 and is capped at 50, and enableContains defaults to false. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when q is empty or shorter than the minimum for its inferred type, when jurisdiction is supplied without plate, or when plate contains no letters or digits. 
      * Search vehicles (query parameter)
      */
     async searchVehiclesByQueryRaw(requestParameters: SearchVehiclesByQueryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchVehiclesResponse>> {
-        if (requestParameters['q'] == null) {
-            throw new runtime.RequiredError(
-                'q',
-                'Required parameter "q" was null or undefined when calling searchVehiclesByQuery().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['q'] != null) {
             queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['plate'] != null) {
+            queryParameters['plate'] = requestParameters['plate'];
+        }
+
+        if (requestParameters['jurisdiction'] != null) {
+            queryParameters['jurisdiction'] = requestParameters['jurisdiction'];
         }
 
         if (requestParameters['limit'] != null) {
@@ -136,10 +139,10 @@ export class VehicleSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches vehicle registry records using query parameters, applying the same ranking as searchVehicles with exact matches first, then prefix matches, then optional contains matches. Use this tool for browser-friendly or link-style searches; use searchVehicles instead when the client can send a JSON body, and use getVehicleByVin when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape exactly as in searchVehicles. Required inputs: q (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, and enableContains defaults to false. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when q is empty or shorter than the minimum for its inferred type. 
+     * Searches vehicle registry records using query parameters, applying the same ranking as searchVehicles with exact matches first, then prefix matches, then optional contains matches. Use this tool for browser-friendly or link-style searches; use searchVehicles instead when the client can send a JSON body, and use getVehicleByVin when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape exactly as in searchVehicles. When plate is given the search is an exact plate search instead: the plate is normalised (upper-cased, separators removed, so 7klm-204 is 7KLM204) and must match the stored plate exactly, q is ignored, and jurisdiction optionally narrows the result to the jurisdiction that issued the plate (an ISO 3166-2 code such as US-CA, or the stored code such as CA; both sides are normalised the same way, so they are interchangeable). Required inputs: q (non-blank, at least 3 characters, or 6 when VIN-shaped) unless plate is given; limit defaults to 25 and is capped at 50, and enableContains defaults to false. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when q is empty or shorter than the minimum for its inferred type, when jurisdiction is supplied without plate, or when plate contains no letters or digits. 
      * Search vehicles (query parameter)
      */
-    async searchVehiclesByQuery(requestParameters: SearchVehiclesByQueryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchVehiclesResponse> {
+    async searchVehiclesByQuery(requestParameters: SearchVehiclesByQueryRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchVehiclesResponse> {
         const response = await this.searchVehiclesByQueryRaw(requestParameters, initOverrides);
         return await response.value();
     }

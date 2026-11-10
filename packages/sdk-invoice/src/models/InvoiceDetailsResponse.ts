@@ -25,6 +25,18 @@ import {
     InvoiceItemResponseFromJSONTyped,
     InvoiceItemResponseToJSON,
 } from './InvoiceItemResponse';
+import type { InvoiceTaxBreakdownRow } from './InvoiceTaxBreakdownRow';
+import {
+    InvoiceTaxBreakdownRowFromJSON,
+    InvoiceTaxBreakdownRowFromJSONTyped,
+    InvoiceTaxBreakdownRowToJSON,
+} from './InvoiceTaxBreakdownRow';
+import type { SellerTaxRegistration } from './SellerTaxRegistration';
+import {
+    SellerTaxRegistrationFromJSON,
+    SellerTaxRegistrationFromJSONTyped,
+    SellerTaxRegistrationToJSON,
+} from './SellerTaxRegistration';
 
 /**
  * Full details of an invoice including line items and adjustments
@@ -45,17 +57,35 @@ export interface InvoiceDetailsResponse {
      */
     adjustments?: number;
     /**
+     * Settlement figure: captured payments minus every non-FAILED refund anchored to this invoice. It is not the accounts-receivable balance and not ADR-0057 collected: credit memos, customer-credit applications and payments applied in accounting are not reflected here
+     * @type {number}
+     * @memberof InvoiceDetailsResponse
+     */
+    amountPaid?: number;
+    /**
      * Identifier of the approval record
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     approvalId?: string;
     /**
+     * Settlement figure: total minus amountPaid minus depositCreditsApplied. Signed and never clamped, so a negative value is an overpayment. It is pos-invoice's own settlement balance, not the accounts-receivable balance
+     * @type {number}
+     * @memberof InvoiceDetailsResponse
+     */
+    balanceDue?: number;
+    /**
      * Timestamp when the invoice was created
      * @type {Date}
      * @memberof InvoiceDetailsResponse
      */
     createdAt?: Date;
+    /**
+     * Settlement figure: deposit-credit draw-downs applied to this invoice. Carried separately from amountPaid and fed only by pos-invoice's own deposit-credit records, so it is not a complete non-cash settlement figure
+     * @type {number}
+     * @memberof InvoiceDetailsResponse
+     */
+    depositCreditsApplied?: number;
     /**
      * Identifier of the source estimate
      * @type {string}
@@ -99,6 +129,12 @@ export interface InvoiceDetailsResponse {
      */
     partyId?: string;
     /**
+     * Settlement status derived from the balance: UNPAID, PARTIALLY_PAID, PAID (settled at the counter, not necessarily cash in hand), OVERPAID, or NOT_APPLICABLE for a CANCELLED or ERROR invoice. Not the accounts-receivable status
+     * @type {string}
+     * @memberof InvoiceDetailsResponse
+     */
+    paymentStatus?: InvoiceDetailsResponsePaymentStatusEnum;
+    /**
      * Whether finalizing this invoice requires a manager approval code (DRAFT total exceeds the service-advisor threshold)
      * @type {boolean}
      * @memberof InvoiceDetailsResponse
@@ -123,6 +159,12 @@ export interface InvoiceDetailsResponse {
      */
     revertedBy?: string;
     /**
+     * Seller tax registrations frozen at finalization; empty on a draft. The number is INTERNAL per ADR-0072 Decision 1: readable and printable, never logged
+     * @type {Array<SellerTaxRegistration>}
+     * @memberof InvoiceDetailsResponse
+     */
+    sellerTaxRegistrations?: Array<SellerTaxRegistration>;
+    /**
      * Current lifecycle status of the invoice
      * @type {string}
      * @memberof InvoiceDetailsResponse
@@ -140,6 +182,18 @@ export interface InvoiceDetailsResponse {
      * @memberof InvoiceDetailsResponse
      */
     tax?: number;
+    /**
+     * Summary-level tax breakdown, one row per (jurisdiction, tax type); absent or empty when the invoice stores none, and tax equals the sum of the row amounts when present
+     * @type {Array<InvoiceTaxBreakdownRow>}
+     * @memberof InvoiceDetailsResponse
+     */
+    taxBreakdown?: Array<InvoiceTaxBreakdownRow>;
+    /**
+     * Layout the tax is shown in (CAP:550 #2630): SINGLE_TOTAL is today's one tax total; BY_TAX_TYPE lists tax per jurisdiction and tax type with configured labels
+     * @type {string}
+     * @memberof InvoiceDetailsResponse
+     */
+    taxDisplayLayout?: InvoiceDetailsResponseTaxDisplayLayoutEnum;
     /**
      * Grand total payable on the invoice
      * @type {number}
@@ -170,12 +224,31 @@ export interface InvoiceDetailsResponse {
 * @export
 * @enum {string}
 */
+export enum InvoiceDetailsResponsePaymentStatusEnum {
+    Unpaid = 'UNPAID',
+    PartiallyPaid = 'PARTIALLY_PAID',
+    Paid = 'PAID',
+    Overpaid = 'OVERPAID',
+    NotApplicable = 'NOT_APPLICABLE'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum InvoiceDetailsResponseStatusEnum {
     Draft = 'DRAFT',
     Finalized = 'FINALIZED',
     Posted = 'POSTED',
     Error = 'ERROR',
     Cancelled = 'CANCELLED'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum InvoiceDetailsResponseTaxDisplayLayoutEnum {
+    SingleTotal = 'SINGLE_TOTAL',
+    ByTaxType = 'BY_TAX_TYPE'
 }
 
 
@@ -200,8 +273,11 @@ export function InvoiceDetailsResponseFromJSONTyped(json: any, ignoreDiscriminat
         
         'adjustmentEntries': ((json['adjustmentEntries'] as Array<any>).map(InvoiceAdjustmentResponseFromJSON)),
         'adjustments': json['adjustments'] == null ? undefined : json['adjustments'],
+        'amountPaid': json['amountPaid'] == null ? undefined : json['amountPaid'],
         'approvalId': json['approvalId'] == null ? undefined : json['approvalId'],
+        'balanceDue': json['balanceDue'] == null ? undefined : json['balanceDue'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'depositCreditsApplied': json['depositCreditsApplied'] == null ? undefined : json['depositCreditsApplied'],
         'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
         'finalizedAt': json['finalizedAt'] == null ? undefined : (new Date(json['finalizedAt'])),
         'finalizedBy': json['finalizedBy'] == null ? undefined : json['finalizedBy'],
@@ -209,13 +285,17 @@ export function InvoiceDetailsResponseFromJSONTyped(json: any, ignoreDiscriminat
         'invoiceNumber': json['invoiceNumber'] == null ? undefined : json['invoiceNumber'],
         'items': ((json['items'] as Array<any>).map(InvoiceItemResponseFromJSON)),
         'partyId': json['partyId'] == null ? undefined : json['partyId'],
+        'paymentStatus': json['paymentStatus'] == null ? undefined : json['paymentStatus'],
         'requiresManagerApproval': json['requiresManagerApproval'] == null ? undefined : json['requiresManagerApproval'],
         'reversionReason': json['reversionReason'] == null ? undefined : json['reversionReason'],
         'revertedAt': json['revertedAt'] == null ? undefined : (new Date(json['revertedAt'])),
         'revertedBy': json['revertedBy'] == null ? undefined : json['revertedBy'],
+        'sellerTaxRegistrations': json['sellerTaxRegistrations'] == null ? undefined : ((json['sellerTaxRegistrations'] as Array<any>).map(SellerTaxRegistrationFromJSON)),
         'status': json['status'] == null ? undefined : json['status'],
         'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
         'tax': json['tax'] == null ? undefined : json['tax'],
+        'taxBreakdown': json['taxBreakdown'] == null ? undefined : ((json['taxBreakdown'] as Array<any>).map(InvoiceTaxBreakdownRowFromJSON)),
+        'taxDisplayLayout': json['taxDisplayLayout'] == null ? undefined : json['taxDisplayLayout'],
         'total': json['total'] == null ? undefined : json['total'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
@@ -231,8 +311,11 @@ export function InvoiceDetailsResponseToJSON(value?: InvoiceDetailsResponse | nu
         
         'adjustmentEntries': ((value['adjustmentEntries'] as Array<any>).map(InvoiceAdjustmentResponseToJSON)),
         'adjustments': value['adjustments'],
+        'amountPaid': value['amountPaid'],
         'approvalId': value['approvalId'],
+        'balanceDue': value['balanceDue'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'depositCreditsApplied': value['depositCreditsApplied'],
         'estimateId': value['estimateId'],
         'finalizedAt': value['finalizedAt'] == null ? undefined : ((value['finalizedAt']).toISOString()),
         'finalizedBy': value['finalizedBy'],
@@ -240,13 +323,17 @@ export function InvoiceDetailsResponseToJSON(value?: InvoiceDetailsResponse | nu
         'invoiceNumber': value['invoiceNumber'],
         'items': ((value['items'] as Array<any>).map(InvoiceItemResponseToJSON)),
         'partyId': value['partyId'],
+        'paymentStatus': value['paymentStatus'],
         'requiresManagerApproval': value['requiresManagerApproval'],
         'reversionReason': value['reversionReason'],
         'revertedAt': value['revertedAt'] == null ? undefined : ((value['revertedAt']).toISOString()),
         'revertedBy': value['revertedBy'],
+        'sellerTaxRegistrations': value['sellerTaxRegistrations'] == null ? undefined : ((value['sellerTaxRegistrations'] as Array<any>).map(SellerTaxRegistrationToJSON)),
         'status': value['status'],
         'subtotal': value['subtotal'],
         'tax': value['tax'],
+        'taxBreakdown': value['taxBreakdown'] == null ? undefined : ((value['taxBreakdown'] as Array<any>).map(InvoiceTaxBreakdownRowToJSON)),
+        'taxDisplayLayout': value['taxDisplayLayout'],
         'total': value['total'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
         'workorderId': value['workorderId'],

@@ -32,12 +32,6 @@ export interface CreateEstimateFromAppointmentRequest {
      */
     customerId: string;
     /**
-     * Idempotency key to prevent duplicate estimate creation
-     * @type {string}
-     * @memberof CreateEstimateFromAppointmentRequest
-     */
-    idempotencyKey: string;
-    /**
      * Location identifier
      * @type {string}
      * @memberof CreateEstimateFromAppointmentRequest
@@ -63,7 +57,6 @@ export interface CreateEstimateFromAppointmentRequest {
 export function instanceOfCreateEstimateFromAppointmentRequest(value: object): boolean {
     if (!('appointmentId' in value)) return false;
     if (!('customerId' in value)) return false;
-    if (!('idempotencyKey' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('vehicleId' in value)) return false;
     return true;
@@ -81,7 +74,6 @@ export function CreateEstimateFromAppointmentRequestFromJSONTyped(json: any, ign
         
         'appointmentId': json['appointmentId'],
         'customerId': json['customerId'],
-        'idempotencyKey': json['idempotencyKey'],
         'locationId': json['locationId'],
         'requestedServices': json['requestedServices'] == null ? undefined : json['requestedServices'],
         'vehicleId': json['vehicleId'],
@@ -96,7 +88,6 @@ export function CreateEstimateFromAppointmentRequestToJSON(value?: CreateEstimat
         
         'appointmentId': value['appointmentId'],
         'customerId': value['customerId'],
-        'idempotencyKey': value['idempotencyKey'],
         'locationId': value['locationId'],
         'requestedServices': value['requestedServices'],
         'vehicleId': value['vehicleId'],

@@ -20,6 +20,8 @@ import type {
   ApiError,
   AuthCapabilitiesResponse,
   LoginRequest,
+  PasswordResetConfirmRequest,
+  PasswordResetRequest,
   SelfRegistrationRequest,
   SelfRegistrationResponse,
   TenantSearchResponse,
@@ -27,6 +29,7 @@ import type {
   TenantSignupResponse,
   TenantSignupStatusResponse,
   TokenPairResponse,
+  UsernameReminderRequest,
 } from '../models/index';
 import {
     ActivateAccountRequestFromJSON,
@@ -39,6 +42,10 @@ import {
     AuthCapabilitiesResponseToJSON,
     LoginRequestFromJSON,
     LoginRequestToJSON,
+    PasswordResetConfirmRequestFromJSON,
+    PasswordResetConfirmRequestToJSON,
+    PasswordResetRequestFromJSON,
+    PasswordResetRequestToJSON,
     SelfRegistrationRequestFromJSON,
     SelfRegistrationRequestToJSON,
     SelfRegistrationResponseFromJSON,
@@ -53,6 +60,8 @@ import {
     TenantSignupStatusResponseToJSON,
     TokenPairResponseFromJSON,
     TokenPairResponseToJSON,
+    UsernameReminderRequestFromJSON,
+    UsernameReminderRequestToJSON,
 } from '../models/index';
 
 export interface ActivateAccountOperationRequest {
@@ -62,6 +71,10 @@ export interface ActivateAccountOperationRequest {
 export interface ActivateAccountWithStarterPasswordRequest {
     activateWithStarterRequest: ActivateWithStarterRequest;
     xTenantSlug?: string;
+}
+
+export interface ConfirmPasswordResetRequest {
+    passwordResetConfirmRequest: PasswordResetConfirmRequest;
 }
 
 export interface GetTenantSignupRequest {
@@ -74,6 +87,14 @@ export interface LoginUserRequest {
 
 export interface RegisterTenantRequest {
     tenantSignupRequest: TenantSignupRequest;
+}
+
+export interface RequestPasswordResetRequest {
+    passwordResetRequest: PasswordResetRequest;
+}
+
+export interface RequestUsernameReminderRequest {
+    usernameReminderRequest: UsernameReminderRequest;
 }
 
 export interface SearchTenantsRequest {
@@ -90,7 +111,7 @@ export interface SelfRegisterUserRequest {
 export class AuthAPIApi extends runtime.BaseAPI {
 
     /**
-     * Exchanges a one-time activation token for the account\'s first password: sets the password, clears the credential expiry provisioning left on the account, and marks the token used, all in one transaction under the token\'s tenant. Use this tool when a tenant\'s first administrator has received an activation token from a platform operator (mintAdministratorActivationToken); do not use loginUser, which cannot succeed until the account is activated, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated and binds no tenant; the token must be unexpired (72 hours from minting) and unused. Required inputs: token and newPassword, both non-blank. Emits a SECURITY_AUTH_ACTIVATE event; no tokens are issued, so a follow-up loginUser call is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the token is unknown, expired or already used (one code on purpose, so nothing about the account or the token\'s history is revealed). 
+     * Exchanges a one-time activation token for the account\'s first password: sets the password, clears the credential expiry provisioning left on the account, and marks the token used, all in one transaction under the token\'s tenant. Use this tool when a tenant\'s first administrator has received an activation token from a platform operator (mintAdministratorActivationToken); do not use loginUser, which cannot succeed until the account is activated, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated and binds no tenant; the token must be unexpired (72 hours from minting) and unused. Required inputs: token and newPassword, both non-blank; newPassword must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password). Emits a SECURITY_AUTH_ACTIVATE event; no tokens are issued, so a follow-up loginUser call is required. Returns 204 on success; 400 INVALID_REQUEST on a blank field, or 400 VALIDATION_ERROR with fieldErrors[newPassword] starting PASSWORD_POLICY_VIOLATION when the password fails the policy (the token is not consumed); 401 with ACTIVATION_TOKEN_INVALID when the token is unknown, expired or already used (one code on purpose, so nothing about the account or the token\'s history is revealed). 
      * Activate an Account with a One-Time Token
      */
     async activateAccountRaw(requestParameters: ActivateAccountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -119,7 +140,7 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Exchanges a one-time activation token for the account\'s first password: sets the password, clears the credential expiry provisioning left on the account, and marks the token used, all in one transaction under the token\'s tenant. Use this tool when a tenant\'s first administrator has received an activation token from a platform operator (mintAdministratorActivationToken); do not use loginUser, which cannot succeed until the account is activated, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated and binds no tenant; the token must be unexpired (72 hours from minting) and unused. Required inputs: token and newPassword, both non-blank. Emits a SECURITY_AUTH_ACTIVATE event; no tokens are issued, so a follow-up loginUser call is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the token is unknown, expired or already used (one code on purpose, so nothing about the account or the token\'s history is revealed). 
+     * Exchanges a one-time activation token for the account\'s first password: sets the password, clears the credential expiry provisioning left on the account, and marks the token used, all in one transaction under the token\'s tenant. Use this tool when a tenant\'s first administrator has received an activation token from a platform operator (mintAdministratorActivationToken); do not use loginUser, which cannot succeed until the account is activated, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated and binds no tenant; the token must be unexpired (72 hours from minting) and unused. Required inputs: token and newPassword, both non-blank; newPassword must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password). Emits a SECURITY_AUTH_ACTIVATE event; no tokens are issued, so a follow-up loginUser call is required. Returns 204 on success; 400 INVALID_REQUEST on a blank field, or 400 VALIDATION_ERROR with fieldErrors[newPassword] starting PASSWORD_POLICY_VIOLATION when the password fails the policy (the token is not consumed); 401 with ACTIVATION_TOKEN_INVALID when the token is unknown, expired or already used (one code on purpose, so nothing about the account or the token\'s history is revealed). 
      * Activate an Account with a One-Time Token
      */
     async activateAccount(requestParameters: ActivateAccountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -127,7 +148,7 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
+     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. newPassword must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the username or tenantSlug). Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 INVALID_REQUEST on a blank field, or 400 VALIDATION_ERROR with fieldErrors[newPassword] starting PASSWORD_POLICY_VIOLATION when the password fails the policy (the starter password is not checked first, so nothing is revealed); 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
      * Claim a Bulk-Provisioned Account with Its Starter Password
      */
     async activateAccountWithStarterPasswordRaw(requestParameters: ActivateAccountWithStarterPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -160,7 +181,7 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
+     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. newPassword must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the username or tenantSlug). Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 INVALID_REQUEST on a blank field, or 400 VALIDATION_ERROR with fieldErrors[newPassword] starting PASSWORD_POLICY_VIOLATION when the password fails the policy (the starter password is not checked first, so nothing is revealed); 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
      * Claim a Bulk-Provisioned Account with Its Starter Password
      */
     async activateAccountWithStarterPassword(requestParameters: ActivateAccountWithStarterPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -168,7 +189,44 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Answers the deployment-wide self-service capabilities — the anonymous tenant signup, the password reset and the username reminder — plus the locale allow-list a self-service signup may name. Use this tool on the sign-in and signup pages before rendering the \"new to Positivity?\" divider, the new-user button, the forgot-password link or the forgot-username link, so a deployment that switched one of them off shows no dead link; do not use it to ask about the caller, who is anonymous here, and do not use it to learn a tenant\'s configuration, which is deliberately never part of this answer. The read is tenant-blind: it takes no X-Tenant-Id and no bearer token, and the response is cacheable for 60 seconds (Cache-Control: public, max-age=60). Preconditions: none — the path is public on the anonymous /v1/auth/_** chain and needs no headers. Required inputs: none; the read takes no path or query parameter, no bearer token and no X-Tenant-Id, because it is deployment-wide and tenant-blind. Emits a SECURITY_AUTH_CAPABILITIES_READ event. Returns 200 with tenantSignupEnabled, passwordResetEnabled, usernameReminderEnabled and supportedLocales; it never answers 4xx or 5xx by design, and an absent or blank property reads as false. 
+     * Exchanges the one-time token from the emailed reset link for a new password: the token is consumed, the password is re-encoded, a lockout raised by the failed-login policy is cleared, the credential expiry provisioning left is cleared, and every live token pair for the account is revoked, all in one transaction under the token row\'s organization. Use this tool from the /reset-password page the link points at; do not use it to change a password you know (that is updateUser) and do not use it twice — the second attempt is 401 PASSWORD_RESET_TOKEN_INVALID and nothing changes. Preconditions: the deployment switch must be on; the token must be unexpired (pos.security.password-reset.token-ttl, default one hour) and unused; the account must still be enabled, activated and unexpired. An account disabled after the mail went out is 401 and its token is consumed. Required inputs: token and newPassword, both non-blank; newPassword must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password), the same rule POST /v1/auth/activate applies. Emits a SECURITY_AUTH_PASSWORD_RESET_CONFIRM event only on a successful (204) confirmation; the account can sign in with the new password immediately, and any session opened before the reset is rejected. Returns 204 on success; 400 VALIDATION_ERROR with fieldErrors for a blank field or a newPassword that fails the policy (fieldErrors[newPassword] starting PASSWORD_POLICY_VIOLATION; the token is not consumed); 401 PASSWORD_RESET_TOKEN_INVALID for a token that is unknown, expired, already used or names an account that may no longer be reset; 404 PASSWORD_RESET_DISABLED while the switch is off; 429 from the gateway\'s per-client-IP limiter. 
+     * Set a New Password With a Reset Token
+     */
+    async confirmPasswordResetRaw(requestParameters: ConfirmPasswordResetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['passwordResetConfirmRequest'] == null) {
+            throw new runtime.RequiredError(
+                'passwordResetConfirmRequest',
+                'Required parameter "passwordResetConfirmRequest" was null or undefined when calling confirmPasswordReset().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/v1/auth/password-reset/confirm`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PasswordResetConfirmRequestToJSON(requestParameters['passwordResetConfirmRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Exchanges the one-time token from the emailed reset link for a new password: the token is consumed, the password is re-encoded, a lockout raised by the failed-login policy is cleared, the credential expiry provisioning left is cleared, and every live token pair for the account is revoked, all in one transaction under the token row\'s organization. Use this tool from the /reset-password page the link points at; do not use it to change a password you know (that is updateUser) and do not use it twice — the second attempt is 401 PASSWORD_RESET_TOKEN_INVALID and nothing changes. Preconditions: the deployment switch must be on; the token must be unexpired (pos.security.password-reset.token-ttl, default one hour) and unused; the account must still be enabled, activated and unexpired. An account disabled after the mail went out is 401 and its token is consumed. Required inputs: token and newPassword, both non-blank; newPassword must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password), the same rule POST /v1/auth/activate applies. Emits a SECURITY_AUTH_PASSWORD_RESET_CONFIRM event only on a successful (204) confirmation; the account can sign in with the new password immediately, and any session opened before the reset is rejected. Returns 204 on success; 400 VALIDATION_ERROR with fieldErrors for a blank field or a newPassword that fails the policy (fieldErrors[newPassword] starting PASSWORD_POLICY_VIOLATION; the token is not consumed); 401 PASSWORD_RESET_TOKEN_INVALID for a token that is unknown, expired, already used or names an account that may no longer be reset; 404 PASSWORD_RESET_DISABLED while the switch is off; 429 from the gateway\'s per-client-IP limiter. 
+     * Set a New Password With a Reset Token
+     */
+    async confirmPasswordReset(requestParameters: ConfirmPasswordResetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.confirmPasswordResetRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Answers the deployment-wide self-service capabilities — the anonymous tenant signup, the password reset and the username reminder — plus the locale allow-list a self-service signup may name and the password policy every password-setting endpoint enforces (passwordPolicy: minLength, maxLength, requireMixedClasses, from pos.security.password-policy.*), so a form\'s hint and pre-check mirror the server exactly. Use this tool on the sign-in and signup pages before rendering the \"new to Positivity?\" divider, the new-user button, the forgot-password link or the forgot-username link, so a deployment that switched one of them off shows no dead link; do not use it to ask about the caller, who is anonymous here, and do not use it to learn a tenant\'s configuration, which is deliberately never part of this answer. The read is tenant-blind: it takes no X-Tenant-Id and no bearer token, and the response is cacheable for 60 seconds (Cache-Control: public, max-age=60). Preconditions: none — the path is public on the anonymous /v1/auth/_** chain and needs no headers. Required inputs: none; the read takes no path or query parameter, no bearer token and no X-Tenant-Id, because it is deployment-wide and tenant-blind. Emits a SECURITY_AUTH_CAPABILITIES_READ event. Returns 200 with tenantSignupEnabled, passwordResetEnabled, usernameReminderEnabled, supportedLocales and passwordPolicy; it never answers 4xx or 5xx by design, and an absent or blank property reads as false. 
      * Read Which Self-Service Auth Entry Points This Deployment Serves
      */
     async getAuthCapabilitiesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthCapabilitiesResponse>> {
@@ -187,7 +245,7 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Answers the deployment-wide self-service capabilities — the anonymous tenant signup, the password reset and the username reminder — plus the locale allow-list a self-service signup may name. Use this tool on the sign-in and signup pages before rendering the \"new to Positivity?\" divider, the new-user button, the forgot-password link or the forgot-username link, so a deployment that switched one of them off shows no dead link; do not use it to ask about the caller, who is anonymous here, and do not use it to learn a tenant\'s configuration, which is deliberately never part of this answer. The read is tenant-blind: it takes no X-Tenant-Id and no bearer token, and the response is cacheable for 60 seconds (Cache-Control: public, max-age=60). Preconditions: none — the path is public on the anonymous /v1/auth/_** chain and needs no headers. Required inputs: none; the read takes no path or query parameter, no bearer token and no X-Tenant-Id, because it is deployment-wide and tenant-blind. Emits a SECURITY_AUTH_CAPABILITIES_READ event. Returns 200 with tenantSignupEnabled, passwordResetEnabled, usernameReminderEnabled and supportedLocales; it never answers 4xx or 5xx by design, and an absent or blank property reads as false. 
+     * Answers the deployment-wide self-service capabilities — the anonymous tenant signup, the password reset and the username reminder — plus the locale allow-list a self-service signup may name and the password policy every password-setting endpoint enforces (passwordPolicy: minLength, maxLength, requireMixedClasses, from pos.security.password-policy.*), so a form\'s hint and pre-check mirror the server exactly. Use this tool on the sign-in and signup pages before rendering the \"new to Positivity?\" divider, the new-user button, the forgot-password link or the forgot-username link, so a deployment that switched one of them off shows no dead link; do not use it to ask about the caller, who is anonymous here, and do not use it to learn a tenant\'s configuration, which is deliberately never part of this answer. The read is tenant-blind: it takes no X-Tenant-Id and no bearer token, and the response is cacheable for 60 seconds (Cache-Control: public, max-age=60). Preconditions: none — the path is public on the anonymous /v1/auth/_** chain and needs no headers. Required inputs: none; the read takes no path or query parameter, no bearer token and no X-Tenant-Id, because it is deployment-wide and tenant-blind. Emits a SECURITY_AUTH_CAPABILITIES_READ event. Returns 200 with tenantSignupEnabled, passwordResetEnabled, usernameReminderEnabled, supportedLocales and passwordPolicy; it never answers 4xx or 5xx by design, and an absent or blank property reads as false. 
      * Read Which Self-Service Auth Entry Points This Deployment Serves
      */
     async getAuthCapabilities(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthCapabilitiesResponse> {
@@ -269,7 +327,7 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates the customer account, the tenant in PENDING and the person\'s own administrator login in one anonymous request: the password chosen here is hashed before anything is written, stored only until provisioning applies it to the ADMIN user, and never carried on an event. Use this tool when a person starts a new business on Durion with no account yet; do not use it to add a tenant to an existing account, which is an operator action (createTenant), and do not use selfRegisterUser, which creates a customer account inside an existing tenant. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED before any validation), the signup secret must be configured, the slug and the account\'s legal name must be free, and the locale, currency and country must be valid. Required inputs: organizationName, slug, locale, functionalCurrency, homeCountry, firstName, lastName, email and password; idempotencyKey is optional and replays the stored response instead of creating a second account and tenant. Emits a SECURITY_AUTH_REGISTER_TENANT event; on success the tenant is PENDING until provisioning completes, and its status is read with getTenantSignup. Returns 202 with the signup id, the tenant id and status PENDING, and Retry-After: 2 as the first poll interval for getTenantSignup; 400 VALIDATION_ERROR with fieldErrors; 404 TENANT_SIGNUP_DISABLED; 409 TENANT_SLUG_TAKEN, ACCOUNT_LEGAL_NAME_TAKEN or IDEMPOTENCY_KEY_REUSED; 503 TENANT_SIGNUP_UNAVAILABLE when pos-tenant cannot create the tenant. A refused or unreachable pos-tenant leaves the signup FAILED and is retryable with a new idempotency key; when the outcome is unknown the signup stays PENDING and the answer carries Retry-After and the signup id as referenceId, so poll getTenantSignup with it until the status resolves, and retry with the SAME idempotency key when one was sent rather than starting a second signup. 
+     * Creates the customer account, the tenant in PENDING and the person\'s own administrator login in one anonymous request: the password chosen here is hashed before anything is written, stored only until provisioning applies it to the ADMIN user, and never carried on an event. Use this tool when a person starts a new business on Durion with no account yet; do not use it to add a tenant to an existing account, which is an operator action (createTenant), and do not use selfRegisterUser, which creates a customer account inside an existing tenant. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED before any validation), the signup secret must be configured, the slug and the account\'s legal name must be free, and the locale and currency must be valid. homeCountry, when sent, must be a two-letter ISO 3166-1 code. A locale with no region is rejected by @SupportedLocale as an unsupported locale (400 fieldErrors[locale]); a configured supported locale whose region is not alpha-2 (for example es-419) requires homeCountry, answering 400 with fieldErrors[homeCountry] instead. Required inputs: organizationName, slug, locale, functionalCurrency, firstName, lastName, email and password; homeCountry is optional and defaults to the region of locale (fr-CA -> CA) when omitted, while an explicit value wins; idempotencyKey is optional and replays the stored response instead of creating a second account and tenant; password must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the slug, organization name, email local part or administrator\'s name), refused with 400 VALIDATION_ERROR and fieldErrors[password] starting PASSWORD_POLICY_VIOLATION before any row is written. Emits a SECURITY_AUTH_REGISTER_TENANT event; on success the tenant is PENDING until provisioning completes, and its status is read with getTenantSignup. Returns 202 with the signup id, the tenant id and status PENDING, and Retry-After: 2 as the first poll interval for getTenantSignup; 400 VALIDATION_ERROR with fieldErrors; 404 TENANT_SIGNUP_DISABLED; 409 TENANT_SLUG_TAKEN, ACCOUNT_LEGAL_NAME_TAKEN or IDEMPOTENCY_KEY_REUSED; 503 TENANT_SIGNUP_UNAVAILABLE when pos-tenant cannot create the tenant. A refused or unreachable pos-tenant leaves the signup FAILED and is retryable with a new idempotency key; when the outcome is unknown the signup stays PENDING and the answer carries Retry-After and the signup id as referenceId, so poll getTenantSignup with it until the status resolves, and retry with the SAME idempotency key when one was sent rather than starting a second signup. 
      * Create a Tenant and Its First Administrator from a Self-Service Signup
      */
     async registerTenantRaw(requestParameters: RegisterTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TenantSignupResponse>> {
@@ -298,12 +356,86 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates the customer account, the tenant in PENDING and the person\'s own administrator login in one anonymous request: the password chosen here is hashed before anything is written, stored only until provisioning applies it to the ADMIN user, and never carried on an event. Use this tool when a person starts a new business on Durion with no account yet; do not use it to add a tenant to an existing account, which is an operator action (createTenant), and do not use selfRegisterUser, which creates a customer account inside an existing tenant. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED before any validation), the signup secret must be configured, the slug and the account\'s legal name must be free, and the locale, currency and country must be valid. Required inputs: organizationName, slug, locale, functionalCurrency, homeCountry, firstName, lastName, email and password; idempotencyKey is optional and replays the stored response instead of creating a second account and tenant. Emits a SECURITY_AUTH_REGISTER_TENANT event; on success the tenant is PENDING until provisioning completes, and its status is read with getTenantSignup. Returns 202 with the signup id, the tenant id and status PENDING, and Retry-After: 2 as the first poll interval for getTenantSignup; 400 VALIDATION_ERROR with fieldErrors; 404 TENANT_SIGNUP_DISABLED; 409 TENANT_SLUG_TAKEN, ACCOUNT_LEGAL_NAME_TAKEN or IDEMPOTENCY_KEY_REUSED; 503 TENANT_SIGNUP_UNAVAILABLE when pos-tenant cannot create the tenant. A refused or unreachable pos-tenant leaves the signup FAILED and is retryable with a new idempotency key; when the outcome is unknown the signup stays PENDING and the answer carries Retry-After and the signup id as referenceId, so poll getTenantSignup with it until the status resolves, and retry with the SAME idempotency key when one was sent rather than starting a second signup. 
+     * Creates the customer account, the tenant in PENDING and the person\'s own administrator login in one anonymous request: the password chosen here is hashed before anything is written, stored only until provisioning applies it to the ADMIN user, and never carried on an event. Use this tool when a person starts a new business on Durion with no account yet; do not use it to add a tenant to an existing account, which is an operator action (createTenant), and do not use selfRegisterUser, which creates a customer account inside an existing tenant. Preconditions: the deployment switch pos.security.tenant-signup.enabled must be on (off answers 404 TENANT_SIGNUP_DISABLED before any validation), the signup secret must be configured, the slug and the account\'s legal name must be free, and the locale and currency must be valid. homeCountry, when sent, must be a two-letter ISO 3166-1 code. A locale with no region is rejected by @SupportedLocale as an unsupported locale (400 fieldErrors[locale]); a configured supported locale whose region is not alpha-2 (for example es-419) requires homeCountry, answering 400 with fieldErrors[homeCountry] instead. Required inputs: organizationName, slug, locale, functionalCurrency, firstName, lastName, email and password; homeCountry is optional and defaults to the region of locale (fr-CA -> CA) when omitted, while an explicit value wins; idempotencyKey is optional and replays the stored response instead of creating a second account and tenant; password must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the slug, organization name, email local part or administrator\'s name), refused with 400 VALIDATION_ERROR and fieldErrors[password] starting PASSWORD_POLICY_VIOLATION before any row is written. Emits a SECURITY_AUTH_REGISTER_TENANT event; on success the tenant is PENDING until provisioning completes, and its status is read with getTenantSignup. Returns 202 with the signup id, the tenant id and status PENDING, and Retry-After: 2 as the first poll interval for getTenantSignup; 400 VALIDATION_ERROR with fieldErrors; 404 TENANT_SIGNUP_DISABLED; 409 TENANT_SLUG_TAKEN, ACCOUNT_LEGAL_NAME_TAKEN or IDEMPOTENCY_KEY_REUSED; 503 TENANT_SIGNUP_UNAVAILABLE when pos-tenant cannot create the tenant. A refused or unreachable pos-tenant leaves the signup FAILED and is retryable with a new idempotency key; when the outcome is unknown the signup stays PENDING and the answer carries Retry-After and the signup id as referenceId, so poll getTenantSignup with it until the status resolves, and retry with the SAME idempotency key when one was sent rather than starting a second signup. 
      * Create a Tenant and Its First Administrator from a Self-Service Signup
      */
     async registerTenant(requestParameters: RegisterTenantRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TenantSignupResponse> {
         const response = await this.registerTenantRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Records an anonymous password-reset request and emails a single-use link to set a new password when the account resolves; do not use this to learn whether an account exists, to log in, or to change a known password. Use this tool on the forgot-password page; the organization resolves as login does: X-Tenant-Slug header, tenantSlug body param, or transitional default. Preconditions: pos.security.password-reset.enabled must be on (off answers 404 PASSWORD_RESET_DISABLED) and a reset link base must be configured; the account must be enabled, activated, unexpired, and in an ACTIVE organization; a policy-locked account is eligible and the reset ends its lockout. Required inputs: username (max 255); tenantSlug is optional when the request host already names the organization. Emits a SECURITY_AUTH_PASSWORD_RESET_REQUEST event and writes a SECURITY_AUTH_PASSWORD_RESET_REQUEST audit row whose outcome is one of the six listed values (SENT, NO_USER, INELIGIBLE, NO_ADDRESS, THROTTLED or MAIL_FAILED). A plan-failure (ERROR) or executor-saturated (REJECTED) outcome still answers 202 with no audit row, only a counter and log. At most one mail per account per pos.security.password-reset.min-interval; newer requests close the previous link. Returns 202 with an empty body for every outcome after validation; 400 VALIDATION_ERROR for a blank username or malformed tenantSlug; 404 PASSWORD_RESET_DISABLED; 429 from the gateway\'s per-client-IP limiter. 
+     * Request a One-Time Password-Reset Link
+     */
+    async requestPasswordResetRaw(requestParameters: RequestPasswordResetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['passwordResetRequest'] == null) {
+            throw new runtime.RequiredError(
+                'passwordResetRequest',
+                'Required parameter "passwordResetRequest" was null or undefined when calling requestPasswordReset().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/v1/auth/password-reset`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PasswordResetRequestToJSON(requestParameters['passwordResetRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Records an anonymous password-reset request and emails a single-use link to set a new password when the account resolves; do not use this to learn whether an account exists, to log in, or to change a known password. Use this tool on the forgot-password page; the organization resolves as login does: X-Tenant-Slug header, tenantSlug body param, or transitional default. Preconditions: pos.security.password-reset.enabled must be on (off answers 404 PASSWORD_RESET_DISABLED) and a reset link base must be configured; the account must be enabled, activated, unexpired, and in an ACTIVE organization; a policy-locked account is eligible and the reset ends its lockout. Required inputs: username (max 255); tenantSlug is optional when the request host already names the organization. Emits a SECURITY_AUTH_PASSWORD_RESET_REQUEST event and writes a SECURITY_AUTH_PASSWORD_RESET_REQUEST audit row whose outcome is one of the six listed values (SENT, NO_USER, INELIGIBLE, NO_ADDRESS, THROTTLED or MAIL_FAILED). A plan-failure (ERROR) or executor-saturated (REJECTED) outcome still answers 202 with no audit row, only a counter and log. At most one mail per account per pos.security.password-reset.min-interval; newer requests close the previous link. Returns 202 with an empty body for every outcome after validation; 400 VALIDATION_ERROR for a blank username or malformed tenantSlug; 404 PASSWORD_RESET_DISABLED; 429 from the gateway\'s per-client-IP limiter. 
+     * Request a One-Time Password-Reset Link
+     */
+    async requestPasswordReset(requestParameters: RequestPasswordResetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.requestPasswordResetRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Requests that the usernames linked to an email address be mailed to that same address (issue #3060). Use this tool when a person has forgotten their username and wants it by email; do not use it to discover whether an address has an account, because every answer is the same 202, and do not use loginUser, which needs a password the person no longer knows. Preconditions: the deployment switch pos.security.username-reminder.enabled is on, and the organization is resolved exactly as loginUser resolves it (the request host, else tenantSlug, else the transitional default); an unknown or inactive organization is answered like a miss. Required inputs: email, the address to mail; tenantSlug is optional when the request host already names the organization. Emits a SECURITY_AUTH_USERNAME_REMINDER_REQUEST event; when the address matches enabled accounts under the resolved organization, one localized message listing their usernames is sent to the submitted address through pos-platform-sender, at most once per configured interval per address and organization. Returns 202 with an empty body for every outcome, including an unknown organization, no match, a throttled address and a mail failure; 400 VALIDATION_ERROR when email is blank, malformed or longer than 320 characters; and 404 USERNAME_REMINDER_DISABLED when the deployment switch is off. 
+     * Mail the Usernames Linked to an Email Address
+     */
+    async requestUsernameReminderRaw(requestParameters: RequestUsernameReminderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['usernameReminderRequest'] == null) {
+            throw new runtime.RequiredError(
+                'usernameReminderRequest',
+                'Required parameter "usernameReminderRequest" was null or undefined when calling requestUsernameReminder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/v1/auth/username-reminder`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UsernameReminderRequestToJSON(requestParameters['usernameReminderRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Requests that the usernames linked to an email address be mailed to that same address (issue #3060). Use this tool when a person has forgotten their username and wants it by email; do not use it to discover whether an address has an account, because every answer is the same 202, and do not use loginUser, which needs a password the person no longer knows. Preconditions: the deployment switch pos.security.username-reminder.enabled is on, and the organization is resolved exactly as loginUser resolves it (the request host, else tenantSlug, else the transitional default); an unknown or inactive organization is answered like a miss. Required inputs: email, the address to mail; tenantSlug is optional when the request host already names the organization. Emits a SECURITY_AUTH_USERNAME_REMINDER_REQUEST event; when the address matches enabled accounts under the resolved organization, one localized message listing their usernames is sent to the submitted address through pos-platform-sender, at most once per configured interval per address and organization. Returns 202 with an empty body for every outcome, including an unknown organization, no match, a throttled address and a mail failure; 400 VALIDATION_ERROR when email is blank, malformed or longer than 320 characters; and 404 USERNAME_REMINDER_DISABLED when the deployment switch is off. 
+     * Mail the Usernames Linked to an Email Address
+     */
+    async requestUsernameReminder(requestParameters: RequestUsernameReminderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.requestUsernameReminderRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -339,7 +471,7 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a low-privilege SELF_SERVICE_CUSTOMER account for an anonymous person, resolving or creating a linked person record before any account row is written. Use this tool when a customer registers themselves; do not use createUser, the operator-facing endpoint that provisions accounts with arbitrary roles and no identity resolution. Preconditions: no active user may exist for the requested or email-derived username, the resolved person must not already have an active linked user, and CRM identity signals must not require manual review. Required inputs: email, password, firstName, and lastName; username is optional and defaults to the email local part, phone and idpSubject are optional, and idempotencyKey optionally replays a completed attempt instead of duplicating it. Emits a SECURITY_AUTH_SELF_REGISTER event, creates the user, and queues an asynchronous user-person link command, so the response reports linkStatus PENDING and issuedTokens false; a follow-up loginUser call is required to obtain tokens. Returns 409 with code USER_ALREADY_EXISTS, ACCOUNT_RECOVERY_REQUIRED, PERSON_ALREADY_HAS_ACTIVE_USER, CRM_PERSON_CONFLICT, or IDEMPOTENCY_KEY_REUSED; recovery and identity conflicts also open a review case and return its id as referenceId with nextAction and supportAction guidance. 
+     * Creates a low-privilege SELF_SERVICE_CUSTOMER account for an anonymous person, resolving or creating a linked person record before any account row is written. Use this tool when a customer registers themselves; do not use createUser, the operator-facing endpoint that provisions accounts with arbitrary roles and no identity resolution. Preconditions: no active user may exist for the requested or email-derived username, the resolved person must not already have an active linked user, and CRM identity signals must not require manual review. Required inputs: email, password, firstName, and lastName; username is optional and defaults to the email local part, phone and idpSubject are optional, and idempotencyKey optionally replays a completed attempt instead of duplicating it. The password must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the email local part, username or name); a refusal is 400 VALIDATION_ERROR with fieldErrors[password] starting PASSWORD_POLICY_VIOLATION. Emits a SECURITY_AUTH_SELF_REGISTER event, creates the user, and queues an asynchronous user-person link command, so the response reports linkStatus PENDING and issuedTokens false; a follow-up loginUser call is required to obtain tokens. Returns 409 with code USER_ALREADY_EXISTS, ACCOUNT_RECOVERY_REQUIRED, PERSON_ALREADY_HAS_ACTIVE_USER, CRM_PERSON_CONFLICT, or IDEMPOTENCY_KEY_REUSED; recovery and identity conflicts also open a review case and return its id as referenceId with nextAction and supportAction guidance. 
      * Self-Register a New Customer Account
      */
     async selfRegisterUserRaw(requestParameters: SelfRegisterUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SelfRegistrationResponse>> {
@@ -368,7 +500,7 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a low-privilege SELF_SERVICE_CUSTOMER account for an anonymous person, resolving or creating a linked person record before any account row is written. Use this tool when a customer registers themselves; do not use createUser, the operator-facing endpoint that provisions accounts with arbitrary roles and no identity resolution. Preconditions: no active user may exist for the requested or email-derived username, the resolved person must not already have an active linked user, and CRM identity signals must not require manual review. Required inputs: email, password, firstName, and lastName; username is optional and defaults to the email local part, phone and idpSubject are optional, and idempotencyKey optionally replays a completed attempt instead of duplicating it. Emits a SECURITY_AUTH_SELF_REGISTER event, creates the user, and queues an asynchronous user-person link command, so the response reports linkStatus PENDING and issuedTokens false; a follow-up loginUser call is required to obtain tokens. Returns 409 with code USER_ALREADY_EXISTS, ACCOUNT_RECOVERY_REQUIRED, PERSON_ALREADY_HAS_ACTIVE_USER, CRM_PERSON_CONFLICT, or IDEMPOTENCY_KEY_REUSED; recovery and identity conflicts also open a review case and return its id as referenceId with nextAction and supportAction guidance. 
+     * Creates a low-privilege SELF_SERVICE_CUSTOMER account for an anonymous person, resolving or creating a linked person record before any account row is written. Use this tool when a customer registers themselves; do not use createUser, the operator-facing endpoint that provisions accounts with arbitrary roles and no identity resolution. Preconditions: no active user may exist for the requested or email-derived username, the resolved person must not already have an active linked user, and CRM identity signals must not require manual review. Required inputs: email, password, firstName, and lastName; username is optional and defaults to the email local part, phone and idpSubject are optional, and idempotencyKey optionally replays a completed attempt instead of duplicating it. The password must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the email local part, username or name); a refusal is 400 VALIDATION_ERROR with fieldErrors[password] starting PASSWORD_POLICY_VIOLATION. Emits a SECURITY_AUTH_SELF_REGISTER event, creates the user, and queues an asynchronous user-person link command, so the response reports linkStatus PENDING and issuedTokens false; a follow-up loginUser call is required to obtain tokens. Returns 409 with code USER_ALREADY_EXISTS, ACCOUNT_RECOVERY_REQUIRED, PERSON_ALREADY_HAS_ACTIVE_USER, CRM_PERSON_CONFLICT, or IDEMPOTENCY_KEY_REUSED; recovery and identity conflicts also open a review case and return its id as referenceId with nextAction and supportAction guidance. 
      * Self-Register a New Customer Account
      */
     async selfRegisterUser(requestParameters: SelfRegisterUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SelfRegistrationResponse> {

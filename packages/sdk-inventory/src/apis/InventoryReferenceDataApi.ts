@@ -49,6 +49,42 @@ export interface ListInventoryStorageLocationsRequest {
 export class InventoryReferenceDataApi extends runtime.BaseAPI {
 
     /**
+     * Returns the closed set of reason codes POST /v1/inventory/adjustments accepts: FOUND_STOCK (a positive quantity) and THEFT_OR_LOSS (a negative one). Use this tool to populate an adjustment-reason picker instead of hard-coding the list; the same set and sign rules are enforced by the adjustment endpoint, so do not duplicate them in the UI. Preconditions: none; the list is static and requires no lookup. Required inputs: none. Emits a fast-read INVENTORY_META_ADJUSTMENT_REASONS_VIEW event and changes no state. Returns 200 with both codes on every call. 
+     * List manual-adjustment reason codes
+     */
+    async listAdjustmentReasonsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/meta/adjustment-reasons`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Returns the closed set of reason codes POST /v1/inventory/adjustments accepts: FOUND_STOCK (a positive quantity) and THEFT_OR_LOSS (a negative one). Use this tool to populate an adjustment-reason picker instead of hard-coding the list; the same set and sign rules are enforced by the adjustment endpoint, so do not duplicate them in the UI. Preconditions: none; the list is static and requires no lookup. Required inputs: none. Emits a fast-read INVENTORY_META_ADJUSTMENT_REASONS_VIEW event and changes no state. Returns 200 with both codes on every call. 
+     * List manual-adjustment reason codes
+     */
+    async listAdjustmentReasons(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
+        const response = await this.listAdjustmentReasonsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Lists inventory location zones as a page; the current implementation is a placeholder that always returns an empty page until the pos-location client integration lands. Use this tool only to probe the future location-zone contract; use listInventoryLocations instead for reference data that is actually served. Preconditions: none. Required inputs: none; locationId and the page/size parameters (default size 20) are accepted but no data is served yet. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page unconditionally in the current implementation. 
      * List inventory location zones
      */
@@ -213,6 +249,42 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
      */
     async listInventoryStorageLocations(requestParameters: ListInventoryStorageLocationsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listInventoryStorageLocationsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the closed set of reason codes POST /v1/inventory/moves accepts: PUTAWAY_TO_HOME_BIN, CONSOLIDATE_BINS, MOVE_TO_VAN_STOCK and DAMAGED_TO_QUARANTINE. Use this tool to populate a move-reason picker instead of hard-coding the list; the same set is enforced by the move endpoint. Preconditions: none; the list is static and requires no lookup. Required inputs: none. Emits a fast-read INVENTORY_META_MOVE_REASONS_VIEW event and changes no state. Returns 200 with all four codes on every call. 
+     * List bin-move reason codes
+     */
+    async listMoveReasonsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/meta/move-reasons`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Returns the closed set of reason codes POST /v1/inventory/moves accepts: PUTAWAY_TO_HOME_BIN, CONSOLIDATE_BINS, MOVE_TO_VAN_STOCK and DAMAGED_TO_QUARANTINE. Use this tool to populate a move-reason picker instead of hard-coding the list; the same set is enforced by the move endpoint. Preconditions: none; the list is static and requires no lookup. Required inputs: none. Emits a fast-read INVENTORY_META_MOVE_REASONS_VIEW event and changes no state. Returns 200 with all four codes on every call. 
+     * List bin-move reason codes
+     */
+    async listMoveReasons(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
+        const response = await this.listMoveReasonsRaw(initOverrides);
         return await response.value();
     }
 

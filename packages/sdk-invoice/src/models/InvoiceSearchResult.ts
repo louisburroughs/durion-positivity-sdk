@@ -20,17 +20,53 @@ import { mapValues } from '../runtime';
  */
 export interface InvoiceSearchResult {
     /**
+     * Settlement figure: captured payments minus every non-FAILED refund anchored to this invoice. It is not the accounts-receivable balance and not ADR-0057 collected: credit memos, customer-credit applications and payments applied in accounting are not reflected here
+     * @type {number}
+     * @memberof InvoiceSearchResult
+     */
+    amountPaid?: number;
+    /**
+     * Settlement figure: total minus amountPaid minus depositCreditsApplied. Signed and never clamped, so a negative value is an overpayment. It is pos-invoice's own settlement balance, not the accounts-receivable balance
+     * @type {number}
+     * @memberof InvoiceSearchResult
+     */
+    balanceDue?: number;
+    /**
      * Creation timestamp
      * @type {Date}
      * @memberof InvoiceSearchResult
      */
     createdAt?: Date;
     /**
+     * ISO 4217 code of the amounts on this row, from the tenant's functional currency (ADR-0067 R-5: new fields are named currencyCode, never currencyUomId)
+     * @type {string}
+     * @memberof InvoiceSearchResult
+     */
+    currencyCode?: string;
+    /**
+     * Billed customer (party) identifier; absent when the invoice has no bill-to party
+     * @type {string}
+     * @memberof InvoiceSearchResult
+     */
+    customerId?: string;
+    /**
      * Resolved customer display name
      * @type {string}
      * @memberof InvoiceSearchResult
      */
     customerName?: string;
+    /**
+     * Settlement figure: deposit-credit draw-downs applied to this invoice. Carried separately from amountPaid and fed only by pos-invoice's own deposit-credit records, so it is not a complete non-cash settlement figure
+     * @type {number}
+     * @memberof InvoiceSearchResult
+     */
+    depositCreditsApplied?: number;
+    /**
+     * Collections-aging due date frozen at finalization; null on a draft
+     * @type {Date}
+     * @memberof InvoiceSearchResult
+     */
+    dueDate?: Date;
     /**
      * Invoice identifier
      * @type {string}
@@ -43,6 +79,18 @@ export interface InvoiceSearchResult {
      * @memberof InvoiceSearchResult
      */
     invoiceNumber?: string;
+    /**
+     * Location the invoice was raised at; the value locationId filters and location scope act on
+     * @type {string}
+     * @memberof InvoiceSearchResult
+     */
+    locationId?: string;
+    /**
+     * Settlement status derived from the balance: UNPAID, PARTIALLY_PAID, PAID (settled at the counter, not necessarily cash in hand), OVERPAID, or NOT_APPLICABLE for a CANCELLED or ERROR invoice. Not the accounts-receivable status
+     * @type {string}
+     * @memberof InvoiceSearchResult
+     */
+    paymentStatus?: InvoiceSearchResultPaymentStatusEnum;
     /**
      * Current invoice status
      * @type {string}
@@ -69,6 +117,17 @@ export interface InvoiceSearchResult {
     workorderNumber?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum InvoiceSearchResultPaymentStatusEnum {
+    Unpaid = 'UNPAID',
+    PartiallyPaid = 'PARTIALLY_PAID',
+    Paid = 'PAID',
+    Overpaid = 'OVERPAID',
+    NotApplicable = 'NOT_APPLICABLE'
+}
 /**
 * @export
 * @enum {string}
@@ -101,10 +160,18 @@ export function InvoiceSearchResultFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'amountPaid': json['amountPaid'] == null ? undefined : json['amountPaid'],
+        'balanceDue': json['balanceDue'] == null ? undefined : json['balanceDue'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'customerName': json['customerName'] == null ? undefined : json['customerName'],
+        'depositCreditsApplied': json['depositCreditsApplied'] == null ? undefined : json['depositCreditsApplied'],
+        'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'invoiceId': json['invoiceId'],
         'invoiceNumber': json['invoiceNumber'] == null ? undefined : json['invoiceNumber'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'paymentStatus': json['paymentStatus'] == null ? undefined : json['paymentStatus'],
         'status': json['status'],
         'total': json['total'] == null ? undefined : json['total'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
@@ -118,10 +185,18 @@ export function InvoiceSearchResultToJSON(value?: InvoiceSearchResult | null): a
     }
     return {
         
+        'amountPaid': value['amountPaid'],
+        'balanceDue': value['balanceDue'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'currencyCode': value['currencyCode'],
+        'customerId': value['customerId'],
         'customerName': value['customerName'],
+        'depositCreditsApplied': value['depositCreditsApplied'],
+        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString().substring(0,10)),
         'invoiceId': value['invoiceId'],
         'invoiceNumber': value['invoiceNumber'],
+        'locationId': value['locationId'],
+        'paymentStatus': value['paymentStatus'],
         'status': value['status'],
         'total': value['total'],
         'workorderId': value['workorderId'],

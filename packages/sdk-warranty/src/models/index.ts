@@ -22,6 +22,7 @@ export * from './PartReturnCreateRequest';
 export * from './PartReturnResponse';
 export * from './PartReturnUpdateRequest';
 export * from './PartReturnView';
+export * from './PolicyBlocker';
 export * from './PolicyRequest';
 export * from './PolicyResponse';
 export * from './ProviderRequest';

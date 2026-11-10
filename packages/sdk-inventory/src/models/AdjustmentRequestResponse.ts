@@ -26,11 +26,23 @@ export interface AdjustmentRequestResponse {
      */
     adjustmentRequestId: string;
     /**
+     * Ledger entry id when the adjustment posted immediately; null while pending approval
+     * @type {string}
+     * @memberof AdjustmentRequestResponse
+     */
+    ledgerEntryId?: string;
+    /**
      * Identifier of the location where the adjustment applies
      * @type {string}
      * @memberof AdjustmentRequestResponse
      */
     locationId: string;
+    /**
+     * True when the request is PENDING and needs approval; false when it posted immediately
+     * @type {boolean}
+     * @memberof AdjustmentRequestResponse
+     */
+    pendingApproval?: boolean;
     /**
      * Stock-keeping unit of the product being adjusted
      * @type {string}
@@ -50,7 +62,7 @@ export interface AdjustmentRequestResponse {
      */
     reasonCode: string;
     /**
-     * Current workflow status of the adjustment request
+     * Current workflow status of the adjustment request: APPROVED when it posted (immediately, or after approval) and PENDING when it awaits approval
      * @type {string}
      * @memberof AdjustmentRequestResponse
      */
@@ -81,7 +93,9 @@ export function AdjustmentRequestResponseFromJSONTyped(json: any, ignoreDiscrimi
     return {
         
         'adjustmentRequestId': json['adjustmentRequestId'],
+        'ledgerEntryId': json['ledgerEntryId'] == null ? undefined : json['ledgerEntryId'],
         'locationId': json['locationId'],
+        'pendingApproval': json['pendingApproval'] == null ? undefined : json['pendingApproval'],
         'productSku': json['productSku'],
         'quantity': json['quantity'],
         'reasonCode': json['reasonCode'],
@@ -96,7 +110,9 @@ export function AdjustmentRequestResponseToJSON(value?: AdjustmentRequestRespons
     return {
         
         'adjustmentRequestId': value['adjustmentRequestId'],
+        'ledgerEntryId': value['ledgerEntryId'],
         'locationId': value['locationId'],
+        'pendingApproval': value['pendingApproval'],
         'productSku': value['productSku'],
         'quantity': value['quantity'],
         'reasonCode': value['reasonCode'],

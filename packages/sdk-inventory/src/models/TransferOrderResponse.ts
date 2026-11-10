@@ -129,6 +129,12 @@ export interface TransferOrderResponse {
      */
     transferOrderId?: string;
     /**
+     * Derived four-step display status (#3189): REQUESTED for DRAFT/APPROVED, IN_TRANSIT for DISPATCHED/PARTIALLY_RECEIVED, RECEIVED for RECEIVED/SHORT_CLOSED, CANCELLED for CANCELLED. Additive: the persisted lifecycle status above is unchanged
+     * @type {string}
+     * @memberof TransferOrderResponse
+     */
+    transferStatus?: TransferOrderResponseTransferStatusEnum;
+    /**
      * Last update timestamp
      * @type {Date}
      * @memberof TransferOrderResponse
@@ -155,6 +161,16 @@ export enum TransferOrderResponseStatusEnum {
     PartiallyReceived = 'PARTIALLY_RECEIVED',
     Received = 'RECEIVED',
     ShortClosed = 'SHORT_CLOSED',
+    Cancelled = 'CANCELLED'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum TransferOrderResponseTransferStatusEnum {
+    Requested = 'REQUESTED',
+    InTransit = 'IN_TRANSIT',
+    Received = 'RECEIVED',
     Cancelled = 'CANCELLED'
 }
 
@@ -193,6 +209,7 @@ export function TransferOrderResponseFromJSONTyped(json: any, ignoreDiscriminato
         'sourceStorageLocationId': json['sourceStorageLocationId'] == null ? undefined : json['sourceStorageLocationId'],
         'status': json['status'] == null ? undefined : json['status'],
         'transferOrderId': json['transferOrderId'] == null ? undefined : json['transferOrderId'],
+        'transferStatus': json['transferStatus'] == null ? undefined : json['transferStatus'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -220,6 +237,7 @@ export function TransferOrderResponseToJSON(value?: TransferOrderResponse | null
         'sourceStorageLocationId': value['sourceStorageLocationId'],
         'status': value['status'],
         'transferOrderId': value['transferOrderId'],
+        'transferStatus': value['transferStatus'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

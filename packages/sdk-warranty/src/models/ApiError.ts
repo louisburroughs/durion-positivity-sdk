@@ -25,6 +25,12 @@ import {
     FieldErrorFromJSONTyped,
     FieldErrorToJSON,
 } from './FieldError';
+import type { PolicyBlocker } from './PolicyBlocker';
+import {
+    PolicyBlockerFromJSON,
+    PolicyBlockerFromJSONTyped,
+    PolicyBlockerToJSON,
+} from './PolicyBlocker';
 import type { SuggestedAlternative } from './SuggestedAlternative';
 import {
     SuggestedAlternativeFromJSON,
@@ -38,6 +44,12 @@ import {
  * @interface ApiError
  */
 export interface ApiError {
+    /**
+     * Itemized blockers behind a 422 refused by documented domain policy (ADR-0017 §3, amended 2026-11-09). Present only on such a 422, never together with fieldErrors or conflicts/suggestedAlternatives, and omitted entirely when there are no items (never an empty array). ApiError.withBlockers(...) is the only supported way to populate this field: it enforces those rules and nulls the sibling fields, while the record's constructors apply no validation to it (the convenience constructors always leave it null)
+     * @type {Array<PolicyBlocker>}
+     * @memberof ApiError
+     */
+    blockers?: Array<PolicyBlocker>;
     /**
      * Machine-readable error code
      * @type {string}
@@ -128,6 +140,7 @@ export function ApiErrorFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
+        'blockers': json['blockers'] == null ? undefined : ((json['blockers'] as Array<any>).map(PolicyBlockerFromJSON)),
         'code': json['code'],
         'conflicts': json['conflicts'] == null ? undefined : ((json['conflicts'] as Array<any>).map(ConflictFromJSON)),
         'correlationId': json['correlationId'],
@@ -148,6 +161,7 @@ export function ApiErrorToJSON(value?: ApiError | null): any {
     }
     return {
         
+        'blockers': value['blockers'] == null ? undefined : ((value['blockers'] as Array<any>).map(PolicyBlockerToJSON)),
         'code': value['code'],
         'conflicts': value['conflicts'] == null ? undefined : ((value['conflicts'] as Array<any>).map(ConflictToJSON)),
         'correlationId': value['correlationId'],

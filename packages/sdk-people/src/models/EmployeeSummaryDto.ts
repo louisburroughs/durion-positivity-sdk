@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { EmployeeClockStateDto } from './EmployeeClockStateDto';
+import {
+    EmployeeClockStateDtoFromJSON,
+    EmployeeClockStateDtoFromJSONTyped,
+    EmployeeClockStateDtoToJSON,
+} from './EmployeeClockStateDto';
 import type { EmployeeContactInfoDto } from './EmployeeContactInfoDto';
 import {
     EmployeeContactInfoDtoFromJSON,
@@ -43,6 +49,12 @@ import {
     EmployeeRoleAssignmentDtoFromJSONTyped,
     EmployeeRoleAssignmentDtoToJSON,
 } from './EmployeeRoleAssignmentDto';
+import type { PeriodTimeDto } from './PeriodTimeDto';
+import {
+    PeriodTimeDtoFromJSON,
+    PeriodTimeDtoFromJSONTyped,
+    PeriodTimeDtoToJSON,
+} from './PeriodTimeDto';
 
 /**
  * Employee row for search results; the fields below `active` are populated only when requested via `include=` (and, for `contactInfo`, only when the caller also holds `people:employee_pii:view`)
@@ -62,6 +74,12 @@ export interface EmployeeSummaryDto {
      * @memberof EmployeeSummaryDto
      */
     allowedActions?: Array<EmployeeSummaryDtoAllowedActionsEnum>;
+    /**
+     * 
+     * @type {EmployeeClockStateDto}
+     * @memberof EmployeeSummaryDto
+     */
+    clock?: EmployeeClockStateDto;
     /**
      * 
      * @type {EmployeeContactInfoDto}
@@ -87,6 +105,12 @@ export interface EmployeeSummaryDto {
      */
     firstName?: string;
     /**
+     * Hire date (yyyy-MM-dd). This key is absent (not null) unless `include=EMPLOYMENT` was requested; it is never withheld for permission reasons, since it is an employment attribute and not the personal contact detail `include=CONTACT_INFO` gates.
+     * @type {Date}
+     * @memberof EmployeeSummaryDto
+     */
+    hireDate?: Date;
+    /**
      * 
      * @type {EmployeeJobRoleDto}
      * @memberof EmployeeSummaryDto
@@ -105,11 +129,29 @@ export interface EmployeeSummaryDto {
      */
     otherLocationCount?: number;
     /**
+     * 
+     * @type {PeriodTimeDto}
+     * @memberof EmployeeSummaryDto
+     */
+    periodTime?: PeriodTimeDto;
+    /**
      * Stable person identifier the employee maps to
      * @type {string}
      * @memberof EmployeeSummaryDto
      */
     personId: string;
+    /**
+     * pos-image identifier of the employee's profile photo (durion#3092). This key is absent (not null) unless `include=PHOTO` was requested; when it was requested and the employee has no photo the key is present with value null (ADR-0064).
+     * @type {string}
+     * @memberof EmployeeSummaryDto
+     */
+    photoImageId?: string;
+    /**
+     * Gateway path that serves the profile photo bytes, /image/v1/images/id/{photoImageId} (durion#3092). This key is absent (not null) unless `include=PHOTO` was requested; when it was requested and the employee has no photo the key is present with value null (ADR-0064).
+     * @type {string}
+     * @memberof EmployeeSummaryDto
+     */
+    photoUrl?: string;
     /**
      * Preferred name, from the identity replica
      * @type {string}
@@ -141,6 +183,18 @@ export interface EmployeeSummaryDto {
      */
     status?: string;
     /**
+     * When the current employment status took effect. Absent unless `include=EMPLOYMENT` was requested, and also absent for an employment row that predates the column.
+     * @type {Date}
+     * @memberof EmployeeSummaryDto
+     */
+    statusEffectiveAt?: Date;
+    /**
+     * Termination date (yyyy-MM-dd). Absent unless `include=EMPLOYMENT` was requested, and also absent (not null) for a still-employed row, which is the module's existing absent-key convention for an optional value (see `propagation`).
+     * @type {Date}
+     * @memberof EmployeeSummaryDto
+     */
+    terminationDate?: Date;
+    /**
      * Login username, from the identity replica; null unless `include=USERNAME` was requested or the person has no linked user account
      * @type {string}
      * @memberof EmployeeSummaryDto
@@ -156,7 +210,9 @@ export enum EmployeeSummaryDtoAllowedActionsEnum {
     ViewPii = 'VIEW_PII',
     Update = 'UPDATE',
     Disable = 'DISABLE',
-    Enable = 'ENABLE'
+    Enable = 'ENABLE',
+    StartWorkSession = 'START_WORK_SESSION',
+    StopWorkSession = 'STOP_WORK_SESSION'
 }
 
 
@@ -182,19 +238,26 @@ export function EmployeeSummaryDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'active': json['active'],
         'allowedActions': json['allowedActions'] == null ? undefined : json['allowedActions'],
+        'clock': json['clock'] == null ? undefined : EmployeeClockStateDtoFromJSON(json['clock']),
         'contactInfo': json['contactInfo'] == null ? undefined : EmployeeContactInfoDtoFromJSON(json['contactInfo']),
         'employeeId': json['employeeId'],
         'employeeNumber': json['employeeNumber'] == null ? undefined : json['employeeNumber'],
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'hireDate': json['hireDate'] == null ? undefined : (new Date(json['hireDate'])),
         'jobRole': json['jobRole'] == null ? undefined : EmployeeJobRoleDtoFromJSON(json['jobRole']),
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
         'otherLocationCount': json['otherLocationCount'] == null ? undefined : json['otherLocationCount'],
+        'periodTime': json['periodTime'] == null ? undefined : PeriodTimeDtoFromJSON(json['periodTime']),
         'personId': json['personId'],
+        'photoImageId': json['photoImageId'] == null ? undefined : json['photoImageId'],
+        'photoUrl': json['photoUrl'] == null ? undefined : json['photoUrl'],
         'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
         'primaryLocation': json['primaryLocation'] == null ? undefined : EmployeeLocationDtoFromJSON(json['primaryLocation']),
         'propagation': json['propagation'] == null ? undefined : EmployeePropagationDtoFromJSON(json['propagation']),
         'roleAssignments': json['roleAssignments'] == null ? undefined : ((json['roleAssignments'] as Array<any>).map(EmployeeRoleAssignmentDtoFromJSON)),
         'status': json['status'] == null ? undefined : json['status'],
+        'statusEffectiveAt': json['statusEffectiveAt'] == null ? undefined : (new Date(json['statusEffectiveAt'])),
+        'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
         'username': json['username'] == null ? undefined : json['username'],
     };
 }
@@ -207,19 +270,26 @@ export function EmployeeSummaryDtoToJSON(value?: EmployeeSummaryDto | null): any
         
         'active': value['active'],
         'allowedActions': value['allowedActions'],
+        'clock': EmployeeClockStateDtoToJSON(value['clock']),
         'contactInfo': EmployeeContactInfoDtoToJSON(value['contactInfo']),
         'employeeId': value['employeeId'],
         'employeeNumber': value['employeeNumber'],
         'firstName': value['firstName'],
+        'hireDate': value['hireDate'] == null ? undefined : ((value['hireDate']).toISOString().substring(0,10)),
         'jobRole': EmployeeJobRoleDtoToJSON(value['jobRole']),
         'lastName': value['lastName'],
         'otherLocationCount': value['otherLocationCount'],
+        'periodTime': PeriodTimeDtoToJSON(value['periodTime']),
         'personId': value['personId'],
+        'photoImageId': value['photoImageId'],
+        'photoUrl': value['photoUrl'],
         'preferredName': value['preferredName'],
         'primaryLocation': EmployeeLocationDtoToJSON(value['primaryLocation']),
         'propagation': EmployeePropagationDtoToJSON(value['propagation']),
         'roleAssignments': value['roleAssignments'] == null ? undefined : ((value['roleAssignments'] as Array<any>).map(EmployeeRoleAssignmentDtoToJSON)),
         'status': value['status'],
+        'statusEffectiveAt': value['statusEffectiveAt'] == null ? undefined : ((value['statusEffectiveAt']).toISOString()),
+        'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
         'username': value['username'],
     };
 }

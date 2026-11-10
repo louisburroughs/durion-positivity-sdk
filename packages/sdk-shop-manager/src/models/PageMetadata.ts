@@ -24,31 +24,35 @@ export interface PageMetadata {
      * @type {number}
      * @memberof PageMetadata
      */
-    number?: number;
+    number: number;
     /**
      * 
      * @type {number}
      * @memberof PageMetadata
      */
-    size?: number;
+    size: number;
     /**
      * 
      * @type {number}
      * @memberof PageMetadata
      */
-    totalElements?: number;
+    totalElements: number;
     /**
      * 
      * @type {number}
      * @memberof PageMetadata
      */
-    totalPages?: number;
+    totalPages: number;
 }
 
 /**
  * Check if a given object implements the PageMetadata interface.
  */
 export function instanceOfPageMetadata(value: object): boolean {
+    if (!('number' in value)) return false;
+    if (!('size' in value)) return false;
+    if (!('totalElements' in value)) return false;
+    if (!('totalPages' in value)) return false;
     return true;
 }
 
@@ -62,10 +66,10 @@ export function PageMetadataFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'number': json['number'] == null ? undefined : json['number'],
-        'size': json['size'] == null ? undefined : json['size'],
-        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
+        'number': json['number'],
+        'size': json['size'],
+        'totalElements': json['totalElements'],
+        'totalPages': json['totalPages'],
     };
 }
 

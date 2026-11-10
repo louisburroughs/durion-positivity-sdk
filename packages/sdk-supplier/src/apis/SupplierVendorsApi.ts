@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   PagedResponseTaxIdRevealRecordView,
+  PagedResponseVendorDirectoryRow,
   PagedResponseVendorView,
   RemitApprovalRequest,
   RemitChangeRequest,
@@ -27,6 +28,7 @@ import type {
   TaxRegistrationSchemes,
   VendorCreateRequest,
   VendorFactReplayResult,
+  VendorLogoRequest,
   VendorStatusChangeRequest,
   VendorUpdateRequest,
   VendorView,
@@ -36,6 +38,8 @@ import {
     ApiErrorToJSON,
     PagedResponseTaxIdRevealRecordViewFromJSON,
     PagedResponseTaxIdRevealRecordViewToJSON,
+    PagedResponseVendorDirectoryRowFromJSON,
+    PagedResponseVendorDirectoryRowToJSON,
     PagedResponseVendorViewFromJSON,
     PagedResponseVendorViewToJSON,
     RemitApprovalRequestFromJSON,
@@ -56,6 +60,8 @@ import {
     VendorCreateRequestToJSON,
     VendorFactReplayResultFromJSON,
     VendorFactReplayResultToJSON,
+    VendorLogoRequestFromJSON,
+    VendorLogoRequestToJSON,
     VendorStatusChangeRequestFromJSON,
     VendorStatusChangeRequestToJSON,
     VendorUpdateRequestFromJSON,
@@ -72,6 +78,7 @@ export interface ApproveSupplierVendorRemitChangeRequest {
 
 export interface CreateSupplierVendorRequest {
     vendorCreateRequest: VendorCreateRequest;
+    idempotencyKey?: string;
 }
 
 export interface DeactivateSupplierVendorRequest {
@@ -101,6 +108,15 @@ export interface ListSupplierVendorTaxRegistrationSchemesRequest {
 export interface ListSupplierVendorsRequest {
     q?: string;
     status?: ListSupplierVendorsStatusEnum;
+    page?: number;
+    size?: number;
+}
+
+export interface ListVendorDirectoryRequest {
+    q?: string;
+    catalog?: ListVendorDirectoryCatalogEnum;
+    status?: ListVendorDirectoryStatusEnum;
+    sort?: string;
     page?: number;
     size?: number;
 }
@@ -135,6 +151,11 @@ export interface RevealSupplierVendorTaxRegistrationRequest {
 export interface UpdateSupplierVendorRequest {
     vendorId: string;
     vendorUpdateRequest: VendorUpdateRequest;
+}
+
+export interface UploadSupplierVendorLogoRequest {
+    vendorId: string;
+    vendorLogoRequest: VendorLogoRequest;
 }
 
 /**
@@ -203,7 +224,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4), and a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes (stored as that code), with region required and listed where the scheme is regional and absent otherwise. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Send a requestId (a UUID the client mints) to make the create idempotent: a retry after a timeout or 5xx with the same requestId and the same payload answers the original 201 body and creates nothing; the same requestId with another payload is refused, so reuse a requestId only for an identical payload. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed or a registration\'s scheme or region is not listed (fieldErrors names taxRegistrations[i].scheme or .region; every violation is reported), 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use, 409 IDEMPOTENCY_CONFLICT when the requestId was used with a different payload or is in use by a concurrent create, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
+     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4), and a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes (stored as that code), with region required and listed where the scheme is regional and absent otherwise. Optional presentation fields (#3073): websiteUrl and catalogUrl (https only, normalised, at most 2048 characters), categories (at most 10 free-text labels of 1-60 characters, trimmed and deduplicated case-insensitively), defaultLeadTimeDays (0 to 365) and primaryContact (the sales rep as free text on the vendor, not a pos-people-contact person); every one is optional and reads back null when absent, and the logo is not writable here — it is set only by POST /{vendorId}/logo. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Send an Idempotency-Key header (a UUID the client mints) to make the create idempotent: a retry after a timeout or 5xx with the same key, the same payload and the same caller answers the original 201 body with Idempotency-Replayed: true and creates neither a second vendor nor a second supplier.vendor.updated fact; the same key with another payload, or from another caller of the tenant, is 409 IDEMPOTENCY_CONFLICT, and a key whose create is still in flight is 409 with Retry-After: 1; omit the header for a create that is not idempotent. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed or a registration\'s scheme or region is not listed (fieldErrors names taxRegistrations[i].scheme or .region; the presentation fields answer the same way as websiteUrl, catalogUrl, categories, defaultLeadTimeDays or primaryContact.name/email/phone; every violation is reported), 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use, 409 IDEMPOTENCY_CONFLICT when the Idempotency-Key was used with a different payload or actor or is in use by a concurrent create, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Create vendor
      */
     async createSupplierVendorRaw(requestParameters: CreateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -219,6 +240,10 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -240,7 +265,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4), and a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes (stored as that code), with region required and listed where the scheme is regional and absent otherwise. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Send a requestId (a UUID the client mints) to make the create idempotent: a retry after a timeout or 5xx with the same requestId and the same payload answers the original 201 body and creates nothing; the same requestId with another payload is refused, so reuse a requestId only for an identical payload. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed or a registration\'s scheme or region is not listed (fieldErrors names taxRegistrations[i].scheme or .region; every violation is reported), 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use, 409 IDEMPOTENCY_CONFLICT when the requestId was used with a different payload or is in use by a concurrent create, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
+     * Creates an ACTIVE vendor, with or without a supplier connection, and publishes supplier.vendor.updated. Use this tool to add a party the shop buys from or pays; do not use it to change a vendor, which is updateSupplierVendor, or to connect a supplier, which is a vendor profile naming this vendor. Preconditions: a vendorNumber, when given, must not be used by another vendor of the tenant. Required inputs: legalName, displayName, defaultPaymentTerms (DUE_ON_RECEIPT or NET1 to NET120) and defaultCurrency (ISO 4217); vendorNumber is optional and allocated as V-000001, V-000002 and so on when omitted, and never changes afterwards; taxRegistrations and remitTo are optional, and each new registration needs its number, which is encrypted at once and never returned (the response shows last4), and a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes (stored as that code), with region required and listed where the scheme is regional and absent otherwise. Optional presentation fields (#3073): websiteUrl and catalogUrl (https only, normalised, at most 2048 characters), categories (at most 10 free-text labels of 1-60 characters, trimmed and deduplicated case-insensitively), defaultLeadTimeDays (0 to 365) and primaryContact (the sales rep as free text on the vendor, not a pos-people-contact person); every one is optional and reads back null when absent, and the logo is not writable here — it is set only by POST /{vendorId}/logo. Emits a SUPPLIER_VENDOR_CREATE audit event and queues one supplier.vendor.updated fact in the same transaction; a remitTo given here is stored as version 1 without approval. Send an Idempotency-Key header (a UUID the client mints) to make the create idempotent: a retry after a timeout or 5xx with the same key, the same payload and the same caller answers the original 201 body with Idempotency-Replayed: true and creates neither a second vendor nor a second supplier.vendor.updated fact; the same key with another payload, or from another caller of the tenant, is 409 IDEMPOTENCY_CONFLICT, and a key whose create is still in flight is 409 with Retry-After: 1; omit the header for a create that is not idempotent. Returns 201 with the vendor, 400 VALIDATION_ERROR when a field is missing or malformed or a registration\'s scheme or region is not listed (fieldErrors names taxRegistrations[i].scheme or .region; the presentation fields answer the same way as websiteUrl, catalogUrl, categories, defaultLeadTimeDays or primaryContact.name/email/phone; every violation is reported), 409 SUPPLIER_VENDOR_NUMBER_TAKEN when the number is in use, 409 IDEMPOTENCY_CONFLICT when the Idempotency-Key was used with a different payload or actor or is in use by a concurrent create, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Create vendor
      */
     async createSupplierVendor(requestParameters: CreateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {
@@ -302,7 +327,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor with its masked tax registrations (registrationId, scheme, region and last4, never the number), approved remit-to and version, default terms and currency, and status. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
+     * Returns one vendor with its masked tax registrations (registrationId, scheme, region and last4, never the number), approved remit-to and version, default terms and currency, status, and presentation fields (#3073): read-only logoImageId (set through POST /{vendorId}/logo), websiteUrl, catalogUrl, categories, defaultLeadTimeDays and primaryContact. Every presentation field is null when it was never set. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
      * Get vendor
      */
     async getSupplierVendorRaw(requestParameters: GetSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -336,7 +361,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one vendor with its masked tax registrations (registrationId, scheme, region and last4, never the number), approved remit-to and version, default terms and currency, and status. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
+     * Returns one vendor with its masked tax registrations (registrationId, scheme, region and last4, never the number), approved remit-to and version, default terms and currency, status, and presentation fields (#3073): read-only logoImageId (set through POST /{vendorId}/logo), websiteUrl, catalogUrl, categories, defaultLeadTimeDays and primaryContact. Every presentation field is null when it was never set. Use this tool when the vendorId is known, for example from a bill, a purchase order or a profile; use listSupplierVendors instead to search by number or name. Preconditions: the vendor must exist in the caller\'s tenant. Required inputs: vendorId (UUIDv7) path parameter; there is no request body. Emits a SUPPLIER_VENDOR_GET audit event; nothing is changed. A remit-to change waiting for approval is not shown here; read it with listSupplierVendorRemitChanges. Returns 404 SUPPLIER_VENDOR_NOT_FOUND when the tenant has no vendor with that id. 
      * Get vendor
      */
     async getSupplierVendor(requestParameters: GetSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {
@@ -483,7 +508,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms, status and masked tax registrations (scheme, region, last4). Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
+     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms, status, masked tax registrations (scheme, region, last4) and presentation fields (#3073): read-only logoImageId (set through POST /{vendorId}/logo), websiteUrl, catalogUrl, categories, defaultLeadTimeDays and primaryContact. Every presentation field is null when it was never set. Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
      * List vendors
      */
     async listSupplierVendorsRaw(requestParameters: ListSupplierVendorsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseVendorView>> {
@@ -526,11 +551,71 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms, status and masked tax registrations (scheme, region, last4). Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
+     * Returns one page of the tenant\'s vendors ordered by vendorNumber, each with its approved remit-to, default terms, status, masked tax registrations (scheme, region, last4) and presentation fields (#3073): read-only logoImageId (set through POST /{vendorId}/logo), websiteUrl, catalogUrl, categories, defaultLeadTimeDays and primaryContact. Every presentation field is null when it was never set. Use this tool to find a vendor by number or name, or to list active or inactive vendors; use getSupplierVendor instead when the vendorId is already known. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches vendorNumber, displayName or legalName (case-insensitive, contains); status narrows to ACTIVE or INACTIVE; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_LIST audit event; nothing is changed. Returns 200 with an empty page when nothing matches, and 400 when page or size is out of range. 
      * List vendors
      */
     async listSupplierVendors(requestParameters: ListSupplierVendorsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseVendorView> {
         const response = await this.listSupplierVendorsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns one page of the tenant\'s vendors, each with how the shop is connected to the vendor and what it is authorized to buy from the vendor — both derived at read time from this service\'s own tables and nothing is stored; no other service is called. The connection state is derived from the vendor\'s profile: MANUAL when the vendor has no profile, a disabled profile or no enabled binding; ERROR when an enabled profile\'s latest exchange inside the error window failed (connectionDetail LAST_EXCHANGE_FAILED) or its price catalog is stale (connectionDetail PRICE_CATALOG_STALE, which needs an enabled PRICE_CATALOG binding and at least one staged import — a feed that never imported is EDI or FEED, never an error); EDI when an enabled ORDER_CREATE binding exists; FEED otherwise. The buy list is the distinct matched products of the profile\'s latest completed vendor import plus its completed re-applications, with that import\'s completion time, and is null when there are none — the UI\'s \"Create buy list\" action is triggering an import, which is triggerSupplierPriceCatalogImport. Use this tool to render the Suppliers tab in one request; use listSupplierVendors instead for the plain vendor master, or listSupplierPriceCatalogEntries to open one vendor\'s buy list. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches the vendor\'s number, display name and legal name case-insensitively (categories and sales representative join the match when the vendor-record enrichment story lands; those fields are null until then); catalog defaults to ANY and may be HAS_BUY_LIST, NO_BUY_LIST or HAS_CATALOG_URL (which matches nothing until that story supplies the catalog URL); status defaults to ACTIVE; sort accepts only name; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_DIRECTORY_SEARCH audit event; nothing is changed and no vendor is called. Returns 200 with an empty page when nothing matches, and 400 when catalog, sort, page or size is out of range. 
+     * List the vendor directory: vendors with their connection state and buy list
+     */
+    async listVendorDirectoryRaw(requestParameters: ListVendorDirectoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseVendorDirectoryRow>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['catalog'] != null) {
+            queryParameters['catalog'] = requestParameters['catalog'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/vendors/directory`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseVendorDirectoryRowFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one page of the tenant\'s vendors, each with how the shop is connected to the vendor and what it is authorized to buy from the vendor — both derived at read time from this service\'s own tables and nothing is stored; no other service is called. The connection state is derived from the vendor\'s profile: MANUAL when the vendor has no profile, a disabled profile or no enabled binding; ERROR when an enabled profile\'s latest exchange inside the error window failed (connectionDetail LAST_EXCHANGE_FAILED) or its price catalog is stale (connectionDetail PRICE_CATALOG_STALE, which needs an enabled PRICE_CATALOG binding and at least one staged import — a feed that never imported is EDI or FEED, never an error); EDI when an enabled ORDER_CREATE binding exists; FEED otherwise. The buy list is the distinct matched products of the profile\'s latest completed vendor import plus its completed re-applications, with that import\'s completion time, and is null when there are none — the UI\'s \"Create buy list\" action is triggering an import, which is triggerSupplierPriceCatalogImport. Use this tool to render the Suppliers tab in one request; use listSupplierVendors instead for the plain vendor master, or listSupplierPriceCatalogEntries to open one vendor\'s buy list. Preconditions: none; only the caller\'s tenant\'s vendors are visible. Required inputs: none. q matches the vendor\'s number, display name and legal name case-insensitively (categories and sales representative join the match when the vendor-record enrichment story lands; those fields are null until then); catalog defaults to ANY and may be HAS_BUY_LIST, NO_BUY_LIST or HAS_CATALOG_URL (which matches nothing until that story supplies the catalog URL); status defaults to ACTIVE; sort accepts only name; page is zero-based and size is 1 to 200 (default 50). Emits a SUPPLIER_VENDOR_DIRECTORY_SEARCH audit event; nothing is changed and no vendor is called. Returns 200 with an empty page when nothing matches, and 400 when catalog, sort, page or size is out of range. 
+     * List the vendor directory: vendors with their connection state and buy list
+     */
+    async listVendorDirectory(requestParameters: ListVendorDirectoryRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseVendorDirectoryRow> {
+        const response = await this.listVendorDirectoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -805,7 +890,7 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation, and the vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them; send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. A registration entered or re-keyed with a number is filed under a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes, with a region exactly where the scheme is regional; a kept registration (registrationId without number) is not re-checked. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region; every scheme or region violation is reported), 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
+     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms, default currency and presentation fields (#3073), and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation, and the vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them; send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. The optional presentation fields (#3073) are fully replaced too: websiteUrl and catalogUrl (https only, normalised), categories (at most 10 free-text labels of 1-60 characters, deduplicated), defaultLeadTimeDays (0 to 365) and primaryContact (the sales rep as free text); omitting or nulling any of them clears the stored value, while the logo is read-only here and is set only by POST /{vendorId}/logo, so a PUT leaves it untouched. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. A registration entered or re-keyed with a number is filed under a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes, with a region exactly where the scheme is regional; a kept registration (registrationId without number) is not re-checked. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region, or the presentation fields websiteUrl, catalogUrl, categories, defaultLeadTimeDays or primaryContact.name/email/phone; every violation is reported), 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Update vendor
      */
     async updateSupplierVendorRaw(requestParameters: UpdateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
@@ -849,11 +934,64 @@ export class SupplierVendorsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms and default currency, and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation, and the vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them; send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. A registration entered or re-keyed with a number is filed under a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes, with a region exactly where the scheme is regional; a kept registration (registrationId without number) is not re-checked. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region; every scheme or region violation is reported), 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
+     * Replaces a vendor\'s legal and display names, tax registrations, default payment terms, default currency and presentation fields (#3073), and publishes supplier.vendor.updated. Use this tool to correct or complete a vendor; do not use it for the remit-to, which needs a remit-to change a second person approves, or for the status, which is deactivation and reactivation, and the vendorNumber never changes. Preconditions: the vendor must exist, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus the full body, because every field is replaced; omitting taxRegistrations clears them; send a stored registration\'s registrationId without number to keep it (its scheme and region must be unchanged), with number to replace the number, and send a new registration without registrationId and with its number. The optional presentation fields (#3073) are fully replaced too: websiteUrl and catalogUrl (https only, normalised), categories (at most 10 free-text labels of 1-60 characters, deduplicated), defaultLeadTimeDays (0 to 365) and primaryContact (the sales rep as free text); omitting or nulling any of them clears the stored value, while the logo is read-only here and is set only by POST /{vendorId}/logo, so a PUT leaves it untouched. Emits a SUPPLIER_VENDOR_UPDATE audit event and queues one supplier.vendor.updated fact in the same transaction. A registration entered or re-keyed with a number is filed under a listed scheme (#2623): a code of listSupplierVendorTaxRegistrationSchemes, with a region exactly where the scheme is regional; a kept registration (registrationId without number) is not re-checked. Returns 200 with the vendor, 400 VALIDATION_ERROR for a malformed field or a refused registration (fieldErrors names taxRegistrations[i].number, .registrationId, .scheme or .region, or the presentation fields websiteUrl, catalogUrl, categories, defaultLeadTimeDays or primaryContact.name/email/phone; every violation is reported), 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, and 503 SERVICE_UNAVAILABLE when a registration carries a number and pos-tax\'s scheme list cannot be read (nothing is stored). 
      * Update vendor
      */
     async updateSupplierVendor(requestParameters: UpdateSupplierVendorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {
         const response = await this.updateSupplierVendorRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Uploads a vendor logo: validates the base64 bytes as a PNG or WebP of at most 512 KiB, at least 96 px on the shorter side and roughly square (aspect 0.95 to 1.05), stores them in pos-image under the vendor-logo context, and sets the returned image id on the vendor. Use this tool to give a vendor a logo; do not use it to change any other vendor field, which is updateSupplierVendor — the logo is read-only there and this endpoint changes nothing else. Preconditions: the vendor must exist in the caller\'s tenant, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus filename, contentType, base64 content and version; the bytes are validated here, never trusting the caller\'s MIME claim. Emits a SUPPLIER_VENDOR_LOGO_UPLOAD audit event and queues one supplier.vendor.updated fact in the transaction that sets the id, after the store; a store that succeeds but cannot be set leaves an orphan image, which is accepted. Returns 200 with the vendor carrying logoImageId, 400 VALIDATION_ERROR for a malformed body, 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, 422 LOGO_IMAGE_INVALID when the bytes are not an acceptable logo or pos-image refuses them, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-image cannot be reached (nothing is written to the vendor). 
+     * Upload vendor logo
+     */
+    async uploadSupplierVendorLogoRaw(requestParameters: UploadSupplierVendorLogoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorView>> {
+        if (requestParameters['vendorId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorId',
+                'Required parameter "vendorId" was null or undefined when calling uploadSupplierVendorLogo().'
+            );
+        }
+
+        if (requestParameters['vendorLogoRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorLogoRequest',
+                'Required parameter "vendorLogoRequest" was null or undefined when calling uploadSupplierVendorLogo().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/vendors/{vendorId}/logo`.replace(`{${"vendorId"}}`, encodeURIComponent(String(requestParameters['vendorId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VendorLogoRequestToJSON(requestParameters['vendorLogoRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorViewFromJSON(jsonValue));
+    }
+
+    /**
+     * Uploads a vendor logo: validates the base64 bytes as a PNG or WebP of at most 512 KiB, at least 96 px on the shorter side and roughly square (aspect 0.95 to 1.05), stores them in pos-image under the vendor-logo context, and sets the returned image id on the vendor. Use this tool to give a vendor a logo; do not use it to change any other vendor field, which is updateSupplierVendor — the logo is read-only there and this endpoint changes nothing else. Preconditions: the vendor must exist in the caller\'s tenant, and version must be the version the caller read. Required inputs: vendorId (UUIDv7) path parameter plus filename, contentType, base64 content and version; the bytes are validated here, never trusting the caller\'s MIME claim. Emits a SUPPLIER_VENDOR_LOGO_UPLOAD audit event and queues one supplier.vendor.updated fact in the transaction that sets the id, after the store; a store that succeeds but cannot be set leaves an orphan image, which is accepted. Returns 200 with the vendor carrying logoImageId, 400 VALIDATION_ERROR for a malformed body, 404 SUPPLIER_VENDOR_NOT_FOUND, 409 CONFLICT when version is stale, 422 LOGO_IMAGE_INVALID when the bytes are not an acceptable logo or pos-image refuses them, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-image cannot be reached (nothing is written to the vendor). 
+     * Upload vendor logo
+     */
+    async uploadSupplierVendorLogo(requestParameters: UploadSupplierVendorLogoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorView> {
+        const response = await this.uploadSupplierVendorLogoRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -873,6 +1011,24 @@ export enum ListSupplierVendorRemitChangesStatusEnum {
   * @enum {string}
   */
 export enum ListSupplierVendorsStatusEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListVendorDirectoryCatalogEnum {
+    Any = 'ANY',
+    HasBuyList = 'HAS_BUY_LIST',
+    HasCatalogUrl = 'HAS_CATALOG_URL',
+    NoBuyList = 'NO_BUY_LIST'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListVendorDirectoryStatusEnum {
     Active = 'ACTIVE',
     Inactive = 'INACTIVE'
 }

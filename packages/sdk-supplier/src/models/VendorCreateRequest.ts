@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PrimaryContactDto } from './PrimaryContactDto';
+import {
+    PrimaryContactDtoFromJSON,
+    PrimaryContactDtoFromJSONTyped,
+    PrimaryContactDtoToJSON,
+} from './PrimaryContactDto';
 import type { RemitToDto } from './RemitToDto';
 import {
     RemitToDtoFromJSON,
@@ -27,17 +33,35 @@ import {
 } from './TaxRegistrationDto';
 
 /**
- * Creates a vendor. vendorNumber is allocated when omitted and never changes afterwards.
+ * Creates a vendor. vendorNumber is allocated when omitted and never changes afterwards. The presentation fields (websiteUrl, catalogUrl, categories, defaultLeadTimeDays, primaryContact) are optional. logoImageId is set only by POST /{vendorId}/logo, never here.
  * @export
  * @interface VendorCreateRequest
  */
 export interface VendorCreateRequest {
+    /**
+     * Vendor public catalogue; https only, at most 2048 characters.
+     * @type {string}
+     * @memberof VendorCreateRequest
+     */
+    catalogUrl?: string;
+    /**
+     * Free-text categories; at most 10 entries of 1-60 characters, deduplicated.
+     * @type {Array<string>}
+     * @memberof VendorCreateRequest
+     */
+    categories?: Array<string>;
     /**
      * ISO 4217 currency code, upper case.
      * @type {string}
      * @memberof VendorCreateRequest
      */
     defaultCurrency?: string;
+    /**
+     * Vendor's general lead time in days, 0 to 365; omit for unknown.
+     * @type {number}
+     * @memberof VendorCreateRequest
+     */
+    defaultLeadTimeDays?: number;
     /**
      * DUE_ON_RECEIPT or NET<n> with n from 1 to 120.
      * @type {string}
@@ -58,16 +82,16 @@ export interface VendorCreateRequest {
     legalName?: string;
     /**
      * 
+     * @type {PrimaryContactDto}
+     * @memberof VendorCreateRequest
+     */
+    primaryContact?: PrimaryContactDto;
+    /**
+     * 
      * @type {RemitToDto}
      * @memberof VendorCreateRequest
      */
     remitTo?: RemitToDto;
-    /**
-     * Idempotency key the client mints (UUID). Reuse it only for an identical payload: a retry after a timeout or 5xx then answers the original 201 body instead of creating a second vendor; the same key with another payload is 409 IDEMPOTENCY_CONFLICT. Omit for no idempotency.
-     * @type {string}
-     * @memberof VendorCreateRequest
-     */
-    requestId?: string;
     /**
      * Tax registrations; omit or leave empty for none.
      * @type {Array<TaxRegistrationDto>}
@@ -80,6 +104,12 @@ export interface VendorCreateRequest {
      * @memberof VendorCreateRequest
      */
     vendorNumber?: string;
+    /**
+     * Vendor website; https only, at most 2048 characters.
+     * @type {string}
+     * @memberof VendorCreateRequest
+     */
+    websiteUrl?: string;
 }
 
 /**
@@ -99,14 +129,18 @@ export function VendorCreateRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'catalogUrl': json['catalogUrl'] == null ? undefined : json['catalogUrl'],
+        'categories': json['categories'] == null ? undefined : json['categories'],
         'defaultCurrency': json['defaultCurrency'] == null ? undefined : json['defaultCurrency'],
+        'defaultLeadTimeDays': json['defaultLeadTimeDays'] == null ? undefined : json['defaultLeadTimeDays'],
         'defaultPaymentTerms': json['defaultPaymentTerms'] == null ? undefined : json['defaultPaymentTerms'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'legalName': json['legalName'] == null ? undefined : json['legalName'],
+        'primaryContact': json['primaryContact'] == null ? undefined : PrimaryContactDtoFromJSON(json['primaryContact']),
         'remitTo': json['remitTo'] == null ? undefined : RemitToDtoFromJSON(json['remitTo']),
-        'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'taxRegistrations': json['taxRegistrations'] == null ? undefined : ((json['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoFromJSON)),
         'vendorNumber': json['vendorNumber'] == null ? undefined : json['vendorNumber'],
+        'websiteUrl': json['websiteUrl'] == null ? undefined : json['websiteUrl'],
     };
 }
 
@@ -116,14 +150,18 @@ export function VendorCreateRequestToJSON(value?: VendorCreateRequest | null): a
     }
     return {
         
+        'catalogUrl': value['catalogUrl'],
+        'categories': value['categories'],
         'defaultCurrency': value['defaultCurrency'],
+        'defaultLeadTimeDays': value['defaultLeadTimeDays'],
         'defaultPaymentTerms': value['defaultPaymentTerms'],
         'displayName': value['displayName'],
         'legalName': value['legalName'],
+        'primaryContact': PrimaryContactDtoToJSON(value['primaryContact']),
         'remitTo': RemitToDtoToJSON(value['remitTo']),
-        'requestId': value['requestId'],
         'taxRegistrations': value['taxRegistrations'] == null ? undefined : ((value['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoToJSON)),
         'vendorNumber': value['vendorNumber'],
+        'websiteUrl': value['websiteUrl'],
     };
 }
 

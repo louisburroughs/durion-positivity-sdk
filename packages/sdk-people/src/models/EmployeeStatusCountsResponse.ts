@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface EmployeeStatusCountsResponse {
     /**
+     * Count of employees currently clocked in (CLOCKED_IN or ON_BREAK) over the same q/location-filtered set; null when the caller lacks people:timekeeping:view.
+     * @type {number}
+     * @memberof EmployeeStatusCountsResponse
+     */
+    clockedInCount?: number;
+    /**
      * Employee count per status name (plus the UNKNOWN bucket for a row with no status recorded), for the register's stat tiles. Computed over the q-filtered set — the same `q` match searchEmployees applies, before any status filter — so a tile for a status the caller has not selected on searchEmployees still shows what selecting it would return, and the counts always sum to the q-filtered total.
      * @type {{ [key: string]: number; }}
      * @memberof EmployeeStatusCountsResponse
@@ -45,6 +51,7 @@ export function EmployeeStatusCountsResponseFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
+        'clockedInCount': json['clockedInCount'] == null ? undefined : json['clockedInCount'],
         'counts': json['counts'],
     };
 }
@@ -55,6 +62,7 @@ export function EmployeeStatusCountsResponseToJSON(value?: EmployeeStatusCountsR
     }
     return {
         
+        'clockedInCount': value['clockedInCount'],
         'counts': value['counts'],
     };
 }

@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   AssignServicePositionRequest,
+  PositionAvailabilityResponse,
   ServicePositionResponse,
 } from '../models/index';
 import {
@@ -24,6 +25,8 @@ import {
     ApiErrorToJSON,
     AssignServicePositionRequestFromJSON,
     AssignServicePositionRequestToJSON,
+    PositionAvailabilityResponseFromJSON,
+    PositionAvailabilityResponseToJSON,
     ServicePositionResponseFromJSON,
     ServicePositionResponseToJSON,
 } from '../models/index';
@@ -31,6 +34,13 @@ import {
 export interface AssignServicePositionOperationRequest {
     workorderId: string;
     assignServicePositionRequest: AssignServicePositionRequest;
+}
+
+export interface GetPositionAvailabilityRequest {
+    locationId: string;
+    from: Date;
+    to: Date;
+    resourceType?: GetPositionAvailabilityResourceTypeEnum;
 }
 
 export interface GetServicePositionRequest {
@@ -48,7 +58,7 @@ export interface ReleaseServicePositionRequest {
 export class ServicePositionAPIApi extends runtime.BaseAPI {
 
     /**
-     * Places the workorder on a service position — a bay, a mobile unit, or the site\'s HOLD (parking) position — recording who placed it, when and why, and releasing whatever position it held before in the same transaction. Use this tool to dispatch a workorder to a bay, move it between bays or mobile units, or park it; do not use releaseServicePosition, which leaves the workorder unplaced, and do not use overrideOperationalContext, which is the manager exception path and also rewrites mechanics and location. Preconditions: the workorder must exist and must not be COMPLETED or CANCELLED; a BAY or MOBILE_UNIT must be known to this module\'s location replicas, belong to the workorder\'s own site and hold no other open workorder, while HOLD has no capacity limit and accepts only the workorder\'s own locationId; and a caller whose workorder:position:assign grant is location-scoped must have the workorder\'s shop within reach (ADR-0061). Required inputs: workorderId (UUID) as a path parameter and a body with resourceType (BAY, MOBILE_UNIT or HOLD, required); resourceId is required for BAY and MOBILE_UNIT and optional for HOLD, reason is optional, and re-sending the placement already in force is a no-op that writes no history. Emits a WORKORDER_POSITION_ASSIGN event and marks the workorder fact changed. Returns 403 when the caller\'s location scope does not cover the workorder\'s shop, 404 when no workorder exists for the id, 409 RESOURCE_OCCUPIED when the position already holds another open workorder, 409 WORKORDER_CLOSED when the workorder is COMPLETED or CANCELLED, 422 SERVICE_POSITION_INVALID when the position is at another site or is the other resource kind, 422 SERVICE_POSITION_INACTIVE when the bay is out of service or the mobile unit is not deployed, 422 SERVICE_POSITION_DUTY_CLASS_EXCEEDED when the vehicle\'s GVWR class is above the position\'s maxDutyClass, and 503 LOCATION_REPLICATION_PENDING with a Retry-After header when neither location replica holds the position id yet; specialty capability is never checked here, only duty class (DECISION-SHOPMGMT-021 rule 3), and an unknown vehicle or ceiling class skips the check. Placing an APPROVED workorder that already has a technician on a BAY or MOBILE_UNIT moves it to ASSIGNED; a HOLD does not, because it is a parking space rather than somewhere work happens. 
+     * Places the workorder on a service position — a bay, a mobile unit, or the site\'s HOLD (parking) position — recording who placed it, when and why, and releasing whatever position it held before in the same transaction. Use this tool to dispatch a workorder to a bay, move it between bays or mobile units, or park it; do not use releaseServicePosition, which leaves the workorder unplaced, and do not use overrideOperationalContext, which is the manager exception path and also rewrites mechanics and location. Preconditions: the workorder must exist and must not be COMPLETED or CANCELLED; a BAY or MOBILE_UNIT must be known to this module\'s location replicas, belong to the workorder\'s own site and hold no other open workorder whose half-open slot [slotStart, slotEnd) overlaps, while HOLD has no capacity limit, carries no slot and accepts only the workorder\'s own locationId; and a caller whose workorder:position:assign grant is location-scoped must have the workorder\'s shop within reach (ADR-0061). Required inputs: workorderId (UUID) as a path parameter and a body with resourceType (BAY, MOBILE_UNIT or HOLD, required); resourceId is required for BAY and MOBILE_UNIT and optional for HOLD, reason is optional, and re-sending the placement already in force is a no-op that writes no history. slotStart and slotEnd are optional and half-open: [slotStart, slotEnd); omitted, the server stores a default slot of now until now plus the greater of 30 minutes and the workorder\'s book time (the sum of its service lines\' guideHours, else quantity); a lone slotStart gets that same default length, a slotEnd without a slotStart or an end not after the start is 400 INVALID_ARGUMENT, and HOLD ignores both; re-sending the same position with a different slot is a change and is refused if the new slot overlaps another open workorder\'s slot. Emits a WORKORDER_POSITION_ASSIGN event and marks the workorder fact changed. Returns 403 when the caller\'s location scope does not cover the workorder\'s shop, 404 when no workorder exists for the id, 409 RESOURCE_OCCUPIED when the position already holds another open workorder, 409 WORKORDER_CLOSED when the workorder is COMPLETED or CANCELLED, 422 SERVICE_POSITION_INVALID when the position is at another site or is the other resource kind, 422 SERVICE_POSITION_INACTIVE when the bay is out of service or the mobile unit is not deployed, 422 SERVICE_POSITION_DUTY_CLASS_EXCEEDED when the vehicle\'s GVWR class is above the position\'s maxDutyClass, and 503 LOCATION_REPLICATION_PENDING with a Retry-After header when neither location replica holds the position id yet; specialty capability is never checked here, only duty class (DECISION-SHOPMGMT-021 rule 3), and an unknown vehicle or ceiling class skips the check. Placing an APPROVED workorder that already has a technician on a BAY or MOBILE_UNIT moves it to ASSIGNED; a HOLD does not, because it is a parking space rather than somewhere work happens. 
      * Assign or Change a Workorder\'s Service Position
      */
     async assignServicePositionRaw(requestParameters: AssignServicePositionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServicePositionResponse>> {
@@ -92,11 +102,84 @@ export class ServicePositionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Places the workorder on a service position — a bay, a mobile unit, or the site\'s HOLD (parking) position — recording who placed it, when and why, and releasing whatever position it held before in the same transaction. Use this tool to dispatch a workorder to a bay, move it between bays or mobile units, or park it; do not use releaseServicePosition, which leaves the workorder unplaced, and do not use overrideOperationalContext, which is the manager exception path and also rewrites mechanics and location. Preconditions: the workorder must exist and must not be COMPLETED or CANCELLED; a BAY or MOBILE_UNIT must be known to this module\'s location replicas, belong to the workorder\'s own site and hold no other open workorder, while HOLD has no capacity limit and accepts only the workorder\'s own locationId; and a caller whose workorder:position:assign grant is location-scoped must have the workorder\'s shop within reach (ADR-0061). Required inputs: workorderId (UUID) as a path parameter and a body with resourceType (BAY, MOBILE_UNIT or HOLD, required); resourceId is required for BAY and MOBILE_UNIT and optional for HOLD, reason is optional, and re-sending the placement already in force is a no-op that writes no history. Emits a WORKORDER_POSITION_ASSIGN event and marks the workorder fact changed. Returns 403 when the caller\'s location scope does not cover the workorder\'s shop, 404 when no workorder exists for the id, 409 RESOURCE_OCCUPIED when the position already holds another open workorder, 409 WORKORDER_CLOSED when the workorder is COMPLETED or CANCELLED, 422 SERVICE_POSITION_INVALID when the position is at another site or is the other resource kind, 422 SERVICE_POSITION_INACTIVE when the bay is out of service or the mobile unit is not deployed, 422 SERVICE_POSITION_DUTY_CLASS_EXCEEDED when the vehicle\'s GVWR class is above the position\'s maxDutyClass, and 503 LOCATION_REPLICATION_PENDING with a Retry-After header when neither location replica holds the position id yet; specialty capability is never checked here, only duty class (DECISION-SHOPMGMT-021 rule 3), and an unknown vehicle or ceiling class skips the check. Placing an APPROVED workorder that already has a technician on a BAY or MOBILE_UNIT moves it to ASSIGNED; a HOLD does not, because it is a parking space rather than somewhere work happens. 
+     * Places the workorder on a service position — a bay, a mobile unit, or the site\'s HOLD (parking) position — recording who placed it, when and why, and releasing whatever position it held before in the same transaction. Use this tool to dispatch a workorder to a bay, move it between bays or mobile units, or park it; do not use releaseServicePosition, which leaves the workorder unplaced, and do not use overrideOperationalContext, which is the manager exception path and also rewrites mechanics and location. Preconditions: the workorder must exist and must not be COMPLETED or CANCELLED; a BAY or MOBILE_UNIT must be known to this module\'s location replicas, belong to the workorder\'s own site and hold no other open workorder whose half-open slot [slotStart, slotEnd) overlaps, while HOLD has no capacity limit, carries no slot and accepts only the workorder\'s own locationId; and a caller whose workorder:position:assign grant is location-scoped must have the workorder\'s shop within reach (ADR-0061). Required inputs: workorderId (UUID) as a path parameter and a body with resourceType (BAY, MOBILE_UNIT or HOLD, required); resourceId is required for BAY and MOBILE_UNIT and optional for HOLD, reason is optional, and re-sending the placement already in force is a no-op that writes no history. slotStart and slotEnd are optional and half-open: [slotStart, slotEnd); omitted, the server stores a default slot of now until now plus the greater of 30 minutes and the workorder\'s book time (the sum of its service lines\' guideHours, else quantity); a lone slotStart gets that same default length, a slotEnd without a slotStart or an end not after the start is 400 INVALID_ARGUMENT, and HOLD ignores both; re-sending the same position with a different slot is a change and is refused if the new slot overlaps another open workorder\'s slot. Emits a WORKORDER_POSITION_ASSIGN event and marks the workorder fact changed. Returns 403 when the caller\'s location scope does not cover the workorder\'s shop, 404 when no workorder exists for the id, 409 RESOURCE_OCCUPIED when the position already holds another open workorder, 409 WORKORDER_CLOSED when the workorder is COMPLETED or CANCELLED, 422 SERVICE_POSITION_INVALID when the position is at another site or is the other resource kind, 422 SERVICE_POSITION_INACTIVE when the bay is out of service or the mobile unit is not deployed, 422 SERVICE_POSITION_DUTY_CLASS_EXCEEDED when the vehicle\'s GVWR class is above the position\'s maxDutyClass, and 503 LOCATION_REPLICATION_PENDING with a Retry-After header when neither location replica holds the position id yet; specialty capability is never checked here, only duty class (DECISION-SHOPMGMT-021 rule 3), and an unknown vehicle or ceiling class skips the check. Placing an APPROVED workorder that already has a technician on a BAY or MOBILE_UNIT moves it to ASSIGNED; a HOLD does not, because it is a parking space rather than somewhere work happens. 
      * Assign or Change a Workorder\'s Service Position
      */
     async assignServicePosition(requestParameters: AssignServicePositionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServicePositionResponse> {
         const response = await this.assignServicePositionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every active bay and, unless narrowed, every active mobile unit at a site together with the open workorders whose half-open slot [slotStart, slotEnd) overlaps the requested window. Each occupant carries its workorder id and number, its current technician id and display name, and its slot; a slot bound of null means unbounded, which is how a legacy placement that predates slots occupies until the workorder closes. Use this tool to answer \"is this bay free for a window\" or to draw a booking board; do not use getServicePosition, which answers one workorder\'s current position. It is the read counterpart of assignServicePosition\'s overlap rule. Preconditions: locationId must be within the caller\'s location scope (ADR-0061); from must be before to; resourceType may be BAY or MOBILE_UNIT, and HOLD is refused because a parking lot is not a bookable position. Required inputs: locationId, from and to as ISO-8601 instants; resourceType is optional and omitted means both kinds. No events are emitted and no state changes; this is a read-only projection of the location replicas and the open positions. Returns 400 INVALID_ARGUMENT when from is not before to or resourceType is HOLD, and 403 LOCATION_SCOPE_DENIED when the caller\'s scope does not cover locationId. 
+     * Read Bay and Mobile-Unit Availability for a Window
+     */
+    async getPositionAvailabilityRaw(requestParameters: GetPositionAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PositionAvailabilityResponse>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling getPositionAvailability().'
+            );
+        }
+
+        if (requestParameters['from'] == null) {
+            throw new runtime.RequiredError(
+                'from',
+                'Required parameter "from" was null or undefined when calling getPositionAvailability().'
+            );
+        }
+
+        if (requestParameters['to'] == null) {
+            throw new runtime.RequiredError(
+                'to',
+                'Required parameter "to" was null or undefined when calling getPositionAvailability().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString();
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString();
+        }
+
+        if (requestParameters['resourceType'] != null) {
+            queryParameters['resourceType'] = requestParameters['resourceType'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:bay:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/positions/availability`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PositionAvailabilityResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns every active bay and, unless narrowed, every active mobile unit at a site together with the open workorders whose half-open slot [slotStart, slotEnd) overlaps the requested window. Each occupant carries its workorder id and number, its current technician id and display name, and its slot; a slot bound of null means unbounded, which is how a legacy placement that predates slots occupies until the workorder closes. Use this tool to answer \"is this bay free for a window\" or to draw a booking board; do not use getServicePosition, which answers one workorder\'s current position. It is the read counterpart of assignServicePosition\'s overlap rule. Preconditions: locationId must be within the caller\'s location scope (ADR-0061); from must be before to; resourceType may be BAY or MOBILE_UNIT, and HOLD is refused because a parking lot is not a bookable position. Required inputs: locationId, from and to as ISO-8601 instants; resourceType is optional and omitted means both kinds. No events are emitted and no state changes; this is a read-only projection of the location replicas and the open positions. Returns 400 INVALID_ARGUMENT when from is not before to or resourceType is HOLD, and 403 LOCATION_SCOPE_DENIED when the caller\'s scope does not cover locationId. 
+     * Read Bay and Mobile-Unit Availability for a Window
+     */
+    async getPositionAvailability(requestParameters: GetPositionAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PositionAvailabilityResponse> {
+        const response = await this.getPositionAvailabilityRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -190,4 +273,14 @@ export class ServicePositionAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum GetPositionAvailabilityResourceTypeEnum {
+    Bay = 'BAY',
+    MobileUnit = 'MOBILE_UNIT',
+    Hold = 'HOLD'
 }

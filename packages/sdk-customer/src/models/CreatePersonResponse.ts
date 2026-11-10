@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface CreatePersonResponse {
     /**
+     * Whether the supplied communicationConsent was persisted. Only true for a newly created person whose request carried communicationConsent
+     * @type {boolean}
+     * @memberof CreatePersonResponse
+     */
+    consentRecorded: boolean;
+    /**
      * Number of contact points created
      * @type {number}
      * @memberof CreatePersonResponse
@@ -43,6 +49,12 @@ export interface CreatePersonResponse {
      * @memberof CreatePersonResponse
      */
     lastName: string;
+    /**
+     * Whether the request resolved to a person party that already existed. On that path the request's contact points and communicationConsent are not written and the existing record is returned
+     * @type {boolean}
+     * @memberof CreatePersonResponse
+     */
+    matchedExisting: boolean;
     /**
      * Party id of the individual customer: the id getParty, vehicles, estimates and appointments key on (personId is the pos-people identity, not the party)
      * @type {string}
@@ -79,10 +91,12 @@ export enum CreatePersonResponsePreferredContactMethodEnum {
  * Check if a given object implements the CreatePersonResponse interface.
  */
 export function instanceOfCreatePersonResponse(value: object): boolean {
+    if (!('consentRecorded' in value)) return false;
     if (!('contactPointsCreated' in value)) return false;
     if (!('createdAt' in value)) return false;
     if (!('firstName' in value)) return false;
     if (!('lastName' in value)) return false;
+    if (!('matchedExisting' in value)) return false;
     if (!('partyId' in value)) return false;
     if (!('personId' in value)) return false;
     if (!('preferredContactMethod' in value)) return false;
@@ -99,10 +113,12 @@ export function CreatePersonResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'consentRecorded': json['consentRecorded'],
         'contactPointsCreated': json['contactPointsCreated'],
         'createdAt': (new Date(json['createdAt'])),
         'firstName': json['firstName'],
         'lastName': json['lastName'],
+        'matchedExisting': json['matchedExisting'],
         'partyId': json['partyId'],
         'personId': json['personId'],
         'preferredContactMethod': json['preferredContactMethod'],
@@ -115,10 +131,12 @@ export function CreatePersonResponseToJSON(value?: CreatePersonResponse | null):
     }
     return {
         
+        'consentRecorded': value['consentRecorded'],
         'contactPointsCreated': value['contactPointsCreated'],
         'createdAt': ((value['createdAt']).toISOString()),
         'firstName': value['firstName'],
         'lastName': value['lastName'],
+        'matchedExisting': value['matchedExisting'],
         'partyId': value['partyId'],
         'personId': value['personId'],
         'preferredContactMethod': value['preferredContactMethod'],

@@ -19,6 +19,7 @@ import type {
   AppointmentCreateRequest,
   AppointmentResponse,
   CancelAppointmentRequest,
+  PagedModelAppointmentSummaryResponse,
   RescheduleAppointmentRequest,
 } from '../models/index';
 import {
@@ -30,6 +31,8 @@ import {
     AppointmentResponseToJSON,
     CancelAppointmentRequestFromJSON,
     CancelAppointmentRequestToJSON,
+    PagedModelAppointmentSummaryResponseFromJSON,
+    PagedModelAppointmentSummaryResponseToJSON,
     RescheduleAppointmentRequestFromJSON,
     RescheduleAppointmentRequestToJSON,
 } from '../models/index';
@@ -48,6 +51,18 @@ export interface CreateAppointmentRequest {
 export interface GetAppointmentByIdRequest {
     appointmentId: string;
     xCorrelationId?: string;
+}
+
+export interface ListAppointmentsRequest {
+    crmCustomerId: string;
+    crmVehicleId?: string;
+    locationId?: string;
+    status?: Array<ListAppointmentsStatusEnum>;
+    from?: Date;
+    to?: Date;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface RescheduleAppointmentOperationRequest {
@@ -215,6 +230,85 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns one page of a customer\'s appointments, so the workorder pane can list what the selected customer already has booked instead of asking the advisor for an appointment id. Use this tool when the customer, and possibly the vehicle, is already selected; use getAppointmentById for one appointment\'s full detail and viewSchedule for one location\'s date board grouped into resource lanes. Preconditions: crmCustomerId is mandatory, so the read is always customer-bounded and never an unbounded scan, and the caller must hold appointments:view or shop:schedule:view. Required inputs: crmCustomerId (UUID); optional filters, all combining with AND, are crmVehicleId and locationId (UUIDs), status (repeatable, one or more appointment statuses) and from/to (ISO-8601 instants bounding startAt, from inclusive and to exclusive, the half-open window convention). With no status the list carries only the open statuses — SCHEDULED, CHECKED_IN, WORK_IN_PROGRESS, WAITING_FOR_PARTS, QUALITY_CHECK, READY_FOR_PICKUP and REOPENED, deliberately this explicit list rather than a derived not-terminal predicate — so COMPLETED, CANCELLED and INVOICED appear only when asked for by name and a status added later stays out of the default until it is listed here. Rows are ordered startAt ascending with appointmentId as the tie-break by default, appointmentId is always appended as the final tie-break so offset pages are stable, sort accepts only startAt, endAt, status and appointmentId, size is capped at 100, and each row is the summary — appointmentId, status, locationId, startAt, endAt, crmCustomerId, crmVehicleId, the stored workorderLinkRef and hasUnresolvedConflicts, which is true while one of the appointment\'s recorded scheduling conflicts has no override — rather than getAppointmentById\'s full detail. A caller whose appointments:view or shop:schedule:view grant is location-scoped (ADR-0061) sees only rows at locations within its reach, including descendants of its assigned locations, and an explicit locationId outside that reach is refused, while a caller whose grant is not location-scoped is not narrowed. Emits a SHOPMGR_APPOINTMENT_LIST event and writes nothing; returns 400 VALIDATION_ERROR when crmCustomerId is missing, from is not before to, sort names an unsupported property or size exceeds 100 (a malformed parameter is instead 400 INVALID_REQUEST); returns 403 LOCATION_SCOPE_DENIED when an explicit locationId lies outside a location-scoped grant\'s reach; and returns 200 with an empty page when the customer has no matching appointment. 
+     * List a Customer\'s Appointments
+     */
+    async listAppointmentsRaw(requestParameters: ListAppointmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedModelAppointmentSummaryResponse>> {
+        if (requestParameters['crmCustomerId'] == null) {
+            throw new runtime.RequiredError(
+                'crmCustomerId',
+                'Required parameter "crmCustomerId" was null or undefined when calling listAppointments().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['crmCustomerId'] != null) {
+            queryParameters['crmCustomerId'] = requestParameters['crmCustomerId'];
+        }
+
+        if (requestParameters['crmVehicleId'] != null) {
+            queryParameters['crmVehicleId'] = requestParameters['crmVehicleId'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString();
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString();
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["appointments:view", "shop:schedule:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/appointments`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedModelAppointmentSummaryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one page of a customer\'s appointments, so the workorder pane can list what the selected customer already has booked instead of asking the advisor for an appointment id. Use this tool when the customer, and possibly the vehicle, is already selected; use getAppointmentById for one appointment\'s full detail and viewSchedule for one location\'s date board grouped into resource lanes. Preconditions: crmCustomerId is mandatory, so the read is always customer-bounded and never an unbounded scan, and the caller must hold appointments:view or shop:schedule:view. Required inputs: crmCustomerId (UUID); optional filters, all combining with AND, are crmVehicleId and locationId (UUIDs), status (repeatable, one or more appointment statuses) and from/to (ISO-8601 instants bounding startAt, from inclusive and to exclusive, the half-open window convention). With no status the list carries only the open statuses — SCHEDULED, CHECKED_IN, WORK_IN_PROGRESS, WAITING_FOR_PARTS, QUALITY_CHECK, READY_FOR_PICKUP and REOPENED, deliberately this explicit list rather than a derived not-terminal predicate — so COMPLETED, CANCELLED and INVOICED appear only when asked for by name and a status added later stays out of the default until it is listed here. Rows are ordered startAt ascending with appointmentId as the tie-break by default, appointmentId is always appended as the final tie-break so offset pages are stable, sort accepts only startAt, endAt, status and appointmentId, size is capped at 100, and each row is the summary — appointmentId, status, locationId, startAt, endAt, crmCustomerId, crmVehicleId, the stored workorderLinkRef and hasUnresolvedConflicts, which is true while one of the appointment\'s recorded scheduling conflicts has no override — rather than getAppointmentById\'s full detail. A caller whose appointments:view or shop:schedule:view grant is location-scoped (ADR-0061) sees only rows at locations within its reach, including descendants of its assigned locations, and an explicit locationId outside that reach is refused, while a caller whose grant is not location-scoped is not narrowed. Emits a SHOPMGR_APPOINTMENT_LIST event and writes nothing; returns 400 VALIDATION_ERROR when crmCustomerId is missing, from is not before to, sort names an unsupported property or size exceeds 100 (a malformed parameter is instead 400 INVALID_REQUEST); returns 403 LOCATION_SCOPE_DENIED when an explicit locationId lies outside a location-scoped grant\'s reach; and returns 200 with an empty page when the customer has no matching appointment. 
+     * List a Customer\'s Appointments
+     */
+    async listAppointments(requestParameters: ListAppointmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedModelAppointmentSummaryResponse> {
+        const response = await this.listAppointmentsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Moves an existing appointment to a new time window and, optionally, onto a different resource (newResourceType/newResourceId, DECISION-SHOPMGMT-022 rule 3), recording the change in reschedule history and the appointment audit trail. Use this tool when a booked appointment must change times or resource; do not use cancelAppointment, which terminates the appointment instead of moving it, and do not use createAppointment for a visit that is not yet booked. Preconditions: the appointment must exist and be in SCHEDULED, CHECKED_IN or WAITING_FOR_PARTS status; when newResourceType and newResourceId are both absent, the appointment\'s own (unchanged) resource must still pass DECISION-SHOPMGMT-021 eligibility, inferring a missing or unrecognised stored resourceType from resourceId exactly as a fresh submit would; when either new-resource field is present, only the resource the appointment ends up on is validated and conflict-checked, never its old one, so moving off an ineligible resource always succeeds. Required inputs: newStartAt and newEndAt (UTC instants, newStartAt before newEndAt) and a reason code; rescheduleReasonNotes (max 1000 characters) is mandatory when reason is OTHER, notifyCustomer defaults to true, and newResourceType/newResourceId are optional. DECISION-SHOPMGMT-004: the first two reschedules of an appointment need no further permission, as does one that is shop-caused (reason EQUIPMENT_ISSUE, or the appointment was DECISION-SHOPMGMT-022 affected); the 3rd and later non-exempt reschedule needs appointments:reschedule:approve and a non-blank approvalReason (max 1000 characters). Emits a SHOPMGR_APPOINTMENT_RESCHEDULE event; a downstream workorder reschedule notification is additionally published only when the appointment carries a workorderLinkRef. A caller whose appointments:reschedule grant is location-scoped must have the appointment\'s location within reach (ADR-0061). Returns 400 when the time window is invalid or notes are missing for reason OTHER, 404 when the appointment does not exist, 403 LOCATION_SCOPE_DENIED (location out of reach) or FORBIDDEN (approval required but appointments:reschedule:approve is not held), 409 when the appointment status does not permit rescheduling, and 422 for BOOKING_HORIZON_EXCEEDED, a SERVICE_POSITION_INVALID/INACTIVE/NOT_EQUIPPED/DUTY_CLASS_EXCEEDED failure on the resource the appointment ends up on (DECISION-SHOPMGMT-021, none overridable), RESCHEDULE_APPROVAL_REASON_REQUIRED when approval is needed but approvalReason is missing or blank, or LOCATION_TIMEZONE_UNKNOWN when the location replica row has no usable timezone; and 503 with a Retry-After header and LOCATION_REPLICATION_PENDING when the location\'s ext_location row has not arrived yet, or when the target bay or mobile unit has not replicated from Location. 
      * Move an Appointment to a New Time Window
      */
@@ -267,4 +361,21 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListAppointmentsStatusEnum {
+    Scheduled = 'SCHEDULED',
+    CheckedIn = 'CHECKED_IN',
+    WorkInProgress = 'WORK_IN_PROGRESS',
+    WaitingForParts = 'WAITING_FOR_PARTS',
+    QualityCheck = 'QUALITY_CHECK',
+    ReadyForPickup = 'READY_FOR_PICKUP',
+    Completed = 'COMPLETED',
+    Cancelled = 'CANCELLED',
+    Invoiced = 'INVOICED',
+    Reopened = 'REOPENED'
 }

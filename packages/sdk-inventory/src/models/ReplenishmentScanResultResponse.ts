@@ -56,6 +56,12 @@ export interface ReplenishmentScanResultResponse {
      */
     suggestionsRefreshed: number;
     /**
+     * Number of purchase requests suppressed because createPurchaseRequests is off at the policy's site (#3190)
+     * @type {number}
+     * @memberof ReplenishmentScanResultResponse
+     */
+    suggestionsSkippedBySetting: number;
+    /**
      * Number of new replenishment tasks created by the scan
      * @type {number}
      * @memberof ReplenishmentScanResultResponse
@@ -79,6 +85,7 @@ export function instanceOfReplenishmentScanResultResponse(value: object): boolea
     if (!('scanAt' in value)) return false;
     if (!('suggestionsCreated' in value)) return false;
     if (!('suggestionsRefreshed' in value)) return false;
+    if (!('suggestionsSkippedBySetting' in value)) return false;
     if (!('tasksCreated' in value)) return false;
     if (!('tasksRefreshed' in value)) return false;
     return true;
@@ -100,6 +107,7 @@ export function ReplenishmentScanResultResponseFromJSONTyped(json: any, ignoreDi
         'scanAt': json['scanAt'],
         'suggestionsCreated': json['suggestionsCreated'],
         'suggestionsRefreshed': json['suggestionsRefreshed'],
+        'suggestionsSkippedBySetting': json['suggestionsSkippedBySetting'],
         'tasksCreated': json['tasksCreated'],
         'tasksRefreshed': json['tasksRefreshed'],
     };
@@ -117,6 +125,7 @@ export function ReplenishmentScanResultResponseToJSON(value?: ReplenishmentScanR
         'scanAt': value['scanAt'],
         'suggestionsCreated': value['suggestionsCreated'],
         'suggestionsRefreshed': value['suggestionsRefreshed'],
+        'suggestionsSkippedBySetting': value['suggestionsSkippedBySetting'],
         'tasksCreated': value['tasksCreated'],
         'tasksRefreshed': value['tasksRefreshed'],
     };

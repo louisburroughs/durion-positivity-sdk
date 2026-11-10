@@ -75,6 +75,12 @@ export interface LocationRequestDTO {
      */
     cleanupBufferMinutes?: number;
     /**
+     * LAST day the location operates, in the location's own timezone; the location deactivates at the start of the following local day. On update, omit the field to keep the stored date, send JSON null to clear it, or send a date to set it. A date being set must be today or later in the location's timezone and not before opensOn, otherwise 400 VALIDATION_ERROR names closesOn (DECISION-LOCATION-030).
+     * @type {Date}
+     * @memberof LocationRequestDTO
+     */
+    closesOn?: Date;
+    /**
      * Unique business code of the location
      * @type {string}
      * @memberof LocationRequestDTO
@@ -116,6 +122,12 @@ export interface LocationRequestDTO {
      * @memberof LocationRequestDTO
      */
     name: string;
+    /**
+     * First day the location operates, as a calendar date in the location's own timezone. On update, omit the field to keep the stored date, send JSON null to clear it, or send a date to set it; past dates are accepted (DECISION-LOCATION-030).
+     * @type {Date}
+     * @memberof LocationRequestDTO
+     */
+    opensOn?: Date;
     /**
      * Weekly operating hours for the location
      * @type {Array<OperatingHoursRequest>}
@@ -202,6 +214,7 @@ export function LocationRequestDTOFromJSONTyped(json: any, ignoreDiscriminator: 
         'checkInBufferMinutes': json['checkInBufferMinutes'] == null ? undefined : json['checkInBufferMinutes'],
         'city': json['city'] == null ? undefined : json['city'],
         'cleanupBufferMinutes': json['cleanupBufferMinutes'] == null ? undefined : json['cleanupBufferMinutes'],
+        'closesOn': json['closesOn'] == null ? undefined : (new Date(json['closesOn'])),
         'code': json['code'],
         'country': json['country'] == null ? undefined : json['country'],
         'distanceUnit': json['distanceUnit'] == null ? undefined : json['distanceUnit'],
@@ -209,6 +222,7 @@ export function LocationRequestDTOFromJSONTyped(json: any, ignoreDiscriminator: 
         'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
         'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
         'name': json['name'],
+        'opensOn': json['opensOn'] == null ? undefined : (new Date(json['opensOn'])),
         'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
         'parents': json['parents'] == null ? undefined : json['parents'],
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
@@ -232,6 +246,7 @@ export function LocationRequestDTOToJSON(value?: LocationRequestDTO | null): any
         'checkInBufferMinutes': value['checkInBufferMinutes'],
         'city': value['city'],
         'cleanupBufferMinutes': value['cleanupBufferMinutes'],
+        'closesOn': value['closesOn'] == null ? undefined : ((value['closesOn'] as any).toISOString().substring(0,10)),
         'code': value['code'],
         'country': value['country'],
         'distanceUnit': value['distanceUnit'],
@@ -239,6 +254,7 @@ export function LocationRequestDTOToJSON(value?: LocationRequestDTO | null): any
         'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
         'mailingAddress': value['mailingAddress'],
         'name': value['name'],
+        'opensOn': value['opensOn'] == null ? undefined : ((value['opensOn'] as any).toISOString().substring(0,10)),
         'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),
         'parents': value['parents'],
         'phoneNumber': value['phoneNumber'],

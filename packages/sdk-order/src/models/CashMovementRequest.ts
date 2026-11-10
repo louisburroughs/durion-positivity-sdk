@@ -75,12 +75,6 @@ export interface CashMovementRequest {
      */
     receiptReference?: string;
     /**
-     * The register's idempotency key (UUIDv7): a retry with the same id returns the first result
-     * @type {string}
-     * @memberof CashMovementRequest
-     */
-    requestId: string;
-    /**
      * Tax stated on the receipt, one entry per regime the category offers, for PETTY_EXPENSE only; absent and empty both mean none. The drawer still counts the movement's whole amount
      * @type {Array<CashMovementStatedTax>}
      * @memberof CashMovementRequest
@@ -126,7 +120,6 @@ export function instanceOfCashMovementRequest(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('currencyCode' in value)) return false;
     if (!('reason' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -148,7 +141,6 @@ export function CashMovementRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'note': json['note'] == null ? undefined : json['note'],
         'reason': json['reason'],
         'receiptReference': json['receiptReference'] == null ? undefined : json['receiptReference'],
-        'requestId': json['requestId'],
         'statedTaxes': json['statedTaxes'] == null ? undefined : ((json['statedTaxes'] as Array<any>).map(CashMovementStatedTaxFromJSON)),
         'supplierName': json['supplierName'] == null ? undefined : json['supplierName'],
         'supplierRegistrationNumber': json['supplierRegistrationNumber'] == null ? undefined : json['supplierRegistrationNumber'],
@@ -170,7 +162,6 @@ export function CashMovementRequestToJSON(value?: CashMovementRequest | null): a
         'note': value['note'],
         'reason': value['reason'],
         'receiptReference': value['receiptReference'],
-        'requestId': value['requestId'],
         'statedTaxes': value['statedTaxes'] == null ? undefined : ((value['statedTaxes'] as Array<any>).map(CashMovementStatedTaxToJSON)),
         'supplierName': value['supplierName'],
         'supplierRegistrationNumber': value['supplierRegistrationNumber'],

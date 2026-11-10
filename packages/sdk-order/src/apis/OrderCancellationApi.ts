@@ -31,11 +31,11 @@ import {
 export interface CancelOrderOperationRequest {
     orderId: string;
     cancelOrderRequest: CancelOrderRequest;
+    idempotencyKey?: string;
 }
 
 export interface RetryOrderCancellationRequest {
     orderId: string;
-    idempotencyKey: string;
 }
 
 /**
@@ -44,7 +44,7 @@ export interface RetryOrderCancellationRequest {
 export class OrderCancellationApi extends runtime.BaseAPI {
 
     /**
-     * Runs the order cancellation saga: transitions the order through CANCEL_REQUESTED, cancels a linked workorder at pos-workexec when workOrderId is supplied, reverses every net-settled payment as refunds through pos-invoice, and finishes at CANCELLED, publishing an order-cancelled fact. Use this tool for DRAFT or QUOTED orders and to re-drive CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING orders from the start; do not use voidOrder, which is the terminal void for an unsettled PENDING_PAYMENT order, and do not use retryOrderCancellation, which re-runs only the billing leg from CANCEL_FAILED_BILLING. Preconditions: the order must be DRAFT, QUOTED, CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING, and settled payments require an invoice reference to refund against. Required inputs: cancellationReason; workOrderId is optional and triggers the workorder-cancellation leg, and idempotencyKey is optional (one is generated when absent) — replaying it against an already CANCELLED order returns the original result. Emits an ORDER_CART_CANCEL_REQUEST event; refunds are idempotent per payment intent at pos-invoice, and a failed leg parks the order at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING. Returns 201 when the cancellation completes (or already had for the replayed key), 404 when the order does not exist, 409 when the current status is not cancellable or work execution reports the workorder non-cancellable, and 500 when a workorder or payment-reversal leg fails downstream — the order is still parked at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING either way, so the retry endpoint applies. 
+     * Runs the order cancellation saga: transitions the order through CANCEL_REQUESTED, cancels a linked workorder at pos-workexec when workOrderId is supplied, reverses every net-settled payment as refunds through pos-invoice, and finishes at CANCELLED, publishing an order-cancelled fact. Use this tool for DRAFT or QUOTED orders and to re-drive CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING orders from the start; do not use voidOrder, which is the terminal void for an unsettled PENDING_PAYMENT order, and do not use retryOrderCancellation, which re-runs only the billing leg from CANCEL_FAILED_BILLING. Preconditions: the order must be DRAFT, QUOTED, CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING, and settled payments require an invoice reference to refund against. Required inputs: cancellationReason; workOrderId is optional and triggers the workorder-cancellation leg, and the optional Idempotency-Key header (a UUID) makes the drive replay-safe: the same key with the same body returns the original result. Refund and workorder-cancel references are derived from the order id, so a re-drive or a retry never refunds the same payment intent twice. Emits an ORDER_CART_CANCEL_REQUEST event; refunds are idempotent per payment intent at pos-invoice, and a failed leg parks the order at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING. Returns 201 when the cancellation completes, 400 when the Idempotency-Key is not a UUID (VALIDATION_ERROR), 404 when the order does not exist, 409 when the current status is not cancellable (or IDEMPOTENCY_CONFLICT when the key was used with a different request), and 500 when a workorder or payment-reversal leg fails downstream — the order is still parked at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING either way, so the retry endpoint applies. 
      * Cancel a Sales Order
      */
     async cancelOrderRaw(requestParameters: CancelOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CancellationResponse>> {
@@ -68,6 +68,10 @@ export class OrderCancellationApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
             const tokenString = await token("bearerAuth", ["order:order:cancel"]);
@@ -88,7 +92,7 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Runs the order cancellation saga: transitions the order through CANCEL_REQUESTED, cancels a linked workorder at pos-workexec when workOrderId is supplied, reverses every net-settled payment as refunds through pos-invoice, and finishes at CANCELLED, publishing an order-cancelled fact. Use this tool for DRAFT or QUOTED orders and to re-drive CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING orders from the start; do not use voidOrder, which is the terminal void for an unsettled PENDING_PAYMENT order, and do not use retryOrderCancellation, which re-runs only the billing leg from CANCEL_FAILED_BILLING. Preconditions: the order must be DRAFT, QUOTED, CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING, and settled payments require an invoice reference to refund against. Required inputs: cancellationReason; workOrderId is optional and triggers the workorder-cancellation leg, and idempotencyKey is optional (one is generated when absent) — replaying it against an already CANCELLED order returns the original result. Emits an ORDER_CART_CANCEL_REQUEST event; refunds are idempotent per payment intent at pos-invoice, and a failed leg parks the order at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING. Returns 201 when the cancellation completes (or already had for the replayed key), 404 when the order does not exist, 409 when the current status is not cancellable or work execution reports the workorder non-cancellable, and 500 when a workorder or payment-reversal leg fails downstream — the order is still parked at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING either way, so the retry endpoint applies. 
+     * Runs the order cancellation saga: transitions the order through CANCEL_REQUESTED, cancels a linked workorder at pos-workexec when workOrderId is supplied, reverses every net-settled payment as refunds through pos-invoice, and finishes at CANCELLED, publishing an order-cancelled fact. Use this tool for DRAFT or QUOTED orders and to re-drive CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING orders from the start; do not use voidOrder, which is the terminal void for an unsettled PENDING_PAYMENT order, and do not use retryOrderCancellation, which re-runs only the billing leg from CANCEL_FAILED_BILLING. Preconditions: the order must be DRAFT, QUOTED, CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING, and settled payments require an invoice reference to refund against. Required inputs: cancellationReason; workOrderId is optional and triggers the workorder-cancellation leg, and the optional Idempotency-Key header (a UUID) makes the drive replay-safe: the same key with the same body returns the original result. Refund and workorder-cancel references are derived from the order id, so a re-drive or a retry never refunds the same payment intent twice. Emits an ORDER_CART_CANCEL_REQUEST event; refunds are idempotent per payment intent at pos-invoice, and a failed leg parks the order at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING. Returns 201 when the cancellation completes, 400 when the Idempotency-Key is not a UUID (VALIDATION_ERROR), 404 when the order does not exist, 409 when the current status is not cancellable (or IDEMPOTENCY_CONFLICT when the key was used with a different request), and 500 when a workorder or payment-reversal leg fails downstream — the order is still parked at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING either way, so the retry endpoint applies. 
      * Cancel a Sales Order
      */
     async cancelOrder(requestParameters: CancelOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CancellationResponse> {
@@ -97,7 +101,7 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retries the billing leg of a failed order cancellation, re-running the settled-payment reversals and completing the transition to CANCELLED. Use this tool after a cancellation parked at CANCEL_FAILED_BILLING; do not use cancelOrder, which starts the saga from the beginning and re-checks the workorder leg as well. Preconditions: the order must be in CANCEL_FAILED_BILLING. Required inputs: orderId (UUID) as a path parameter and idempotencyKey as a query parameter — the original cancellation key, from which per-intent refund idempotency at pos-invoice is derived. Emits an ORDER_CART_CANCEL_RETRY event; a retry that fails again transitions the order to CANCEL_REQUIRES_MANUAL_REVIEW and publishes a review-required fact instead of looping. Returns 200 when the cancellation completes on retry, 404 when the order does not exist, 409 when the order is not in CANCEL_FAILED_BILLING, and 500 when the reversal fails again — which also parks the order at CANCEL_REQUIRES_MANUAL_REVIEW. 
+     * Retries the billing leg of a failed order cancellation, re-running the settled-payment reversals and completing the transition to CANCELLED. Use this tool after a cancellation parked at CANCEL_FAILED_BILLING; do not use cancelOrder, which starts the saga from the beginning and re-checks the workorder leg as well. Preconditions: the order must be in CANCEL_FAILED_BILLING. Required inputs: orderId (UUID) as a path parameter; there is no body and no caller key — the per-intent refund reference is derived from the order id, so the retry cannot refund a payment intent twice. Emits an ORDER_CART_CANCEL_RETRY event; a retry that fails again transitions the order to CANCEL_REQUIRES_MANUAL_REVIEW and publishes a review-required fact instead of looping. Returns 200 when the cancellation completes on retry, 404 when the order does not exist, 409 when the order is not in CANCEL_FAILED_BILLING, and 500 when the reversal fails again — which also parks the order at CANCEL_REQUIRES_MANUAL_REVIEW. 
      * Retry a Failed Cancellation
      */
     async retryOrderCancellationRaw(requestParameters: RetryOrderCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CancellationResponse>> {
@@ -108,18 +112,7 @@ export class OrderCancellationApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['idempotencyKey'] == null) {
-            throw new runtime.RequiredError(
-                'idempotencyKey',
-                'Required parameter "idempotencyKey" was null or undefined when calling retryOrderCancellation().'
-            );
-        }
-
         const queryParameters: any = {};
-
-        if (requestParameters['idempotencyKey'] != null) {
-            queryParameters['idempotencyKey'] = requestParameters['idempotencyKey'];
-        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -142,7 +135,7 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retries the billing leg of a failed order cancellation, re-running the settled-payment reversals and completing the transition to CANCELLED. Use this tool after a cancellation parked at CANCEL_FAILED_BILLING; do not use cancelOrder, which starts the saga from the beginning and re-checks the workorder leg as well. Preconditions: the order must be in CANCEL_FAILED_BILLING. Required inputs: orderId (UUID) as a path parameter and idempotencyKey as a query parameter — the original cancellation key, from which per-intent refund idempotency at pos-invoice is derived. Emits an ORDER_CART_CANCEL_RETRY event; a retry that fails again transitions the order to CANCEL_REQUIRES_MANUAL_REVIEW and publishes a review-required fact instead of looping. Returns 200 when the cancellation completes on retry, 404 when the order does not exist, 409 when the order is not in CANCEL_FAILED_BILLING, and 500 when the reversal fails again — which also parks the order at CANCEL_REQUIRES_MANUAL_REVIEW. 
+     * Retries the billing leg of a failed order cancellation, re-running the settled-payment reversals and completing the transition to CANCELLED. Use this tool after a cancellation parked at CANCEL_FAILED_BILLING; do not use cancelOrder, which starts the saga from the beginning and re-checks the workorder leg as well. Preconditions: the order must be in CANCEL_FAILED_BILLING. Required inputs: orderId (UUID) as a path parameter; there is no body and no caller key — the per-intent refund reference is derived from the order id, so the retry cannot refund a payment intent twice. Emits an ORDER_CART_CANCEL_RETRY event; a retry that fails again transitions the order to CANCEL_REQUIRES_MANUAL_REVIEW and publishes a review-required fact instead of looping. Returns 200 when the cancellation completes on retry, 404 when the order does not exist, 409 when the order is not in CANCEL_FAILED_BILLING, and 500 when the reversal fails again — which also parks the order at CANCEL_REQUIRES_MANUAL_REVIEW. 
      * Retry a Failed Cancellation
      */
     async retryOrderCancellation(requestParameters: RetryOrderCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CancellationResponse> {
