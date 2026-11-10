@@ -275,10 +275,10 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a change request for work beyond the authorized scope, placing it in AWAITING_ADVISOR_REVIEW with its service and part items marked PENDING_APPROVAL. Use this tool when a technician finds additional work mid-job; do not use approveChangeRequest or declineChangeRequest, which are the advisor\'s decision steps on an existing request. Preconditions: the workorder must exist and be in WORK_IN_PROGRESS status, and emergency exception requests must carry the required emergency documentation on their items. Required inputs: workorderId (UUID) as a path parameter, a non-blank description, and at least one entry in services or parts; an Idempotency-Key header is recommended — a repeated key returns the originally created request instead of a duplicate. Emits a WORKORDER_CHANGE_REQUEST_CREATE event and renders a supplemental estimate PDF via the documents service when items are present. Returns 400 when the description or items are missing, the workorder status is not WORK_IN_PROGRESS, or emergency documentation is incomplete, and 404 when the workorder does not exist. 
+     * Creates a change request for work beyond the authorized scope, placing it in AWAITING_ADVISOR_REVIEW with its service and part items marked PENDING_APPROVAL. Use this tool when a technician finds additional work mid-job; do not use approveChangeRequest or declineChangeRequest, which are the advisor\'s decision steps on an existing request. Preconditions: the workorder must exist and be in WORK_IN_PROGRESS status, and emergency exception requests must carry the required emergency documentation on their items. Required inputs: workorderId (UUID) as a path parameter, a non-blank description, and at least one entry in services or parts; an optional Idempotency-Key header (a UUID) makes a replay return the originally created request instead of a duplicate. Emits a WORKORDER_CHANGE_REQUEST_CREATE event and renders a supplemental estimate PDF via the documents service when items are present. Returns 400 when the description or items are missing, the workorder status is not WORK_IN_PROGRESS, or emergency documentation is incomplete, and 404 when the workorder does not exist. 
      * Create Change Request for Additional Work
      */
-    async createChangeRequestRaw(requestParameters: CreateChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
+    async createChangeRequestRaw(requestParameters: CreateChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -319,14 +319,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
             body: CreateChangeRequestDTOToJSON(requestParameters['createChangeRequestDTO']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ChangeRequestResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
-     * Creates a change request for work beyond the authorized scope, placing it in AWAITING_ADVISOR_REVIEW with its service and part items marked PENDING_APPROVAL. Use this tool when a technician finds additional work mid-job; do not use approveChangeRequest or declineChangeRequest, which are the advisor\'s decision steps on an existing request. Preconditions: the workorder must exist and be in WORK_IN_PROGRESS status, and emergency exception requests must carry the required emergency documentation on their items. Required inputs: workorderId (UUID) as a path parameter, a non-blank description, and at least one entry in services or parts; an Idempotency-Key header is recommended — a repeated key returns the originally created request instead of a duplicate. Emits a WORKORDER_CHANGE_REQUEST_CREATE event and renders a supplemental estimate PDF via the documents service when items are present. Returns 400 when the description or items are missing, the workorder status is not WORK_IN_PROGRESS, or emergency documentation is incomplete, and 404 when the workorder does not exist. 
+     * Creates a change request for work beyond the authorized scope, placing it in AWAITING_ADVISOR_REVIEW with its service and part items marked PENDING_APPROVAL. Use this tool when a technician finds additional work mid-job; do not use approveChangeRequest or declineChangeRequest, which are the advisor\'s decision steps on an existing request. Preconditions: the workorder must exist and be in WORK_IN_PROGRESS status, and emergency exception requests must carry the required emergency documentation on their items. Required inputs: workorderId (UUID) as a path parameter, a non-blank description, and at least one entry in services or parts; an optional Idempotency-Key header (a UUID) makes a replay return the originally created request instead of a duplicate. Emits a WORKORDER_CHANGE_REQUEST_CREATE event and renders a supplemental estimate PDF via the documents service when items are present. Returns 400 when the description or items are missing, the workorder status is not WORK_IN_PROGRESS, or emergency documentation is incomplete, and 404 when the workorder does not exist. 
      * Create Change Request for Additional Work
      */
-    async createChangeRequest(requestParameters: CreateChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
+    async createChangeRequest(requestParameters: CreateChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.createChangeRequestRaw(requestParameters, initOverrides);
         return await response.value();
     }

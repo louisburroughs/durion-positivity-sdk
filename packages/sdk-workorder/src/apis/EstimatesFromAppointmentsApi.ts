@@ -17,19 +17,17 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   CreateEstimateFromAppointmentRequest,
-  CreateEstimateFromAppointmentResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
     CreateEstimateFromAppointmentRequestFromJSON,
     CreateEstimateFromAppointmentRequestToJSON,
-    CreateEstimateFromAppointmentResponseFromJSON,
-    CreateEstimateFromAppointmentResponseToJSON,
 } from '../models/index';
 
 export interface CreateEstimateFromAppointmentOperationRequest {
     createEstimateFromAppointmentRequest: CreateEstimateFromAppointmentRequest;
+    idempotencyKey?: string;
 }
 
 /**
@@ -38,10 +36,10 @@ export interface CreateEstimateFromAppointmentOperationRequest {
 export class EstimatesFromAppointmentsApi extends runtime.BaseAPI {
 
     /**
-     * Creates a DRAFT estimate seeded from a shop appointment, linking the appointment, customer, vehicle, and location ids onto the new estimate. Use this tool when an appointment arrives and needs an estimate started; do not use createEstimate, which builds an estimate from scratch without an appointment link or idempotency guarantee. Preconditions: the caller must hold workorder:estimate:create, and when that grant is location-scoped the body\'s locationId must be within reach (ADR-0061); the appointment id is not verified against the scheduling service, and an estimate already linked to the appointmentId short-circuits creation. Required inputs: idempotencyKey, appointmentId, customerId, vehicleId, and locationId (all UUIDs); requestedServices is an optional list of free-text service descriptions. Emits a WORKORDER_ESTIMATE_CREATE_FROM_APPOINTMENT event; the call is idempotent on appointmentId, so retries never create duplicates. Returns 201 with created=true when a new estimate is persisted, 200 with created=false and the existing estimateId when the appointment already has one, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId. 
+     * Creates a DRAFT estimate seeded from a shop appointment, linking the appointment, customer, vehicle, and location ids onto the new estimate. Use this tool when an appointment arrives and needs an estimate started; do not use createEstimate, which builds an estimate from scratch without an appointment link or idempotency guarantee. Preconditions: the caller must hold workorder:estimate:create, and when that grant is location-scoped the body\'s locationId must be within reach (ADR-0061); the appointment id is not verified against the scheduling service, and an estimate already linked to the appointmentId short-circuits creation. Required inputs: appointmentId, customerId, vehicleId, and locationId (all UUIDs); an Idempotency-Key header makes a retry of the same request answer the original result, and requestedServices is an optional list of free-text service descriptions. Emits a WORKORDER_ESTIMATE_CREATE_FROM_APPOINTMENT event; the call is idempotent on appointmentId, so retries never create duplicates. Returns 201 with created=true when a new estimate is persisted, 200 with created=false and the existing estimateId when the appointment already has one, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor; a malformed Idempotency-Key is a 400 VALIDATION_ERROR naming the header. 
      * Create Draft Estimate From Appointment
      */
-    async createEstimateFromAppointmentRaw(requestParameters: CreateEstimateFromAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateEstimateFromAppointmentResponse>> {
+    async createEstimateFromAppointmentRaw(requestParameters: CreateEstimateFromAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['createEstimateFromAppointmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'createEstimateFromAppointmentRequest',
@@ -54,6 +52,10 @@ export class EstimatesFromAppointmentsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -71,14 +73,14 @@ export class EstimatesFromAppointmentsApi extends runtime.BaseAPI {
             body: CreateEstimateFromAppointmentRequestToJSON(requestParameters['createEstimateFromAppointmentRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CreateEstimateFromAppointmentResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
-     * Creates a DRAFT estimate seeded from a shop appointment, linking the appointment, customer, vehicle, and location ids onto the new estimate. Use this tool when an appointment arrives and needs an estimate started; do not use createEstimate, which builds an estimate from scratch without an appointment link or idempotency guarantee. Preconditions: the caller must hold workorder:estimate:create, and when that grant is location-scoped the body\'s locationId must be within reach (ADR-0061); the appointment id is not verified against the scheduling service, and an estimate already linked to the appointmentId short-circuits creation. Required inputs: idempotencyKey, appointmentId, customerId, vehicleId, and locationId (all UUIDs); requestedServices is an optional list of free-text service descriptions. Emits a WORKORDER_ESTIMATE_CREATE_FROM_APPOINTMENT event; the call is idempotent on appointmentId, so retries never create duplicates. Returns 201 with created=true when a new estimate is persisted, 200 with created=false and the existing estimateId when the appointment already has one, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId. 
+     * Creates a DRAFT estimate seeded from a shop appointment, linking the appointment, customer, vehicle, and location ids onto the new estimate. Use this tool when an appointment arrives and needs an estimate started; do not use createEstimate, which builds an estimate from scratch without an appointment link or idempotency guarantee. Preconditions: the caller must hold workorder:estimate:create, and when that grant is location-scoped the body\'s locationId must be within reach (ADR-0061); the appointment id is not verified against the scheduling service, and an estimate already linked to the appointmentId short-circuits creation. Required inputs: appointmentId, customerId, vehicleId, and locationId (all UUIDs); an Idempotency-Key header makes a retry of the same request answer the original result, and requestedServices is an optional list of free-text service descriptions. Emits a WORKORDER_ESTIMATE_CREATE_FROM_APPOINTMENT event; the call is idempotent on appointmentId, so retries never create duplicates. Returns 201 with created=true when a new estimate is persisted, 200 with created=false and the existing estimateId when the appointment already has one, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor; a malformed Idempotency-Key is a 400 VALIDATION_ERROR naming the header. 
      * Create Draft Estimate From Appointment
      */
-    async createEstimateFromAppointment(requestParameters: CreateEstimateFromAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateEstimateFromAppointmentResponse> {
+    async createEstimateFromAppointment(requestParameters: CreateEstimateFromAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.createEstimateFromAppointmentRaw(requestParameters, initOverrides);
         return await response.value();
     }

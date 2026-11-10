@@ -18,8 +18,11 @@ import type {
   ApiError,
   ConvertPurchaseSuggestionsRequest,
   ConvertPurchaseSuggestionsResponse,
+  CreatePurchaseSuggestionRequest,
   DismissPurchaseSuggestionRequest,
+  PurchaseSuggestionPageResponse,
   PurchaseSuggestionResponse,
+  UpdatePurchaseSuggestionQuantityRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -28,10 +31,16 @@ import {
     ConvertPurchaseSuggestionsRequestToJSON,
     ConvertPurchaseSuggestionsResponseFromJSON,
     ConvertPurchaseSuggestionsResponseToJSON,
+    CreatePurchaseSuggestionRequestFromJSON,
+    CreatePurchaseSuggestionRequestToJSON,
     DismissPurchaseSuggestionRequestFromJSON,
     DismissPurchaseSuggestionRequestToJSON,
+    PurchaseSuggestionPageResponseFromJSON,
+    PurchaseSuggestionPageResponseToJSON,
     PurchaseSuggestionResponseFromJSON,
     PurchaseSuggestionResponseToJSON,
+    UpdatePurchaseSuggestionQuantityRequestFromJSON,
+    UpdatePurchaseSuggestionQuantityRequestToJSON,
 } from '../models/index';
 
 export interface AcceptPurchaseSuggestionRequest {
@@ -40,6 +49,10 @@ export interface AcceptPurchaseSuggestionRequest {
 
 export interface ConvertPurchaseSuggestionsOperationRequest {
     convertPurchaseSuggestionsRequest: ConvertPurchaseSuggestionsRequest;
+}
+
+export interface CreatePurchaseSuggestionOperationRequest {
+    createPurchaseSuggestionRequest: CreatePurchaseSuggestionRequest;
 }
 
 export interface DismissPurchaseSuggestionOperationRequest {
@@ -56,9 +69,13 @@ export interface ListPurchaseSuggestionsRequest {
     sku?: string;
     locationId?: string;
     orderAttention?: string;
-    page?: number;
-    size?: number;
-    sort?: Array<string>;
+    pageSize?: number;
+    pageToken?: string;
+}
+
+export interface UpdatePurchaseSuggestionRequest {
+    suggestionId: string;
+    updatePurchaseSuggestionQuantityRequest: UpdatePurchaseSuggestionQuantityRequest;
 }
 
 /**
@@ -152,6 +169,52 @@ export class PurchaseSuggestionsApi extends runtime.BaseAPI {
      */
     async convertPurchaseSuggestions(requestParameters: ConvertPurchaseSuggestionsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConvertPurchaseSuggestionsResponse> {
         const response = await this.convertPurchaseSuggestionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates a manual purchase request for a SKU at a site: a SUGGESTED purchase suggestion with origin MANUAL, the caller in requestedBy, a per-tenant display number (PR-nnnn) and the requested quantity. It carries no replenishment policy and no vendor. Use this tool when a person wants to ask Purchasing for stock; do not use it to change an open request, use updatePurchaseSuggestion instead, and use acceptPurchaseSuggestion plus convertPurchaseSuggestions to turn an accepted request into a purchase order. Preconditions: createPurchaseRequests must be on at the site (else 422 PURCHASE_REQUESTS_DISABLED); no open request may already exist for the same SKU + site (else 409 PURCHASE_REQUEST_ALREADY_OPEN, whose referenceId names the existing request when the caller\'s reach covers it). Required inputs: sku, locationId (a known site, or a known bin resolved to its site; else 422 PURCHASE_REQUEST_LOCATION_UNKNOWN), quantity greater than zero, and an optional binLocationId under the site. Emits an INVENTORY_PURCHASE_SUGGESTION_CREATE event; no purchase order is created and no spend is committed. Returns 201 with the created request, 400 when a field is invalid or the bin is not under the site, 403 when the caller lacks the permission or the location is outside their reach, 409 for a duplicate open request and 422 when the location is unknown or purchase requests are disabled at the site. 
+     * Create Manual Purchase Request
+     */
+    async createPurchaseSuggestionRaw(requestParameters: CreatePurchaseSuggestionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseSuggestionResponse>> {
+        if (requestParameters['createPurchaseSuggestionRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createPurchaseSuggestionRequest',
+                'Required parameter "createPurchaseSuggestionRequest" was null or undefined when calling createPurchaseSuggestion().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:purchase_request:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/purchase-suggestions`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreatePurchaseSuggestionRequestToJSON(requestParameters['createPurchaseSuggestionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseSuggestionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates a manual purchase request for a SKU at a site: a SUGGESTED purchase suggestion with origin MANUAL, the caller in requestedBy, a per-tenant display number (PR-nnnn) and the requested quantity. It carries no replenishment policy and no vendor. Use this tool when a person wants to ask Purchasing for stock; do not use it to change an open request, use updatePurchaseSuggestion instead, and use acceptPurchaseSuggestion plus convertPurchaseSuggestions to turn an accepted request into a purchase order. Preconditions: createPurchaseRequests must be on at the site (else 422 PURCHASE_REQUESTS_DISABLED); no open request may already exist for the same SKU + site (else 409 PURCHASE_REQUEST_ALREADY_OPEN, whose referenceId names the existing request when the caller\'s reach covers it). Required inputs: sku, locationId (a known site, or a known bin resolved to its site; else 422 PURCHASE_REQUEST_LOCATION_UNKNOWN), quantity greater than zero, and an optional binLocationId under the site. Emits an INVENTORY_PURCHASE_SUGGESTION_CREATE event; no purchase order is created and no spend is committed. Returns 201 with the created request, 400 when a field is invalid or the bin is not under the site, 403 when the caller lacks the permission or the location is outside their reach, 409 for a duplicate open request and 422 when the location is unknown or purchase requests are disabled at the site. 
+     * Create Manual Purchase Request
+     */
+    async createPurchaseSuggestion(requestParameters: CreatePurchaseSuggestionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseSuggestionResponse> {
+        const response = await this.createPurchaseSuggestionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -252,10 +315,10 @@ export class PurchaseSuggestionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a page of replenishment purchase suggestions, newest first, with their lifecycle status, suggested quantity, vendor and pricing snapshot. Use this tool to discover suggestionIds or review what the replenishment scan proposed; use getPurchaseSuggestion instead when the id is already known. Preconditions: none; suggestions are created only by the replenishment scan, so an empty page means the scan proposed nothing matching the filters. Required inputs: none; status (SUGGESTED, ACCEPTED, CONVERTED or DISMISSED), sku and locationId are optional filters, and the page size defaults to 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when status is not a known lifecycle value, and 200 with an empty page when nothing matches. 
-     * List Purchase Suggestions
+     * Returns one cursor page of purchase requests (the extended purchase suggestions), ordered ascending by their UUIDv7 key, with their derived display status, quantity, origin, display number, vendor and pricing snapshot. Use this tool to discover suggestionIds or review what the replenishment scan proposed and what people requested manually; use getPurchaseSuggestion instead when the id is already known. Preconditions: none; an empty page means nothing matches the filters. Required inputs: none; status (REQUESTED, ON_PO, RECEIVED, CANCELLED or the persisted SUGGESTED, ACCEPTED, CONVERTED, DISMISSED), sku, locationId and orderAttention are optional filters. pageSize defaults to 50 (max 200); pageToken is the opaque nextPageToken of the previous page. There is no totalCount. No events are emitted and no state changes; this is a read-only projection. Returns 400 when status, pageSize or pageToken is not valid, and 200 with an empty page when nothing matches. 
+     * List Purchase Requests
      */
-    async listPurchaseSuggestionsRaw(requestParameters: ListPurchaseSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+    async listPurchaseSuggestionsRaw(requestParameters: ListPurchaseSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseSuggestionPageResponse>> {
         const queryParameters: any = {};
 
         if (requestParameters['status'] != null) {
@@ -274,16 +337,12 @@ export class PurchaseSuggestionsApi extends runtime.BaseAPI {
             queryParameters['orderAttention'] = requestParameters['orderAttention'];
         }
 
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
+        if (requestParameters['pageSize'] != null) {
+            queryParameters['pageSize'] = requestParameters['pageSize'];
         }
 
-        if (requestParameters['size'] != null) {
-            queryParameters['size'] = requestParameters['size'];
-        }
-
-        if (requestParameters['sort'] != null) {
-            queryParameters['sort'] = requestParameters['sort'];
+        if (requestParameters['pageToken'] != null) {
+            queryParameters['pageToken'] = requestParameters['pageToken'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -303,19 +362,68 @@ export class PurchaseSuggestionsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<string>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseSuggestionPageResponseFromJSON(jsonValue));
     }
 
     /**
-     * Returns a page of replenishment purchase suggestions, newest first, with their lifecycle status, suggested quantity, vendor and pricing snapshot. Use this tool to discover suggestionIds or review what the replenishment scan proposed; use getPurchaseSuggestion instead when the id is already known. Preconditions: none; suggestions are created only by the replenishment scan, so an empty page means the scan proposed nothing matching the filters. Required inputs: none; status (SUGGESTED, ACCEPTED, CONVERTED or DISMISSED), sku and locationId are optional filters, and the page size defaults to 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when status is not a known lifecycle value, and 200 with an empty page when nothing matches. 
-     * List Purchase Suggestions
+     * Returns one cursor page of purchase requests (the extended purchase suggestions), ordered ascending by their UUIDv7 key, with their derived display status, quantity, origin, display number, vendor and pricing snapshot. Use this tool to discover suggestionIds or review what the replenishment scan proposed and what people requested manually; use getPurchaseSuggestion instead when the id is already known. Preconditions: none; an empty page means nothing matches the filters. Required inputs: none; status (REQUESTED, ON_PO, RECEIVED, CANCELLED or the persisted SUGGESTED, ACCEPTED, CONVERTED, DISMISSED), sku, locationId and orderAttention are optional filters. pageSize defaults to 50 (max 200); pageToken is the opaque nextPageToken of the previous page. There is no totalCount. No events are emitted and no state changes; this is a read-only projection. Returns 400 when status, pageSize or pageToken is not valid, and 200 with an empty page when nothing matches. 
+     * List Purchase Requests
      */
-    async listPurchaseSuggestions(requestParameters: ListPurchaseSuggestionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+    async listPurchaseSuggestions(requestParameters: ListPurchaseSuggestionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseSuggestionPageResponse> {
         const response = await this.listPurchaseSuggestionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Changes the quantity of an open purchase request (persisted SUGGESTED or ACCEPTED). The edit is final: the replenishment scan\'s refresh leaves the quantity alone, while still refreshing the vendor and lead-time fields it owns. Use this tool to adjust an existing request instead of raising a duplicate one; use dismissPurchaseSuggestion to reject it, and acceptPurchaseSuggestion to approve it. Preconditions: the request must exist and be SUGGESTED or ACCEPTED. Required inputs: suggestionId (UUIDv7) path parameter and a body with quantity greater than zero. Emits an INVENTORY_PURCHASE_SUGGESTION_UPDATE event and flags the row quantityEdited. Returns 404 when the request does not exist, 403 when the location is outside the caller\'s reach, 409 PURCHASE_SUGGESTION_INVALID_STATE when it is CONVERTED or DISMISSED, and 400 when the quantity is not positive. 
+     * Update Purchase Request Quantity
+     */
+    async updatePurchaseSuggestionRaw(requestParameters: UpdatePurchaseSuggestionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseSuggestionResponse>> {
+        if (requestParameters['suggestionId'] == null) {
+            throw new runtime.RequiredError(
+                'suggestionId',
+                'Required parameter "suggestionId" was null or undefined when calling updatePurchaseSuggestion().'
+            );
+        }
+
+        if (requestParameters['updatePurchaseSuggestionQuantityRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updatePurchaseSuggestionQuantityRequest',
+                'Required parameter "updatePurchaseSuggestionQuantityRequest" was null or undefined when calling updatePurchaseSuggestion().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:purchase_request:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/purchase-suggestions/{suggestionId}`.replace(`{${"suggestionId"}}`, encodeURIComponent(String(requestParameters['suggestionId']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdatePurchaseSuggestionQuantityRequestToJSON(requestParameters['updatePurchaseSuggestionQuantityRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseSuggestionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Changes the quantity of an open purchase request (persisted SUGGESTED or ACCEPTED). The edit is final: the replenishment scan\'s refresh leaves the quantity alone, while still refreshing the vendor and lead-time fields it owns. Use this tool to adjust an existing request instead of raising a duplicate one; use dismissPurchaseSuggestion to reject it, and acceptPurchaseSuggestion to approve it. Preconditions: the request must exist and be SUGGESTED or ACCEPTED. Required inputs: suggestionId (UUIDv7) path parameter and a body with quantity greater than zero. Emits an INVENTORY_PURCHASE_SUGGESTION_UPDATE event and flags the row quantityEdited. Returns 404 when the request does not exist, 403 when the location is outside the caller\'s reach, 409 PURCHASE_SUGGESTION_INVALID_STATE when it is CONVERTED or DISMISSED, and 400 when the quantity is not positive. 
+     * Update Purchase Request Quantity
+     */
+    async updatePurchaseSuggestion(requestParameters: UpdatePurchaseSuggestionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseSuggestionResponse> {
+        const response = await this.updatePurchaseSuggestionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { OrAllOfNodes } from './OrAllOfNodes';
+import {
+    OrAllOfNodesFromJSON,
+    OrAllOfNodesFromJSONTyped,
+    OrAllOfNodesToJSON,
+} from './OrAllOfNodes';
 import type { SegmentPredicate } from './SegmentPredicate';
 import {
     SegmentPredicateFromJSON,
@@ -27,11 +33,11 @@ import {
  */
 export interface Or extends SegmentPredicate {
     /**
-     * 
-     * @type {any}
+     * Child predicates
+     * @type {Array<OrAllOfNodes>}
      * @memberof Or
      */
-    nodes?: any;
+    nodes?: Array<OrAllOfNodes>;
 }
 
 /**
@@ -51,7 +57,7 @@ export function OrFromJSONTyped(json: any, ignoreDiscriminator: boolean): Or {
     }
     return {
         ...SegmentPredicateFromJSONTyped(json, ignoreDiscriminator),
-        'nodes': json['nodes'] == null ? undefined : json['nodes'],
+        'nodes': json['nodes'] == null ? undefined : ((json['nodes'] as Array<any>).map(OrAllOfNodesFromJSON)),
     };
 }
 
@@ -61,7 +67,7 @@ export function OrToJSON(value?: Or | null): any {
     }
     return {
         ...SegmentPredicateToJSON(value),
-        'nodes': value['nodes'],
+        'nodes': value['nodes'] == null ? undefined : ((value['nodes'] as Array<any>).map(OrAllOfNodesToJSON)),
     };
 }
 

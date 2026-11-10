@@ -37,19 +37,21 @@ export interface PagedModelMechanicRosterEntryResponse {
      * @type {Array<MechanicRosterEntryResponse>}
      * @memberof PagedModelMechanicRosterEntryResponse
      */
-    content?: Array<MechanicRosterEntryResponse>;
+    content: Array<MechanicRosterEntryResponse>;
     /**
      * 
      * @type {PageMetadata}
      * @memberof PagedModelMechanicRosterEntryResponse
      */
-    page?: PageMetadata;
+    page: PageMetadata;
 }
 
 /**
  * Check if a given object implements the PagedModelMechanicRosterEntryResponse interface.
  */
 export function instanceOfPagedModelMechanicRosterEntryResponse(value: object): boolean {
+    if (!('content' in value)) return false;
+    if (!('page' in value)) return false;
     return true;
 }
 
@@ -63,8 +65,8 @@ export function PagedModelMechanicRosterEntryResponseFromJSONTyped(json: any, ig
     }
     return {
         
-        'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(MechanicRosterEntryResponseFromJSON)),
-        'page': json['page'] == null ? undefined : PageMetadataFromJSON(json['page']),
+        'content': ((json['content'] as Array<any>).map(MechanicRosterEntryResponseFromJSON)),
+        'page': PageMetadataFromJSON(json['page']),
     };
 }
 
@@ -74,7 +76,7 @@ export function PagedModelMechanicRosterEntryResponseToJSON(value?: PagedModelMe
     }
     return {
         
-        'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(MechanicRosterEntryResponseToJSON)),
+        'content': ((value['content'] as Array<any>).map(MechanicRosterEntryResponseToJSON)),
         'page': PageMetadataToJSON(value['page']),
     };
 }

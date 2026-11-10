@@ -37,19 +37,21 @@ export interface PagedModelLocationTechnicianRosterEntryResponse {
      * @type {Array<LocationTechnicianRosterEntryResponse>}
      * @memberof PagedModelLocationTechnicianRosterEntryResponse
      */
-    content?: Array<LocationTechnicianRosterEntryResponse>;
+    content: Array<LocationTechnicianRosterEntryResponse>;
     /**
      * 
      * @type {PageMetadata}
      * @memberof PagedModelLocationTechnicianRosterEntryResponse
      */
-    page?: PageMetadata;
+    page: PageMetadata;
 }
 
 /**
  * Check if a given object implements the PagedModelLocationTechnicianRosterEntryResponse interface.
  */
 export function instanceOfPagedModelLocationTechnicianRosterEntryResponse(value: object): boolean {
+    if (!('content' in value)) return false;
+    if (!('page' in value)) return false;
     return true;
 }
 
@@ -63,8 +65,8 @@ export function PagedModelLocationTechnicianRosterEntryResponseFromJSONTyped(jso
     }
     return {
         
-        'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(LocationTechnicianRosterEntryResponseFromJSON)),
-        'page': json['page'] == null ? undefined : PageMetadataFromJSON(json['page']),
+        'content': ((json['content'] as Array<any>).map(LocationTechnicianRosterEntryResponseFromJSON)),
+        'page': PageMetadataFromJSON(json['page']),
     };
 }
 
@@ -74,7 +76,7 @@ export function PagedModelLocationTechnicianRosterEntryResponseToJSON(value?: Pa
     }
     return {
         
-        'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(LocationTechnicianRosterEntryResponseToJSON)),
+        'content': ((value['content'] as Array<any>).map(LocationTechnicianRosterEntryResponseToJSON)),
         'page': PageMetadataToJSON(value['page']),
     };
 }

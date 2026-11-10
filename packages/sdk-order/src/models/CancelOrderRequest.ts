@@ -26,12 +26,6 @@ export interface CancelOrderRequest {
      */
     cancellationReason: string;
     /**
-     * Optional idempotency key for duplicate cancellation prevention
-     * @type {string}
-     * @memberof CancelOrderRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Identifier of the associated workorder, when applicable
      * @type {string}
      * @memberof CancelOrderRequest
@@ -58,7 +52,6 @@ export function CancelOrderRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'cancellationReason': json['cancellationReason'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
     };
 }
@@ -70,7 +63,6 @@ export function CancelOrderRequestToJSON(value?: CancelOrderRequest | null): any
     return {
         
         'cancellationReason': value['cancellationReason'],
-        'idempotencyKey': value['idempotencyKey'],
         'workOrderId': value['workOrderId'],
     };
 }

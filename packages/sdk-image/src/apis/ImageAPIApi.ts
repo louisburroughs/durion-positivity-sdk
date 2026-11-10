@@ -34,7 +34,7 @@ export interface GetImageByFilenameRequest {
 }
 
 export interface GetImageByIdRequest {
-    id: number;
+    id: string;
     ifNoneMatch?: string;
 }
 
@@ -48,7 +48,7 @@ export interface StoreImageOperationRequest {
 export class ImageAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the numeric image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
+     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
      * Get image by filename
      */
     async getImageByFilenameRaw(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -78,7 +78,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the numeric image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
+     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
      * Get image by filename
      */
     async getImageByFilename(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -87,7 +87,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for a numeric image record ID. Use this operation when the caller has the numeric image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (numeric database ID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
+     * Returns image bytes inline for an image record ID (a UUID). Use this operation when the caller has the image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (the image UUID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID, and 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
      * Get image by ID
      */
     async getImageByIdRaw(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -117,7 +117,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for a numeric image record ID. Use this operation when the caller has the numeric image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (numeric database ID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
+     * Returns image bytes inline for an image record ID (a UUID). Use this operation when the caller has the image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (the image UUID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID, and 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
      * Get image by ID
      */
     async getImageById(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {

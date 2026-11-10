@@ -17,5 +17,6 @@ export * from './FieldError';
 export * from './FileUploadResponse';
 export * from './PageBulkLoadJobResponse';
 export * from './PageableObject';
+export * from './PolicyBlocker';
 export * from './SortObject';
 export * from './SuggestedAlternative';

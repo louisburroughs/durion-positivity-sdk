@@ -14,11 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * A scan-generated suggestion to purchase stock for a PURCHASE-preferring replenishment policy. Lifecycle SUGGESTED → ACCEPTED → CONVERTED | DISMISSED; acceptance is human-mandatory and conversion produces a DRAFT purchase order subject to the normal approval workflow
+ * A purchase request (the extended purchase suggestion): either raised by the replenishment scan for a PURCHASE-preferring policy or created manually. Lifecycle SUGGESTED → ACCEPTED → CONVERTED | DISMISSED; acceptance is human-mandatory and conversion produces a DRAFT purchase order subject to the normal approval workflow. requestStatus is the derived display status
  * @export
  * @interface PurchaseSuggestionResponse
  */
 export interface PurchaseSuggestionResponse {
+    /**
+     * The bin a manual request names under its site; null when it names only the site
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    binLocationId?: string;
     /**
      * The DRAFT purchase order the suggestion was converted into
      * @type {string}
@@ -37,6 +43,12 @@ export interface PurchaseSuggestionResponse {
      * @memberof PurchaseSuggestionResponse
      */
     dismissalReason?: string;
+    /**
+     * Per-tenant display number, formatted PR- plus at least four digits; unique per tenant and never reused
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    displayNumber?: string;
     /**
      * Earliest date the purchase could plausibly arrive (suggestion date + lead time)
      * @type {Date}
@@ -62,6 +74,12 @@ export interface PurchaseSuggestionResponse {
      */
     leadTimeDays?: number;
     /**
+     * The purchase order the request was converted onto; the same value as convertedPurchaseOrderId
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    linkedPurchaseOrderId?: string;
+    /**
      * Destination location the purchased stock is for
      * @type {string}
      * @memberof PurchaseSuggestionResponse
@@ -80,17 +98,47 @@ export interface PurchaseSuggestionResponse {
      */
     orderStatus?: string;
     /**
-     * Replenishment policy the suggestion was computed for
+     * How the request came to exist: MANUAL or REPLENISHMENT
      * @type {string}
      * @memberof PurchaseSuggestionResponse
      */
-    policyId: string;
+    origin: PurchaseSuggestionResponseOriginEnum;
+    /**
+     * True when the linked purchase order has received part of its line but is not fully received or short-closed
+     * @type {boolean}
+     * @memberof PurchaseSuggestionResponse
+     */
+    partiallyReceived: boolean;
+    /**
+     * Replenishment policy the request was computed for; null for a manual request, which no scan owns
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    policyId?: string;
+    /**
+     * Derived display status: REQUESTED (SUGGESTED/ACCEPTED), ON_PO (CONVERTED and the order is not fully received), RECEIVED (CONVERTED and the order is FULLY_RECEIVED or CLOSED) or CANCELLED (DISMISSED, or converted onto a cancelled order)
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    requestStatus: PurchaseSuggestionResponseRequestStatusEnum;
+    /**
+     * The authenticated username that raised a manual request; null for a scan row
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    requestedBy?: string;
     /**
      * Explainable record of the deterministic vendor-ranking inputs
      * @type {string}
      * @memberof PurchaseSuggestionResponse
      */
     selectionReason: string;
+    /**
+     * The site the destination belongs to
+     * @type {string}
+     * @memberof PurchaseSuggestionResponse
+     */
+    siteId: string;
     /**
      * Lifecycle status
      * @type {string}
@@ -169,6 +217,24 @@ export interface PurchaseSuggestionResponse {
 * @export
 * @enum {string}
 */
+export enum PurchaseSuggestionResponseOriginEnum {
+    Manual = 'MANUAL',
+    Replenishment = 'REPLENISHMENT'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum PurchaseSuggestionResponseRequestStatusEnum {
+    Requested = 'REQUESTED',
+    OnPo = 'ON_PO',
+    Received = 'RECEIVED',
+    Cancelled = 'CANCELLED'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum PurchaseSuggestionResponseStatusEnum {
     Suggested = 'SUGGESTED',
     Accepted = 'ACCEPTED',
@@ -200,8 +266,11 @@ export function instanceOfPurchaseSuggestionResponse(value: object): boolean {
     if (!('createdAt' in value)) return false;
     if (!('itemSKU' in value)) return false;
     if (!('locationId' in value)) return false;
-    if (!('policyId' in value)) return false;
+    if (!('origin' in value)) return false;
+    if (!('partiallyReceived' in value)) return false;
+    if (!('requestStatus' in value)) return false;
     if (!('selectionReason' in value)) return false;
+    if (!('siteId' in value)) return false;
     if (!('status' in value)) return false;
     if (!('suggestedQuantity' in value)) return false;
     if (!('suggestionId' in value)) return false;
@@ -219,18 +288,26 @@ export function PurchaseSuggestionResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
+        'binLocationId': json['binLocationId'] == null ? undefined : json['binLocationId'],
         'convertedPurchaseOrderId': json['convertedPurchaseOrderId'] == null ? undefined : json['convertedPurchaseOrderId'],
         'createdAt': (new Date(json['createdAt'])),
         'dismissalReason': json['dismissalReason'] == null ? undefined : json['dismissalReason'],
+        'displayNumber': json['displayNumber'] == null ? undefined : json['displayNumber'],
         'earliestExpectedDate': json['earliestExpectedDate'] == null ? undefined : (new Date(json['earliestExpectedDate'])),
         'feedVendorRef': json['feedVendorRef'] == null ? undefined : json['feedVendorRef'],
         'itemSKU': json['itemSKU'],
         'leadTimeDays': json['leadTimeDays'] == null ? undefined : json['leadTimeDays'],
+        'linkedPurchaseOrderId': json['linkedPurchaseOrderId'] == null ? undefined : json['linkedPurchaseOrderId'],
         'locationId': json['locationId'],
         'orderAttention': json['orderAttention'] == null ? undefined : json['orderAttention'],
         'orderStatus': json['orderStatus'] == null ? undefined : json['orderStatus'],
-        'policyId': json['policyId'],
+        'origin': json['origin'],
+        'partiallyReceived': json['partiallyReceived'],
+        'policyId': json['policyId'] == null ? undefined : json['policyId'],
+        'requestStatus': json['requestStatus'],
+        'requestedBy': json['requestedBy'] == null ? undefined : json['requestedBy'],
         'selectionReason': json['selectionReason'],
+        'siteId': json['siteId'],
         'status': json['status'],
         'suggestedQuantity': json['suggestedQuantity'],
         'suggestedVendorType': json['suggestedVendorType'] == null ? undefined : json['suggestedVendorType'],
@@ -252,18 +329,26 @@ export function PurchaseSuggestionResponseToJSON(value?: PurchaseSuggestionRespo
     }
     return {
         
+        'binLocationId': value['binLocationId'],
         'convertedPurchaseOrderId': value['convertedPurchaseOrderId'],
         'createdAt': ((value['createdAt']).toISOString()),
         'dismissalReason': value['dismissalReason'],
+        'displayNumber': value['displayNumber'],
         'earliestExpectedDate': value['earliestExpectedDate'] == null ? undefined : ((value['earliestExpectedDate']).toISOString().substring(0,10)),
         'feedVendorRef': value['feedVendorRef'],
         'itemSKU': value['itemSKU'],
         'leadTimeDays': value['leadTimeDays'],
+        'linkedPurchaseOrderId': value['linkedPurchaseOrderId'],
         'locationId': value['locationId'],
         'orderAttention': value['orderAttention'],
         'orderStatus': value['orderStatus'],
+        'origin': value['origin'],
+        'partiallyReceived': value['partiallyReceived'],
         'policyId': value['policyId'],
+        'requestStatus': value['requestStatus'],
+        'requestedBy': value['requestedBy'],
         'selectionReason': value['selectionReason'],
+        'siteId': value['siteId'],
         'status': value['status'],
         'suggestedQuantity': value['suggestedQuantity'],
         'suggestedVendorType': value['suggestedVendorType'],

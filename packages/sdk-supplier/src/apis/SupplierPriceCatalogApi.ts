@@ -35,6 +35,14 @@ export interface GetSupplierPriceCatalogFreshnessRequest {
     vendorProfileId: string;
 }
 
+export interface ListSupplierPriceCatalogEntriesRequest {
+    vendorProfileId: string;
+    importManifestId?: string;
+    q?: string;
+    page?: number;
+    size?: number;
+}
+
 export interface ListSupplierPriceCatalogImportsRequest {
     vendorProfileId: string;
     bindingId?: string;
@@ -109,6 +117,65 @@ export class SupplierPriceCatalogApi extends runtime.BaseAPI {
      */
     async getSupplierPriceCatalogFreshness(requestParameters: GetSupplierPriceCatalogFreshnessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceCatalogFreshnessView> {
         const response = await this.getSupplierPriceCatalogFreshnessRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a page of the matched lines of a vendor profile\'s authorized buy list — its latest completed PRICAT vendor import plus every completed quarantine re-application of that import, the list the Suppliers tab opens — each with the product it matched, the vendor\'s identifiers, the match method, net and gross prices, the suggested retail price, the market currency and the date the price applies from. Only matched lines are served: an unmatched line is quarantine material and is read through listSupplierPriceCatalogUnmatchedLines; product names are not part of the contract, and the client resolves them from the catalog by matchedProductId, because this service holds catalog codes only. Use this tool to answer \"what may we buy from this vendor, at what net price\": it is the read behind the Authorized buy list button, and the counterpart of a vendor\'s buy-list itemCount in the directory. Do not use it for a vendor\'s import run history, which is listSupplierPriceCatalogImports. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything, in which case the page is empty rather than an error — the UI\'s \"Create buy list\" action is triggerSupplierPriceCatalogImport. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200; optionally, importManifestId pins one completed import instead of the derived buy list (an id that is not a completed import of this profile is 404), and q is a case-insensitive contains-match over the vendor article code, the EAN and the cross-reference code, with LIKE metacharacters treated literally. Emits a SUPPLIER_PRICECATALOG_ENTRIES_SEARCH event; no state changes and no vendor call is made. Returns 200 with an empty items array when the profile has never completed an import or nothing matches, 400 when the page size is outside the permitted range, and 404 when the profile does not exist (SUPPLIER_UNKNOWN) or the pinned import is not a completed import of the profile (SUPPLIER_PRICECATALOG_IMPORT_NOT_FOUND). 
+     * List a vendor\'s authorized buy list: the matched entries of a price-catalog import
+     */
+    async listSupplierPriceCatalogEntriesRaw(requestParameters: ListSupplierPriceCatalogEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponse>> {
+        if (requestParameters['vendorProfileId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorProfileId',
+                'Required parameter "vendorProfileId" was null or undefined when calling listSupplierPriceCatalogEntries().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['importManifestId'] != null) {
+            queryParameters['importManifestId'] = requestParameters['importManifestId'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/admin/price-catalog/{vendorProfileId}/entries`.replace(`{${"vendorProfileId"}}`, encodeURIComponent(String(requestParameters['vendorProfileId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a page of the matched lines of a vendor profile\'s authorized buy list — its latest completed PRICAT vendor import plus every completed quarantine re-application of that import, the list the Suppliers tab opens — each with the product it matched, the vendor\'s identifiers, the match method, net and gross prices, the suggested retail price, the market currency and the date the price applies from. Only matched lines are served: an unmatched line is quarantine material and is read through listSupplierPriceCatalogUnmatchedLines; product names are not part of the contract, and the client resolves them from the catalog by matchedProductId, because this service holds catalog codes only. Use this tool to answer \"what may we buy from this vendor, at what net price\": it is the read behind the Authorized buy list button, and the counterpart of a vendor\'s buy-list itemCount in the directory. Do not use it for a vendor\'s import run history, which is listSupplierPriceCatalogImports. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything, in which case the page is empty rather than an error — the UI\'s \"Create buy list\" action is triggerSupplierPriceCatalogImport. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200; optionally, importManifestId pins one completed import instead of the derived buy list (an id that is not a completed import of this profile is 404), and q is a case-insensitive contains-match over the vendor article code, the EAN and the cross-reference code, with LIKE metacharacters treated literally. Emits a SUPPLIER_PRICECATALOG_ENTRIES_SEARCH event; no state changes and no vendor call is made. Returns 200 with an empty items array when the profile has never completed an import or nothing matches, 400 when the page size is outside the permitted range, and 404 when the profile does not exist (SUPPLIER_UNKNOWN) or the pinned import is not a completed import of the profile (SUPPLIER_PRICECATALOG_IMPORT_NOT_FOUND). 
+     * List a vendor\'s authorized buy list: the matched entries of a price-catalog import
+     */
+    async listSupplierPriceCatalogEntries(requestParameters: ListSupplierPriceCatalogEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponse> {
+        const response = await this.listSupplierPriceCatalogEntriesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

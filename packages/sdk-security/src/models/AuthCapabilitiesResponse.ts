@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PasswordPolicyResponse } from './PasswordPolicyResponse';
+import {
+    PasswordPolicyResponseFromJSON,
+    PasswordPolicyResponseFromJSONTyped,
+    PasswordPolicyResponseToJSON,
+} from './PasswordPolicyResponse';
+
 /**
  * Self-service authentication entry points this deployment serves
  * @export
@@ -20,7 +27,13 @@ import { mapValues } from '../runtime';
  */
 export interface AuthCapabilitiesResponse {
     /**
-     * Whether the anonymous password reset answers on this deployment; false until that story lands. The field ships from the first release so the client shape is stable
+     * 
+     * @type {PasswordPolicyResponse}
+     * @memberof AuthCapabilitiesResponse
+     */
+    passwordPolicy: PasswordPolicyResponse;
+    /**
+     * Whether the anonymous password reset answers on this deployment (POST /v1/auth/password-reset and /confirm); true only while its switch is on (absent follows the platform-sender secret) AND a reset link base is configured
      * @type {boolean}
      * @memberof AuthCapabilitiesResponse
      */
@@ -49,6 +62,7 @@ export interface AuthCapabilitiesResponse {
  * Check if a given object implements the AuthCapabilitiesResponse interface.
  */
 export function instanceOfAuthCapabilitiesResponse(value: object): boolean {
+    if (!('passwordPolicy' in value)) return false;
     if (!('passwordResetEnabled' in value)) return false;
     if (!('supportedLocales' in value)) return false;
     if (!('tenantSignupEnabled' in value)) return false;
@@ -66,6 +80,7 @@ export function AuthCapabilitiesResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'passwordPolicy': PasswordPolicyResponseFromJSON(json['passwordPolicy']),
         'passwordResetEnabled': json['passwordResetEnabled'],
         'supportedLocales': json['supportedLocales'],
         'tenantSignupEnabled': json['tenantSignupEnabled'],
@@ -79,6 +94,7 @@ export function AuthCapabilitiesResponseToJSON(value?: AuthCapabilitiesResponse 
     }
     return {
         
+        'passwordPolicy': PasswordPolicyResponseToJSON(value['passwordPolicy']),
         'passwordResetEnabled': value['passwordResetEnabled'],
         'supportedLocales': value['supportedLocales'],
         'tenantSignupEnabled': value['tenantSignupEnabled'],

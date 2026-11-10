@@ -23,6 +23,7 @@ import type {
   EmployeeStatusCountsResponse,
   EnableEmployeeRequestDto,
   PagedResponseEmployeeSummaryDto,
+  SetEmployeePhotoRequest,
   UpdateEmployeeRequest,
 } from '../models/index';
 import {
@@ -42,9 +43,15 @@ import {
     EnableEmployeeRequestDtoToJSON,
     PagedResponseEmployeeSummaryDtoFromJSON,
     PagedResponseEmployeeSummaryDtoToJSON,
+    SetEmployeePhotoRequestFromJSON,
+    SetEmployeePhotoRequestToJSON,
     UpdateEmployeeRequestFromJSON,
     UpdateEmployeeRequestToJSON,
 } from '../models/index';
+
+export interface ClearEmployeePhotoRequest {
+    employeeId: string;
+}
 
 export interface CreateEmployeeOperationRequest {
     createEmployeeRequest: CreateEmployeeRequest;
@@ -70,15 +77,23 @@ export interface GetEmployeeByNumberRequest {
 
 export interface GetEmployeeStatusCountsRequest {
     q?: string;
+    locationId?: Array<string>;
 }
 
 export interface SearchEmployeesRequest {
     q?: string;
     status?: Array<SearchEmployeesStatusEnum>;
+    locationId?: Array<string>;
+    clockState?: Array<SearchEmployeesClockStateEnum>;
     sort?: string;
     page?: number;
     size?: number;
     include?: Array<SearchEmployeesIncludeEnum>;
+}
+
+export interface SetEmployeePhotoOperationRequest {
+    employeeId: string;
+    setEmployeePhotoRequest: SetEmployeePhotoRequest;
 }
 
 export interface UpdateEmployeeOperationRequest {
@@ -90,6 +105,48 @@ export interface UpdateEmployeeOperationRequest {
  * 
  */
 export class EmployeeAPIApi extends runtime.BaseAPI {
+
+    /**
+     * Clears the employee\'s photo reference (durion#3092): photoImageId becomes null and the profile\'s photoUrl with it. The image itself stays in pos-image, unreferenced -- pos-image has no delete API. Use this tool to remove a photo; do not use setEmployeePhoto, which requires bytes. Preconditions: an employee row must exist for employeeId and must not be TERMINATED -- a terminated employee is read-only (DECISION-PEOPLE-025), even when it has no photo, so the 409 comes before the idempotency shortcut. Required inputs: employeeId (UUID) path parameter; there is no request body. Idempotent: an employee with no photo answers 204 and publishes nothing, so a repeated DELETE is safe. Emits a PEOPLE_EMPLOYEE_PHOTO_CLEAR event and publishes a people.employee.updated fact in the same transaction that nulls the id -- only when a photo was actually set. Returns 404 when the employee does not exist and 409 when it is TERMINATED. 
+     * Clear An Employee Profile Photo
+     */
+    async clearEmployeePhotoRaw(requestParameters: ClearEmployeePhotoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['employeeId'] == null) {
+            throw new runtime.RequiredError(
+                'employeeId',
+                'Required parameter "employeeId" was null or undefined when calling clearEmployeePhoto().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/employees/{employeeId}/photo`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Clears the employee\'s photo reference (durion#3092): photoImageId becomes null and the profile\'s photoUrl with it. The image itself stays in pos-image, unreferenced -- pos-image has no delete API. Use this tool to remove a photo; do not use setEmployeePhoto, which requires bytes. Preconditions: an employee row must exist for employeeId and must not be TERMINATED -- a terminated employee is read-only (DECISION-PEOPLE-025), even when it has no photo, so the 409 comes before the idempotency shortcut. Required inputs: employeeId (UUID) path parameter; there is no request body. Idempotent: an employee with no photo answers 204 and publishes nothing, so a repeated DELETE is safe. Emits a PEOPLE_EMPLOYEE_PHOTO_CLEAR event and publishes a people.employee.updated fact in the same transaction that nulls the id -- only when a photo was actually set. Returns 404 when the employee does not exist and 409 when it is TERMINATED. 
+     * Clear An Employee Profile Photo
+     */
+    async clearEmployeePhoto(requestParameters: ClearEmployeePhotoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.clearEmployeePhotoRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Creates an employee profile: employment attributes (employee number, status, hire date) are stored in the people domain, while identity attributes (names, contact info) are forwarded to pos-people-contact as an upsert command with a server-generated UUIDv7 person id. Use this tool when hiring or registering a brand-new employee; do not use updateEmployee, which modifies an existing profile, and do not use createEmployeesBulk, which imports many records in one call. Preconditions: no existing employee may match the employee number, primary email, or phone when duplicatePolicy is STRICT (the default); identity duplicate checks run against an eventually consistent replica. Required inputs: firstName, lastName, employeeNumber, status (ACTIVE, ON_LEAVE, SUSPENDED, TERMINATED, DISABLED) and hireDate (yyyy-MM-dd); duplicatePolicy defaults to STRICT, and BALANCED accepts suspected duplicates while returning warnings in the response. Emits a PEOPLE_EMPLOYEE_CREATE event, publishes a people.employee.updated fact, and sends a person upsert command to pos-people-contact; the response echoes the submitted identity fields because the replica may lag. Returns 409 when a duplicate employee number, email, or phone is detected under STRICT policy, and 422 when terminationDate is before hireDate. 
@@ -323,7 +380,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a per-status employee count for the employee register\'s stat tiles, computed over the same case-insensitive name/employee-number q filter searchEmployees applies, before any status filter -- so every tile reports what selecting that status would return out of the current search, including for a status not currently selected. Use this tool alongside searchEmployees to render the register\'s stat-tile row; do not use it in place of searchEmployees, which alone returns the paged row list (durion#2158: this histogram used to be folded into that endpoint\'s response, which changed its shape for every caller -- it is now this separate, additive endpoint instead). Preconditions: none; an empty tenant, or a q that matches nothing, returns an empty counts map rather than an error. Required inputs: none are mandatory; q defaults to blank, which counts every employee. Unlike searchEmployees this endpoint takes no status, sort, page, size, or include parameters -- the histogram always covers the whole q-filtered set, never one page of it. Emits a PEOPLE_EMPLOYEE_STATUS_COUNTS audit event but changes no state; this is a read-only projection merged in memory the same way searchEmployees is, and carries a bucket for an employee with no status recorded (a legacy row) so the counts always sum to the q-filtered total. Returns 200 with an empty counts map when q matches nothing. 
+     * Returns a per-status employee count for the employee register\'s stat tiles, computed over the same case-insensitive name/employee-number q filter and locationId filter searchEmployees applies, before any status filter -- so every tile reports what selecting that status would return out of the current search, including for a status not currently selected. Use this tool alongside searchEmployees to render the register\'s stat-tile row; do not use it in place of searchEmployees, which alone returns the paged row list (durion#2158: this histogram used to be folded into that endpoint\'s response, which changed its shape for every caller -- it is now this separate, additive endpoint instead). Preconditions: none; an empty tenant, or a q that matches nothing, returns an empty counts map rather than an error. Required inputs: none are mandatory; q defaults to blank, which counts every employee, and an omitted locationId applies no location filter. Unlike searchEmployees this endpoint takes no status, clockState, sort, page, size, or include parameters -- the histogram always covers the whole q-/location-filtered set, never one page of it. locationId (durion#3093) is repeatable and keeps employees with an ACTIVE staffing assignment effective today at any of the named locations, exact locations only; every named location must be within the caller\'s people:employee:view location reach, else 403 LOCATION_SCOPE_DENIED. clockedInCount reports the number of those employees whose current open-session state is CLOCKED_IN or ON_BREAK, and is null when the caller lacks people:timekeeping:view. Emits a PEOPLE_EMPLOYEE_STATUS_COUNTS audit event but changes no state; this is a read-only projection merged in memory the same way searchEmployees is, and carries a bucket for an employee with no status recorded (a legacy row) so the counts always sum to the q-filtered total. Returns 200 with an empty counts map when q matches nothing, and 403 LOCATION_SCOPE_DENIED when a named locationId is outside the caller\'s reach. 
      * Get Employee Status Histogram For The Register
      */
     async getEmployeeStatusCountsRaw(requestParameters: GetEmployeeStatusCountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmployeeStatusCountsResponse>> {
@@ -331,6 +388,10 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
 
         if (requestParameters['q'] != null) {
             queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -354,7 +415,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a per-status employee count for the employee register\'s stat tiles, computed over the same case-insensitive name/employee-number q filter searchEmployees applies, before any status filter -- so every tile reports what selecting that status would return out of the current search, including for a status not currently selected. Use this tool alongside searchEmployees to render the register\'s stat-tile row; do not use it in place of searchEmployees, which alone returns the paged row list (durion#2158: this histogram used to be folded into that endpoint\'s response, which changed its shape for every caller -- it is now this separate, additive endpoint instead). Preconditions: none; an empty tenant, or a q that matches nothing, returns an empty counts map rather than an error. Required inputs: none are mandatory; q defaults to blank, which counts every employee. Unlike searchEmployees this endpoint takes no status, sort, page, size, or include parameters -- the histogram always covers the whole q-filtered set, never one page of it. Emits a PEOPLE_EMPLOYEE_STATUS_COUNTS audit event but changes no state; this is a read-only projection merged in memory the same way searchEmployees is, and carries a bucket for an employee with no status recorded (a legacy row) so the counts always sum to the q-filtered total. Returns 200 with an empty counts map when q matches nothing. 
+     * Returns a per-status employee count for the employee register\'s stat tiles, computed over the same case-insensitive name/employee-number q filter and locationId filter searchEmployees applies, before any status filter -- so every tile reports what selecting that status would return out of the current search, including for a status not currently selected. Use this tool alongside searchEmployees to render the register\'s stat-tile row; do not use it in place of searchEmployees, which alone returns the paged row list (durion#2158: this histogram used to be folded into that endpoint\'s response, which changed its shape for every caller -- it is now this separate, additive endpoint instead). Preconditions: none; an empty tenant, or a q that matches nothing, returns an empty counts map rather than an error. Required inputs: none are mandatory; q defaults to blank, which counts every employee, and an omitted locationId applies no location filter. Unlike searchEmployees this endpoint takes no status, clockState, sort, page, size, or include parameters -- the histogram always covers the whole q-/location-filtered set, never one page of it. locationId (durion#3093) is repeatable and keeps employees with an ACTIVE staffing assignment effective today at any of the named locations, exact locations only; every named location must be within the caller\'s people:employee:view location reach, else 403 LOCATION_SCOPE_DENIED. clockedInCount reports the number of those employees whose current open-session state is CLOCKED_IN or ON_BREAK, and is null when the caller lacks people:timekeeping:view. Emits a PEOPLE_EMPLOYEE_STATUS_COUNTS audit event but changes no state; this is a read-only projection merged in memory the same way searchEmployees is, and carries a bucket for an employee with no status recorded (a legacy row) so the counts always sum to the q-filtered total. Returns 200 with an empty counts map when q matches nothing, and 403 LOCATION_SCOPE_DENIED when a named locationId is outside the caller\'s reach. 
      * Get Employee Status Histogram For The Register
      */
     async getEmployeeStatusCounts(requestParameters: GetEmployeeStatusCountsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeStatusCountsResponse> {
@@ -363,7 +424,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number, optionally narrowed to one or more employment statuses and sorted. Use this tool when listing, filtering, sorting, or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, or getEmployeeByNumber, which resolves one exact employee number rather than searching, and use getEmployeeStatusCounts instead of this endpoint to render the register\'s stat tiles. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory -- q defaults to blank and lists every employee, status defaults to no filter, sort defaults to lastName,asc, page defaults to 0, and size defaults to 20 with a maximum of 100; the repeatable include parameter (durion#2155, plus ALLOWED_ACTIONS from durion#2159) adds one extra field group per token (USERNAME, CONTACT_INFO, ROLE_ASSIGNMENTS, LOCATION, JOB_ROLE, ALLOWED_ACTIONS, PROPAGATION) to the returned rows, with CONTACT_INFO gated by people:employee_pii:view (#1898) and ROLE_ASSIGNMENTS gated by people-contact:role:view, each silently omitted rather than returning 403 when the caller lacks that permission, and ALLOWED_ACTIONS is a rendering hint computed by EmployeeActionPolicy that never substitutes for the @PreAuthorize and service-level guards those actions still enforce independently. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state, merging local employment rows with the pos-people-contact identity replica in memory, with every requested include category resolved only against the page actually returned so response cost stays flat as the tenant grows. Returns 200 with an empty items list and correct totals when the page, query, or status filter matches nothing, and returns 400 for an unsupported sort field or direction. 
+     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number, optionally narrowed to one or more employment statuses, staffing locations and clock states, and sorted. Use this tool when listing, filtering, sorting, or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, or getEmployeeByNumber, which resolves one exact employee number rather than searching, and use getEmployeeStatusCounts instead of this endpoint to render the register\'s stat tiles. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory -- q defaults to blank and lists every employee, status, locationId and clockState default to no filter, sort defaults to lastName,asc, page defaults to 0, and size defaults to 20 with a maximum of 100; the repeatable include parameter (durion#2155, plus ALLOWED_ACTIONS from durion#2159, EMPLOYMENT/CLOCK_STATE from durion#3093, PERIOD_TIME from durion#3094 and PHOTO from durion#3092) adds one extra field group per token (USERNAME, CONTACT_INFO, ROLE_ASSIGNMENTS, LOCATION, JOB_ROLE, ALLOWED_ACTIONS, PROPAGATION, EMPLOYMENT, CLOCK_STATE, PERIOD_TIME, PHOTO) to the returned rows, with CONTACT_INFO gated by people:employee_pii:view (#1898) and ROLE_ASSIGNMENTS gated by people-contact:role:view, each silently omitted rather than returning 403 when the caller lacks that permission; CLOCK_STATE is likewise gated by people:timekeeping:view and silently absent without it; PERIOD_TIME is gated by people:timeEntry:view, omitted on rows outside a location-scoped grant\'s reach, and present as JSON null when the tenant has no current pay period, so absent and null are different answers; and ALLOWED_ACTIONS is a rendering hint computed by EmployeeActionPolicy that never substitutes for the @PreAuthorize and service-level guards those actions still enforce independently. Filters combine with AND, and repeated values inside one filter with OR. locationId keeps employees with an ACTIVE staffing assignment effective today at any of the named locations (exact locations only, no hierarchy expansion); every named location must lie within the caller\'s people:employee:view location reach. clockState filters on the employee\'s current open work session before paging, so the totals count the whole filtered set: CLOCKED_OUT includes an employee with no open session, including one who has never clocked in, and a DISABLED or TERMINATED employee with a stray open session still reports it; every filter runs before paging. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state, merging local employment rows with the pos-people-contact identity replica in memory, with every requested include category resolved only against the page actually returned so response cost stays flat as the tenant grows. Clock state is resolved for the returned page (or the filtered set) in a bounded number of batched queries, never one per row. Returns 200 with an empty items list and correct totals when the page, query, or filter matches nothing; 400 for an unsupported sort field or direction; 403 LOCATION_SCOPE_DENIED when a named locationId is outside the caller\'s reach; and 403 FORBIDDEN when clockState is used without people:timekeeping:view. 
      * Search Employees By Name Or Number
      */
     async searchEmployeesRaw(requestParameters: SearchEmployeesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseEmployeeSummaryDto>> {
@@ -375,6 +436,14 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
 
         if (requestParameters['status'] != null) {
             queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['clockState'] != null) {
+            queryParameters['clockState'] = requestParameters['clockState'];
         }
 
         if (requestParameters['sort'] != null) {
@@ -414,11 +483,64 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number, optionally narrowed to one or more employment statuses and sorted. Use this tool when listing, filtering, sorting, or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, or getEmployeeByNumber, which resolves one exact employee number rather than searching, and use getEmployeeStatusCounts instead of this endpoint to render the register\'s stat tiles. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory -- q defaults to blank and lists every employee, status defaults to no filter, sort defaults to lastName,asc, page defaults to 0, and size defaults to 20 with a maximum of 100; the repeatable include parameter (durion#2155, plus ALLOWED_ACTIONS from durion#2159) adds one extra field group per token (USERNAME, CONTACT_INFO, ROLE_ASSIGNMENTS, LOCATION, JOB_ROLE, ALLOWED_ACTIONS, PROPAGATION) to the returned rows, with CONTACT_INFO gated by people:employee_pii:view (#1898) and ROLE_ASSIGNMENTS gated by people-contact:role:view, each silently omitted rather than returning 403 when the caller lacks that permission, and ALLOWED_ACTIONS is a rendering hint computed by EmployeeActionPolicy that never substitutes for the @PreAuthorize and service-level guards those actions still enforce independently. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state, merging local employment rows with the pos-people-contact identity replica in memory, with every requested include category resolved only against the page actually returned so response cost stays flat as the tenant grows. Returns 200 with an empty items list and correct totals when the page, query, or status filter matches nothing, and returns 400 for an unsupported sort field or direction. 
+     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number, optionally narrowed to one or more employment statuses, staffing locations and clock states, and sorted. Use this tool when listing, filtering, sorting, or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, or getEmployeeByNumber, which resolves one exact employee number rather than searching, and use getEmployeeStatusCounts instead of this endpoint to render the register\'s stat tiles. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory -- q defaults to blank and lists every employee, status, locationId and clockState default to no filter, sort defaults to lastName,asc, page defaults to 0, and size defaults to 20 with a maximum of 100; the repeatable include parameter (durion#2155, plus ALLOWED_ACTIONS from durion#2159, EMPLOYMENT/CLOCK_STATE from durion#3093, PERIOD_TIME from durion#3094 and PHOTO from durion#3092) adds one extra field group per token (USERNAME, CONTACT_INFO, ROLE_ASSIGNMENTS, LOCATION, JOB_ROLE, ALLOWED_ACTIONS, PROPAGATION, EMPLOYMENT, CLOCK_STATE, PERIOD_TIME, PHOTO) to the returned rows, with CONTACT_INFO gated by people:employee_pii:view (#1898) and ROLE_ASSIGNMENTS gated by people-contact:role:view, each silently omitted rather than returning 403 when the caller lacks that permission; CLOCK_STATE is likewise gated by people:timekeeping:view and silently absent without it; PERIOD_TIME is gated by people:timeEntry:view, omitted on rows outside a location-scoped grant\'s reach, and present as JSON null when the tenant has no current pay period, so absent and null are different answers; and ALLOWED_ACTIONS is a rendering hint computed by EmployeeActionPolicy that never substitutes for the @PreAuthorize and service-level guards those actions still enforce independently. Filters combine with AND, and repeated values inside one filter with OR. locationId keeps employees with an ACTIVE staffing assignment effective today at any of the named locations (exact locations only, no hierarchy expansion); every named location must lie within the caller\'s people:employee:view location reach. clockState filters on the employee\'s current open work session before paging, so the totals count the whole filtered set: CLOCKED_OUT includes an employee with no open session, including one who has never clocked in, and a DISABLED or TERMINATED employee with a stray open session still reports it; every filter runs before paging. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state, merging local employment rows with the pos-people-contact identity replica in memory, with every requested include category resolved only against the page actually returned so response cost stays flat as the tenant grows. Clock state is resolved for the returned page (or the filtered set) in a bounded number of batched queries, never one per row. Returns 200 with an empty items list and correct totals when the page, query, or filter matches nothing; 400 for an unsupported sort field or direction; 403 LOCATION_SCOPE_DENIED when a named locationId is outside the caller\'s reach; and 403 FORBIDDEN when clockState is used without people:timekeeping:view. 
      * Search Employees By Name Or Number
      */
     async searchEmployees(requestParameters: SearchEmployeesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseEmployeeSummaryDto> {
         const response = await this.searchEmployeesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Stores the submitted photo bytes in pos-image, records pos-image\'s image id (a UUID) on the employee and returns the refreshed profile with photoImageId and photoUrl set (durion#3092). Use this tool to set or replace a photo, as Add photo / Change photo does; do not use updateEmployee, which carries no image bytes, and there is no GET counterpart here, because the bytes are served by pos-image itself at photoUrl, the gateway path /image/v1/images/id/{photoImageId}. Preconditions: an employee row must exist for employeeId (the person id at this API surface) and must not be TERMINATED -- a terminated employee is read-only (DECISION-PEOPLE-025), even when it has no photo. Required inputs: employeeId (UUID) path parameter plus a JSON body with contentType (a claim only) and content (base64); the detected type is authoritative, JPEG, PNG or WebP only, and the decoded size must be at most pos.people.photo.max-bytes (5 MiB by default). Replacing a photo overwrites photoImageId; the superseded image is left in pos-image, unreferenced, because pos-image has no delete API. The bytes are stored with pos-people\'s own service identity and the employee-photo tag, so an editor needs only people:employee:edit; the write emits PEOPLE_EMPLOYEE_PHOTO_SET and publishes a people.employee.updated fact in the same transaction that records the id. Returns 404 when the employee does not exist, 409 when it is TERMINATED, 422 PHOTO_UNSUPPORTED_TYPE or PHOTO_TOO_LARGE when the bytes are refused (nothing is stored in either case), and 503 IMAGE_SERVICE_UNAVAILABLE when pos-image cannot be reached or answers 5xx (nothing is recorded, so a retry is safe). 
+     * Set Or Replace An Employee Profile Photo
+     */
+    async setEmployeePhotoRaw(requestParameters: SetEmployeePhotoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmployeeProfileDto>> {
+        if (requestParameters['employeeId'] == null) {
+            throw new runtime.RequiredError(
+                'employeeId',
+                'Required parameter "employeeId" was null or undefined when calling setEmployeePhoto().'
+            );
+        }
+
+        if (requestParameters['setEmployeePhotoRequest'] == null) {
+            throw new runtime.RequiredError(
+                'setEmployeePhotoRequest',
+                'Required parameter "setEmployeePhotoRequest" was null or undefined when calling setEmployeePhoto().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/employees/{employeeId}/photo`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SetEmployeePhotoRequestToJSON(requestParameters['setEmployeePhotoRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EmployeeProfileDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Stores the submitted photo bytes in pos-image, records pos-image\'s image id (a UUID) on the employee and returns the refreshed profile with photoImageId and photoUrl set (durion#3092). Use this tool to set or replace a photo, as Add photo / Change photo does; do not use updateEmployee, which carries no image bytes, and there is no GET counterpart here, because the bytes are served by pos-image itself at photoUrl, the gateway path /image/v1/images/id/{photoImageId}. Preconditions: an employee row must exist for employeeId (the person id at this API surface) and must not be TERMINATED -- a terminated employee is read-only (DECISION-PEOPLE-025), even when it has no photo. Required inputs: employeeId (UUID) path parameter plus a JSON body with contentType (a claim only) and content (base64); the detected type is authoritative, JPEG, PNG or WebP only, and the decoded size must be at most pos.people.photo.max-bytes (5 MiB by default). Replacing a photo overwrites photoImageId; the superseded image is left in pos-image, unreferenced, because pos-image has no delete API. The bytes are stored with pos-people\'s own service identity and the employee-photo tag, so an editor needs only people:employee:edit; the write emits PEOPLE_EMPLOYEE_PHOTO_SET and publishes a people.employee.updated fact in the same transaction that records the id. Returns 404 when the employee does not exist, 409 when it is TERMINATED, 422 PHOTO_UNSUPPORTED_TYPE or PHOTO_TOO_LARGE when the bytes are refused (nothing is stored in either case), and 503 IMAGE_SERVICE_UNAVAILABLE when pos-image cannot be reached or answers 5xx (nothing is recorded, so a retry is safe). 
+     * Set Or Replace An Employee Profile Photo
+     */
+    async setEmployeePhoto(requestParameters: SetEmployeePhotoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeProfileDto> {
+        const response = await this.setEmployeePhotoRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -492,12 +614,25 @@ export enum SearchEmployeesStatusEnum {
   * @export
   * @enum {string}
   */
+export enum SearchEmployeesClockStateEnum {
+    ClockedIn = 'CLOCKED_IN',
+    OnBreak = 'ON_BREAK',
+    ClockedOut = 'CLOCKED_OUT'
+}
+/**
+  * @export
+  * @enum {string}
+  */
 export enum SearchEmployeesIncludeEnum {
     Username = 'USERNAME',
     ContactInfo = 'CONTACT_INFO',
     RoleAssignments = 'ROLE_ASSIGNMENTS',
     Location = 'LOCATION',
     JobRole = 'JOB_ROLE',
+    Employment = 'EMPLOYMENT',
+    ClockState = 'CLOCK_STATE',
     Propagation = 'PROPAGATION',
-    AllowedActions = 'ALLOWED_ACTIONS'
+    AllowedActions = 'ALLOWED_ACTIONS',
+    Photo = 'PHOTO',
+    PeriodTime = 'PERIOD_TIME'
 }

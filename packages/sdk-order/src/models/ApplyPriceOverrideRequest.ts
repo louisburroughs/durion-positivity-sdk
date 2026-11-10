@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface ApplyPriceOverrideRequest {
     /**
-     * Optional idempotency key for duplicate prevention
-     * @type {string}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Free-text justification supporting the price override
      * @type {string}
      * @memberof ApplyPriceOverrideRequest
@@ -92,7 +86,6 @@ export function ApplyPriceOverrideRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'justification': json['justification'] == null ? undefined : json['justification'],
         'orderId': json['orderId'],
         'orderLineId': json['orderLineId'],
@@ -109,7 +102,6 @@ export function ApplyPriceOverrideRequestToJSON(value?: ApplyPriceOverrideReques
     }
     return {
         
-        'idempotencyKey': value['idempotencyKey'],
         'justification': value['justification'],
         'orderId': value['orderId'],
         'orderLineId': value['orderLineId'],

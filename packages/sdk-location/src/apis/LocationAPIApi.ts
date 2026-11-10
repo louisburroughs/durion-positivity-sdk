@@ -16,7 +16,9 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  LocationAttentionItemDTO,
   LocationDescendantResponseDTO,
+  LocationParentReplaceRequest,
   LocationParentResponseDTO,
   LocationPatchRequest,
   LocationRequestDTO,
@@ -28,8 +30,12 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    LocationAttentionItemDTOFromJSON,
+    LocationAttentionItemDTOToJSON,
     LocationDescendantResponseDTOFromJSON,
     LocationDescendantResponseDTOToJSON,
+    LocationParentReplaceRequestFromJSON,
+    LocationParentReplaceRequestToJSON,
     LocationParentResponseDTOFromJSON,
     LocationParentResponseDTOToJSON,
     LocationPatchRequestFromJSON,
@@ -58,6 +64,7 @@ export interface CreateLocationRequest {
 
 export interface DeleteLocationRequest {
     locationId: string;
+    effectiveDate?: Date;
 }
 
 export interface GetLocationByIdRequest {
@@ -76,6 +83,12 @@ export interface GetLocationRosterRequest {
     sort?: Array<string>;
 }
 
+export interface ListLocationAttentionRequest {
+    locationId?: string;
+    from?: Date;
+    to?: Date;
+}
+
 export interface ListLocationChildrenRequest {
     locationId: string;
     parentType?: string;
@@ -89,6 +102,17 @@ export interface ListLocationDescendantsRequest {
 export interface PatchLocationRequest {
     locationId: string;
     locationPatchRequest: LocationPatchRequest;
+}
+
+export interface RemoveLocationParentRequest {
+    childId: string;
+    parentType: string;
+}
+
+export interface ReplaceLocationParentRequest {
+    childId: string;
+    parentType: string;
+    locationParentReplaceRequest: LocationParentReplaceRequest;
 }
 
 export interface UpdateLocationRequest {
@@ -167,7 +191,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a location with address, timezone, operating hours, scheduling buffers and type classification, defaulting status to ACTIVE. Use this tool when registering a new physical or logical site; do not use updateLocation, which replaces an existing location, and use bulkIngestLocations for batch imports. Preconditions: no existing location may share the same name (case-insensitive) or code, and a type referenced by id must already exist; a type given only by name is created on the fly. Required inputs: name, code and type (id or name); timezone must be a valid IANA zone id, operatingHours entries must have unique dayOfWeek values with openTime before closeTime, active defaults to true, and distanceUnit (KM or MI, DECISION-LOCATION-028) defaults to KM. Emits a LOCATION_LOCATION_CREATE event and publishes a location fact for replica consumers. Returns 409 when the name or code is already taken, 422 when the timezone or operating hours are invalid, and 400 when a referenced location type id is unknown or distanceUnit is something other than KM or MI. 
+     * Creates a location with address, timezone, operating hours, scheduling buffers and type classification, defaulting status to ACTIVE. Use this tool when registering a new physical or logical site; do not use updateLocation, which replaces an existing location, and use bulkIngestLocations for batch imports. Preconditions: no existing location may share the same name (case-insensitive) or code, and a type referenced by id must already exist; a type given only by name is created on the fly. Required inputs: name, code and type (id or name); timezone must be a valid IANA zone id, operatingHours entries must have unique dayOfWeek values with openTime before closeTime, active defaults to true, and distanceUnit (KM or MI, DECISION-LOCATION-028) defaults to KM. opensOn and closesOn are optional calendar dates in the location\'s own timezone and default to null; closesOn is the LAST operating day and may not be before opensOn or before today in that timezone (DECISION-LOCATION-030). Emits a LOCATION_LOCATION_CREATE event and publishes a location fact for replica consumers. Returns 409 when the name or code is already taken, 422 when the timezone or operating hours are invalid, and 400 when a referenced location type id is unknown, distanceUnit is something other than KM or MI, or closesOn is invalid. 
      * Create a New Location Record
      */
     async createLocationRaw(requestParameters: CreateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
@@ -204,7 +228,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a location with address, timezone, operating hours, scheduling buffers and type classification, defaulting status to ACTIVE. Use this tool when registering a new physical or logical site; do not use updateLocation, which replaces an existing location, and use bulkIngestLocations for batch imports. Preconditions: no existing location may share the same name (case-insensitive) or code, and a type referenced by id must already exist; a type given only by name is created on the fly. Required inputs: name, code and type (id or name); timezone must be a valid IANA zone id, operatingHours entries must have unique dayOfWeek values with openTime before closeTime, active defaults to true, and distanceUnit (KM or MI, DECISION-LOCATION-028) defaults to KM. Emits a LOCATION_LOCATION_CREATE event and publishes a location fact for replica consumers. Returns 409 when the name or code is already taken, 422 when the timezone or operating hours are invalid, and 400 when a referenced location type id is unknown or distanceUnit is something other than KM or MI. 
+     * Creates a location with address, timezone, operating hours, scheduling buffers and type classification, defaulting status to ACTIVE. Use this tool when registering a new physical or logical site; do not use updateLocation, which replaces an existing location, and use bulkIngestLocations for batch imports. Preconditions: no existing location may share the same name (case-insensitive) or code, and a type referenced by id must already exist; a type given only by name is created on the fly. Required inputs: name, code and type (id or name); timezone must be a valid IANA zone id, operatingHours entries must have unique dayOfWeek values with openTime before closeTime, active defaults to true, and distanceUnit (KM or MI, DECISION-LOCATION-028) defaults to KM. opensOn and closesOn are optional calendar dates in the location\'s own timezone and default to null; closesOn is the LAST operating day and may not be before opensOn or before today in that timezone (DECISION-LOCATION-030). Emits a LOCATION_LOCATION_CREATE event and publishes a location fact for replica consumers. Returns 409 when the name or code is already taken, 422 when the timezone or operating hours are invalid, and 400 when a referenced location type id is unknown, distanceUnit is something other than KM or MI, or closesOn is invalid. 
      * Create a New Location Record
      */
     async createLocation(requestParameters: CreateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
@@ -213,8 +237,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success, 404 when the location does not exist, and 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061). 
-     * Delete a Location by Identifier
+     * Soft-deactivates an existing location by id; the row is never removed (DECISION-LOCATION-030). The location becomes inactive, its status becomes INACTIVE, deactivatedAt records the moment and any scheduled closing is cleared, all published as a location.location.updated fact — no location.location.deleted tombstone is emitted. Use this tool when a site stops operating or its last operating day is known in advance; use patchLocation with status ACTIVE to bring a deactivated site back instead of re-creating it, and read the resulting lifecycleStatus from listLocations or getLocationById. Preconditions: the location must exist and nothing is hard-deleted, so its code and name stay reserved and re-creating the same code still answers 409; there is no child-relationship or usage check, and closing a parent leaves its children and parent links unchanged, with the next active hierarchy root taking over as the top-level location (ADR-0016, ADR-0061). Required inputs: locationId (UUID) as a path parameter and an optional effectiveDate (ISO yyyy-MM-dd, read in the location\'s own timezone); omit it or send today to deactivate at once, or send a later date to schedule the close, where that date is the LAST day the location operates, the location stays active and CLOSING until then, the closing job retires it after the following local midnight, and the date may not be before today in that timezone nor before opensOn. Emits a LOCATION_LOCATION_DELETE event, and a scheduled close also appears on the location\'s location.location.updated fact. Returns 204 on success (an already inactive location is a no-op that publishes nothing), 400 VALIDATION_ERROR with fieldErrors naming effectiveDate when the date is malformed, in the past or before opensOn, 404 when the location does not exist, and 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061). 
+     * Deactivate a Location, now or on a Date
      */
     async deleteLocationRaw(requestParameters: DeleteLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['locationId'] == null) {
@@ -225,6 +249,10 @@ export class LocationAPIApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['effectiveDate'] != null) {
+            queryParameters['effectiveDate'] = (requestParameters['effectiveDate'] as any).toISOString().substring(0,10);
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -247,15 +275,15 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success, 404 when the location does not exist, and 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061). 
-     * Delete a Location by Identifier
+     * Soft-deactivates an existing location by id; the row is never removed (DECISION-LOCATION-030). The location becomes inactive, its status becomes INACTIVE, deactivatedAt records the moment and any scheduled closing is cleared, all published as a location.location.updated fact — no location.location.deleted tombstone is emitted. Use this tool when a site stops operating or its last operating day is known in advance; use patchLocation with status ACTIVE to bring a deactivated site back instead of re-creating it, and read the resulting lifecycleStatus from listLocations or getLocationById. Preconditions: the location must exist and nothing is hard-deleted, so its code and name stay reserved and re-creating the same code still answers 409; there is no child-relationship or usage check, and closing a parent leaves its children and parent links unchanged, with the next active hierarchy root taking over as the top-level location (ADR-0016, ADR-0061). Required inputs: locationId (UUID) as a path parameter and an optional effectiveDate (ISO yyyy-MM-dd, read in the location\'s own timezone); omit it or send today to deactivate at once, or send a later date to schedule the close, where that date is the LAST day the location operates, the location stays active and CLOSING until then, the closing job retires it after the following local midnight, and the date may not be before today in that timezone nor before opensOn. Emits a LOCATION_LOCATION_DELETE event, and a scheduled close also appears on the location\'s location.location.updated fact. Returns 204 on success (an already inactive location is a no-op that publishes nothing), 400 VALIDATION_ERROR with fieldErrors naming effectiveDate when the date is malformed, in the past or before opensOn, 404 when the location does not exist, and 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061). 
+     * Deactivate a Location, now or on a Date
      */
     async deleteLocation(requestParameters: DeleteLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteLocationRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Returns the full location record, including address fields, active flag, responsible person id, type classification and the scheduling facts as stored — timezone, operatingHours and holidayClosures — for a known id. The hours and closures are expressed in the location\'s own timezone, which is the zone scheduling converts a booking into before judging it against them, so reading them back is how a caller confirms what it published and in which zone. Use this tool when the location id is already known; use listLocations instead to enumerate, and use validateLocation when only existence and active state are needed. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no location exists for the supplied id. 
+     * Returns the full location record, including address fields, active flag, responsible person id, type classification, the scheduling facts as stored — timezone, operatingHours and holidayClosures — and the opening/closing facts (opensOn, closesOn, deactivatedAt) with the lifecycleStatus derived from them in the location\'s own timezone, for a known id. The hours and closures are expressed in the location\'s own timezone, which is the zone scheduling converts a booking into before judging it against them, so reading them back is how a caller confirms what it published and in which zone. Use this tool when the location id is already known; use listLocations instead to enumerate, and use validateLocation when only existence and active state are needed. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no location exists for the supplied id; a found location also carries the same query-time projections as listLocations — hasRepairCapability, activeBayCount and activeMobileUnitCount unchanged for an active location, plus bayCount and outOfServiceBayCount (every bay whose status is not RETIRED, and its OUT_OF_SERVICE subset), mobileUnitCount and outOfServiceMobileUnitCount, and storageLocationCount (storage locations with status ACTIVE at every topology level, not a total) — with the five inventory counts reported for an inactive location too (a closed site still shows what it holds) and no roll-up from child locations. 
      * Get Location by Unique Identifier
      */
     async getLocationByIdRaw(requestParameters: GetLocationByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
@@ -289,7 +317,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the full location record, including address fields, active flag, responsible person id, type classification and the scheduling facts as stored — timezone, operatingHours and holidayClosures — for a known id. The hours and closures are expressed in the location\'s own timezone, which is the zone scheduling converts a booking into before judging it against them, so reading them back is how a caller confirms what it published and in which zone. Use this tool when the location id is already known; use listLocations instead to enumerate, and use validateLocation when only existence and active state are needed. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no location exists for the supplied id. 
+     * Returns the full location record, including address fields, active flag, responsible person id, type classification, the scheduling facts as stored — timezone, operatingHours and holidayClosures — and the opening/closing facts (opensOn, closesOn, deactivatedAt) with the lifecycleStatus derived from them in the location\'s own timezone, for a known id. The hours and closures are expressed in the location\'s own timezone, which is the zone scheduling converts a booking into before judging it against them, so reading them back is how a caller confirms what it published and in which zone. Use this tool when the location id is already known; use listLocations instead to enumerate, and use validateLocation when only existence and active state are needed. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no location exists for the supplied id; a found location also carries the same query-time projections as listLocations — hasRepairCapability, activeBayCount and activeMobileUnitCount unchanged for an active location, plus bayCount and outOfServiceBayCount (every bay whose status is not RETIRED, and its OUT_OF_SERVICE subset), mobileUnitCount and outOfServiceMobileUnitCount, and storageLocationCount (storage locations with status ACTIVE at every topology level, not a total) — with the five inventory counts reported for an inactive location too (a closed site still shows what it holds) and no roll-up from child locations. 
      * Get Location by Unique Identifier
      */
     async getLocationById(requestParameters: GetLocationByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
@@ -433,7 +461,55 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the direct child locations of a parent location, optionally restricted to one relationship type. Use this tool for one level of hierarchy; use listLocationDescendants instead when the whole subtree with depth information is needed. Preconditions: none; an unknown or childless parent id yields an empty list rather than an error. Required inputs: locationId (UUID) as a path parameter; parentType is optional and, when omitted, edges of every relationship type are returned. No events are emitted and no state changes; this is a read-only projection. Returns 400 when parentType is supplied but is not a recognized ParentType value. 
+     * Returns one list of what needs attention now and what is coming up across a branch of the location hierarchy, so a regional manager does not have to open every shop to find an out-of-service bay, an uncovered postal code or a closing next week. Use this tool for the Locations page\'s coming-up-and-needs-attention feed; use listBays or listMobileUnits instead when one location\'s bays or units are wanted in full, and listLocationDescendants when the branch\'s shape is wanted rather than its problems. Preconditions: the requested root, when named, must exist and be within the caller\'s location scope (ADR-0061). Required inputs: none are mandatory; locationId names the branch root and the read covers it plus its HOME_OFFICE descendants, without it the read covers every location in the caller\'s reach, and from and to are ISO dates (yyyy-MM-dd) bounding the dated kinds and defaulting to each location\'s local today through 60 days later. Each item carries kind, severity (PROBLEM or INFO), locationId, locationName, occursOn (dated kinds) or since (ongoing problems), and kind-specific refs for BAY_OUT_OF_SERVICE, MOBILE_UNIT_OUT_OF_SERVICE, COVERAGE_GAP, OPENING, CLOSING and HOLIDAY_CLOSURE, ordered problems first by oldest since, then dated items by occursOn, ties by location name. Emits a LOCATION_ATTENTION_GET event; no state changes, and inactive locations contribute nothing while the bay and mobile-unit kinds are omitted for a caller without location:bay:read or location:mobile-unit:read rather than failing the request. Returns 200 with the list (empty when nothing needs attention), 400 VALIDATION_ERROR with fieldErrors naming from or to when a date is not an ISO date, 400 INVALID_DATE_RANGE when from is after to, 403 LOCATION_SCOPE_DENIED when a location-scoped location:read grant does not cover the requested root (ADR-0061), and 404 LOCATION_NOT_FOUND when the requested root does not exist. 
+     * List What Needs Attention Across a Branch
+     */
+    async listLocationAttentionRaw(requestParameters: ListLocationAttentionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationAttentionItemDTO>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/attention`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationAttentionItemDTOFromJSON));
+    }
+
+    /**
+     * Returns one list of what needs attention now and what is coming up across a branch of the location hierarchy, so a regional manager does not have to open every shop to find an out-of-service bay, an uncovered postal code or a closing next week. Use this tool for the Locations page\'s coming-up-and-needs-attention feed; use listBays or listMobileUnits instead when one location\'s bays or units are wanted in full, and listLocationDescendants when the branch\'s shape is wanted rather than its problems. Preconditions: the requested root, when named, must exist and be within the caller\'s location scope (ADR-0061). Required inputs: none are mandatory; locationId names the branch root and the read covers it plus its HOME_OFFICE descendants, without it the read covers every location in the caller\'s reach, and from and to are ISO dates (yyyy-MM-dd) bounding the dated kinds and defaulting to each location\'s local today through 60 days later. Each item carries kind, severity (PROBLEM or INFO), locationId, locationName, occursOn (dated kinds) or since (ongoing problems), and kind-specific refs for BAY_OUT_OF_SERVICE, MOBILE_UNIT_OUT_OF_SERVICE, COVERAGE_GAP, OPENING, CLOSING and HOLIDAY_CLOSURE, ordered problems first by oldest since, then dated items by occursOn, ties by location name. Emits a LOCATION_ATTENTION_GET event; no state changes, and inactive locations contribute nothing while the bay and mobile-unit kinds are omitted for a caller without location:bay:read or location:mobile-unit:read rather than failing the request. Returns 200 with the list (empty when nothing needs attention), 400 VALIDATION_ERROR with fieldErrors naming from or to when a date is not an ISO date, 400 INVALID_DATE_RANGE when from is after to, 403 LOCATION_SCOPE_DENIED when a location-scoped location:read grant does not cover the requested root (ADR-0061), and 404 LOCATION_NOT_FOUND when the requested root does not exist. 
+     * List What Needs Attention Across a Branch
+     */
+    async listLocationAttention(requestParameters: ListLocationAttentionRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationAttentionItemDTO>> {
+        const response = await this.listLocationAttentionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the direct child locations of a parent location, optionally restricted to one relationship type. Use this tool for one level of hierarchy; use listLocationDescendants instead when the whole subtree with depth information is needed. Preconditions: none; an unknown or childless parent id yields an empty list rather than an error. Required inputs: locationId (UUID) as a path parameter; parentType is optional and, when omitted, edges of every relationship type are returned. No events are emitted and no state changes; this is a read-only projection. Each child carries the same counts as listLocations, counted for that child alone: bayCount and outOfServiceBayCount for bays whose status is not RETIRED and its OUT_OF_SERVICE subset, mobileUnitCount and outOfServiceMobileUnitCount for units based there, and storageLocationCount for storage locations with status ACTIVE at every topology level. The counts cover inactive children too and never roll up from a grandchild into this child. Returns 400 when parentType is supplied but is not a recognized ParentType value. 
      * List Direct Children of a Location
      */
     async listLocationChildrenRaw(requestParameters: ListLocationChildrenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationResponseDTO>>> {
@@ -471,7 +547,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the direct child locations of a parent location, optionally restricted to one relationship type. Use this tool for one level of hierarchy; use listLocationDescendants instead when the whole subtree with depth information is needed. Preconditions: none; an unknown or childless parent id yields an empty list rather than an error. Required inputs: locationId (UUID) as a path parameter; parentType is optional and, when omitted, edges of every relationship type are returned. No events are emitted and no state changes; this is a read-only projection. Returns 400 when parentType is supplied but is not a recognized ParentType value. 
+     * Returns the direct child locations of a parent location, optionally restricted to one relationship type. Use this tool for one level of hierarchy; use listLocationDescendants instead when the whole subtree with depth information is needed. Preconditions: none; an unknown or childless parent id yields an empty list rather than an error. Required inputs: locationId (UUID) as a path parameter; parentType is optional and, when omitted, edges of every relationship type are returned. No events are emitted and no state changes; this is a read-only projection. Each child carries the same counts as listLocations, counted for that child alone: bayCount and outOfServiceBayCount for bays whose status is not RETIRED and its OUT_OF_SERVICE subset, mobileUnitCount and outOfServiceMobileUnitCount for units based there, and storageLocationCount for storage locations with status ACTIVE at every topology level. The counts cover inactive children too and never roll up from a grandchild into this child. Returns 400 when parentType is supplied but is not a recognized ParentType value. 
      * List Direct Children of a Location
      */
     async listLocationChildren(requestParameters: ListLocationChildrenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationResponseDTO>> {
@@ -563,7 +639,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists every location in the system as a flat, unpaginated collection with address, status, type details and the stored scheduling facts (timezone, operatingHours, holidayClosures), plus a query-time repair-capability projection: hasRepairCapability, activeBayCount and activeMobileUnitCount. Use this tool when a complete location inventory is needed at once, including when deciding which locations can perform repairs; use getLocationRoster instead for a paginated sync feed with status and updated-since filtering, do not use it to fetch a single known id, which is getLocationById, and do not fan out over listBays or listMobileUnits per location to derive repair capability. Preconditions: none beyond the location:read authority; an empty system returns an empty list. Required inputs: none; there are no parameters and no request body, and there is no capability filter parameter, so narrow on hasRepairCapability after the call. No events are emitted and no state changes; this is a read-only projection recomputed on every request, so a bay or mobile unit that was just created, restatused or re-based is reflected immediately. Returns 200 with the full list; there are no business error conditions for this operation. activeBayCount counts only bays with status ACTIVE, activeMobileUnitCount only mobile units with status ACTIVE, hasRepairCapability is true when either count is above zero, and an inactive location always reports false with zero counts. 
+     * Lists every location in the system as a flat, unpaginated collection with address, status, type details, the stored scheduling facts (timezone, operatingHours, holidayClosures) and the opening, closing and deactivation facts (opensOn, closesOn, deactivatedAt, derived lifecycleStatus), plus two query-time projections: a repair-capability projection (hasRepairCapability, activeBayCount, activeMobileUnitCount) and an inventory-count projection (bayCount, outOfServiceBayCount, mobileUnitCount, outOfServiceMobileUnitCount, storageLocationCount). Use this tool when a complete location inventory is needed at once, including when deciding which locations can perform repairs, how many bays, mobile units or storage locations each site has and how many of those are out of service, or whether a location carries storage (and so gets the Inventory link); use getLocationRoster instead for a paginated sync feed with status and updated-since filtering, do not use it to fetch a single known id, which is getLocationById, and do not fan out over listBays, listMobileUnits or the storage-location list per location to derive these numbers. Preconditions: none beyond the location:read authority; an empty system returns an empty list. Required inputs: none; there are no parameters and no request body, and there is no filter parameter on any count, so narrow on hasRepairCapability or the counts after the call. No events are emitted and no state changes; these are read-only projections recomputed on every request, so a bay or mobile unit that was just created, restatused, retired or re-based, or a storage location that was added or restatused, is reflected immediately. Returns 200 with the full list; there are no business error conditions for this operation. activeBayCount counts only bays with status ACTIVE, activeMobileUnitCount only mobile units with status ACTIVE, hasRepairCapability is true when either count is above zero, and an inactive location always reports false with zero counts. bayCount counts bays whose status is not RETIRED and outOfServiceBayCount the OUT_OF_SERVICE subset (it is a superset, not a partition); mobileUnitCount and outOfServiceMobileUnitCount read the same way for mobile units based there; storageLocationCount counts storage locations with status ACTIVE at every level of the site\'s topology, so MAINTENANCE, QUARANTINED and INACTIVE storage locations are excluded and it is not a total. Unlike the active counts, the five inventory counts report what is on record for an inactive location too, because a closed site still shows what it holds. Each location reports only its own rows: no count rolls up from child locations to a parent, so a caller that wants a total over a branch sums the list. 
      * List All Locations Without Pagination
      */
     async listLocationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationResponseDTO>>> {
@@ -590,7 +666,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists every location in the system as a flat, unpaginated collection with address, status, type details and the stored scheduling facts (timezone, operatingHours, holidayClosures), plus a query-time repair-capability projection: hasRepairCapability, activeBayCount and activeMobileUnitCount. Use this tool when a complete location inventory is needed at once, including when deciding which locations can perform repairs; use getLocationRoster instead for a paginated sync feed with status and updated-since filtering, do not use it to fetch a single known id, which is getLocationById, and do not fan out over listBays or listMobileUnits per location to derive repair capability. Preconditions: none beyond the location:read authority; an empty system returns an empty list. Required inputs: none; there are no parameters and no request body, and there is no capability filter parameter, so narrow on hasRepairCapability after the call. No events are emitted and no state changes; this is a read-only projection recomputed on every request, so a bay or mobile unit that was just created, restatused or re-based is reflected immediately. Returns 200 with the full list; there are no business error conditions for this operation. activeBayCount counts only bays with status ACTIVE, activeMobileUnitCount only mobile units with status ACTIVE, hasRepairCapability is true when either count is above zero, and an inactive location always reports false with zero counts. 
+     * Lists every location in the system as a flat, unpaginated collection with address, status, type details, the stored scheduling facts (timezone, operatingHours, holidayClosures) and the opening, closing and deactivation facts (opensOn, closesOn, deactivatedAt, derived lifecycleStatus), plus two query-time projections: a repair-capability projection (hasRepairCapability, activeBayCount, activeMobileUnitCount) and an inventory-count projection (bayCount, outOfServiceBayCount, mobileUnitCount, outOfServiceMobileUnitCount, storageLocationCount). Use this tool when a complete location inventory is needed at once, including when deciding which locations can perform repairs, how many bays, mobile units or storage locations each site has and how many of those are out of service, or whether a location carries storage (and so gets the Inventory link); use getLocationRoster instead for a paginated sync feed with status and updated-since filtering, do not use it to fetch a single known id, which is getLocationById, and do not fan out over listBays, listMobileUnits or the storage-location list per location to derive these numbers. Preconditions: none beyond the location:read authority; an empty system returns an empty list. Required inputs: none; there are no parameters and no request body, and there is no filter parameter on any count, so narrow on hasRepairCapability or the counts after the call. No events are emitted and no state changes; these are read-only projections recomputed on every request, so a bay or mobile unit that was just created, restatused, retired or re-based, or a storage location that was added or restatused, is reflected immediately. Returns 200 with the full list; there are no business error conditions for this operation. activeBayCount counts only bays with status ACTIVE, activeMobileUnitCount only mobile units with status ACTIVE, hasRepairCapability is true when either count is above zero, and an inactive location always reports false with zero counts. bayCount counts bays whose status is not RETIRED and outOfServiceBayCount the OUT_OF_SERVICE subset (it is a superset, not a partition); mobileUnitCount and outOfServiceMobileUnitCount read the same way for mobile units based there; storageLocationCount counts storage locations with status ACTIVE at every level of the site\'s topology, so MAINTENANCE, QUARANTINED and INACTIVE storage locations are excluded and it is not a total. Unlike the active counts, the five inventory counts report what is on record for an inactive location too, because a closed site still shows what it holds. Each location reports only its own rows: no count rolls up from child locations to a parent, so a caller that wants a total over a branch sums the list. 
      * List All Locations Without Pagination
      */
     async listLocations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationResponseDTO>> {
@@ -599,7 +675,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes, cleanupBufferMinutes and distanceUnit. The response echoes the stored timezone, operatingHours and holidayClosures, so a caller sees what the server kept and which zone the hours are read in — they are facility-local, and hours published without a timezone keep whichever zone the location already carries. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, reactivation is not supported through this operation, and distanceUnit (KM or MI, DECISION-LOCATION-028) is left unchanged when omitted. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI. 
+     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes, cleanupBufferMinutes, distanceUnit, opensOn and closesOn. The response echoes the stored timezone, operatingHours and holidayClosures, so a caller sees what the server kept and which zone the hours are read in — they are facility-local, and hours published without a timezone keep whichever zone the location already carries. It also reports opensOn, closesOn, deactivatedAt and the derived lifecycleStatus. Use this tool for targeted edits such as deactivation, reactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status accepts ACTIVE or INACTIVE in any casing — ACTIVE reactivates the location, clearing deactivatedAt and any scheduled closing (cancelling a CLOSING location\'s close), INACTIVE deactivates it and records deactivatedAt. opensOn and closesOn are the only fields where an absent key differs from an explicit null: absent keeps the stored date, null clears it, and a date sets it; a closesOn being set must be today or later in the location\'s timezone and not before opensOn (DECISION-LOCATION-030). distanceUnit (KM or MI, DECISION-LOCATION-028) is left unchanged when omitted. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the new name is taken, 422 when a supplied timezone or operating-hours entry is invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI, status is neither ACTIVE nor INACTIVE, or closesOn is before today or before opensOn. 
      * Patch Selected Fields of a Location
      */
     async patchLocationRaw(requestParameters: PatchLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
@@ -643,7 +719,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes, cleanupBufferMinutes and distanceUnit. The response echoes the stored timezone, operatingHours and holidayClosures, so a caller sees what the server kept and which zone the hours are read in — they are facility-local, and hours published without a timezone keep whichever zone the location already carries. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, reactivation is not supported through this operation, and distanceUnit (KM or MI, DECISION-LOCATION-028) is left unchanged when omitted. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI. 
+     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes, cleanupBufferMinutes, distanceUnit, opensOn and closesOn. The response echoes the stored timezone, operatingHours and holidayClosures, so a caller sees what the server kept and which zone the hours are read in — they are facility-local, and hours published without a timezone keep whichever zone the location already carries. It also reports opensOn, closesOn, deactivatedAt and the derived lifecycleStatus. Use this tool for targeted edits such as deactivation, reactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status accepts ACTIVE or INACTIVE in any casing — ACTIVE reactivates the location, clearing deactivatedAt and any scheduled closing (cancelling a CLOSING location\'s close), INACTIVE deactivates it and records deactivatedAt. opensOn and closesOn are the only fields where an absent key differs from an explicit null: absent keeps the stored date, null clears it, and a date sets it; a closesOn being set must be today or later in the location\'s timezone and not before opensOn (DECISION-LOCATION-030). distanceUnit (KM or MI, DECISION-LOCATION-028) is left unchanged when omitted. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the new name is taken, 422 when a supplied timezone or operating-hours entry is invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI, status is neither ACTIVE nor INACTIVE, or closesOn is before today or before opensOn. 
      * Patch Selected Fields of a Location
      */
     async patchLocation(requestParameters: PatchLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
@@ -652,7 +728,116 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved, and an omitted distanceUnit (KM or MI, DECISION-LOCATION-028) resets to KM. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the name or code collides with another location, 422 when the timezone or operating hours are invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI. 
+     * Removes the child\'s parent edge of the requested type, answering 204 whether or not the child had one, so the call is idempotent. Use this tool to detach a location from a parent before or instead of moving it; use replaceLocationParent to point it at a different parent in one call. Only the parentType in the path is removed; every other parent edge of the child is kept. Preconditions: the child must exist; having no edge of that parentType is not an error. Required inputs: childId and parentType as path parameters; there is no request body. parentType is one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_REMOVE event and, only when an edge actually existed, republishes the child\'s location fact so replica consumers drop the parent they derived from it. Returns 204 on success, 400 when parentType is not a recognized value, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the child, and 404 LOCATION_NOT_FOUND when the child does not exist. 
+     * Remove a Location\'s Parent of One Type
+     */
+    async removeLocationParentRaw(requestParameters: RemoveLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['childId'] == null) {
+            throw new runtime.RequiredError(
+                'childId',
+                'Required parameter "childId" was null or undefined when calling removeLocationParent().'
+            );
+        }
+
+        if (requestParameters['parentType'] == null) {
+            throw new runtime.RequiredError(
+                'parentType',
+                'Required parameter "parentType" was null or undefined when calling removeLocationParent().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/{childId}/parents/{parentType}`.replace(`{${"childId"}}`, encodeURIComponent(String(requestParameters['childId']))).replace(`{${"parentType"}}`, encodeURIComponent(String(requestParameters['parentType']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Removes the child\'s parent edge of the requested type, answering 204 whether or not the child had one, so the call is idempotent. Use this tool to detach a location from a parent before or instead of moving it; use replaceLocationParent to point it at a different parent in one call. Only the parentType in the path is removed; every other parent edge of the child is kept. Preconditions: the child must exist; having no edge of that parentType is not an error. Required inputs: childId and parentType as path parameters; there is no request body. parentType is one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_REMOVE event and, only when an edge actually existed, republishes the child\'s location fact so replica consumers drop the parent they derived from it. Returns 204 on success, 400 when parentType is not a recognized value, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the child, and 404 LOCATION_NOT_FOUND when the child does not exist. 
+     * Remove a Location\'s Parent of One Type
+     */
+    async removeLocationParent(requestParameters: RemoveLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.removeLocationParentRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates the child\'s parent edge of the requested type, or replaces the edge it already has of that type, so a location can be moved under a different parent in one call. Use this tool to reorganize the hierarchy; use addLocationParent instead to attach a parent of a type the child does not have yet, and listLocationParents or listLocationChildren to read the result. Only the parentType in the path changes: an existing FINANCIAL, PHYSICAL or other edge of the child is left exactly as it was. Preconditions: both locations must exist; the move must not put the child under itself or under one of its own descendants on that parentType, because ADR-0016 forbids cycles per dimension; and the pair must not already be linked on another parentType, because a (child, parent) pair holds a single edge. Required inputs: childId and parentType as path parameters and parentId in the body. parentType is one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_REPLACE event and republishes the child\'s location fact, which carries its new parent edges to replica consumers; pointing at the parent the child already has is an idempotent success that publishes nothing. Returns 400 when parentType is not a recognized value or parentId is missing, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the child, 404 LOCATION_NOT_FOUND when either location does not exist, and 409 LOCATION_PARENT_CYCLE when the move would close a cycle on that parentType. 
+     * Create or Replace a Location\'s Parent of One Type
+     */
+    async replaceLocationParentRaw(requestParameters: ReplaceLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationParentResponseDTO>> {
+        if (requestParameters['childId'] == null) {
+            throw new runtime.RequiredError(
+                'childId',
+                'Required parameter "childId" was null or undefined when calling replaceLocationParent().'
+            );
+        }
+
+        if (requestParameters['parentType'] == null) {
+            throw new runtime.RequiredError(
+                'parentType',
+                'Required parameter "parentType" was null or undefined when calling replaceLocationParent().'
+            );
+        }
+
+        if (requestParameters['locationParentReplaceRequest'] == null) {
+            throw new runtime.RequiredError(
+                'locationParentReplaceRequest',
+                'Required parameter "locationParentReplaceRequest" was null or undefined when calling replaceLocationParent().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/{childId}/parents/{parentType}`.replace(`{${"childId"}}`, encodeURIComponent(String(requestParameters['childId']))).replace(`{${"parentType"}}`, encodeURIComponent(String(requestParameters['parentType']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: LocationParentReplaceRequestToJSON(requestParameters['locationParentReplaceRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => LocationParentResponseDTOFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates the child\'s parent edge of the requested type, or replaces the edge it already has of that type, so a location can be moved under a different parent in one call. Use this tool to reorganize the hierarchy; use addLocationParent instead to attach a parent of a type the child does not have yet, and listLocationParents or listLocationChildren to read the result. Only the parentType in the path changes: an existing FINANCIAL, PHYSICAL or other edge of the child is left exactly as it was. Preconditions: both locations must exist; the move must not put the child under itself or under one of its own descendants on that parentType, because ADR-0016 forbids cycles per dimension; and the pair must not already be linked on another parentType, because a (child, parent) pair holds a single edge. Required inputs: childId and parentType as path parameters and parentId in the body. parentType is one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_REPLACE event and republishes the child\'s location fact, which carries its new parent edges to replica consumers; pointing at the parent the child already has is an idempotent success that publishes nothing. Returns 400 when parentType is not a recognized value or parentId is missing, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the child, 404 LOCATION_NOT_FOUND when either location does not exist, and 409 LOCATION_PARENT_CYCLE when the move would close a cycle on that parentType. 
+     * Create or Replace a Location\'s Parent of One Type
+     */
+    async replaceLocationParent(requestParameters: ReplaceLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationParentResponseDTO> {
+        const response = await this.replaceLocationParentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved, and an omitted distanceUnit (KM or MI, DECISION-LOCATION-028) resets to KM. opensOn and closesOn follow the opposite rule: an absent key keeps the stored date and an explicit JSON null clears it (DECISION-LOCATION-030). PUT active=true on an inactive location reactivates it, clearing deactivatedAt and any scheduled closing; active=false deactivates it and records deactivatedAt. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the name or code collides with another location, 422 when the timezone or operating hours are invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI, or closesOn is before today in the location\'s timezone or before opensOn. 
      * Update an Existing Location Fully
      */
     async updateLocationRaw(requestParameters: UpdateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
@@ -696,7 +881,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved, and an omitted distanceUnit (KM or MI, DECISION-LOCATION-028) resets to KM. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the name or code collides with another location, 422 when the timezone or operating hours are invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI. 
+     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved, and an omitted distanceUnit (KM or MI, DECISION-LOCATION-028) resets to KM. opensOn and closesOn follow the opposite rule: an absent key keeps the stored date and an explicit JSON null clears it (DECISION-LOCATION-030). PUT active=true on an inactive location reactivates it, clearing deactivatedAt and any scheduled closing; active=false deactivates it and records deactivatedAt. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the name or code collides with another location, 422 when the timezone or operating hours are invalid, and 400 VALIDATION_ERROR when distanceUnit is something other than KM or MI, or closesOn is before today in the location\'s timezone or before opensOn. 
      * Update an Existing Location Fully
      */
     async updateLocation(requestParameters: UpdateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {

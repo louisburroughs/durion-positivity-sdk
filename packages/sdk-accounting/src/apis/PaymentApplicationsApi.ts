@@ -63,7 +63,7 @@ export interface CreditPaymentRemainderRequest {
 }
 
 export interface ListAutomaticPaymentApplicationsRequest {
-    since: string;
+    since: string | null;
     page?: number;
     size?: number;
 }

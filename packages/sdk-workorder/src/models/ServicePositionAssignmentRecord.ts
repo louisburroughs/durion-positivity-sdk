@@ -79,6 +79,18 @@ export interface ServicePositionAssignmentRecord {
      * @memberof ServicePositionAssignmentRecord
      */
     resourceType?: ServicePositionAssignmentRecordResourceTypeEnum;
+    /**
+     * End of the half-open slot; null means unbounded
+     * @type {Date}
+     * @memberof ServicePositionAssignmentRecord
+     */
+    slotEnd?: Date;
+    /**
+     * Start of the half-open slot this placement was made for; null for HOLD and legacy rows
+     * @type {Date}
+     * @memberof ServicePositionAssignmentRecord
+     */
+    slotStart?: Date;
 }
 
 /**
@@ -119,6 +131,8 @@ export function ServicePositionAssignmentRecordFromJSONTyped(json: any, ignoreDi
         'releasedBy': json['releasedBy'] == null ? undefined : json['releasedBy'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
+        'slotEnd': json['slotEnd'] == null ? undefined : (new Date(json['slotEnd'])),
+        'slotStart': json['slotStart'] == null ? undefined : (new Date(json['slotStart'])),
     };
 }
 
@@ -138,6 +152,8 @@ export function ServicePositionAssignmentRecordToJSON(value?: ServicePositionAss
         'releasedBy': value['releasedBy'],
         'resourceId': value['resourceId'],
         'resourceType': value['resourceType'],
+        'slotEnd': value['slotEnd'] == null ? undefined : ((value['slotEnd']).toISOString()),
+        'slotStart': value['slotStart'] == null ? undefined : ((value['slotStart']).toISOString()),
     };
 }
 

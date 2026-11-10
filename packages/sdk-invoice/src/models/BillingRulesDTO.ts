@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface BillingRulesDTO {
     /**
+     * Whether a completed workorder for this party needs a customer contact's sign-off recorded before it may be invoiced
+     * @type {boolean}
+     * @memberof BillingRulesDTO
+     */
+    completionSignOffRequired: boolean;
+    /**
      * Timestamp when the record was created
      * @type {Date}
      * @memberof BillingRulesDTO
@@ -105,6 +111,7 @@ export enum BillingRulesDTOInvoiceGroupingStrategyEnum {
  * Check if a given object implements the BillingRulesDTO interface.
  */
 export function instanceOfBillingRulesDTO(value: object): boolean {
+    if (!('completionSignOffRequired' in value)) return false;
     if (!('createdAt' in value)) return false;
     if (!('invoiceDeliveryMethod' in value)) return false;
     if (!('invoiceGroupingStrategy' in value)) return false;
@@ -127,6 +134,7 @@ export function BillingRulesDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
+        'completionSignOffRequired': json['completionSignOffRequired'],
         'createdAt': (new Date(json['createdAt'])),
         'id': json['id'] == null ? undefined : json['id'],
         'invoiceDeliveryMethod': json['invoiceDeliveryMethod'],
@@ -146,6 +154,7 @@ export function BillingRulesDTOToJSON(value?: BillingRulesDTO | null): any {
     }
     return {
         
+        'completionSignOffRequired': value['completionSignOffRequired'],
         'createdAt': ((value['createdAt']).toISOString()),
         'id': value['id'],
         'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],

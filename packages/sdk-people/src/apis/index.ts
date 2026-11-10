@@ -6,6 +6,7 @@ export * from './PeopleAvailabilityAPIApi';
 export * from './PeopleBulkIngestAPIApi';
 export * from './PeopleComplianceAPIApi';
 export * from './PeopleExceptionsApi';
+export * from './PeopleLocationReachAPIApi';
 export * from './PeopleReportsAPIApi';
 export * from './PeopleStaffingAssignmentsApi';
 export * from './PeopleTimeEntriesApi';

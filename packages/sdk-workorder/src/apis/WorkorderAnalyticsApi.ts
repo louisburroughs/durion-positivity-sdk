@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  LaborOverrunAnalyticsResponse,
   OpenWorkordersByCustomerResponse,
   ReopenedWorkorderAnalyticsResponse,
   TechnicianLaborAnalyticsResponse,
@@ -24,6 +25,8 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    LaborOverrunAnalyticsResponseFromJSON,
+    LaborOverrunAnalyticsResponseToJSON,
     OpenWorkordersByCustomerResponseFromJSON,
     OpenWorkordersByCustomerResponseToJSON,
     ReopenedWorkorderAnalyticsResponseFromJSON,
@@ -33,6 +36,14 @@ import {
     WorkorderStatusTransitionsResponseFromJSON,
     WorkorderStatusTransitionsResponseToJSON,
 } from '../models/index';
+
+export interface GetLaborOverrunsByServiceTypeRequest {
+    from: Date;
+    to: Date;
+    locationId?: string;
+    serviceType?: string;
+    limit?: number;
+}
 
 export interface GetOpenWorkordersByCustomerRequest {
     limit?: number;
@@ -64,6 +75,76 @@ export interface GetWorkorderStatusTransitionsRequest {
  * 
  */
 export class WorkorderAnalyticsApi extends runtime.BaseAPI {
+
+    /**
+     * Returns one row per service line whose stopped labor time in the window ran strictly over its own guide estimate — job, service, estimate, actual and overrun — plus a per-service-type rollup of measured and overrun lines with the total and average overrun hours. Use this tool to answer which jobs overran their book time in a period and how that varies by service type; do NOT use it for hours per technician, which is getTechnicianLaborAnalytics, nor for one work order\'s labor lines, which is searchWorkorders followed by getWorkorder. Preconditions: none beyond a valid window; the estimate is the guide baseline snapshotted on the service line (not the catalog service\'s degraded default), the actual is the sum of stopped labor entries that STARTED inside the window, and a line without an estimate is counted in servicesWithoutEstimate rather than compared, while a line exactly on its estimate is measured, not over. Required inputs: from and to, ISO dates with to strictly after from — the window is half-open [from, to) on UTC day boundaries, so a calendar week starting Monday runs to the next Monday; locationId and serviceType are optional filters, and a supplied locationId outside the caller\'s reach is refused with 403 LOCATION_SCOPE_DENIED. limit caps the returned overrun rows (default 100, max 500) and never the rollup, the without-estimate count or truncated. Emits a WORKORDER_ANALYTICS_LABOR_OVERRUNS_VIEW audit event; no state changes. Returns 400 WORKEXEC_INVALID_REQUEST when to is not after from, and truncated=true when more lines ran over than limit allowed or an internal cap made the rollup partial. Advisory only: comparing reported time with the quoted estimate has no billing or payroll effect. 
+     * Get Labor Overruns Against Guide Estimates By Service Type
+     */
+    async getLaborOverrunsByServiceTypeRaw(requestParameters: GetLaborOverrunsByServiceTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LaborOverrunAnalyticsResponse>> {
+        if (requestParameters['from'] == null) {
+            throw new runtime.RequiredError(
+                'from',
+                'Required parameter "from" was null or undefined when calling getLaborOverrunsByServiceType().'
+            );
+        }
+
+        if (requestParameters['to'] == null) {
+            throw new runtime.RequiredError(
+                'to',
+                'Required parameter "to" was null or undefined when calling getLaborOverrunsByServiceType().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['serviceType'] != null) {
+            queryParameters['serviceType'] = requestParameters['serviceType'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/analytics/labor-overruns`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => LaborOverrunAnalyticsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one row per service line whose stopped labor time in the window ran strictly over its own guide estimate — job, service, estimate, actual and overrun — plus a per-service-type rollup of measured and overrun lines with the total and average overrun hours. Use this tool to answer which jobs overran their book time in a period and how that varies by service type; do NOT use it for hours per technician, which is getTechnicianLaborAnalytics, nor for one work order\'s labor lines, which is searchWorkorders followed by getWorkorder. Preconditions: none beyond a valid window; the estimate is the guide baseline snapshotted on the service line (not the catalog service\'s degraded default), the actual is the sum of stopped labor entries that STARTED inside the window, and a line without an estimate is counted in servicesWithoutEstimate rather than compared, while a line exactly on its estimate is measured, not over. Required inputs: from and to, ISO dates with to strictly after from — the window is half-open [from, to) on UTC day boundaries, so a calendar week starting Monday runs to the next Monday; locationId and serviceType are optional filters, and a supplied locationId outside the caller\'s reach is refused with 403 LOCATION_SCOPE_DENIED. limit caps the returned overrun rows (default 100, max 500) and never the rollup, the without-estimate count or truncated. Emits a WORKORDER_ANALYTICS_LABOR_OVERRUNS_VIEW audit event; no state changes. Returns 400 WORKEXEC_INVALID_REQUEST when to is not after from, and truncated=true when more lines ran over than limit allowed or an internal cap made the rollup partial. Advisory only: comparing reported time with the quoted estimate has no billing or payroll effect. 
+     * Get Labor Overruns Against Guide Estimates By Service Type
+     */
+    async getLaborOverrunsByServiceType(requestParameters: GetLaborOverrunsByServiceTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LaborOverrunAnalyticsResponse> {
+        const response = await this.getLaborOverrunsByServiceTypeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Returns one row per customer who currently holds at least one open work order, with the customer\'s display name and their open count, ordered by count descending, plus the totals before the limit was applied. Use this tool to answer questions about open work across the whole book — which customers have work in progress, how many customers have open jobs, or the work-order half of a cross-domain question such as customers with both an open job and an unpaid invoice; it returns COUNTS, so do not use it when the answer needs the individual work orders, which is searchWorkorders (status=OPEN, optionally customerId), or getWorkorder for one work order\'s detail. Open means the six non-terminal statuses APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, AWAITING_APPROVAL and READY_FOR_PICKUP — the same set searchWorkorders accepts under its OPEN alias — while DRAFT is deliberately excluded, because a draft has not been approved into work; the workorder count endpoint (GET /v1/workorders/count?openOnly=true) counts DRAFT as open, so the two deliberately disagree, and this one matches what a status=OPEN search returns. Preconditions: none; required inputs: none, and limit is optional (default 100, hard-capped at 500). Emits a WORKORDER_ANALYTICS_OPEN_BY_CUSTOMER_VIEW audit event; no state changes. Returns 200 with truncated=true and the true totalCustomers/totalOpenWorkorders when more customers had open work than the limit allowed. 

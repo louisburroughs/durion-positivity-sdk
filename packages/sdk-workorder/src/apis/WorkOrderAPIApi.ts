@@ -20,9 +20,10 @@ import type {
   CompleteWorkorderRequest,
   CompleteWorkorderResponse,
   CompletionPreconditionsResponse,
+  CompletionSignOffResponse,
   CountResponse,
   CreateWorkorderRequest,
-  InvoiceGenerationResponse,
+  RecordCompletionSignOffRequest,
   ReopenWorkorderRequest,
   ReopenWorkorderResponse,
   WorkorderItemCompletionResponse,
@@ -30,7 +31,6 @@ import type {
   WorkorderSnapshotResponse,
   WorkorderStateTransitionResponse,
   WorkorderTransferRequest,
-  WorkorderTransferResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -43,12 +43,14 @@ import {
     CompleteWorkorderResponseToJSON,
     CompletionPreconditionsResponseFromJSON,
     CompletionPreconditionsResponseToJSON,
+    CompletionSignOffResponseFromJSON,
+    CompletionSignOffResponseToJSON,
     CountResponseFromJSON,
     CountResponseToJSON,
     CreateWorkorderRequestFromJSON,
     CreateWorkorderRequestToJSON,
-    InvoiceGenerationResponseFromJSON,
-    InvoiceGenerationResponseToJSON,
+    RecordCompletionSignOffRequestFromJSON,
+    RecordCompletionSignOffRequestToJSON,
     ReopenWorkorderRequestFromJSON,
     ReopenWorkorderRequestToJSON,
     ReopenWorkorderResponseFromJSON,
@@ -63,8 +65,6 @@ import {
     WorkorderStateTransitionResponseToJSON,
     WorkorderTransferRequestFromJSON,
     WorkorderTransferRequestToJSON,
-    WorkorderTransferResponseFromJSON,
-    WorkorderTransferResponseToJSON,
 } from '../models/index';
 
 export interface ApproveWorkorderOperationRequest {
@@ -110,6 +110,10 @@ export interface GetCompletionPreconditionsRequest {
     workorderId: string;
 }
 
+export interface GetCompletionSignOffRequest {
+    workorderId: string;
+}
+
 export interface GetWorkorderRequest {
     workorderId: string;
 }
@@ -120,6 +124,11 @@ export interface GetWorkorderSnapshotsRequest {
 
 export interface GetWorkorderTransitionsRequest {
     workorderId: string;
+}
+
+export interface RecordCompletionSignOffOperationRequest {
+    workorderId: string;
+    recordCompletionSignOffRequest: RecordCompletionSignOffRequest;
 }
 
 export interface ReopenWorkorderOperationRequest {
@@ -392,7 +401,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
      * Creates a DRAFT workorder from an estimate, copying the estimate\'s customer, location, and CRM references and generating a workorder number. Use this tool when opening a workorder directly; do not use promoteEstimate, which is the estimate-side path that promotes an APPROVED estimate into a workorder. Preconditions: the referenced estimate must exist, and the caller must hold workorder:workorder:create; the location falls back to the caller\'s primary location when the estimate carries none. Required inputs: estimateId and customerId (UUIDs); an Idempotency-Key header is recommended — a repeated key returns the originally created workorder instead of a duplicate. Emits a WORKORDER_CREATE event and marks the workorder fact changed for downstream replication. Returns 200 with the created or replayed workorder, 400 when the estimate cannot be found, and 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the workorder number — re-send the same request. 
      * Create a New Workorder
      */
-    async createWorkorderRaw(requestParameters: CreateWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
+    async createWorkorderRaw(requestParameters: CreateWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['createWorkorderRequest'] == null) {
             throw new runtime.RequiredError(
                 'createWorkorderRequest',
@@ -426,14 +435,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
             body: CreateWorkorderRequestToJSON(requestParameters['createWorkorderRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Creates a DRAFT workorder from an estimate, copying the estimate\'s customer, location, and CRM references and generating a workorder number. Use this tool when opening a workorder directly; do not use promoteEstimate, which is the estimate-side path that promotes an APPROVED estimate into a workorder. Preconditions: the referenced estimate must exist, and the caller must hold workorder:workorder:create; the location falls back to the caller\'s primary location when the estimate carries none. Required inputs: estimateId and customerId (UUIDs); an Idempotency-Key header is recommended — a repeated key returns the originally created workorder instead of a duplicate. Emits a WORKORDER_CREATE event and marks the workorder fact changed for downstream replication. Returns 200 with the created or replayed workorder, 400 when the estimate cannot be found, and 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the workorder number — re-send the same request. 
      * Create a New Workorder
      */
-    async createWorkorder(requestParameters: CreateWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {
+    async createWorkorder(requestParameters: CreateWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.createWorkorderRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -481,10 +490,10 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 409 when it is not COMPLETED, and 503 when the Kafka feed is disabled or the broker rejects the command. 
+     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, the payer\'s billing rules must not set completionSignOffRequired (or a customer completion sign-off must already be recorded), and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 409 when it is not COMPLETED or when a required customer completion sign-off is outstanding (COMPLETION_SIGN_OFF_REQUIRED), and 503 when the Kafka feed is disabled or the broker rejects the command. 
      * Request Invoice Generation From Workorder
      */
-    async generateWorkorderInvoiceRaw(requestParameters: GenerateWorkorderInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceGenerationResponse>> {
+    async generateWorkorderInvoiceRaw(requestParameters: GenerateWorkorderInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -515,20 +524,20 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => InvoiceGenerationResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
-     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 409 when it is not COMPLETED, and 503 when the Kafka feed is disabled or the broker rejects the command. 
+     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, the payer\'s billing rules must not set completionSignOffRequired (or a customer completion sign-off must already be recorded), and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 409 when it is not COMPLETED or when a required customer completion sign-off is outstanding (COMPLETION_SIGN_OFF_REQUIRED), and 503 when the Kafka feed is disabled or the broker rejects the command. 
      * Request Invoice Generation From Workorder
      */
-    async generateWorkorderInvoice(requestParameters: GenerateWorkorderInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceGenerationResponse> {
+    async generateWorkorderInvoice(requestParameters: GenerateWorkorderInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.generateWorkorderInvoiceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Evaluates whether a workorder can be completed, returning a canComplete flag, a checklist, blocking reasons, counts of unresolved approval-gated change requests and non-terminal items, the emergency-denial acknowledgment state, and whether billable items exist. Use this tool before completeWorkorder to surface blockers without attempting the transition; do not use checkWorkorderCanClose, which checks only the emergency-denial acknowledgment dimension. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only evaluation. Returns 404 when no workorder exists for the id. 
+     * Evaluates whether a workorder can be completed, returning a canComplete flag, a checklist, blocking reasons, counts of unresolved approval-gated change requests and non-terminal items, the emergency-denial acknowledgment state, and whether billable items exist. It also reports waitingOn: CUSTOMER while a required customer completion sign-off is outstanding (#3201), null otherwise. waitingOn is not a blocking reason — the sign-off is recorded after completion, so it never refuses the completion it follows. Use this tool before completeWorkorder to surface blockers without attempting the transition; do not use checkWorkorderCanClose, which checks only the emergency-denial acknowledgment dimension. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only evaluation. Returns 404 when no workorder exists for the id. 
      * Evaluate Workorder Completion Preconditions
      */
     async getCompletionPreconditionsRaw(requestParameters: GetCompletionPreconditionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CompletionPreconditionsResponse>> {
@@ -562,11 +571,54 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Evaluates whether a workorder can be completed, returning a canComplete flag, a checklist, blocking reasons, counts of unresolved approval-gated change requests and non-terminal items, the emergency-denial acknowledgment state, and whether billable items exist. Use this tool before completeWorkorder to surface blockers without attempting the transition; do not use checkWorkorderCanClose, which checks only the emergency-denial acknowledgment dimension. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only evaluation. Returns 404 when no workorder exists for the id. 
+     * Evaluates whether a workorder can be completed, returning a canComplete flag, a checklist, blocking reasons, counts of unresolved approval-gated change requests and non-terminal items, the emergency-denial acknowledgment state, and whether billable items exist. It also reports waitingOn: CUSTOMER while a required customer completion sign-off is outstanding (#3201), null otherwise. waitingOn is not a blocking reason — the sign-off is recorded after completion, so it never refuses the completion it follows. Use this tool before completeWorkorder to surface blockers without attempting the transition; do not use checkWorkorderCanClose, which checks only the emergency-denial acknowledgment dimension. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only evaluation. Returns 404 when no workorder exists for the id. 
      * Evaluate Workorder Completion Preconditions
      */
     async getCompletionPreconditions(requestParameters: GetCompletionPreconditionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompletionPreconditionsResponse> {
         const response = await this.getCompletionPreconditionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Reports whether this workorder\'s payer requires a customer completion sign-off before invoicing, and where the sign-off stands: NOT_REQUIRED when the payer\'s billing rules do not ask for one, SIGNED_OFF when one is recorded, PENDING otherwise. Use this tool to drive the advisor\'s sign-off prompt before generateWorkorderInvoice; use getCompletionPreconditions when the question is whether the workorder can be completed. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the derived state and the sign-off\'s evidence when one was recorded, and 404 when no workorder exists for the id. 
+     * Read a Workorder\'s Customer Completion Sign-Off State
+     */
+    async getCompletionSignOffRaw(requestParameters: GetCompletionSignOffRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CompletionSignOffResponse>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling getCompletionSignOff().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/completion-sign-off`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CompletionSignOffResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reports whether this workorder\'s payer requires a customer completion sign-off before invoicing, and where the sign-off stands: NOT_REQUIRED when the payer\'s billing rules do not ask for one, SIGNED_OFF when one is recorded, PENDING otherwise. Use this tool to drive the advisor\'s sign-off prompt before generateWorkorderInvoice; use getCompletionPreconditions when the question is whether the workorder can be completed. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the derived state and the sign-off\'s evidence when one was recorded, and 404 when no workorder exists for the id. 
+     * Read a Workorder\'s Customer Completion Sign-Off State
+     */
+    async getCompletionSignOff(requestParameters: GetCompletionSignOffRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompletionSignOffResponse> {
+        const response = await this.getCompletionSignOffRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -736,6 +788,59 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Records a customer contact\'s sign-off on a COMPLETED workorder of an account whose billing rules require one before it may be invoiced. The service advisor records it on the customer\'s behalf with a note as evidence; no customer signature is involved. Use this tool before generateWorkorderInvoice when getCompletionSignOff reports PENDING; do not use it to approve scope changes, which go through the change-request endpoints. Preconditions: the workorder must be COMPLETED, the payer\'s billing rules must set completionSignOffRequired, and the workorder must not already carry a sign-off. Required inputs: workorderId (UUID) as a path parameter and a non-blank contactName and note in the body; contactId is optional; signedOffBy comes from the security context, never from the body. Emits a WORKORDER_COMPLETION_SIGN_OFF event. Returns 200 with the recorded state, 400 VALIDATION_ERROR for a blank contactName or note, 404 when the workorder does not exist, and 409 with COMPLETION_SIGN_OFF_WORKORDER_NOT_COMPLETED, COMPLETION_SIGN_OFF_NOT_REQUIRED or COMPLETION_SIGN_OFF_ALREADY_RECORDED when the workorder\'s state refuses the sign-off. 
+     * Record a Customer\'s Completion Sign-Off
+     */
+    async recordCompletionSignOffRaw(requestParameters: RecordCompletionSignOffOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CompletionSignOffResponse>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling recordCompletionSignOff().'
+            );
+        }
+
+        if (requestParameters['recordCompletionSignOffRequest'] == null) {
+            throw new runtime.RequiredError(
+                'recordCompletionSignOffRequest',
+                'Required parameter "recordCompletionSignOffRequest" was null or undefined when calling recordCompletionSignOff().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:record_sign_off"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/completion-sign-off`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecordCompletionSignOffRequestToJSON(requestParameters['recordCompletionSignOffRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CompletionSignOffResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records a customer contact\'s sign-off on a COMPLETED workorder of an account whose billing rules require one before it may be invoiced. The service advisor records it on the customer\'s behalf with a note as evidence; no customer signature is involved. Use this tool before generateWorkorderInvoice when getCompletionSignOff reports PENDING; do not use it to approve scope changes, which go through the change-request endpoints. Preconditions: the workorder must be COMPLETED, the payer\'s billing rules must set completionSignOffRequired, and the workorder must not already carry a sign-off. Required inputs: workorderId (UUID) as a path parameter and a non-blank contactName and note in the body; contactId is optional; signedOffBy comes from the security context, never from the body. Emits a WORKORDER_COMPLETION_SIGN_OFF event. Returns 200 with the recorded state, 400 VALIDATION_ERROR for a blank contactName or note, 404 when the workorder does not exist, and 409 with COMPLETION_SIGN_OFF_WORKORDER_NOT_COMPLETED, COMPLETION_SIGN_OFF_NOT_REQUIRED or COMPLETION_SIGN_OFF_ALREADY_RECORDED when the workorder\'s state refuses the sign-off. 
+     * Record a Customer\'s Completion Sign-Off
+     */
+    async recordCompletionSignOff(requestParameters: RecordCompletionSignOffOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CompletionSignOffResponse> {
+        const response = await this.recordCompletionSignOffRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Reopens a COMPLETED workorder in a controlled way: the finalized billable scope is superseded via a new snapshot, and the workorder is flagged isReopened with the actor, reason, and timestamp recorded — the status itself remains COMPLETED. Use this tool when post-completion corrections are needed; do not use deleteWorkorder, which destroys the record instead of auditing a reopen. Preconditions: the workorder must exist and be in COMPLETED status, and the caller must hold workorder:workorder:reopen_completed. Required inputs: workorderId (UUID) as a path parameter and a non-blank reopenReason in the body; the acting user comes from the security context. Emits a WORKORDER_REOPEN event and captures a BILLABLE_SCOPE_SUPERSEDED snapshot. Returns 400 with the reason when the workorder is not COMPLETED or the reason is missing, and 404 when the workorder does not exist. 
      * Reopen a Completed Workorder
      */
@@ -792,7 +897,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
      * Transfers the same unstarted workorder to a different active location, releasing its current position and technician; an ASSIGNED workorder returns to APPROVED. Use this tool when an unstarted workorder must move to another shop, for example at the customer\'s request or for capacity; do not use it for a workorder that has recorded time, has parts in hand, or is closed. Finish or cancel that work at its current location instead, and create a new workorder at the other location. Preconditions: the caller holds workorder:workorder:transfer in scope for both the current and the target location, the target location is a different active location, the workorder is not closed, and it has no pending change request, no recorded time, and no picked parts. Required inputs: workorderId (UUID) as a path parameter, and toLocationId (UUID) and reasonCode (CUSTOMER_REQUEST, CAPACITY, EQUIPMENT, MOBILE_DEPOT or OTHER) in the body; OTHER requires a non-blank note of at most 500 characters. An optional Idempotency-Key header replays the original transfer response. Emits a WORKORDER_TRANSFER event and the workorder.workorder.transferred domain event. Returns 200, 400 VALIDATION_FAILED, 403 LOCATION_SCOPE_DENIED, 404 NOT_FOUND, 409 WORKORDER_CLOSED or WORKORDER_TRANSFER_NOT_ALLOWED, and 422 WORKORDER_TRANSFER_LOCATION_INVALID, WORKORDER_TRANSFER_LOCATION_INACTIVE, WORKORDER_TRANSFER_CHANGE_REQUEST_PENDING, WORKORDER_TRANSFER_TIME_RECORDED, or WORKORDER_TRANSFER_PARTS_IN_HAND. 
      * Transfer a Workorder to Another Location
      */
-    async transferWorkorderRaw(requestParameters: TransferWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderTransferResponse>> {
+    async transferWorkorderRaw(requestParameters: TransferWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -833,14 +938,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
             body: WorkorderTransferRequestToJSON(requestParameters['workorderTransferRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderTransferResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Transfers the same unstarted workorder to a different active location, releasing its current position and technician; an ASSIGNED workorder returns to APPROVED. Use this tool when an unstarted workorder must move to another shop, for example at the customer\'s request or for capacity; do not use it for a workorder that has recorded time, has parts in hand, or is closed. Finish or cancel that work at its current location instead, and create a new workorder at the other location. Preconditions: the caller holds workorder:workorder:transfer in scope for both the current and the target location, the target location is a different active location, the workorder is not closed, and it has no pending change request, no recorded time, and no picked parts. Required inputs: workorderId (UUID) as a path parameter, and toLocationId (UUID) and reasonCode (CUSTOMER_REQUEST, CAPACITY, EQUIPMENT, MOBILE_DEPOT or OTHER) in the body; OTHER requires a non-blank note of at most 500 characters. An optional Idempotency-Key header replays the original transfer response. Emits a WORKORDER_TRANSFER event and the workorder.workorder.transferred domain event. Returns 200, 400 VALIDATION_FAILED, 403 LOCATION_SCOPE_DENIED, 404 NOT_FOUND, 409 WORKORDER_CLOSED or WORKORDER_TRANSFER_NOT_ALLOWED, and 422 WORKORDER_TRANSFER_LOCATION_INVALID, WORKORDER_TRANSFER_LOCATION_INACTIVE, WORKORDER_TRANSFER_CHANGE_REQUEST_PENDING, WORKORDER_TRANSFER_TIME_RECORDED, or WORKORDER_TRANSFER_PARTS_IN_HAND. 
      * Transfer a Workorder to Another Location
      */
-    async transferWorkorder(requestParameters: TransferWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderTransferResponse> {
+    async transferWorkorder(requestParameters: TransferWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.transferWorkorderRaw(requestParameters, initOverrides);
         return await response.value();
     }

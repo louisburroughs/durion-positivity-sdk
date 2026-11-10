@@ -35,7 +35,10 @@ export interface SearchInvoiceLinesRequest {
 
 export interface SearchInvoicesRequest {
     q?: string;
-    status?: SearchInvoicesStatusEnum;
+    status?: Array<SearchInvoicesStatusEnum>;
+    paymentStatus?: Array<SearchInvoicesPaymentStatusEnum>;
+    locationId?: string;
+    openOnly?: boolean;
     issuedFrom?: Date;
     issuedTo?: Date;
     customerId?: string;
@@ -101,7 +104,7 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Combinable with structured filters — status, an issued-date window, and customerId — each independently optional and ANDed against the free-text match and against each other. Use this tool to locate an invoice when its id is unknown; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank/missing q with every structured filter also absent short-circuits to an empty page rather than listing all invoices; a blank q with at least one structured filter set performs a filtered listing instead. Required inputs: none are individually required — q, status, issuedFrom, issuedTo and customerId are all optional and combinable, plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. status must be one of the InvoiceStatus values (DRAFT, FINALIZED, POSTED, ERROR, CANCELLED); an unrecognized value returns 400 rather than an empty page. issuedFrom/issuedTo bound Invoice.finalizedAt (the timestamp an invoice was finalized/issued to the customer, inclusive on both ends) — a DRAFT invoice has no finalizedAt and is excluded whenever either bound is set. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed, when status is not a recognized InvoiceStatus value, or when issuedTo is before issuedFrom. 
+     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Combinable with structured filters — repeatable status, repeatable paymentStatus, locationId, openOnly, an issued-date window, and customerId — each independently optional and ANDed against the free-text match and against each other. Use this tool to locate an invoice when its id is unknown, or to list the pane\'s open items with openOnly=true; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank/missing q with every structured filter also absent short-circuits to an empty page rather than listing all invoices; a blank q with at least one structured filter set performs a filtered listing instead. Required inputs: none are individually required — q, status, paymentStatus, locationId, openOnly, issuedFrom, issuedTo and customerId are all optional and combinable, plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. status must be one of the InvoiceStatus values (DRAFT, FINALIZED, POSTED, ERROR, CANCELLED) and paymentStatus one of UNPAID, PARTIALLY_PAID, PAID, OVERPAID, NOT_APPLICABLE; both are repeatable and an unrecognized value returns 400 rather than an empty page. paymentStatus and the returned balanceDue/amountPaid are pos-invoice\'s own settlement figures, not the accounts-receivable balance. openOnly=true is the shorthand status IN (DRAFT, FINALIZED, POSTED) AND balanceDue > 0, ANDed with any other filter. locationId both filters and is location-scoped: a caller whose grant is scoped away from it is denied with 403 LOCATION_SCOPE_DENIED; without locationId the result set is not narrowed. issuedFrom/issuedTo bound Invoice.finalizedAt (the timestamp an invoice was finalized/issued to the customer, inclusive on both ends) — a DRAFT invoice has no finalizedAt and is excluded whenever either bound is set. dueDate and balanceDue are sortable. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed, when status or paymentStatus is not a recognized value, or when issuedTo is before issuedFrom. 
      * Search Invoices by Free Text and Structured Filters
      */
     async searchInvoicesRaw(requestParameters: SearchInvoicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageInvoiceSearchResult>> {
@@ -113,6 +116,18 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
 
         if (requestParameters['status'] != null) {
             queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['paymentStatus'] != null) {
+            queryParameters['paymentStatus'] = requestParameters['paymentStatus'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['openOnly'] != null) {
+            queryParameters['openOnly'] = requestParameters['openOnly'];
         }
 
         if (requestParameters['issuedFrom'] != null) {
@@ -160,7 +175,7 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Combinable with structured filters — status, an issued-date window, and customerId — each independently optional and ANDed against the free-text match and against each other. Use this tool to locate an invoice when its id is unknown; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank/missing q with every structured filter also absent short-circuits to an empty page rather than listing all invoices; a blank q with at least one structured filter set performs a filtered listing instead. Required inputs: none are individually required — q, status, issuedFrom, issuedTo and customerId are all optional and combinable, plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. status must be one of the InvoiceStatus values (DRAFT, FINALIZED, POSTED, ERROR, CANCELLED); an unrecognized value returns 400 rather than an empty page. issuedFrom/issuedTo bound Invoice.finalizedAt (the timestamp an invoice was finalized/issued to the customer, inclusive on both ends) — a DRAFT invoice has no finalizedAt and is excluded whenever either bound is set. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed, when status is not a recognized InvoiceStatus value, or when issuedTo is before issuedFrom. 
+     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Combinable with structured filters — repeatable status, repeatable paymentStatus, locationId, openOnly, an issued-date window, and customerId — each independently optional and ANDed against the free-text match and against each other. Use this tool to locate an invoice when its id is unknown, or to list the pane\'s open items with openOnly=true; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank/missing q with every structured filter also absent short-circuits to an empty page rather than listing all invoices; a blank q with at least one structured filter set performs a filtered listing instead. Required inputs: none are individually required — q, status, paymentStatus, locationId, openOnly, issuedFrom, issuedTo and customerId are all optional and combinable, plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. status must be one of the InvoiceStatus values (DRAFT, FINALIZED, POSTED, ERROR, CANCELLED) and paymentStatus one of UNPAID, PARTIALLY_PAID, PAID, OVERPAID, NOT_APPLICABLE; both are repeatable and an unrecognized value returns 400 rather than an empty page. paymentStatus and the returned balanceDue/amountPaid are pos-invoice\'s own settlement figures, not the accounts-receivable balance. openOnly=true is the shorthand status IN (DRAFT, FINALIZED, POSTED) AND balanceDue > 0, ANDed with any other filter. locationId both filters and is location-scoped: a caller whose grant is scoped away from it is denied with 403 LOCATION_SCOPE_DENIED; without locationId the result set is not narrowed. issuedFrom/issuedTo bound Invoice.finalizedAt (the timestamp an invoice was finalized/issued to the customer, inclusive on both ends) — a DRAFT invoice has no finalizedAt and is excluded whenever either bound is set. dueDate and balanceDue are sortable. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed, when status or paymentStatus is not a recognized value, or when issuedTo is before issuedFrom. 
      * Search Invoices by Free Text and Structured Filters
      */
     async searchInvoices(requestParameters: SearchInvoicesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageInvoiceSearchResult> {
@@ -180,4 +195,15 @@ export enum SearchInvoicesStatusEnum {
     Posted = 'POSTED',
     Error = 'ERROR',
     Cancelled = 'CANCELLED'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum SearchInvoicesPaymentStatusEnum {
+    Unpaid = 'UNPAID',
+    PartiallyPaid = 'PARTIALLY_PAID',
+    Paid = 'PAID',
+    Overpaid = 'OVERPAID',
+    NotApplicable = 'NOT_APPLICABLE'
 }

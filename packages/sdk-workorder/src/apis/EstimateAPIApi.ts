@@ -24,7 +24,6 @@ import type {
   EstimateSnapshotResponse,
   EstimateSummaryResponse,
   UpdateEstimateItemRequest,
-  WorkorderResponse,
 } from '../models/index';
 import {
     AddEstimateItemRequestFromJSON,
@@ -45,8 +44,6 @@ import {
     EstimateSummaryResponseToJSON,
     UpdateEstimateItemRequestFromJSON,
     UpdateEstimateItemRequestToJSON,
-    WorkorderResponseFromJSON,
-    WorkorderResponseToJSON,
 } from '../models/index';
 
 export interface AddEstimateItemOperationRequest {
@@ -875,7 +872,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when a promotion precondition or the customer\'s requirements verdict refuses it, 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the workorder number, and 503 when the requirements verdict has not replicated yet. Those last two are the only answers worth retrying. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
      * Promote Approved Estimate to Workorder
      */
-    async promoteEstimateRaw(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
+    async promoteEstimateRaw(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
@@ -906,14 +903,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when a promotion precondition or the customer\'s requirements verdict refuses it, 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the workorder number, and 503 when the requirements verdict has not replicated yet. Those last two are the only answers worth retrying. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
      * Promote Approved Estimate to Workorder
      */
-    async promoteEstimate(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {
+    async promoteEstimate(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.promoteEstimateRaw(requestParameters, initOverrides);
         return await response.value();
     }

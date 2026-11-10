@@ -63,13 +63,13 @@ export interface ReceivingSessionResponse {
      */
     shipmentReference?: string;
     /**
-     * Identifier of the source document the session receives against
+     * Identifier of the source document the session receives against; null for an unplanned receipt (#3187), which has no source document
      * @type {string}
      * @memberof ReceivingSessionResponse
      */
-    sourceDocumentId: string;
+    sourceDocumentId?: string;
     /**
-     * Type of the source document, such as PURCHASE_ORDER or WORKORDER
+     * Type of the source document: PO, ASN, or UNPLANNED for a receipt with no source document (#3187)
      * @type {string}
      * @memberof ReceivingSessionResponse
      */
@@ -94,7 +94,6 @@ export interface ReceivingSessionResponse {
 export function instanceOfReceivingSessionResponse(value: object): boolean {
     if (!('createdAt' in value)) return false;
     if (!('sessionId' in value)) return false;
-    if (!('sourceDocumentId' in value)) return false;
     if (!('status' in value)) return false;
     return true;
 }
@@ -115,7 +114,7 @@ export function ReceivingSessionResponseFromJSONTyped(json: any, ignoreDiscrimin
         'lines': json['lines'] == null ? undefined : ((json['lines'] as Array<any>).map(ReceivingLineResponseFromJSON)),
         'sessionId': json['sessionId'],
         'shipmentReference': json['shipmentReference'] == null ? undefined : json['shipmentReference'],
-        'sourceDocumentId': json['sourceDocumentId'],
+        'sourceDocumentId': json['sourceDocumentId'] == null ? undefined : json['sourceDocumentId'],
         'sourceDocumentType': json['sourceDocumentType'] == null ? undefined : json['sourceDocumentType'],
         'status': json['status'],
         'supplierId': json['supplierId'] == null ? undefined : json['supplierId'],

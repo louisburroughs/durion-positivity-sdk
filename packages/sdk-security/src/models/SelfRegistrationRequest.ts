@@ -50,7 +50,7 @@ export interface SelfRegistrationRequest {
      */
     lastName: string;
     /**
-     * Password for the new account
+     * Password for the new account. Must meet the password policy GET /v1/auth/capabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the email local part, username or name); a refusal is 400 VALIDATION_ERROR with fieldErrors[password] starting PASSWORD_POLICY_VIOLATION
      * @type {string}
      * @memberof SelfRegistrationRequest
      */

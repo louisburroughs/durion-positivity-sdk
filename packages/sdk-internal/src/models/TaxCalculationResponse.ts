@@ -19,6 +19,12 @@ import {
     LineItemTaxFromJSONTyped,
     LineItemTaxToJSON,
 } from './LineItemTax';
+import type { TaxDocumentRule } from './TaxDocumentRule';
+import {
+    TaxDocumentRuleFromJSON,
+    TaxDocumentRuleFromJSONTyped,
+    TaxDocumentRuleToJSON,
+} from './TaxDocumentRule';
 import type { TaxJurisdiction } from './TaxJurisdiction';
 import {
     TaxJurisdictionFromJSON,
@@ -44,6 +50,18 @@ export interface TaxCalculationResponse {
      * @memberof TaxCalculationResponse
      */
     calculationType?: TaxCalculationResponseCalculationTypeEnum;
+    /**
+     * ISO 3166-1 alpha-2 country whose profile priced this calculation; null when the pricing provider has no country profile
+     * @type {string}
+     * @memberof TaxCalculationResponse
+     */
+    countryCode?: string;
+    /**
+     * The country profile's shipped document display rules; empty when the country declares none
+     * @type {Array<TaxDocumentRule>}
+     * @memberof TaxCalculationResponse
+     */
+    documentRules?: Array<TaxDocumentRule>;
     /**
      * Effective tax rate: total tax divided by the exempt-filtered taxable base (the taxable amount remaining after tax-exempt lines are excluded), expressed as percentage points. This is NOT total tax divided by the raw subtotal (ADR-0042).
      * @type {number}
@@ -162,6 +180,8 @@ export function TaxCalculationResponseFromJSONTyped(json: any, ignoreDiscriminat
         
         'calculatedAt': (new Date(json['calculatedAt'])),
         'calculationType': json['calculationType'] == null ? undefined : json['calculationType'],
+        'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
+        'documentRules': json['documentRules'] == null ? undefined : ((json['documentRules'] as Array<any>).map(TaxDocumentRuleFromJSON)),
         'effectiveTaxRate': json['effectiveTaxRate'],
         'externalTransactionId': json['externalTransactionId'] == null ? undefined : json['externalTransactionId'],
         'jurisdictions': ((json['jurisdictions'] as Array<any>).map(TaxJurisdictionFromJSON)),
@@ -184,6 +204,8 @@ export function TaxCalculationResponseToJSON(value?: TaxCalculationResponse | nu
         
         'calculatedAt': ((value['calculatedAt']).toISOString()),
         'calculationType': value['calculationType'],
+        'countryCode': value['countryCode'],
+        'documentRules': value['documentRules'] == null ? undefined : ((value['documentRules'] as Array<any>).map(TaxDocumentRuleToJSON)),
         'effectiveTaxRate': value['effectiveTaxRate'],
         'externalTransactionId': value['externalTransactionId'],
         'jurisdictions': ((value['jurisdictions'] as Array<any>).map(TaxJurisdictionToJSON)),

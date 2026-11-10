@@ -74,12 +74,27 @@ export interface CompletionPreconditionsResponse {
      */
     unresolvedApprovalGatedChangeRequests?: number;
     /**
+     * What the workorder is waiting on besides its own items; CUSTOMER while a required customer completion sign-off is outstanding (#3201). Null when it waits on nothing outside the workorder
+     * @type {string}
+     * @memberof CompletionPreconditionsResponse
+     */
+    waitingOn?: CompletionPreconditionsResponseWaitingOnEnum;
+    /**
      * Workorder identifier
      * @type {string}
      * @memberof CompletionPreconditionsResponse
      */
     workorderId: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CompletionPreconditionsResponseWaitingOnEnum {
+    Customer = 'CUSTOMER'
+}
+
 
 /**
  * Check if a given object implements the CompletionPreconditionsResponse interface.
@@ -110,6 +125,7 @@ export function CompletionPreconditionsResponseFromJSONTyped(json: any, ignoreDi
         'nonTerminalPartItems': json['nonTerminalPartItems'] == null ? undefined : json['nonTerminalPartItems'],
         'nonTerminalServiceItems': json['nonTerminalServiceItems'] == null ? undefined : json['nonTerminalServiceItems'],
         'unresolvedApprovalGatedChangeRequests': json['unresolvedApprovalGatedChangeRequests'] == null ? undefined : json['unresolvedApprovalGatedChangeRequests'],
+        'waitingOn': json['waitingOn'] == null ? undefined : json['waitingOn'],
         'workorderId': json['workorderId'],
     };
 }
@@ -129,6 +145,7 @@ export function CompletionPreconditionsResponseToJSON(value?: CompletionPrecondi
         'nonTerminalPartItems': value['nonTerminalPartItems'],
         'nonTerminalServiceItems': value['nonTerminalServiceItems'],
         'unresolvedApprovalGatedChangeRequests': value['unresolvedApprovalGatedChangeRequests'],
+        'waitingOn': value['waitingOn'],
         'workorderId': value['workorderId'],
     };
 }

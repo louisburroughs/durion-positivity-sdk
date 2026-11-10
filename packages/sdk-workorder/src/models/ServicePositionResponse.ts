@@ -51,6 +51,18 @@ export interface ServicePositionResponse {
      */
     resourceType?: ServicePositionResponseResourceTypeEnum;
     /**
+     * End of the half-open slot; null means unbounded (held until the workorder closes) or, for HOLD, not applicable
+     * @type {Date}
+     * @memberof ServicePositionResponse
+     */
+    slotEnd?: Date;
+    /**
+     * Start of the half-open slot the position is booked for; null for HOLD and for a legacy placement that predates slots
+     * @type {Date}
+     * @memberof ServicePositionResponse
+     */
+    slotStart?: Date;
+    /**
      * Technician holding the workorder now; null when none is assigned
      * @type {string}
      * @memberof ServicePositionResponse
@@ -103,6 +115,8 @@ export function ServicePositionResponseFromJSONTyped(json: any, ignoreDiscrimina
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
+        'slotEnd': json['slotEnd'] == null ? undefined : (new Date(json['slotEnd'])),
+        'slotStart': json['slotStart'] == null ? undefined : (new Date(json['slotStart'])),
         'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
         'workorderId': json['workorderId'],
         'workorderStatus': json['workorderStatus'] == null ? undefined : json['workorderStatus'],
@@ -119,6 +133,8 @@ export function ServicePositionResponseToJSON(value?: ServicePositionResponse | 
         'locationId': value['locationId'],
         'resourceId': value['resourceId'],
         'resourceType': value['resourceType'],
+        'slotEnd': value['slotEnd'] == null ? undefined : ((value['slotEnd']).toISOString()),
+        'slotStart': value['slotStart'] == null ? undefined : ((value['slotStart']).toISOString()),
         'technicianId': value['technicianId'],
         'workorderId': value['workorderId'],
         'workorderStatus': value['workorderStatus'],

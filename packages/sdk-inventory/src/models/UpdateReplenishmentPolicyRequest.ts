@@ -32,7 +32,7 @@ export interface UpdateReplenishmentPolicyRequest {
      */
     leadTimeDaysOverride?: number;
     /**
-     * Maximum on-hand quantity replenishment aims to restock up to
+     * Maximum on-hand quantity replenishment aims to restock up to; must be at least minimumQuantity, and 0 with minimumQuantity 0 is a reserve bin
      * @type {number}
      * @memberof UpdateReplenishmentPolicyRequest
      */
@@ -42,9 +42,9 @@ export interface UpdateReplenishmentPolicyRequest {
      * @type {boolean}
      * @memberof UpdateReplenishmentPolicyRequest
      */
-    minimumLessThanMaximum?: boolean;
+    minimumAtMostMaximum?: boolean;
     /**
-     * Minimum on-hand quantity that triggers replenishment when reached
+     * Minimum on-hand quantity that triggers replenishment when reached; 0 with maximumQuantity 0 marks a reserve bin that never triggers replenishment
      * @type {number}
      * @memberof UpdateReplenishmentPolicyRequest
      */
@@ -96,7 +96,7 @@ export function UpdateReplenishmentPolicyRequestFromJSONTyped(json: any, ignoreD
         'active': json['active'] == null ? undefined : json['active'],
         'leadTimeDaysOverride': json['leadTimeDaysOverride'] == null ? undefined : json['leadTimeDaysOverride'],
         'maximumQuantity': json['maximumQuantity'],
-        'minimumLessThanMaximum': json['minimumLessThanMaximum'] == null ? undefined : json['minimumLessThanMaximum'],
+        'minimumAtMostMaximum': json['minimumAtMostMaximum'] == null ? undefined : json['minimumAtMostMaximum'],
         'minimumQuantity': json['minimumQuantity'],
         'orderMultiple': json['orderMultiple'] == null ? undefined : json['orderMultiple'],
         'preferredSourceType': json['preferredSourceType'] == null ? undefined : json['preferredSourceType'],
@@ -112,7 +112,7 @@ export function UpdateReplenishmentPolicyRequestToJSON(value?: UpdateReplenishme
         'active': value['active'],
         'leadTimeDaysOverride': value['leadTimeDaysOverride'],
         'maximumQuantity': value['maximumQuantity'],
-        'minimumLessThanMaximum': value['minimumLessThanMaximum'],
+        'minimumAtMostMaximum': value['minimumAtMostMaximum'],
         'minimumQuantity': value['minimumQuantity'],
         'orderMultiple': value['orderMultiple'],
         'preferredSourceType': value['preferredSourceType'],

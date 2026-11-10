@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PrimaryContactDto } from './PrimaryContactDto';
+import {
+    PrimaryContactDtoFromJSON,
+    PrimaryContactDtoFromJSONTyped,
+    PrimaryContactDtoToJSON,
+} from './PrimaryContactDto';
 import type { TaxRegistrationDto } from './TaxRegistrationDto';
 import {
     TaxRegistrationDtoFromJSON,
@@ -21,17 +27,35 @@ import {
 } from './TaxRegistrationDto';
 
 /**
- * Replaces a vendor's settable fields. vendorNumber, remitTo and status are changed elsewhere.
+ * Replaces a vendor's settable fields. vendorNumber, remitTo and status are changed elsewhere. The presentation fields are optional and fully replaced: omitting one clears it.
  * @export
  * @interface VendorUpdateRequest
  */
 export interface VendorUpdateRequest {
+    /**
+     * Vendor public catalogue; https only, at most 2048 characters; null clears it.
+     * @type {string}
+     * @memberof VendorUpdateRequest
+     */
+    catalogUrl?: string;
+    /**
+     * Free-text categories; at most 10 entries of 1-60 characters, deduplicated.
+     * @type {Array<string>}
+     * @memberof VendorUpdateRequest
+     */
+    categories?: Array<string>;
     /**
      * ISO 4217 currency code, upper case.
      * @type {string}
      * @memberof VendorUpdateRequest
      */
     defaultCurrency?: string;
+    /**
+     * Vendor's general lead time in days, 0 to 365; null clears it.
+     * @type {number}
+     * @memberof VendorUpdateRequest
+     */
+    defaultLeadTimeDays?: number;
     /**
      * DUE_ON_RECEIPT or NET<n> with n from 1 to 120.
      * @type {string}
@@ -51,6 +75,12 @@ export interface VendorUpdateRequest {
      */
     legalName?: string;
     /**
+     * 
+     * @type {PrimaryContactDto}
+     * @memberof VendorUpdateRequest
+     */
+    primaryContact?: PrimaryContactDto;
+    /**
      * Tax registrations, replacing the stored list; omit or leave empty for none.
      * @type {Array<TaxRegistrationDto>}
      * @memberof VendorUpdateRequest
@@ -62,6 +92,12 @@ export interface VendorUpdateRequest {
      * @memberof VendorUpdateRequest
      */
     version?: number;
+    /**
+     * Vendor website; https only, at most 2048 characters; null clears it.
+     * @type {string}
+     * @memberof VendorUpdateRequest
+     */
+    websiteUrl?: string;
 }
 
 /**
@@ -81,12 +117,17 @@ export function VendorUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'catalogUrl': json['catalogUrl'] == null ? undefined : json['catalogUrl'],
+        'categories': json['categories'] == null ? undefined : json['categories'],
         'defaultCurrency': json['defaultCurrency'] == null ? undefined : json['defaultCurrency'],
+        'defaultLeadTimeDays': json['defaultLeadTimeDays'] == null ? undefined : json['defaultLeadTimeDays'],
         'defaultPaymentTerms': json['defaultPaymentTerms'] == null ? undefined : json['defaultPaymentTerms'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'legalName': json['legalName'] == null ? undefined : json['legalName'],
+        'primaryContact': json['primaryContact'] == null ? undefined : PrimaryContactDtoFromJSON(json['primaryContact']),
         'taxRegistrations': json['taxRegistrations'] == null ? undefined : ((json['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoFromJSON)),
         'version': json['version'] == null ? undefined : json['version'],
+        'websiteUrl': json['websiteUrl'] == null ? undefined : json['websiteUrl'],
     };
 }
 
@@ -96,12 +137,17 @@ export function VendorUpdateRequestToJSON(value?: VendorUpdateRequest | null): a
     }
     return {
         
+        'catalogUrl': value['catalogUrl'],
+        'categories': value['categories'],
         'defaultCurrency': value['defaultCurrency'],
+        'defaultLeadTimeDays': value['defaultLeadTimeDays'],
         'defaultPaymentTerms': value['defaultPaymentTerms'],
         'displayName': value['displayName'],
         'legalName': value['legalName'],
+        'primaryContact': PrimaryContactDtoToJSON(value['primaryContact']),
         'taxRegistrations': value['taxRegistrations'] == null ? undefined : ((value['taxRegistrations'] as Array<any>).map(TaxRegistrationDtoToJSON)),
         'version': value['version'],
+        'websiteUrl': value['websiteUrl'],
     };
 }
 
