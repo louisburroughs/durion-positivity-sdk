@@ -483,6 +483,7 @@ export class CustomerEventSimulator {
         let timerStarted = false;
         try {
           await this.workorderClient.workexecTimeTrackingAPIApi.startTimer({
+            idempotencyKey: crypto.randomUUID(),
             workexecTimerStartRequest: {
               workorderId,
               workorderItemId,
@@ -495,6 +496,7 @@ export class CustomerEventSimulator {
             try {
               await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
               await this.workorderClient.workexecTimeTrackingAPIApi.startTimer({
+                idempotencyKey: crypto.randomUUID(),
                 workexecTimerStartRequest: {
                   workorderId,
                   workorderItemId,
