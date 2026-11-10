@@ -59,6 +59,12 @@ jobs:
         # compiles at all.
         run: npm run build
 
+      - name: Agent QA smoke
+        # The agent harness end to end against a mock model and a mock gateway:
+        # the one path the unit suites cannot take, because Jest cannot load the
+        # ESM-only AI SDK. Needs the build above, like any consumer of the clients.
+        run: npm run qa:smoke
+
       - name: Typecheck
         # src/** against the packages' build output, so it has to follow the
         # build rather than replace it.

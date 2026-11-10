@@ -72,6 +72,10 @@ All packages are versioned together at `0.1.0-alpha` and scoped under `@durion-s
 
 `@durion-sdk/internal` (private) covers the internal tax service and is not published.
 
+`@durion-sdk/agent-qa` (private) is the agentic QA harness: it exposes every generated SDK method to a language
+model as a validated tool and replays a tenant's daily, weekly and monthly operations against a live backend. See
+[packages/sdk-agent-qa/README.md](packages/sdk-agent-qa/README.md).
+
 ---
 
 ## Architecture

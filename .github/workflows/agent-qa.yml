@@ -1,0 +1,207 @@
+name: Agent QA
+
+# Runs the agentic QA harness (packages/sdk-agent-qa) against alpha from a
+# GitHub-hosted runner, for when a laptop is not the right place for it.
+#
+# The laptop is the primary launcher (`npm run qa:daemon`, or `npm run qa:tick`
+# from cron / Task Scheduler); this is the same `tick`, reached a different way:
+#   1. build the workspace, so the harness calls the clients a consumer would;
+#   2. open the SSM port-forward to alpha that scripts/alpha-itest-tunnel.sh
+#      opens on a laptop (no ingress is opened and nothing on alpha changes);
+#   3. restore the harness state — what has run today, this week and this month,
+#      and the month's SDK coverage — run one pass, and save the state again.
+#
+# Step 3 is what makes separate runs one schedule: the planner is a function of
+# the clock and that state, so a run only does what is due and not yet done.
+#
+# Manual by default. To have it keep the shop's hours without a laptop, enable
+# the schedule below: every half hour from 07:30 to 18:30 US Eastern, Monday to
+# Saturday, each run doing at most one scenario (the harness's own pacing).
+#
+# Needs, beyond what the other alpha workflows already use (AWS_ROLE_ARN,
+# ALPHA_INSTANCE_ID):
+#   secrets  ITEST_USERNAME, ITEST_PASSWORD      the admin login, as in .env.itest
+#            QA_ENV                              optional: extra KEY=value lines in .env.itest
+#                                                form (persona logins, QA_* overrides)
+#            OPENROUTER_API_KEY and/or OPENCODE_API_KEY, OLLAMA_API_KEY
+#   vars     QA_MODELS                           e.g. openrouter:anthropic/claude-sonnet-4.5
+#            OLLAMA_BASE_URL                     only for Ollama cloud
+# and the role behind AWS_ROLE_ARN must allow ssm:StartSession on the alpha
+# instance with AWS-StartPortForwardingSession.
+on:
+  workflow_dispatch:
+    inputs:
+      pass:
+        description: "due-now: what a tick would run at this moment. whole-day: everything due so far today, back to back."
+        type: choice
+        default: due-now
+        options:
+          - due-now
+          - whole-day
+      scenarios:
+        description: "Run these scenario ids now instead (space-separated), ignoring the schedule"
+        type: string
+        default: ""
+  # schedule:
+  #   - cron: "*/30 11-23 * * 1-6"
+
+concurrency:
+  # One pass at a time: the state cache is read at the start and written at the end.
+  group: agent-qa
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # OIDC for the SSM tunnel
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  QA_STATE_DIR: ${{ github.workspace }}/.agent-qa
+
+jobs:
+  qa:
+    name: Run due scenarios against alpha
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Restore harness state
+        uses: actions/cache/restore@v4
+        with:
+          path: .agent-qa
+          # Never an exact hit: each run saves under its own key and restores the newest.
+          key: agent-qa-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: agent-qa-state-
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install the Session Manager plugin
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/session-manager-plugin.deb \
+            https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+          sudo dpkg -i /tmp/session-manager-plugin.deb
+
+      - name: Open the tunnel to alpha
+        env:
+          ALPHA_INSTANCE_ID: ${{ vars.ALPHA_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          nohup ./scripts/alpha-itest-tunnel.sh > tunnel.log 2>&1 &
+          echo "TUNNEL_PID=$!" >> "$GITHUB_ENV"
+          for _ in $(seq 1 60); do
+            if (exec 3<>/dev/tcp/127.0.0.1/18080) 2> /dev/null; then
+              echo "gateway tunnel is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::The tunnel did not come up"
+          cat tunnel.log
+          exit 1
+
+      - name: Run the harness
+        id: run
+        env:
+          ITEST_BASE_URL: http://localhost:18080
+          ITEST_SECURITY_SERVICE_URL: http://localhost:18086
+          ITEST_USERNAME: ${{ secrets.ITEST_USERNAME }}
+          ITEST_PASSWORD: ${{ secrets.ITEST_PASSWORD }}
+          ALPHA_TENANT_SLUG: alpha
+          ALPHA_TENANT_ID: 01900000-0000-7000-8000-000000000001
+          QA_MODELS: ${{ vars.QA_MODELS }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_BASE_URL: ${{ vars.OLLAMA_BASE_URL }}
+          QA_ENV: ${{ secrets.QA_ENV }}
+          # Through the environment, never interpolated into the script.
+          QA_PASS: ${{ inputs.pass || 'due-now' }}
+          QA_SCENARIOS: ${{ inputs.scenarios }}
+        run: |
+          set -euo pipefail
+          # Extra settings ride in as a .env.itest, which the harness already
+          # reads; values set above win over it, and it never reaches the log.
+          if [[ -n "${QA_ENV}" ]]; then
+            umask 077
+            printf '%s\n' "${QA_ENV}" > "${RUNNER_TEMP}/env.itest"
+            export ITEST_ENV_FILE="${RUNNER_TEMP}/env.itest"
+          fi
+          if [[ "${QA_PASS}" == "whole-day" ]]; then
+            export QA_MAX_PER_TICK=100 QA_MIN_GAP_MINUTES=0 QA_MAX_LATENESS_MINUTES=1440
+          fi
+
+          set +e
+          if [[ -n "${QA_SCENARIOS}" ]]; then
+            read -r -a IDS <<< "${QA_SCENARIOS}"
+            for id in "${IDS[@]}"; do
+              [[ "${id}" =~ ^[a-z0-9-]+$ ]] || { echo "::error::'${id}' is not a scenario id"; exit 64; }
+            done
+            npm run --silent qa -- run "${IDS[@]}"
+          else
+            npm run --silent qa:tick
+          fi
+          CODE=$?
+          set -e
+          echo "code=${CODE}" >> "$GITHUB_OUTPUT"
+
+          REPORT="$(find .agent-qa/runs -name report.md 2> /dev/null | sort | tail -n 1)"
+          if [[ -n "${REPORT}" ]]; then
+            cat "${REPORT}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Nothing was due." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Close the tunnel
+        if: always()
+        run: |
+          if [[ -n "${TUNNEL_PID:-}" ]]; then
+            kill -INT "${TUNNEL_PID}" 2> /dev/null || true
+          fi
+
+      - name: Save harness state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .agent-qa
+          key: agent-qa-state-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload reports, ledgers and transcripts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-qa-${{ github.run_id }}
+          path: .agent-qa/runs
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Fail on a server error or an unreachable backend
+        if: steps.run.outputs.code != '0'
+        env:
+          CODE: ${{ steps.run.outputs.code }}
+        run: |
+          case "${CODE}" in
+            1) echo "::error::A scenario found a server error or an undecodable response; see the summary" ;;
+            2) echo "::error::Alpha did not answer" ;;
+            *) echo "::error::The harness exited ${CODE} (configuration or usage)" ;;
+          esac
+          exit 1
