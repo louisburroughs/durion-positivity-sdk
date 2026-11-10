@@ -151,7 +151,11 @@ describe('VirtualClock', () => {
     // The figure a run can plan against: the anchors say how long the timeline was,
     // this says how much of it survives. Derived from the reading alone, so it stays
     // right across a re-dispatch that moves the anchors.
-    const reading = await clockWith(respond(200, body())).read();
+    // The reading is taken against the real wall clock, so the fixture's virtual
+    // instant is placed relative to today: a fixed date drifts further behind every
+    // day until the gap outgrows the deployed one and the bound below fails.
+    const virtualTime = new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString();
+    const reading = await clockWith(respond(200, body({ virtualTime }))).read();
     const gapDays = (reading.readAt.getTime() - reading.virtualTime.getTime()) / (24 * 60 * 60 * 1000);
     expect(reading.remainingDays).toBeCloseTo((1460 * gapDays) / 1459, 3);
     // Strictly less than the deployed gap, because time has already been spent.

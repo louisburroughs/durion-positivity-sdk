@@ -257,6 +257,7 @@ describe('Suite C — workorder execution', () => {
 
     await call('startTimer', () =>
       tech.workorder.workexecTimeTrackingAPIApi.startTimer({
+        idempotencyKey: crypto.randomUUID(),
         workexecTimerStartRequest: {
           workorderId,
           workorderItemId: serviceItemId,
@@ -291,6 +292,7 @@ describe('Suite C — workorder execution', () => {
 
     await call('startTimer (first item, to occupy the technician)', () =>
       tech.workorder.workexecTimeTrackingAPIApi.startTimer({
+        idempotencyKey: crypto.randomUUID(),
         workexecTimerStartRequest: {
           workorderId,
           workorderItemId: firstItemId,
@@ -301,6 +303,7 @@ describe('Suite C — workorder execution', () => {
 
     const status = await expectHttpError(
       tech.workorder.workexecTimeTrackingAPIApi.startTimer({
+        idempotencyKey: crypto.randomUUID(),
         workexecTimerStartRequest: {
           workorderId,
           workorderItemId: secondItemId,
@@ -314,6 +317,7 @@ describe('Suite C — workorder execution', () => {
     // Recover the way the seeder does: stop, restart on the second item, stop.
     await tech.workorder.workexecTimeTrackingAPIApi.stopTimers();
     await tech.workorder.workexecTimeTrackingAPIApi.startTimer({
+      idempotencyKey: crypto.randomUUID(),
       workexecTimerStartRequest: {
         workorderId,
         workorderItemId: secondItemId,
@@ -477,6 +481,7 @@ describe('Suite C — workorder execution', () => {
     // Work it like the others so C8 can complete every item.
     await stopTimersIfRunning(tech);
     await tech.workorder.workexecTimeTrackingAPIApi.startTimer({
+      idempotencyKey: crypto.randomUUID(),
       workexecTimerStartRequest: {
         workorderId,
         workorderItemId: withChange.added.id,
@@ -634,6 +639,7 @@ describe('Suite C — workorder execution', () => {
     itInRoleMode('an advisor cannot start a labor timer', async () => {
       await expectHttpError(
         advisor.workorder.workexecTimeTrackingAPIApi.startTimer({
+          idempotencyKey: crypto.randomUUID(),
           workexecTimerStartRequest: {
             workorderId,
             workorderItemId: promoted.serviceItemMap.get(serviceIds[0]),

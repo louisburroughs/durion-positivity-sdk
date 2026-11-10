@@ -941,9 +941,10 @@ export function createAppointmentPort(options: {
    * The bridge is idempotent on the **appointment id**:
    * `EstimateServiceImpl.createEstimateFromAppointment` looks up
    * `estimateRepository.findByAppointmentId` first and returns the existing
-   * estimate with `created: false` when there is one. `idempotencyKey` is
-   * logged and nothing else, so a fresh UUID per attempt is safe — a retried
-   * conversion cannot produce a second estimate for one arrival.
+   * estimate with `created: false` when there is one. The `Idempotency-Key`
+   * header only replays a retry that reuses the same key, so a fresh UUID per
+   * attempt is safe — a retried conversion still lands on the appointment
+   * lookup and cannot produce a second estimate for one arrival.
    *
    * That matters now that a refused conversion no longer ends the run: the
    * appointment stays pending and is tried again on the next virtual day, and
@@ -957,8 +958,8 @@ export function createAppointmentPort(options: {
         }
         const created = await call(`createEstimateFromAppointment ${appointment.appointmentId}`, () =>
           options.advisor.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
+            idempotencyKey: crypto.randomUUID(),
             createEstimateFromAppointmentRequest: {
-              idempotencyKey: crypto.randomUUID(),
               appointmentId: appointment.appointmentId,
               customerId: appointment.partyId,
               vehicleId: appointment.vehicleId,

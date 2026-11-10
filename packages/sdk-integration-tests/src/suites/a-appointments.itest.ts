@@ -276,14 +276,12 @@ describe('Suite A — appointments', () => {
   describe('A5 — appointment → estimate bridge', () => {
     it('is idempotent on the appointment: the second call returns the first estimate', async () => {
       const appointment = await bookAppointment(advisor);
-      // The field is typed as a plain string by the generated client but is a UUID
-      // on the backend, which rejects anything else with a bare 400. One value,
-      // reused across both calls: that sameness is what the test is proving.
-      const idempotencyKey = crypto.randomUUID();
-
+      // The Idempotency-Key header replays the original response for a retry of
+      // the same request, which would hide what this test proves: that the
+      // bridge is idempotent on the appointment itself. So each call carries its
+      // own key and the second one has to find the estimate by appointment id.
       const request = {
         createEstimateFromAppointmentRequest: {
-          idempotencyKey,
           appointmentId: appointment.appointmentId,
           customerId: customer.partyId,
           vehicleId,
@@ -295,13 +293,19 @@ describe('Suite A — appointments', () => {
       };
 
       const first = await call('createEstimateFromAppointment (first)', () =>
-        advisor.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment(request),
+        advisor.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
+          ...request,
+          idempotencyKey: crypto.randomUUID(),
+        }),
       );
       expect(first.created).toBe(true);
       expect(first.estimateId).toBeTruthy();
 
       const second = await call('createEstimateFromAppointment (replay)', () =>
-        advisor.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment(request),
+        advisor.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
+          ...request,
+          idempotencyKey: crypto.randomUUID(),
+        }),
       );
       expect(second.created).toBe(false);
       expect(second.estimateId).toBe(first.estimateId);
@@ -347,8 +351,8 @@ describe('Suite A — appointments', () => {
       const appointment = await bookAppointment(advisor);
       await expectHttpError(
         tech.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
+          idempotencyKey: crypto.randomUUID(),
           createEstimateFromAppointmentRequest: {
-            idempotencyKey: crypto.randomUUID(),
             appointmentId: appointment.appointmentId,
             customerId: customer.partyId,
             vehicleId,

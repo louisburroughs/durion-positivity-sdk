@@ -250,6 +250,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   it('F1 — the technician opens a labor session on the service line', async () => {
     const entry = await call('startLaborSession', () =>
       tech.workorder.workorderLaborAPIApi.startLaborSession({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         serviceId: serviceItemId,
         startLaborRequest: {
@@ -271,6 +272,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   it('F2 — a second session on the same service is refused while one is open', async () => {
     const status = await expectHttpError(
       tech.workorder.workorderLaborAPIApi.startLaborSession({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         serviceId: serviceItemId,
         startLaborRequest: { technicianId },
@@ -288,6 +290,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   it('F2b — a running entry cannot be adjusted: stop it first', async () => {
     const refused = await expectApiError(
       manager.workorder.workorderLaborAPIApi.adjustLaborHours({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         entryId: laborEntryId,
         adjustLaborRequest: {
@@ -307,7 +310,11 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     await new Promise((resolve) => setTimeout(resolve, 1_500));
 
     const stopped = await call('stopLaborSession', () =>
-      tech.workorder.workorderLaborAPIApi.stopLaborSession({ workorderId, entryId: laborEntryId }),
+      tech.workorder.workorderLaborAPIApi.stopLaborSession({
+        idempotencyKey: crypto.randomUUID(),
+        workorderId,
+        entryId: laborEntryId,
+      }),
     );
     console.log(`[F3] labor entry ${laborEntryId} closed, hours=${stopped.hoursWorked}`);
 
@@ -339,6 +346,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   itInRoleMode('F5 — the technician cannot adjust the recorded hours', async () => {
     const status = await expectHttpError(
       tech.workorder.workorderLaborAPIApi.adjustLaborHours({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         entryId: laborEntryId,
         adjustLaborRequest: {
@@ -355,6 +363,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   it('F6 — the manager adjusts the technician\'s hours, and the record names the manager and the reason', async () => {
     const adjusted = await call('adjustLaborHours', () =>
       manager.workorder.workorderLaborAPIApi.adjustLaborHours({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         entryId: laborEntryId,
         adjustLaborRequest: {
@@ -402,6 +411,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
 
     await call('startTimer', () =>
       tech.workorder.workexecTimeTrackingAPIApi.startTimer({
+        idempotencyKey: crypto.randomUUID(),
         workexecTimerStartRequest: {
           workorderId,
           workorderItemId: serviceItemId,
@@ -482,6 +492,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   it('F7b — a supervisor\'s correction reaches pos-people\'s job-time totals', async () => {
     const entry = await call('startLaborSession', () =>
       tech.workorder.workorderLaborAPIApi.startLaborSession({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         serviceId: serviceItemId,
         startLaborRequest: {
@@ -492,7 +503,11 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 1_500));
     const stopped = await call('stopLaborSession', () =>
-      tech.workorder.workorderLaborAPIApi.stopLaborSession({ workorderId, entryId: entry.id }),
+      tech.workorder.workorderLaborAPIApi.stopLaborSession({
+        idempotencyKey: crypto.randomUUID(),
+        workorderId,
+        entryId: entry.id,
+      }),
     );
     const recordedHours = Number(stopped.hoursWorked);
     console.log(`[F7b] second entry ${entry.id} recorded ${recordedHours} h`);
@@ -500,6 +515,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     const before = await jobHoursReported();
     const adjusted = await call('adjustLaborHours', () =>
       manager.workorder.workorderLaborAPIApi.adjustLaborHours({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         entryId: entry.id,
         adjustLaborRequest: {
@@ -553,6 +569,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
 
     const adjusted = await call('adjustLaborHours', () =>
       manager.workorder.workorderLaborAPIApi.adjustLaborHours({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         entryId: laborEntryId,
         adjustLaborRequest: {
