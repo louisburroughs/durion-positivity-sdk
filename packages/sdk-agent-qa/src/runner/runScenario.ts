@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { runLoop, type LoopEvent, type LoopLimits, type LoopResult, type ModelPort } from '../agent/loop';
 import type { Catalog } from '../catalog/types';
-import type { CoverageStore } from '../coverage/CoverageStore';
+import type { CoverageStore } from '../sdk-coverage/CoverageStore';
 import type { CallLedger, CallRecord } from '../ledger/CallLedger';
 import { judge, type ExpectationResult, type Verdict } from '../scenarios/oracle';
 import type { Scenario } from '../scenarios/types';

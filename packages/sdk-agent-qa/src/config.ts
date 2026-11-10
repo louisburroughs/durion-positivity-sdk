@@ -8,7 +8,7 @@
  */
 import * as path from 'path';
 import { z } from 'zod';
-import type { CoverageLevel } from './coverage/CoverageStore';
+import type { CoverageLevel } from './sdk-coverage/CoverageStore';
 import type { SafetyPolicy } from './tools/toolkit';
 
 type Env = Record<string, string | undefined>;

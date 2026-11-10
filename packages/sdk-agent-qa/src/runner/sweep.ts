@@ -14,7 +14,7 @@
  * which every model provider was down.
  */
 import { randomUUID } from 'crypto';
-import type { CoverageLevel, CoverageStore } from '../coverage/CoverageStore';
+import type { CoverageLevel, CoverageStore } from '../sdk-coverage/CoverageStore';
 import type { Catalog, Operation, Risk, SchemaIR } from '../catalog/types';
 import { SWEEP_SCENARIO_ID, SWEEP_SLOT } from '../scenarios/library';
 import { scenarioSchema, type Scenario } from '../scenarios/types';

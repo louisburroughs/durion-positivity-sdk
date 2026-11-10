@@ -18,7 +18,7 @@
  */
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import type { CoverageStore } from '../coverage/CoverageStore';
+import type { CoverageStore } from '../sdk-coverage/CoverageStore';
 import type { Catalog, Operation, Risk } from '../catalog/types';
 import { formatIssues, zodFromIr } from '../catalog/zodFromIr';
 import type { CallLedger } from '../ledger/CallLedger';

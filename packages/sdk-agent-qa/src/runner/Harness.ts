@@ -8,7 +8,7 @@ import * as path from 'path';
 import type { ModelPort } from '../agent/loop';
 import type { Catalog } from '../catalog/types';
 import type { QaConfig } from '../config';
-import { CoverageStore, sweepQuota, type CoverageSummary } from '../coverage/CoverageStore';
+import { CoverageStore, sweepQuota, type CoverageSummary } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
 import { SCENARIOS, SWEEP_SCENARIO_ID, SWEEP_SLOT } from '../scenarios/library';
 import type { Scenario } from '../scenarios/types';

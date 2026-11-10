@@ -4,7 +4,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
-import type { CoverageSummary } from '../coverage/CoverageStore';
+import type { CoverageSummary } from '../sdk-coverage/CoverageStore';
 import type { ScenarioResult } from './runScenario';
 
 const MARK: Record<string, string> = {

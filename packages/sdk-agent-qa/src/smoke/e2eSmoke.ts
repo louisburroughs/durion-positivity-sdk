@@ -16,7 +16,7 @@ import type { AddressInfo } from 'node:net';
 import { MockLanguageModelV4 } from 'ai/test';
 import { AiSdkModel } from '../agent/aiSdkModel';
 import { buildCatalog } from '../catalog/buildCatalog';
-import { CoverageStore } from '../coverage/CoverageStore';
+import { CoverageStore } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
 import { runScenario } from '../runner/runScenario';
 import { scenarioSchema } from '../scenarios/types';

@@ -1,5 +1,5 @@
 import { buildCatalog } from '../catalog/buildCatalog';
-import { CoverageStore } from '../coverage/CoverageStore';
+import { CoverageStore } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
 import { fakeBackend, invokerFor, type FakeBackend } from '../testing/fakes';
 import { ToolRuntime, type QaTool, type SafetyPolicy, type ToolRuntimeOptions } from './toolkit';
