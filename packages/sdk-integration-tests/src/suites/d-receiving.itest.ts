@@ -623,6 +623,7 @@ describe('Suite D — receiving', () => {
       let outcome: string;
       try {
         const crossDocked = await parts.inventory.receivingApi.crossDockReceivingLine({
+          idempotencyKey: crypto.randomUUID(),
           sessionId: crossDockSessionId,
           lineId,
           crossDockRequest: {
@@ -705,6 +706,7 @@ describe('Suite D — receiving', () => {
 
       const status = await expectHttpError(
         parts.inventory.receivingApi.crossDockReceivingLine({
+          idempotencyKey: crypto.randomUUID(),
           sessionId: '00000000-0000-0000-0000-000000000000',
           lineId: '00000000-0000-0000-0000-000000000000',
           crossDockRequest: {

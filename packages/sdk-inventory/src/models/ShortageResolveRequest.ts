@@ -26,12 +26,6 @@ export interface ShortageResolveRequest {
      */
     allocationId: string;
     /**
-     * Retry-safe idempotency key; a replay with the same key returns the original result. When omitted, defaults to "<allocationId>:<optionType>"
-     * @type {string}
-     * @memberof ShortageResolveRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Site the demand is short at (required for BACKORDER / TRANSFER_IN)
      * @type {string}
      * @memberof ShortageResolveRequest
@@ -114,7 +108,6 @@ export function ShortageResolveRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'allocationId': json['allocationId'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
         'optionType': json['optionType'],
@@ -133,7 +126,6 @@ export function ShortageResolveRequestToJSON(value?: ShortageResolveRequest | nu
     return {
         
         'allocationId': value['allocationId'],
-        'idempotencyKey': value['idempotencyKey'],
         'locationId': value['locationId'],
         'notes': value['notes'],
         'optionType': value['optionType'],

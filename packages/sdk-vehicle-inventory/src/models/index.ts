@@ -10,6 +10,7 @@ export * from './FieldError';
 export * from './PageVehicleDueDateResponse';
 export * from './Pageable';
 export * from './PageableObject';
+export * from './PolicyBlocker';
 export * from './PreferencesMergeDto';
 export * from './PreferencesUpsertDto';
 export * from './SearchVehiclesRequest';

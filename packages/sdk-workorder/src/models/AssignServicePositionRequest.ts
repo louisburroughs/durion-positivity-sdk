@@ -37,6 +37,18 @@ export interface AssignServicePositionRequest {
      * @memberof AssignServicePositionRequest
      */
     resourceType: AssignServicePositionRequestResourceTypeEnum;
+    /**
+     * End of the half-open slot [slotStart, slotEnd). Requires slotStart and must be after it; omitted with a slotStart means slotStart plus the default length. Ignored for HOLD
+     * @type {Date}
+     * @memberof AssignServicePositionRequest
+     */
+    slotEnd?: Date;
+    /**
+     * Start of the half-open slot [slotStart, slotEnd) the position is booked for. Optional; omitted means the server default (now until now plus max(30 minutes, book time)). Ignored for HOLD
+     * @type {Date}
+     * @memberof AssignServicePositionRequest
+     */
+    slotStart?: Date;
 }
 
 /**
@@ -71,6 +83,8 @@ export function AssignServicePositionRequestFromJSONTyped(json: any, ignoreDiscr
         'reason': json['reason'] == null ? undefined : json['reason'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'resourceType': json['resourceType'],
+        'slotEnd': json['slotEnd'] == null ? undefined : (new Date(json['slotEnd'])),
+        'slotStart': json['slotStart'] == null ? undefined : (new Date(json['slotStart'])),
     };
 }
 
@@ -83,6 +97,8 @@ export function AssignServicePositionRequestToJSON(value?: AssignServicePosition
         'reason': value['reason'],
         'resourceId': value['resourceId'],
         'resourceType': value['resourceType'],
+        'slotEnd': value['slotEnd'] == null ? undefined : ((value['slotEnd']).toISOString()),
+        'slotStart': value['slotStart'] == null ? undefined : ((value['slotStart']).toISOString()),
     };
 }
 

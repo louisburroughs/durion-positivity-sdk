@@ -17,6 +17,8 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   CountResponse,
+  CreateAdHocCountTasksRequest,
+  CreateAdHocCountTasksResponse,
   SubmitCountRequest,
   SubmitRecountRequest,
 } from '../models/index';
@@ -25,11 +27,19 @@ import {
     ApiErrorToJSON,
     CountResponseFromJSON,
     CountResponseToJSON,
+    CreateAdHocCountTasksRequestFromJSON,
+    CreateAdHocCountTasksRequestToJSON,
+    CreateAdHocCountTasksResponseFromJSON,
+    CreateAdHocCountTasksResponseToJSON,
     SubmitCountRequestFromJSON,
     SubmitCountRequestToJSON,
     SubmitRecountRequestFromJSON,
     SubmitRecountRequestToJSON,
 } from '../models/index';
+
+export interface CreateAdHocCountTasksOperationRequest {
+    createAdHocCountTasksRequest: CreateAdHocCountTasksRequest;
+}
 
 export interface SubmitCycleCountRequest {
     submitCountRequest: SubmitCountRequest;
@@ -43,6 +53,52 @@ export interface SubmitCycleCountRecountRequest {
  * 
  */
 export class CycleCountOperationsApi extends runtime.BaseAPI {
+
+    /**
+     * Creates one cycle count task per requested bin for a SKU, outside any plan, and returns them with 201 — the part panel\'s \"Count now\". Use this tool to count a bin on demand; do not use generateCycleCountTasks, which creates the tasks a plan schedules, and do not use submitCycleCount, which records the count once the task exists. Preconditions: the SKU and every bin must exist, the bins must be ACTIVE and belong to the named site, and no open task — plan-generated or ad-hoc — may already count the same sku at the same bin. Each task is ASSIGNED with no plan, its bin as bin_location and the on-hand at that bin captured as its expected quantity (the same ledger aggregation plan generation snapshots); auditorId is recorded as given, else the authenticated caller (ADR-0018), so the task appears in the caller\'s handheld work queue, and the count then runs through the existing submit, recount and adjustment-approval endpoints unchanged. Required inputs: locationId (the site, a UUID), sku (the ledger\'s stock_item_id text, normally a SKU code) and storageLocationIds (1 to 50 bins); auditorId is optional. All or nothing: a request that fails any check records no task, and checks run in this order — the SKU and every bin must exist (404), the site must lie within the caller\'s inventory:cycle_count:initiate reach (403), a repeated bin is a 400, a bin that is not ACTIVE is a 422 STORAGE_LOCATION_INACTIVE (DECISION-INVENTORY-009), a bin of another site is a 422 VALIDATION_ERROR (DECISION-INVENTORY-001), and an already-open task for the same sku and bin is a 409 CYCLE_COUNT_TASK_ALREADY_OPEN naming the existing task (referenceId) without echoing quantities. Emits an INVENTORY_CYCLE_COUNT_TASK_CREATE_ADHOC event with no ledger entry posted and no on-hand change, and returns 400 VALIDATION_ERROR for a blank sku, an empty or over-50 bin list or a repeated bin, 403 LOCATION_SCOPE_DENIED outside the caller\'s reach, 404 for an unknown sku or bin, 409 CYCLE_COUNT_TASK_ALREADY_OPEN, and 422 STORAGE_LOCATION_INACTIVE or VALIDATION_ERROR. 
+     * Create ad-hoc cycle count tasks
+     */
+    async createAdHocCountTasksRaw(requestParameters: CreateAdHocCountTasksOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateAdHocCountTasksResponse>> {
+        if (requestParameters['createAdHocCountTasksRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createAdHocCountTasksRequest',
+                'Required parameter "createAdHocCountTasksRequest" was null or undefined when calling createAdHocCountTasks().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:initiate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/cycleCount/tasks`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreateAdHocCountTasksRequestToJSON(requestParameters['createAdHocCountTasksRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CreateAdHocCountTasksResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates one cycle count task per requested bin for a SKU, outside any plan, and returns them with 201 — the part panel\'s \"Count now\". Use this tool to count a bin on demand; do not use generateCycleCountTasks, which creates the tasks a plan schedules, and do not use submitCycleCount, which records the count once the task exists. Preconditions: the SKU and every bin must exist, the bins must be ACTIVE and belong to the named site, and no open task — plan-generated or ad-hoc — may already count the same sku at the same bin. Each task is ASSIGNED with no plan, its bin as bin_location and the on-hand at that bin captured as its expected quantity (the same ledger aggregation plan generation snapshots); auditorId is recorded as given, else the authenticated caller (ADR-0018), so the task appears in the caller\'s handheld work queue, and the count then runs through the existing submit, recount and adjustment-approval endpoints unchanged. Required inputs: locationId (the site, a UUID), sku (the ledger\'s stock_item_id text, normally a SKU code) and storageLocationIds (1 to 50 bins); auditorId is optional. All or nothing: a request that fails any check records no task, and checks run in this order — the SKU and every bin must exist (404), the site must lie within the caller\'s inventory:cycle_count:initiate reach (403), a repeated bin is a 400, a bin that is not ACTIVE is a 422 STORAGE_LOCATION_INACTIVE (DECISION-INVENTORY-009), a bin of another site is a 422 VALIDATION_ERROR (DECISION-INVENTORY-001), and an already-open task for the same sku and bin is a 409 CYCLE_COUNT_TASK_ALREADY_OPEN naming the existing task (referenceId) without echoing quantities. Emits an INVENTORY_CYCLE_COUNT_TASK_CREATE_ADHOC event with no ledger entry posted and no on-hand change, and returns 400 VALIDATION_ERROR for a blank sku, an empty or over-50 bin list or a repeated bin, 403 LOCATION_SCOPE_DENIED outside the caller\'s reach, 404 for an unknown sku or bin, 409 CYCLE_COUNT_TASK_ALREADY_OPEN, and 422 STORAGE_LOCATION_INACTIVE or VALIDATION_ERROR. 
+     * Create ad-hoc cycle count tasks
+     */
+    async createAdHocCountTasks(requestParameters: CreateAdHocCountTasksOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateAdHocCountTasksResponse> {
+        const response = await this.createAdHocCountTasksRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Records the auditor\'s initial physical count for an ASSIGNED cycle count task, computes the variance against the task\'s expected-quantity snapshot, and moves the task to COUNTED_PENDING_REVIEW — or to CONFLICT when on-hand-affecting stock movements occurred during the count window. Use this tool for the first count of a task; do not use submitCycleCountRecount, which records a follow-up count, and do not use createCycleCountAdjustment, which posts the settled variance to the ledger. Preconditions: the task must exist and be in ASSIGNED status; stock movements are never frozen during counts, so a CONFLICT outcome is expected behaviour, not an error. Required inputs: taskId (UUID), auditorId, and actualQuantity (integer, zero or positive). Emits an INVENTORY_CYCLE_COUNT_SUBMIT event; a count entry is recorded but no ledger posting or on-hand change happens here. Returns 404 when the task does not exist, 409 when the task is not in ASSIGNED status, and 400 when actualQuantity is negative. 

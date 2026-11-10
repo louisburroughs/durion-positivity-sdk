@@ -34,10 +34,10 @@ export interface TreadDesignImageDto {
     altTexts?: Array<TreadDesignImageAltTextDto>;
     /**
      * pos-image identifier for the stored bytes; absent when unresolved.
-     * @type {number}
+     * @type {string}
      * @memberof TreadDesignImageDto
      */
-    imageId?: number;
+    imageId?: string;
     /**
      * Vendor's own classification of the image.
      * @type {string}

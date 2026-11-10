@@ -32,6 +32,12 @@ export interface Conflict {
      */
     code: string;
     /**
+     * Identifier of the entity holding the resource, when the service can name it — for RESOURCE_OCCUPIED, the occupying workorder id
+     * @type {string}
+     * @memberof Conflict
+     */
+    holderId?: string;
+    /**
      * User-safe description of the conflict
      * @type {string}
      * @memberof Conflict
@@ -44,11 +50,29 @@ export interface Conflict {
      */
     overridable: boolean;
     /**
+     * Identifier of the resource the conflict is about, when it has one — for RESOURCE_OCCUPIED, the bay or mobile-unit id
+     * @type {string}
+     * @memberof Conflict
+     */
+    resourceId?: string;
+    /**
      * Conflict severity (HARD or SOFT)
      * @type {string}
      * @memberof Conflict
      */
     severity: string;
+    /**
+     * End of the holder's occupied window, ISO-8601. Null means unbounded
+     * @type {string}
+     * @memberof Conflict
+     */
+    windowEnd?: string;
+    /**
+     * Start of the holder's occupied window, ISO-8601. Null means unbounded
+     * @type {string}
+     * @memberof Conflict
+     */
+    windowStart?: string;
 }
 
 /**
@@ -74,9 +98,13 @@ export function ConflictFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         
         'affectedResource': json['affectedResource'] == null ? undefined : json['affectedResource'],
         'code': json['code'],
+        'holderId': json['holderId'] == null ? undefined : json['holderId'],
         'message': json['message'],
         'overridable': json['overridable'],
+        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'severity': json['severity'],
+        'windowEnd': json['windowEnd'] == null ? undefined : json['windowEnd'],
+        'windowStart': json['windowStart'] == null ? undefined : json['windowStart'],
     };
 }
 
@@ -88,9 +116,13 @@ export function ConflictToJSON(value?: Conflict | null): any {
         
         'affectedResource': value['affectedResource'],
         'code': value['code'],
+        'holderId': value['holderId'],
         'message': value['message'],
         'overridable': value['overridable'],
+        'resourceId': value['resourceId'],
         'severity': value['severity'],
+        'windowEnd': value['windowEnd'],
+        'windowStart': value['windowStart'],
     };
 }
 

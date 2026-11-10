@@ -683,6 +683,7 @@ export class AcceleratedJob {
     const workorderId = this.requireWorkorder();
     const entry = await call('startLaborSession', () =>
       this.deps.as.tech.workorder.workorderLaborAPIApi.startLaborSession({
+        idempotencyKey: crypto.randomUUID(),
         workorderId,
         serviceId: this.laborServiceId(),
         startLaborRequest: {
@@ -737,6 +738,7 @@ export class AcceleratedJob {
     try {
       await call('stopLaborSession', () =>
         this.deps.as.tech.workorder.workorderLaborAPIApi.stopLaborSession({
+          idempotencyKey: crypto.randomUUID(),
           workorderId: this.requireWorkorder(),
           entryId,
         }),

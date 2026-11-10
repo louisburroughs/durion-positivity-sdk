@@ -26,6 +26,12 @@ export interface LocationTypeDTO {
      */
     description?: string;
     /**
+     * Display level of the location type (display-only; a location's level comes only from its type). Required when a request creates a new location type by name, optional when it names an existing type by id or by an already-seeded name.
+     * @type {string}
+     * @memberof LocationTypeDTO
+     */
+    displayLevel?: LocationTypeDTODisplayLevelEnum;
+    /**
      * Unique identifier of the location type
      * @type {string}
      * @memberof LocationTypeDTO
@@ -38,6 +44,21 @@ export interface LocationTypeDTO {
      */
     name?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum LocationTypeDTODisplayLevelEnum {
+    Hq = 'HQ',
+    RegionHq = 'REGION_HQ',
+    Shop = 'SHOP',
+    Store = 'STORE',
+    Warehouse = 'WAREHOUSE',
+    DistributionCenter = 'DISTRIBUTION_CENTER',
+    MobileBase = 'MOBILE_BASE'
+}
+
 
 /**
  * Check if a given object implements the LocationTypeDTO interface.
@@ -57,6 +78,7 @@ export function LocationTypeDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'description': json['description'] == null ? undefined : json['description'],
+        'displayLevel': json['displayLevel'] == null ? undefined : json['displayLevel'],
         'id': json['id'] == null ? undefined : json['id'],
         'name': json['name'] == null ? undefined : json['name'],
     };
@@ -69,6 +91,7 @@ export function LocationTypeDTOToJSON(value?: LocationTypeDTO | null): any {
     return {
         
         'description': value['description'],
+        'displayLevel': value['displayLevel'],
         'id': value['id'],
         'name': value['name'],
     };

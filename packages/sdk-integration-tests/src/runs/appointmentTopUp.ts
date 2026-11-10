@@ -225,8 +225,8 @@ async function convertArrivals(
       if (String(appointment.status).toUpperCase().includes('CANCEL')) continue;
       const created = await call(`createEstimateFromAppointment ${appointmentId}`, () =>
         crew.advisor.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
+          idempotencyKey: randomUUID(),
           createEstimateFromAppointmentRequest: {
-            idempotencyKey: randomUUID(),
             appointmentId,
             customerId: appointment.crmCustomerId,
             vehicleId: appointment.crmVehicleId,

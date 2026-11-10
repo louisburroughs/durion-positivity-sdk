@@ -32,6 +32,12 @@ export interface VehicleSummary {
      */
     licensePlate?: string;
     /**
+     * Jurisdiction that issued the license plate, as stored (CAP:663, #3286)
+     * @type {string}
+     * @memberof VehicleSummary
+     */
+    licensePlateJurisdiction?: string;
+    /**
      * Manufacturer of the vehicle
      * @type {string}
      * @memberof VehicleSummary
@@ -90,6 +96,7 @@ export function VehicleSummaryFromJSONTyped(json: any, ignoreDiscriminator: bool
         
         'description': json['description'] == null ? undefined : json['description'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
+        'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
         'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
@@ -107,6 +114,7 @@ export function VehicleSummaryToJSON(value?: VehicleSummary | null): any {
         
         'description': value['description'],
         'licensePlate': value['licensePlate'],
+        'licensePlateJurisdiction': value['licensePlateJurisdiction'],
         'make': value['make'],
         'model': value['model'],
         'unitNumber': value['unitNumber'],

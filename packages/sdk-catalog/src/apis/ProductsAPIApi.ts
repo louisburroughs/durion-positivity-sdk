@@ -30,6 +30,7 @@ import type {
   ProductFactReplayResultDto,
   ProductLifecycleResponse,
   ProductLifecycleUpdateRequest,
+  ProductListPage,
   ProductReplacementRequest,
   ProductTrackingLevelUpdateRequestDto,
   ProductUpdateRequestDto,
@@ -68,6 +69,8 @@ import {
     ProductLifecycleResponseToJSON,
     ProductLifecycleUpdateRequestFromJSON,
     ProductLifecycleUpdateRequestToJSON,
+    ProductListPageFromJSON,
+    ProductListPageToJSON,
     ProductReplacementRequestFromJSON,
     ProductReplacementRequestToJSON,
     ProductTrackingLevelUpdateRequestDtoFromJSON,
@@ -144,6 +147,17 @@ export interface ListClaimableServicesRequest {
 
 export interface ListNonInventoryProductsByNameRequest {
     name: string;
+}
+
+export interface ListProductCommandCenterRequest {
+    page?: number;
+    size?: number;
+    sort?: ListProductCommandCenterSortEnum;
+    dir?: ListProductCommandCenterDirEnum;
+    q?: string;
+    category?: string;
+    supplierIds?: Array<string>;
+    stock?: ListProductCommandCenterStockEnum;
 }
 
 export interface ListProductReplacementsRequest {
@@ -880,6 +894,74 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns one offset-paged page of products with the commercial and stock numbers the Products tab renders: name, SKU, category, the chosen current supplier, cost, the current MSRP price, margin, summed on-hand, minimum and a derived stock state. Use this tool to render or page the product list; use searchCatalogProducts instead for cursor-paged free-text search over description and brand, and getProductById when the id is already known. Preconditions: none; nothing is written and no other service is called, so every column comes from pos-catalog\'s own tables and replicas. Required inputs: all parameters are optional. page defaults to 0; size defaults to 25 and must be 10, 25 or 50; sort defaults to name and is one of name, category, supplier, cost, price, margin or onHand with dir asc or desc (default asc); q filters name or SKU case-insensitively (trimmed, at most 100 characters); category is a category id or an exact case-insensitive category name; supplierIds is repeatable and matches a product that has a current supplier price entry from any listed vendor; stock is one of IN, LOW, OUT or DISCONTINUED. Emits a CATALOG_PRODUCT_LIST_SEARCH event; the read changes no state. Returns 200 with an empty items array when nothing matches. summary counts the filtered set with the stock filter ignored, so the summary bar keeps reading for the caller\'s other filters while the table shows one state. Returns 400 VALIDATION_ERROR for a size other than 10, 25 or 50, a bad sort, dir or stock value, a negative page, or a q longer than 100 characters. 
+     * List Products for the Command Center
+     */
+    async listProductCommandCenterRaw(requestParameters: ListProductCommandCenterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductListPage>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        if (requestParameters['dir'] != null) {
+            queryParameters['dir'] = requestParameters['dir'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['category'] != null) {
+            queryParameters['category'] = requestParameters['category'];
+        }
+
+        if (requestParameters['supplierIds'] != null) {
+            queryParameters['supplierIds'] = requestParameters['supplierIds'];
+        }
+
+        if (requestParameters['stock'] != null) {
+            queryParameters['stock'] = requestParameters['stock'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/list`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductListPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one offset-paged page of products with the commercial and stock numbers the Products tab renders: name, SKU, category, the chosen current supplier, cost, the current MSRP price, margin, summed on-hand, minimum and a derived stock state. Use this tool to render or page the product list; use searchCatalogProducts instead for cursor-paged free-text search over description and brand, and getProductById when the id is already known. Preconditions: none; nothing is written and no other service is called, so every column comes from pos-catalog\'s own tables and replicas. Required inputs: all parameters are optional. page defaults to 0; size defaults to 25 and must be 10, 25 or 50; sort defaults to name and is one of name, category, supplier, cost, price, margin or onHand with dir asc or desc (default asc); q filters name or SKU case-insensitively (trimmed, at most 100 characters); category is a category id or an exact case-insensitive category name; supplierIds is repeatable and matches a product that has a current supplier price entry from any listed vendor; stock is one of IN, LOW, OUT or DISCONTINUED. Emits a CATALOG_PRODUCT_LIST_SEARCH event; the read changes no state. Returns 200 with an empty items array when nothing matches. summary counts the filtered set with the stock filter ignored, so the summary bar keeps reading for the caller\'s other filters while the table shows one state. Returns 400 VALIDATION_ERROR for a size other than 10, 25 or 50, a bad sort, dir or stock value, a negative page, or a q longer than 100 characters. 
+     * List Products for the Command Center
+     */
+    async listProductCommandCenter(requestParameters: ListProductCommandCenterRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductListPage> {
+        const response = await this.listProductCommandCenterRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns the non-deleted replacement options recorded for a product, ordered by priority, each with its replacement product id, notes and effective instant. Use this tool to see what supersedes a discontinued product; do not use addProductReplacement, which records a new option, and use getPartSubstitutes to resolve the full substitute product records instead of the option rows. Preconditions: the product must exist; replacements are normally present only on DISCONTINUED products. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id, and 200 with an empty array when the product has no replacements. 
      * List Replacement Products
      */
@@ -1445,4 +1527,35 @@ export enum ListClaimableServicesOperationCategoryEnum {
     Diagnostic = 'DIAGNOSTIC',
     Maintenance = 'MAINTENANCE',
     TireService = 'TIRE_SERVICE'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListProductCommandCenterSortEnum {
+    Name = 'name',
+    Category = 'category',
+    Supplier = 'supplier',
+    Cost = 'cost',
+    Price = 'price',
+    Margin = 'margin',
+    OnHand = 'onHand'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListProductCommandCenterDirEnum {
+    Asc = 'asc',
+    Desc = 'desc'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListProductCommandCenterStockEnum {
+    In = 'IN',
+    Low = 'LOW',
+    Out = 'OUT',
+    Discontinued = 'DISCONTINUED'
 }

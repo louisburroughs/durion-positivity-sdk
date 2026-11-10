@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface CrossDockRequest {
     /**
-     * Optional idempotency key, the body fallback for the Idempotency-Key header (the header wins; both present and different is a 400). A retry with the same key and the same payload posts nothing and returns the original response; the same key with a different payload is a 409 IDEMPOTENCY_CONFLICT. Generated server-side when absent, in which case a retry is not recognised
-     * @type {string}
-     * @memberof CrossDockRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Lot or batch number of the cross-docked stock. Required (422 LOT_NUMBER_REQUIRED) when the product is LOT-tracked (falls back to the lot number already keyed on the receiving line); the lot is found-or-created like any receipt and stamped on BOTH paired ledger entries. Ignored for untracked products
      * @type {string}
      * @memberof CrossDockRequest
@@ -77,7 +71,6 @@ export function CrossDockRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
         'notes': json['notes'] == null ? undefined : json['notes'],
         'quantity': json['quantity'],
@@ -92,7 +85,6 @@ export function CrossDockRequestToJSON(value?: CrossDockRequest | null): any {
     }
     return {
         
-        'idempotencyKey': value['idempotencyKey'],
         'lotNumber': value['lotNumber'],
         'notes': value['notes'],
         'quantity': value['quantity'],

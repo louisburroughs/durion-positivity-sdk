@@ -34,6 +34,7 @@ export * from './NltiRequestDTO';
 export * from './NltiResponseV1';
 export * from './PageAuditEventResponse';
 export * from './PageableObject';
+export * from './PolicyBlocker';
 export * from './SortObject';
 export * from './StreamChatRequest';
 export * from './SuggestedAlternative';

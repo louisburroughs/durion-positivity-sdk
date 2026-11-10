@@ -491,6 +491,7 @@ async function openLaborSession(
     // above already went through it, so a token that had expired was renewed a call
     // ago. A 401 here is workexec refusing this login, not an expired session.
     const entry = await as.tech.workorder.workorderLaborAPIApi.startLaborSession({
+      idempotencyKey: crypto.randomUUID(),
       workorderId,
       serviceId: serviceLineId,
       startLaborRequest: {
@@ -545,6 +546,7 @@ async function closeLaborSessions(tech: DomainClients, outcomes: JobOutcome[]): 
     // exactly the false alarm this warning exists to avoid.
     const attempt = () =>
       tech.workorder.workorderLaborAPIApi.stopLaborSession({
+        idempotencyKey: crypto.randomUUID(),
         workorderId: outcome.workorderId as string,
         entryId: outcome.laborEntryId as string,
       });

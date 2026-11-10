@@ -45,10 +45,10 @@ export interface StoredImage {
     filename?: string;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof StoredImage
      */
-    imageId?: number;
+    imageId?: string;
     /**
      * 
      * @type {boolean}

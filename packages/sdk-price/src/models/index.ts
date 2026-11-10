@@ -29,6 +29,7 @@ export * from './LaborRateRequest';
 export * from './LaborRateResponse';
 export * from './LineItemContext';
 export * from './MoneyAmount';
+export * from './PolicyBlocker';
 export * from './PriceQuoteRequest';
 export * from './PriceQuoteResponse';
 export * from './PricingAdjustment';

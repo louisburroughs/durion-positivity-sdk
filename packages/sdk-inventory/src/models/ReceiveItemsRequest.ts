@@ -27,12 +27,6 @@ import {
  */
 export interface ReceiveItemsRequest {
     /**
-     * Optional idempotency key, the body fallback for the Idempotency-Key header (the header wins; both present and different is a 400). A retry with the same key and the same payload posts nothing and returns the original response; the same key with a different payload is a 409 IDEMPOTENCY_CONFLICT. Generated server-side when absent, in which case a retry is not recognised
-     * @type {string}
-     * @memberof ReceiveItemsRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Receiving lines with their received quantities; at least one line is required
      * @type {Array<ReceiveLineRequest>}
      * @memberof ReceiveItemsRequest
@@ -58,7 +52,6 @@ export function ReceiveItemsRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'lines': ((json['lines'] as Array<any>).map(ReceiveLineRequestFromJSON)),
     };
 }
@@ -69,7 +62,6 @@ export function ReceiveItemsRequestToJSON(value?: ReceiveItemsRequest | null): a
     }
     return {
         
-        'idempotencyKey': value['idempotencyKey'],
         'lines': ((value['lines'] as Array<any>).map(ReceiveLineRequestToJSON)),
     };
 }

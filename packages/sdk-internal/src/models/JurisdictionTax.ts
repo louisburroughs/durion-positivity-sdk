@@ -56,6 +56,12 @@ export interface JurisdictionTax {
      */
     jurisdictionType: JurisdictionTaxJurisdictionTypeEnum;
     /**
+     * Display label of this row's tax type from the country profile; null when the profile declares none — never the code
+     * @type {string}
+     * @memberof JurisdictionTax
+     */
+    label?: string;
+    /**
      * Tax rate applied for this jurisdiction, expressed as a decimal fraction (e.g. 0.0725 for 7.25%)
      * @type {number}
      * @memberof JurisdictionTax
@@ -122,6 +128,7 @@ export function JurisdictionTaxFromJSONTyped(json: any, ignoreDiscriminator: boo
         'exemptionReasonCode': json['exemptionReasonCode'] == null ? undefined : json['exemptionReasonCode'],
         'inputTaxRecoverable': json['inputTaxRecoverable'] == null ? undefined : json['inputTaxRecoverable'],
         'jurisdictionType': json['jurisdictionType'],
+        'label': json['label'] == null ? undefined : json['label'],
         'rate': json['rate'],
         'taxType': json['taxType'] == null ? undefined : json['taxType'],
     };
@@ -139,6 +146,7 @@ export function JurisdictionTaxToJSON(value?: JurisdictionTax | null): any {
         'exemptionReasonCode': value['exemptionReasonCode'],
         'inputTaxRecoverable': value['inputTaxRecoverable'],
         'jurisdictionType': value['jurisdictionType'],
+        'label': value['label'],
         'rate': value['rate'],
         'taxType': value['taxType'],
     };

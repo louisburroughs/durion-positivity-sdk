@@ -19,6 +19,12 @@ import {
     HolidayClosureResponseFromJSONTyped,
     HolidayClosureResponseToJSON,
 } from './HolidayClosureResponse';
+import type { LocationParentSummary } from './LocationParentSummary';
+import {
+    LocationParentSummaryFromJSON,
+    LocationParentSummaryFromJSONTyped,
+    LocationParentSummaryToJSON,
+} from './LocationParentSummary';
 import type { LocationTypeDTO } from './LocationTypeDTO';
 import {
     LocationTypeDTOFromJSON,
@@ -69,11 +75,29 @@ export interface LocationResponseDTO {
      */
     addressLine2?: string;
     /**
+     * Number of bays owned by the location whose status is not RETIRED, so ACTIVE and OUT_OF_SERVICE bays are both counted (it is a superset of outOfServiceBayCount, not a partition); unlike activeBayCount an inactive location still reports its on-record bays
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    bayCount: number;
+    /**
+     * Number of direct HOME_OFFICE children of this location, whatever their status
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    childCount: number;
+    /**
      * City of the location
      * @type {string}
      * @memberof LocationResponseDTO
      */
     city?: string;
+    /**
+     * LAST day the location operates, in the location's own timezone; null when no closing is scheduled. The closing job deactivates the location at the start of the following local day, so this date itself is still an operating day (DECISION-LOCATION-030).
+     * @type {Date}
+     * @memberof LocationResponseDTO
+     */
+    closesOn?: Date;
     /**
      * Unique business code of the location
      * @type {string}
@@ -86,6 +110,12 @@ export interface LocationResponseDTO {
      * @memberof LocationResponseDTO
      */
     country?: string;
+    /**
+     * When the system made this location inactive (DELETE, the closing job, PATCH status INACTIVE or PUT active=false); null when it was never deactivated, which includes rows that went inactive before the field existed. Cleared on reactivation (DECISION-LOCATION-030).
+     * @type {Date}
+     * @memberof LocationResponseDTO
+     */
+    deactivatedAt?: Date;
     /**
      * Unit this location's forms show and accept for a distance value (DECISION-LOCATION-028); every distance in a request or response for this location is expressed in this unit. Storage of a distance is always canonical kilometres regardless of this setting.
      * @type {string}
@@ -117,11 +147,23 @@ export interface LocationResponseDTO {
      */
     id: string;
     /**
+     * Lifecycle state derived on every read in the location's own timezone: OPENING when active with opensOn still ahead, CLOSING when active with a closesOn on or after today, ACTIVE otherwise while active, INACTIVE when not active (or when a closesOn has passed but the closing job has not run yet).
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    lifecycleStatus: LocationResponseDTOLifecycleStatusEnum;
+    /**
      * Mailing address of the location
      * @type {string}
      * @memberof LocationResponseDTO
      */
     mailingAddress?: string;
+    /**
+     * Number of mobile units based at the location whose status is not RETIRED, so ACTIVE and OUT_OF_SERVICE units are both counted (it is a superset of outOfServiceMobileUnitCount, not a partition); unlike activeMobileUnitCount an inactive location still reports its on-record units
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    mobileUnitCount: number;
     /**
      * Display name of the location
      * @type {string}
@@ -129,11 +171,35 @@ export interface LocationResponseDTO {
      */
     name: string;
     /**
+     * First day the location operates, as a calendar date in the location's own timezone; null when no opening date is recorded. It is a statement about the site, not a switch: the location is ACTIVE from this date regardless of anyone flipping a flag (DECISION-LOCATION-030).
+     * @type {Date}
+     * @memberof LocationResponseDTO
+     */
+    opensOn?: Date;
+    /**
      * Stored weekly operating hours, one entry per published day of the week, in the location's own timezone; null when hours have never been published
      * @type {Array<OperatingHoursResponse>}
      * @memberof LocationResponseDTO
      */
     operatingHours?: Array<OperatingHoursResponse>;
+    /**
+     * Number of bays owned by the location with status OUT_OF_SERVICE; reported for an inactive location too, since a closed site still shows which of its bays are out of service
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    outOfServiceBayCount: number;
+    /**
+     * Number of mobile units based at the location with status OUT_OF_SERVICE; reported for an inactive location too
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    outOfServiceMobileUnitCount: number;
+    /**
+     * 
+     * @type {LocationParentSummary}
+     * @memberof LocationResponseDTO
+     */
+    parent?: LocationParentSummary;
     /**
      * Primary phone number for the location
      * @type {string}
@@ -159,6 +225,12 @@ export interface LocationResponseDTO {
      */
     state?: string;
     /**
+     * Number of storage locations at the site with status ACTIVE, across every level of the topology. This is an ACTIVE-only count, not a total: MAINTENANCE, QUARANTINED and INACTIVE storage locations are excluded. Reported for an inactive location too, because the site still holds its storage
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    storageLocationCount: number;
+    /**
      * IANA timezone identifier of the location; the zone every operating-hours and holiday closure entry below is expressed in, and the zone scheduling converts a booking into
      * @type {string}
      * @memberof LocationResponseDTO
@@ -180,6 +252,20 @@ export enum LocationResponseDTODistanceUnitEnum {
     Km = 'KM',
     Mi = 'MI'
 }
+/**
+* @export
+* @enum {string}
+*/
+export enum LocationResponseDTOLifecycleStatusEnum {
+    Opening = 'OPENING',
+    Closing = 'CLOSING',
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE',
+    Opening2 = 'OPENING',
+    Closing2 = 'CLOSING',
+    Active2 = 'ACTIVE',
+    Inactive2 = 'INACTIVE'
+}
 
 
 /**
@@ -189,10 +275,17 @@ export function instanceOfLocationResponseDTO(value: object): boolean {
     if (!('active' in value)) return false;
     if (!('activeBayCount' in value)) return false;
     if (!('activeMobileUnitCount' in value)) return false;
+    if (!('bayCount' in value)) return false;
+    if (!('childCount' in value)) return false;
     if (!('distanceUnit' in value)) return false;
     if (!('hasRepairCapability' in value)) return false;
     if (!('id' in value)) return false;
+    if (!('lifecycleStatus' in value)) return false;
+    if (!('mobileUnitCount' in value)) return false;
     if (!('name' in value)) return false;
+    if (!('outOfServiceBayCount' in value)) return false;
+    if (!('outOfServiceMobileUnitCount' in value)) return false;
+    if (!('storageLocationCount' in value)) return false;
     return true;
 }
 
@@ -211,21 +304,32 @@ export function LocationResponseDTOFromJSONTyped(json: any, ignoreDiscriminator:
         'activeMobileUnitCount': json['activeMobileUnitCount'],
         'addressLine1': json['addressLine1'] == null ? undefined : json['addressLine1'],
         'addressLine2': json['addressLine2'] == null ? undefined : json['addressLine2'],
+        'bayCount': json['bayCount'],
+        'childCount': json['childCount'],
         'city': json['city'] == null ? undefined : json['city'],
+        'closesOn': json['closesOn'] == null ? undefined : (new Date(json['closesOn'])),
         'code': json['code'] == null ? undefined : json['code'],
         'country': json['country'] == null ? undefined : json['country'],
+        'deactivatedAt': json['deactivatedAt'] == null ? undefined : (new Date(json['deactivatedAt'])),
         'distanceUnit': json['distanceUnit'],
         'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
         'hasRepairCapability': json['hasRepairCapability'],
         'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureResponseFromJSON)),
         'id': json['id'],
+        'lifecycleStatus': json['lifecycleStatus'],
         'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
+        'mobileUnitCount': json['mobileUnitCount'],
         'name': json['name'],
+        'opensOn': json['opensOn'] == null ? undefined : (new Date(json['opensOn'])),
         'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursResponseFromJSON)),
+        'outOfServiceBayCount': json['outOfServiceBayCount'],
+        'outOfServiceMobileUnitCount': json['outOfServiceMobileUnitCount'],
+        'parent': json['parent'] == null ? undefined : LocationParentSummaryFromJSON(json['parent']),
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'responsiblePersonId': json['responsiblePersonId'] == null ? undefined : json['responsiblePersonId'],
         'state': json['state'] == null ? undefined : json['state'],
+        'storageLocationCount': json['storageLocationCount'],
         'timezone': json['timezone'] == null ? undefined : json['timezone'],
         'type': json['type'] == null ? undefined : LocationTypeDTOFromJSON(json['type']),
     };
@@ -242,21 +346,32 @@ export function LocationResponseDTOToJSON(value?: LocationResponseDTO | null): a
         'activeMobileUnitCount': value['activeMobileUnitCount'],
         'addressLine1': value['addressLine1'],
         'addressLine2': value['addressLine2'],
+        'bayCount': value['bayCount'],
+        'childCount': value['childCount'],
         'city': value['city'],
+        'closesOn': value['closesOn'] == null ? undefined : ((value['closesOn'] as any).toISOString().substring(0,10)),
         'code': value['code'],
         'country': value['country'],
+        'deactivatedAt': value['deactivatedAt'] == null ? undefined : ((value['deactivatedAt'] as any).toISOString()),
         'distanceUnit': value['distanceUnit'],
         'geographicalLocationId': value['geographicalLocationId'],
         'hasRepairCapability': value['hasRepairCapability'],
         'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureResponseToJSON)),
         'id': value['id'],
+        'lifecycleStatus': value['lifecycleStatus'],
         'mailingAddress': value['mailingAddress'],
+        'mobileUnitCount': value['mobileUnitCount'],
         'name': value['name'],
+        'opensOn': value['opensOn'] == null ? undefined : ((value['opensOn'] as any).toISOString().substring(0,10)),
         'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursResponseToJSON)),
+        'outOfServiceBayCount': value['outOfServiceBayCount'],
+        'outOfServiceMobileUnitCount': value['outOfServiceMobileUnitCount'],
+        'parent': LocationParentSummaryToJSON(value['parent']),
         'phoneNumber': value['phoneNumber'],
         'postalCode': value['postalCode'],
         'responsiblePersonId': value['responsiblePersonId'],
         'state': value['state'],
+        'storageLocationCount': value['storageLocationCount'],
         'timezone': value['timezone'],
         'type': LocationTypeDTOToJSON(value['type']),
     };

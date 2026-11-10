@@ -121,6 +121,12 @@ export interface PurchaseOrderLineResponse {
      * @memberof PurchaseOrderLineResponse
      */
     unitCostMinor?: number;
+    /**
+     * Opaque reference to the workorder this line was bought for (#3195), as stored; null when the line names none. Not validated against pos-workorder (ADR-0044)
+     * @type {string}
+     * @memberof PurchaseOrderLineResponse
+     */
+    workorderId?: string;
 }
 
 /**
@@ -159,6 +165,7 @@ export function PurchaseOrderLineResponseFromJSONTyped(json: any, ignoreDiscrimi
         'taxCodeId': json['taxCodeId'] == null ? undefined : json['taxCodeId'],
         'taxMinor': json['taxMinor'] == null ? undefined : json['taxMinor'],
         'unitCostMinor': json['unitCostMinor'] == null ? undefined : json['unitCostMinor'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -185,6 +192,7 @@ export function PurchaseOrderLineResponseToJSON(value?: PurchaseOrderLineRespons
         'taxCodeId': value['taxCodeId'],
         'taxMinor': value['taxMinor'],
         'unitCostMinor': value['unitCostMinor'],
+        'workorderId': value['workorderId'],
     };
 }
 

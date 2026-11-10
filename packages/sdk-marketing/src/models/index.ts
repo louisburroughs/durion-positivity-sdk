@@ -16,6 +16,7 @@ export * from './FieldError';
 export * from './MessageTemplateResponse';
 export * from './OverviewCounts';
 export * from './PagedResponse';
+export * from './PolicyBlocker';
 export * from './ProgramStatsResponse';
 export * from './RecentCampaign';
 export * from './SampleRecipient';

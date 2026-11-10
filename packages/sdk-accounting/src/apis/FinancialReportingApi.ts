@@ -31,6 +31,7 @@ import type {
   TaxLiabilitySnapshotSummary,
   TaxLiabilitySnapshotVerification,
   TrialBalanceReport,
+  UnappliedReceivablesReport,
   UnpaidWalkInSalesResponse,
 } from '../models/index';
 import {
@@ -66,6 +67,8 @@ import {
     TaxLiabilitySnapshotVerificationToJSON,
     TrialBalanceReportFromJSON,
     TrialBalanceReportToJSON,
+    UnappliedReceivablesReportFromJSON,
+    UnappliedReceivablesReportToJSON,
     UnpaidWalkInSalesResponseFromJSON,
     UnpaidWalkInSalesResponseToJSON,
 } from '../models/index';
@@ -129,6 +132,11 @@ export interface GetReportExportStatusRequest {
 
 export interface GetTaxLiabilitySnapshotRequest {
     snapshotId: string;
+}
+
+export interface GetUnappliedReceivablesRequest {
+    asOfDate: Date;
+    customerId?: string;
 }
 
 export interface ListReportExportsRequest {
@@ -827,6 +835,57 @@ export class FinancialReportingApi extends runtime.BaseAPI {
      */
     async getTaxLiabilitySnapshot(requestParameters: GetTaxLiabilitySnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxLiabilitySnapshotResponse> {
         const response = await this.getTaxLiabilitySnapshotRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Reads the money customers have paid or been credited that is not yet applied to an invoice: receivable payments with an unapplied remainder, customer credits with a usable remainder, per-customer subtotals of each and grand totals. Use this tool for \"which accounts have unapplied payments or credits\" and to find money to apply or refund; do not use generateAgedReceivables, which reports open invoice balances and has no unapplied column, and do not use getUnpaidWalkInSales, which reports the CASH walk-in house account this read leaves out. POSTED credit memos are never listed because they already reduce the invoice balance, and the CASH walk-in house account is excluded because it never holds credits and its unapplied payments are refund-pending excess reported by getUnpaidWalkInSales. Preconditions: the caller needs reporting:view:financial-statements authority; rows are empty when nothing is unapplied. Required inputs: asOfDate (ISO date) as a query parameter; customerId (UUID) is optional and narrows both lists and the totals. The as-of date is a CREATION CUT-OFF only: a payment cleared, or a credit created, after it did not exist yet and is excluded, while every amount is the CURRENT balance, not a reconstruction as of that date (balancesAreCurrent is always true). Amounts are in the ledger\'s currency, rounded DOWN to its minor unit, and are never added across currencies. Emits an ACCOUNTING_UNAPPLIED_RECEIVABLES_VIEW event and changes no state, and returns 400 when asOfDate is missing or malformed or customerId is not a UUID, and 403 when the caller lacks the authority. 
+     * Get Unapplied Receivables
+     */
+    async getUnappliedReceivablesRaw(requestParameters: GetUnappliedReceivablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UnappliedReceivablesReport>> {
+        if (requestParameters['asOfDate'] == null) {
+            throw new runtime.RequiredError(
+                'asOfDate',
+                'Required parameter "asOfDate" was null or undefined when calling getUnappliedReceivables().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['asOfDate'] != null) {
+            queryParameters['asOfDate'] = (requestParameters['asOfDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['customerId'] != null) {
+            queryParameters['customerId'] = requestParameters['customerId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/receivables/unapplied`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UnappliedReceivablesReportFromJSON(jsonValue));
+    }
+
+    /**
+     * Reads the money customers have paid or been credited that is not yet applied to an invoice: receivable payments with an unapplied remainder, customer credits with a usable remainder, per-customer subtotals of each and grand totals. Use this tool for \"which accounts have unapplied payments or credits\" and to find money to apply or refund; do not use generateAgedReceivables, which reports open invoice balances and has no unapplied column, and do not use getUnpaidWalkInSales, which reports the CASH walk-in house account this read leaves out. POSTED credit memos are never listed because they already reduce the invoice balance, and the CASH walk-in house account is excluded because it never holds credits and its unapplied payments are refund-pending excess reported by getUnpaidWalkInSales. Preconditions: the caller needs reporting:view:financial-statements authority; rows are empty when nothing is unapplied. Required inputs: asOfDate (ISO date) as a query parameter; customerId (UUID) is optional and narrows both lists and the totals. The as-of date is a CREATION CUT-OFF only: a payment cleared, or a credit created, after it did not exist yet and is excluded, while every amount is the CURRENT balance, not a reconstruction as of that date (balancesAreCurrent is always true). Amounts are in the ledger\'s currency, rounded DOWN to its minor unit, and are never added across currencies. Emits an ACCOUNTING_UNAPPLIED_RECEIVABLES_VIEW event and changes no state, and returns 400 when asOfDate is missing or malformed or customerId is not a UUID, and 403 when the caller lacks the authority. 
+     * Get Unapplied Receivables
+     */
+    async getUnappliedReceivables(requestParameters: GetUnappliedReceivablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UnappliedReceivablesReport> {
+        const response = await this.getUnappliedReceivablesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

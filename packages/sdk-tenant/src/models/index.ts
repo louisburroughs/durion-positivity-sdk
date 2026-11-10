@@ -12,6 +12,7 @@ export * from './Conflict';
 export * from './FieldError';
 export * from './MonthlyAllowanceDto';
 export * from './OwnerContact';
+export * from './PolicyBlocker';
 export * from './ReadingTierCreateRequest';
 export * from './ReadingTierResponse';
 export * from './ReadingTierUpdateRequest';

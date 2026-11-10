@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface CreateUserRequest {
     /**
-     * Initial password; hashed server-side before storage
+     * Initial password; hashed server-side before storage. Must meet the password policy GET /v1/auth/capabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the username); a refusal is 400 VALIDATION_ERROR with fieldErrors[password] starting PASSWORD_POLICY_VIOLATION
      * @type {string}
      * @memberof CreateUserRequest
      */

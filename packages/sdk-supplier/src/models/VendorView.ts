@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PrimaryContactDto } from './PrimaryContactDto';
+import {
+    PrimaryContactDtoFromJSON,
+    PrimaryContactDtoFromJSONTyped,
+    PrimaryContactDtoToJSON,
+} from './PrimaryContactDto';
 import type { RemitToDto } from './RemitToDto';
 import {
     RemitToDtoFromJSON,
@@ -33,6 +39,18 @@ import {
  */
 export interface VendorView {
     /**
+     * Vendor public catalogue, normalised https URL.
+     * @type {string}
+     * @memberof VendorView
+     */
+    catalogUrl?: string;
+    /**
+     * Free-text categories, deduplicated case-insensitively; null when none.
+     * @type {Array<string>}
+     * @memberof VendorView
+     */
+    categories?: Array<string>;
+    /**
      * Creation time.
      * @type {Date}
      * @memberof VendorView
@@ -51,6 +69,12 @@ export interface VendorView {
      */
     defaultCurrency?: string;
     /**
+     * Vendor's general lead time in days, 0 to 365; null when unknown.
+     * @type {number}
+     * @memberof VendorView
+     */
+    defaultLeadTimeDays?: number;
+    /**
      * DUE_ON_RECEIPT or NET<n>.
      * @type {string}
      * @memberof VendorView
@@ -68,6 +92,18 @@ export interface VendorView {
      * @memberof VendorView
      */
     legalName?: string;
+    /**
+     * pos-image id of the vendor's logo; null when it has none.
+     * @type {string}
+     * @memberof VendorView
+     */
+    logoImageId?: string;
+    /**
+     * 
+     * @type {PrimaryContactDto}
+     * @memberof VendorView
+     */
+    primaryContact?: PrimaryContactDto;
     /**
      * 
      * @type {RemitToDto}
@@ -152,6 +188,12 @@ export interface VendorView {
      * @memberof VendorView
      */
     version?: number;
+    /**
+     * Vendor website, normalised https URL.
+     * @type {string}
+     * @memberof VendorView
+     */
+    websiteUrl?: string;
 }
 
 /**
@@ -181,12 +223,17 @@ export function VendorViewFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
+        'catalogUrl': json['catalogUrl'] == null ? undefined : json['catalogUrl'],
+        'categories': json['categories'] == null ? undefined : json['categories'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'defaultCurrency': json['defaultCurrency'] == null ? undefined : json['defaultCurrency'],
+        'defaultLeadTimeDays': json['defaultLeadTimeDays'] == null ? undefined : json['defaultLeadTimeDays'],
         'defaultPaymentTerms': json['defaultPaymentTerms'] == null ? undefined : json['defaultPaymentTerms'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'legalName': json['legalName'] == null ? undefined : json['legalName'],
+        'logoImageId': json['logoImageId'] == null ? undefined : json['logoImageId'],
+        'primaryContact': json['primaryContact'] == null ? undefined : PrimaryContactDtoFromJSON(json['primaryContact']),
         'remitTo': json['remitTo'] == null ? undefined : RemitToDtoFromJSON(json['remitTo']),
         'remitToApprovedBy': json['remitToApprovedBy'] == null ? undefined : json['remitToApprovedBy'],
         'remitToChangedAt': json['remitToChangedAt'] == null ? undefined : (new Date(json['remitToChangedAt'])),
@@ -201,6 +248,7 @@ export function VendorViewFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
         'vendorNumber': json['vendorNumber'] == null ? undefined : json['vendorNumber'],
         'version': json['version'] == null ? undefined : json['version'],
+        'websiteUrl': json['websiteUrl'] == null ? undefined : json['websiteUrl'],
     };
 }
 
@@ -210,12 +258,17 @@ export function VendorViewToJSON(value?: VendorView | null): any {
     }
     return {
         
+        'catalogUrl': value['catalogUrl'],
+        'categories': value['categories'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'defaultCurrency': value['defaultCurrency'],
+        'defaultLeadTimeDays': value['defaultLeadTimeDays'],
         'defaultPaymentTerms': value['defaultPaymentTerms'],
         'displayName': value['displayName'],
         'legalName': value['legalName'],
+        'logoImageId': value['logoImageId'],
+        'primaryContact': PrimaryContactDtoToJSON(value['primaryContact']),
         'remitTo': RemitToDtoToJSON(value['remitTo']),
         'remitToApprovedBy': value['remitToApprovedBy'],
         'remitToChangedAt': value['remitToChangedAt'] == null ? undefined : ((value['remitToChangedAt']).toISOString()),
@@ -230,6 +283,7 @@ export function VendorViewToJSON(value?: VendorView | null): any {
         'vendorId': value['vendorId'],
         'vendorNumber': value['vendorNumber'],
         'version': value['version'],
+        'websiteUrl': value['websiteUrl'],
     };
 }
 

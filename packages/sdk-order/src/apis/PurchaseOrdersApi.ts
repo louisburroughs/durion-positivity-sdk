@@ -26,6 +26,7 @@ import type {
   ProcurementAvailability,
   PurchaseOrderResponse,
   PurchaseOrderSummaryResponse,
+  PurchaseOrderUnitsBySkuResponse,
   PurchaseOrderVendorResponse,
   ReopenPurchaseOrderLineRequest,
   RevisePurchaseOrderRequest,
@@ -53,6 +54,8 @@ import {
     PurchaseOrderResponseToJSON,
     PurchaseOrderSummaryResponseFromJSON,
     PurchaseOrderSummaryResponseToJSON,
+    PurchaseOrderUnitsBySkuResponseFromJSON,
+    PurchaseOrderUnitsBySkuResponseToJSON,
     PurchaseOrderVendorResponseFromJSON,
     PurchaseOrderVendorResponseToJSON,
     ReopenPurchaseOrderLineRequestFromJSON,
@@ -93,6 +96,12 @@ export interface GetPurchaseOrderSupplierAvailabilityRequest {
     poId: string;
     vendorProfileId: string;
     deliveryLocationId: string;
+}
+
+export interface GetPurchaseOrderUnitsBySkuRequest {
+    vendorId?: string;
+    status?: Array<GetPurchaseOrderUnitsBySkuStatusEnum>;
+    limit?: number;
 }
 
 export interface GetPurchaseOrderVendorRequest {
@@ -509,6 +518,54 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
      */
     async getPurchaseOrderSupplierAvailability(requestParameters: GetPurchaseOrderSupplierAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProcurementAvailability> {
         const response = await this.getPurchaseOrderSupplierAvailabilityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every SKU that appears on a placed purchase order with its units ordered, units still open, line count and order count, ranked by units ordered (highest first, ties broken by SKU identifier), over the whole matching population rather than one page of orders. Use this tool to rank products by how much we ordered — for example the three SKUs with the most units ordered — and for any per-SKU purchase-order total; do not sum the rows of listPurchaseOrders, which returns only the first page, and do not use this endpoint for order or money totals, which getPurchaseOrderSummary returns. Ordered quantity is what we ordered, NOT usage or demand: replenishment orders to the policy maximum and rounds the quantity up to the vendor\'s order multiple, so a high rank can reflect a generous maximum level or packaging rather than consumption (inventory ruling #1781). Lines with no SKU are not ranked. Preconditions: none; every input is optional and the population is every purchase order that matches. Required inputs: none. status is optional (repeatable, or comma-separated) and defaults to the placed set APPROVED, PARTIALLY_RECEIVED, FULLY_RECEIVED and CLOSED: DRAFT was never sent to a vendor and CANCELLED is void, so neither counts unless named explicitly. vendorId (UUID) restricts the population to one vendor\'s orders, and limit (1 to 100, default 10) caps how many SKUs are returned. Emits an ORDER_PURCHASE_ORDER_UNITS_BY_SKU audit event; read-only, no stock state changes. Returns 200 with an empty skus list when nothing matches, 400 when a status is not a known lifecycle status or limit is outside 1 to 100, and 403 for a caller without the purchase-order view authority. 
+     * Rank Purchase Order SKUs by Units Ordered
+     */
+    async getPurchaseOrderUnitsBySkuRaw(requestParameters: GetPurchaseOrderUnitsBySkuRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderUnitsBySkuResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['vendorId'] != null) {
+            queryParameters['vendorId'] = requestParameters['vendorId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-orders/units-by-sku`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseOrderUnitsBySkuResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns every SKU that appears on a placed purchase order with its units ordered, units still open, line count and order count, ranked by units ordered (highest first, ties broken by SKU identifier), over the whole matching population rather than one page of orders. Use this tool to rank products by how much we ordered — for example the three SKUs with the most units ordered — and for any per-SKU purchase-order total; do not sum the rows of listPurchaseOrders, which returns only the first page, and do not use this endpoint for order or money totals, which getPurchaseOrderSummary returns. Ordered quantity is what we ordered, NOT usage or demand: replenishment orders to the policy maximum and rounds the quantity up to the vendor\'s order multiple, so a high rank can reflect a generous maximum level or packaging rather than consumption (inventory ruling #1781). Lines with no SKU are not ranked. Preconditions: none; every input is optional and the population is every purchase order that matches. Required inputs: none. status is optional (repeatable, or comma-separated) and defaults to the placed set APPROVED, PARTIALLY_RECEIVED, FULLY_RECEIVED and CLOSED: DRAFT was never sent to a vendor and CANCELLED is void, so neither counts unless named explicitly. vendorId (UUID) restricts the population to one vendor\'s orders, and limit (1 to 100, default 10) caps how many SKUs are returned. Emits an ORDER_PURCHASE_ORDER_UNITS_BY_SKU audit event; read-only, no stock state changes. Returns 200 with an empty skus list when nothing matches, 400 when a status is not a known lifecycle status or limit is outside 1 to 100, and 403 for a caller without the purchase-order view authority. 
+     * Rank Purchase Order SKUs by Units Ordered
+     */
+    async getPurchaseOrderUnitsBySku(requestParameters: GetPurchaseOrderUnitsBySkuRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderUnitsBySkuResponse> {
+        const response = await this.getPurchaseOrderUnitsBySkuRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -931,6 +988,18 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
 
 }
 
+/**
+  * @export
+  * @enum {string}
+  */
+export enum GetPurchaseOrderUnitsBySkuStatusEnum {
+    Draft = 'DRAFT',
+    Approved = 'APPROVED',
+    PartiallyReceived = 'PARTIALLY_RECEIVED',
+    FullyReceived = 'FULLY_RECEIVED',
+    Closed = 'CLOSED',
+    Cancelled = 'CANCELLED'
+}
 /**
   * @export
   * @enum {string}

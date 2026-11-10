@@ -257,7 +257,11 @@ async function stopOpenLabor(tech: DomainClients, workorderId: string, label: st
   for (const entry of history) {
     if (!entry.id || entry.endTime) continue;
     try {
-      await tech.workorder.workorderLaborAPIApi.stopLaborSession({ workorderId, entryId: entry.id });
+      await tech.workorder.workorderLaborAPIApi.stopLaborSession({
+        idempotencyKey: crypto.randomUUID(),
+        workorderId,
+        entryId: entry.id,
+      });
       log(`  stopped labor entry ${entry.id} left running on ${label}`);
     } catch (error) {
       if (!isHttpStatus(error, 404)) {

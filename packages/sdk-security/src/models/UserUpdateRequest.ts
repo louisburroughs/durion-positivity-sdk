@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface UserUpdateRequest {
     /**
-     * New password for the account
+     * New password for the account; omitted or blank leaves it unchanged. Must meet the password policy GET /v1/auth/capabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the username); a refusal is 400 VALIDATION_ERROR with fieldErrors[password] starting PASSWORD_POLICY_VIOLATION
      * @type {string}
      * @memberof UserUpdateRequest
      */

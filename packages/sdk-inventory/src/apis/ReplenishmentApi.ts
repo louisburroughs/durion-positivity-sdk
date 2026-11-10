@@ -19,6 +19,7 @@ import type {
   CreateReplenishmentPolicyRequest,
   ReplenishmentNeedResponse,
   ReplenishmentPolicyResponse,
+  ReplenishmentQueuePageResponse,
   ReplenishmentScanResultResponse,
   ReplenishmentTaskResponse,
   SnoozeReplenishmentPolicyRequest,
@@ -33,6 +34,8 @@ import {
     ReplenishmentNeedResponseToJSON,
     ReplenishmentPolicyResponseFromJSON,
     ReplenishmentPolicyResponseToJSON,
+    ReplenishmentQueuePageResponseFromJSON,
+    ReplenishmentQueuePageResponseToJSON,
     ReplenishmentScanResultResponseFromJSON,
     ReplenishmentScanResultResponseToJSON,
     ReplenishmentTaskResponseFromJSON,
@@ -54,6 +57,12 @@ export interface ListReplenishmentPoliciesRequest {
     sort?: Array<string>;
 }
 
+export interface ListReplenishmentSuggestionsRequest {
+    scope?: string;
+    pageSize?: number;
+    pageToken?: string;
+}
+
 export interface SnoozeReplenishmentPolicyOperationRequest {
     policyId: string;
     snoozeReplenishmentPolicyRequest: SnoozeReplenishmentPolicyRequest;
@@ -70,7 +79,7 @@ export interface UpdateReplenishmentPolicyOperationRequest {
 export class ReplenishmentApi extends runtime.BaseAPI {
 
     /**
-     * Creates a min/max replenishment policy that drives orderpoint evaluation for one SKU at one location. Use this tool to define when a pick face should be restocked; do not use updateReplenishmentPolicy, which retunes a policy that already exists. Preconditions: none checked against existing state; a duplicate policy for the same SKU and location is not rejected here. Required inputs: locationId (UUID), itemSKU, and minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); orderMultiple defaults to the vendor-feed pack size when one greater than 1 is known for a product-UUID SKU, preferredSourceType defaults to EITHER and active defaults to true. Emits an INVENTORY_REPLENISHMENT_POLICY_CREATE event; no task is created until a scan or stock event triggers the policy. Returns 400 when minimumQuantity is not less than maximumQuantity or a required field is missing. 
+     * Creates a min/max replenishment policy that drives orderpoint evaluation for one SKU at one location. Use this tool to define when a pick face should be restocked; do not use updateReplenishmentPolicy, which retunes a policy that already exists. Preconditions: no policy may exist yet for the same SKU and location, active or inactive; one policy per pair holds, so a second create is refused rather than silently rewriting the first. Required inputs: locationId (UUID), itemSKU, and minimumQuantity (at least 0) at most maximumQuantity (at least 0); min = max > 0 is valid and min = max = 0 is a reserve bin that never triggers replenishment; orderMultiple defaults to the vendor-feed pack size when one greater than 1 is known for a product-UUID SKU, preferredSourceType defaults to EITHER and active defaults to true. Emits an INVENTORY_REPLENISHMENT_POLICY_CREATE event and appends a CREATED row to the per-bin audit trail; no task is created until a scan or stock event triggers the policy. Returns 400 when minimumQuantity is greater than maximumQuantity or a required field is missing, and 409 REPLENISHMENT_POLICY_EXISTS when a policy already exists for the pair (the envelope\'s referenceId is the existing policyId; update it instead). 
      * Create replenishment policy
      */
     async createReplenishmentPolicyRaw(requestParameters: CreateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentPolicyResponse>> {
@@ -107,7 +116,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a min/max replenishment policy that drives orderpoint evaluation for one SKU at one location. Use this tool to define when a pick face should be restocked; do not use updateReplenishmentPolicy, which retunes a policy that already exists. Preconditions: none checked against existing state; a duplicate policy for the same SKU and location is not rejected here. Required inputs: locationId (UUID), itemSKU, and minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); orderMultiple defaults to the vendor-feed pack size when one greater than 1 is known for a product-UUID SKU, preferredSourceType defaults to EITHER and active defaults to true. Emits an INVENTORY_REPLENISHMENT_POLICY_CREATE event; no task is created until a scan or stock event triggers the policy. Returns 400 when minimumQuantity is not less than maximumQuantity or a required field is missing. 
+     * Creates a min/max replenishment policy that drives orderpoint evaluation for one SKU at one location. Use this tool to define when a pick face should be restocked; do not use updateReplenishmentPolicy, which retunes a policy that already exists. Preconditions: no policy may exist yet for the same SKU and location, active or inactive; one policy per pair holds, so a second create is refused rather than silently rewriting the first. Required inputs: locationId (UUID), itemSKU, and minimumQuantity (at least 0) at most maximumQuantity (at least 0); min = max > 0 is valid and min = max = 0 is a reserve bin that never triggers replenishment; orderMultiple defaults to the vendor-feed pack size when one greater than 1 is known for a product-UUID SKU, preferredSourceType defaults to EITHER and active defaults to true. Emits an INVENTORY_REPLENISHMENT_POLICY_CREATE event and appends a CREATED row to the per-bin audit trail; no task is created until a scan or stock event triggers the policy. Returns 400 when minimumQuantity is greater than maximumQuantity or a required field is missing, and 409 REPLENISHMENT_POLICY_EXISTS when a policy already exists for the pair (the envelope\'s referenceId is the existing policyId; update it instead). 
      * Create replenishment policy
      */
     async createReplenishmentPolicy(requestParameters: CreateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentPolicyResponse> {
@@ -204,6 +213,54 @@ export class ReplenishmentApi extends runtime.BaseAPI {
      */
     async listReplenishmentPolicies(requestParameters: ListReplenishmentPoliciesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listReplenishmentPoliciesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists one row per bin that the replenishment engine puts below its minimum now or projects below it at the lead-time horizon, with the order quantity, on-order supply, coverage and best internal source. Use this tool to drive the Replenish queue; use listReplenishmentNeeds instead for the raw orderpoint report of every policy and listReplenishmentTasks for work already materialised. Each row follows the engine\'s own routing, so a PURCHASE policy shows no internal source and falls back to purchasing, and any other policy whose SKU already has an open transfer order into its site shows no source, hint or fallback. Emits an INVENTORY_REPLENISHMENT_SUGGESTIONS_LIST event and creates nothing, because the queue is computed on every read and is therefore always current. Returns 200 with items and nextPageToken and no totalCount, 400 when scope, pageSize or pageToken is invalid, and 403 LOCATION_SCOPE_DENIED when a named scope lies outside the caller\'s reach. Required inputs: none; scope is an optional site or bin id or the literal all, pageSize defaults to 50 (1-200) and pageToken carries the cursor from the previous page, so keep following nextPageToken until it is null because a page can hold fewer than pageSize items, or none. Preconditions: none; snoozed, inactive and zero-minimum zero-maximum reserve policies are excluded and a bin without a policy is never listed. 
+     * Replenishment suggestions queue
+     */
+    async listReplenishmentSuggestionsRaw(requestParameters: ListReplenishmentSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentQueuePageResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['scope'] != null) {
+            queryParameters['scope'] = requestParameters['scope'];
+        }
+
+        if (requestParameters['pageSize'] != null) {
+            queryParameters['pageSize'] = requestParameters['pageSize'];
+        }
+
+        if (requestParameters['pageToken'] != null) {
+            queryParameters['pageToken'] = requestParameters['pageToken'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/replenishment`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReplenishmentQueuePageResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists one row per bin that the replenishment engine puts below its minimum now or projects below it at the lead-time horizon, with the order quantity, on-order supply, coverage and best internal source. Use this tool to drive the Replenish queue; use listReplenishmentNeeds instead for the raw orderpoint report of every policy and listReplenishmentTasks for work already materialised. Each row follows the engine\'s own routing, so a PURCHASE policy shows no internal source and falls back to purchasing, and any other policy whose SKU already has an open transfer order into its site shows no source, hint or fallback. Emits an INVENTORY_REPLENISHMENT_SUGGESTIONS_LIST event and creates nothing, because the queue is computed on every read and is therefore always current. Returns 200 with items and nextPageToken and no totalCount, 400 when scope, pageSize or pageToken is invalid, and 403 LOCATION_SCOPE_DENIED when a named scope lies outside the caller\'s reach. Required inputs: none; scope is an optional site or bin id or the literal all, pageSize defaults to 50 (1-200) and pageToken carries the cursor from the previous page, so keep following nextPageToken until it is null because a page can hold fewer than pageSize items, or none. Preconditions: none; snoozed, inactive and zero-minimum zero-maximum reserve policies are excluded and a bin without a policy is never listed. 
+     * Replenishment suggestions queue
+     */
+    async listReplenishmentSuggestions(requestParameters: ListReplenishmentSuggestionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentQueuePageResponse> {
+        const response = await this.listReplenishmentSuggestionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -333,7 +390,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces every tunable field of a replenishment policy: min/max thresholds, order multiple, lead-time override, preferred source type and active flag. Use this tool to retune an existing policy; do not use snoozeReplenishmentPolicy, which manages the snooze state this endpoint cannot touch, and do not use createReplenishmentPolicy, which defines a new policy. Preconditions: the policy must exist; its location and SKU identity are immutable here. Required inputs: policyId (UUID) path parameter plus minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); omitted optional fields are cleared or reset — orderMultiple and leadTimeDaysOverride to none, preferredSourceType to EITHER, active to true. Emits an INVENTORY_REPLENISHMENT_POLICY_UPDATE event; the next scan or stock event evaluates the new thresholds. Returns 404 when the policy does not exist, and 400 when minimumQuantity is not less than maximumQuantity. 
+     * Replaces every tunable field of a replenishment policy: min/max thresholds, order multiple, lead-time override, preferred source type and active flag. Use this tool to retune an existing policy; do not use snoozeReplenishmentPolicy, which manages the snooze state this endpoint cannot touch, and do not use createReplenishmentPolicy, which defines a new policy. Preconditions: the policy must exist; its location and SKU identity are immutable here. Required inputs: policyId (UUID) path parameter plus minimumQuantity (at least 0) at most maximumQuantity (at least 0); min = max > 0 is valid and min = max = 0 is a reserve bin that never triggers replenishment; omitted optional fields are cleared or reset — orderMultiple and leadTimeDaysOverride to none, preferredSourceType to EITHER, active to true. Emits an INVENTORY_REPLENISHMENT_POLICY_UPDATE event and appends an UPDATED, DEACTIVATED or REACTIVATED row to the per-bin audit trail when a persisted field changed; the next scan or stock event evaluates the new thresholds. Returns 404 when the policy does not exist, and 400 when minimumQuantity is greater than maximumQuantity. 
      * Update replenishment policy
      */
     async updateReplenishmentPolicyRaw(requestParameters: UpdateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentPolicyResponse>> {
@@ -377,7 +434,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces every tunable field of a replenishment policy: min/max thresholds, order multiple, lead-time override, preferred source type and active flag. Use this tool to retune an existing policy; do not use snoozeReplenishmentPolicy, which manages the snooze state this endpoint cannot touch, and do not use createReplenishmentPolicy, which defines a new policy. Preconditions: the policy must exist; its location and SKU identity are immutable here. Required inputs: policyId (UUID) path parameter plus minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); omitted optional fields are cleared or reset — orderMultiple and leadTimeDaysOverride to none, preferredSourceType to EITHER, active to true. Emits an INVENTORY_REPLENISHMENT_POLICY_UPDATE event; the next scan or stock event evaluates the new thresholds. Returns 404 when the policy does not exist, and 400 when minimumQuantity is not less than maximumQuantity. 
+     * Replaces every tunable field of a replenishment policy: min/max thresholds, order multiple, lead-time override, preferred source type and active flag. Use this tool to retune an existing policy; do not use snoozeReplenishmentPolicy, which manages the snooze state this endpoint cannot touch, and do not use createReplenishmentPolicy, which defines a new policy. Preconditions: the policy must exist; its location and SKU identity are immutable here. Required inputs: policyId (UUID) path parameter plus minimumQuantity (at least 0) at most maximumQuantity (at least 0); min = max > 0 is valid and min = max = 0 is a reserve bin that never triggers replenishment; omitted optional fields are cleared or reset — orderMultiple and leadTimeDaysOverride to none, preferredSourceType to EITHER, active to true. Emits an INVENTORY_REPLENISHMENT_POLICY_UPDATE event and appends an UPDATED, DEACTIVATED or REACTIVATED row to the per-bin audit trail when a persisted field changed; the next scan or stock event evaluates the new thresholds. Returns 404 when the policy does not exist, and 400 when minimumQuantity is greater than maximumQuantity. 
      * Update replenishment policy
      */
     async updateReplenishmentPolicy(requestParameters: UpdateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentPolicyResponse> {

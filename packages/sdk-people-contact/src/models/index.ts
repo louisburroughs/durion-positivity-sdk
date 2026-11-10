@@ -10,6 +10,7 @@ export * from './Person';
 export * from './PersonFactReplayResultDto';
 export * from './PersonResponse';
 export * from './PersonRoleAssignmentRequest';
+export * from './PolicyBlocker';
 export * from './PostalAddressDto';
 export * from './ResolvePersonRequest';
 export * from './ResolvePersonResponse';

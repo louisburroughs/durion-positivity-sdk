@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface CancellationResponse {
     /**
-     * Idempotency key associated with the cancellation request
-     * @type {string}
-     * @memberof CancellationResponse
-     */
-    cancellationIdempotencyKey?: string;
-    /**
      * Human-readable message describing the cancellation outcome
      * @type {string}
      * @memberof CancellationResponse
@@ -64,7 +58,6 @@ export function CancellationResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'cancellationIdempotencyKey': json['cancellationIdempotencyKey'] == null ? undefined : json['cancellationIdempotencyKey'],
         'message': json['message'] == null ? undefined : json['message'],
         'orderId': json['orderId'],
         'status': json['status'],
@@ -77,7 +70,6 @@ export function CancellationResponseToJSON(value?: CancellationResponse | null):
     }
     return {
         
-        'cancellationIdempotencyKey': value['cancellationIdempotencyKey'],
         'message': value['message'],
         'orderId': value['orderId'],
         'status': value['status'],

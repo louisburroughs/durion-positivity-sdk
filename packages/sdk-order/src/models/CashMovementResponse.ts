@@ -117,12 +117,6 @@ export interface CashMovementResponse {
      */
     recordedByName?: string;
     /**
-     * The register's idempotency key; null on a movement recorded before the fixed reasons
-     * @type {string}
-     * @memberof CashMovementResponse
-     */
-    requestId?: string;
-    /**
      * Session the movement belongs to
      * @type {string}
      * @memberof CashMovementResponse
@@ -227,7 +221,6 @@ export function CashMovementResponseFromJSONTyped(json: any, ignoreDiscriminator
         'reason': json['reason'] == null ? undefined : json['reason'],
         'receiptReference': json['receiptReference'] == null ? undefined : json['receiptReference'],
         'recordedByName': json['recordedByName'] == null ? undefined : json['recordedByName'],
-        'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
         'statedTaxes': json['statedTaxes'] == null ? undefined : ((json['statedTaxes'] as Array<any>).map(CashMovementStatedTaxFromJSON)),
         'supplierName': json['supplierName'] == null ? undefined : json['supplierName'],
@@ -259,7 +252,6 @@ export function CashMovementResponseToJSON(value?: CashMovementResponse | null):
         'reason': value['reason'],
         'receiptReference': value['receiptReference'],
         'recordedByName': value['recordedByName'],
-        'requestId': value['requestId'],
         'sessionId': value['sessionId'],
         'statedTaxes': value['statedTaxes'] == null ? undefined : ((value['statedTaxes'] as Array<any>).map(CashMovementStatedTaxToJSON)),
         'supplierName': value['supplierName'],

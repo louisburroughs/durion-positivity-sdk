@@ -27,7 +27,7 @@ import {
 } from './OperatingHoursRequest';
 
 /**
- * Partial update payload for a location; null fields are left unchanged
+ * Partial update payload for a location; absent fields are left unchanged. opensOn and closesOn are the exception: an absent key leaves the stored date unchanged, while an explicit JSON null clears it.
  * @export
  * @interface LocationPatchRequest
  */
@@ -44,6 +44,12 @@ export interface LocationPatchRequest {
      * @memberof LocationPatchRequest
      */
     cleanupBufferMinutes?: number;
+    /**
+     * LAST day the location operates, in the location's own timezone; the location deactivates at the start of the following local day. Omit the field to keep the stored date, send JSON null to clear it, or send a date to set it. A date being set must be today or later in the location's timezone and not before opensOn, otherwise 400 VALIDATION_ERROR names closesOn (DECISION-LOCATION-030).
+     * @type {Date}
+     * @memberof LocationPatchRequest
+     */
+    closesOn?: Date;
     /**
      * Unit this location's forms show and accept for a distance value (DECISION-LOCATION-028); unchanged when omitted. Storage of a distance is always canonical kilometres regardless of this setting.
      * @type {string}
@@ -62,6 +68,12 @@ export interface LocationPatchRequest {
      * @memberof LocationPatchRequest
      */
     name?: string;
+    /**
+     * First day the location operates, as a calendar date in the location's own timezone. Omit the field to keep the stored date, send JSON null to clear it, or send a date to set it; past dates are accepted (DECISION-LOCATION-030).
+     * @type {Date}
+     * @memberof LocationPatchRequest
+     */
+    opensOn?: Date;
     /**
      * Weekly operating hours for the location
      * @type {Array<OperatingHoursRequest>}
@@ -111,9 +123,11 @@ export function LocationPatchRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'checkInBufferMinutes': json['checkInBufferMinutes'] == null ? undefined : json['checkInBufferMinutes'],
         'cleanupBufferMinutes': json['cleanupBufferMinutes'] == null ? undefined : json['cleanupBufferMinutes'],
+        'closesOn': json['closesOn'] == null ? undefined : (new Date(json['closesOn'])),
         'distanceUnit': json['distanceUnit'] == null ? undefined : json['distanceUnit'],
         'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
         'name': json['name'] == null ? undefined : json['name'],
+        'opensOn': json['opensOn'] == null ? undefined : (new Date(json['opensOn'])),
         'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
         'status': json['status'] == null ? undefined : json['status'],
         'timezone': json['timezone'] == null ? undefined : json['timezone'],
@@ -128,9 +142,11 @@ export function LocationPatchRequestToJSON(value?: LocationPatchRequest | null):
         
         'checkInBufferMinutes': value['checkInBufferMinutes'],
         'cleanupBufferMinutes': value['cleanupBufferMinutes'],
+        'closesOn': value['closesOn'] == null ? undefined : ((value['closesOn'] as any).toISOString().substring(0,10)),
         'distanceUnit': value['distanceUnit'],
         'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
         'name': value['name'],
+        'opensOn': value['opensOn'] == null ? undefined : ((value['opensOn'] as any).toISOString().substring(0,10)),
         'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),
         'status': value['status'],
         'timezone': value['timezone'],

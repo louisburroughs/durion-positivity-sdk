@@ -73,6 +73,12 @@ export interface PurchaseOrderLineRequest {
      * @memberof PurchaseOrderLineRequest
      */
     unitCostMinor: number;
+    /**
+     * Opaque reference to the workorder this line was bought for (#3195), stored and published as given: it is not validated against pos-workorder (ADR-0044). Omit it to leave the line with no workorder; a revision replaces lines, so an omitted value clears the reference a line had
+     * @type {string}
+     * @memberof PurchaseOrderLineRequest
+     */
+    workorderId?: string;
 }
 
 /**
@@ -104,6 +110,7 @@ export function PurchaseOrderLineRequestFromJSONTyped(json: any, ignoreDiscrimin
         'skuId': json['skuId'] == null ? undefined : json['skuId'],
         'taxCodeId': json['taxCodeId'] == null ? undefined : json['taxCodeId'],
         'unitCostMinor': json['unitCostMinor'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -122,6 +129,7 @@ export function PurchaseOrderLineRequestToJSON(value?: PurchaseOrderLineRequest 
         'skuId': value['skuId'],
         'taxCodeId': value['taxCodeId'],
         'unitCostMinor': value['unitCostMinor'],
+        'workorderId': value['workorderId'],
     };
 }
 

@@ -93,6 +93,18 @@ export interface EmployeeProfileDto {
      */
     lastName: string;
     /**
+     * pos-image identifier of the employee's profile photo (durion#3092); null when the employee has no photo. The photo bytes are owned and served by pos-image, never stored here. A replaced photo overwrites this id; the superseded image stays in pos-image, unreferenced.
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    photoImageId?: string;
+    /**
+     * Gateway path that serves the profile photo bytes, /image/v1/images/id/{photoImageId} (durion#3092); null when no photo is set. Computed from photoImageId on read, never stored.
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    photoUrl?: string;
+    /**
      * Preferred name of the employee
      * @type {string}
      * @memberof EmployeeProfileDto
@@ -144,7 +156,9 @@ export enum EmployeeProfileDtoAllowedActionsEnum {
     ViewPii = 'VIEW_PII',
     Update = 'UPDATE',
     Disable = 'DISABLE',
-    Enable = 'ENABLE'
+    Enable = 'ENABLE',
+    StartWorkSession = 'START_WORK_SESSION',
+    StopWorkSession = 'STOP_WORK_SESSION'
 }
 /**
 * @export
@@ -192,6 +206,8 @@ export function EmployeeProfileDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         'id': json['id'],
         'jobRole': json['jobRole'] == null ? undefined : EmployeeJobRoleDtoFromJSON(json['jobRole']),
         'lastName': json['lastName'],
+        'photoImageId': json['photoImageId'] == null ? undefined : json['photoImageId'],
+        'photoUrl': json['photoUrl'] == null ? undefined : json['photoUrl'],
         'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
         'propagation': json['propagation'] == null ? undefined : EmployeePropagationDtoFromJSON(json['propagation']),
         'status': json['status'],
@@ -217,6 +233,8 @@ export function EmployeeProfileDtoToJSON(value?: EmployeeProfileDto | null): any
         'id': value['id'],
         'jobRole': EmployeeJobRoleDtoToJSON(value['jobRole']),
         'lastName': value['lastName'],
+        'photoImageId': value['photoImageId'],
+        'photoUrl': value['photoUrl'],
         'preferredName': value['preferredName'],
         'propagation': EmployeePropagationDtoToJSON(value['propagation']),
         'status': value['status'],

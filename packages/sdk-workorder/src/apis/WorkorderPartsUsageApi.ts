@@ -36,8 +36,8 @@ import {
 
 export interface ConsumePartsRequest {
     workorderId: string;
+    idempotencyKey: string;
     consumePartRequest: ConsumePartRequest;
-    idempotencyKey?: string;
 }
 
 export interface GetPartsUsageHistoryRequest {
@@ -47,14 +47,14 @@ export interface GetPartsUsageHistoryRequest {
 
 export interface IssuePartsRequest {
     workorderId: string;
+    idempotencyKey: string;
     issuePartRequest: IssuePartRequest;
-    idempotencyKey?: string;
 }
 
 export interface ReturnPartsRequest {
     workorderId: string;
+    idempotencyKey: string;
     returnPartRequest: ReturnPartRequest;
-    idempotencyKey?: string;
 }
 
 /**
@@ -63,7 +63,7 @@ export interface ReturnPartsRequest {
 export class WorkorderPartsUsageApi extends runtime.BaseAPI {
 
     /**
-     * Records actual consumption of an issued part, incrementing the line\'s quantityConsumed and writing a CONSUME usage event. Use this tool when a part is actually installed on the vehicle; do not use issueParts, which only reserves quantity, or returnParts, which sends unused quantity back. Preconditions: the part must belong to the workorder and cumulative consumption must not exceed the quantity already issued. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_CONSUME event and marks the workorder fact changed. Returns 201 with the CONSUME event, 400 when the quantity is not positive, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when consumption would exceed the issued quantity or the part belongs to a different workorder. 
+     * Records actual consumption of an issued part, incrementing the line\'s quantityConsumed and writing a CONSUME usage event. Use this tool when a part is actually installed on the vehicle; do not use issueParts, which only reserves quantity, or returnParts, which sends unused quantity back. Preconditions: the part must belong to the workorder and cumulative consumption must not exceed the quantity already issued. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); the required Idempotency-Key header (a UUID) makes a replay return the original 201 usage event. Emits a WORKORDER_PART_CONSUME event and marks the workorder fact changed. Returns 201 with the CONSUME event, 400 when the quantity is not positive or the Idempotency-Key is missing or not a UUID, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when consumption would exceed the issued quantity, the part belongs to a different workorder, or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor. 
      * Record Part Consumption on Workorder
      */
     async consumePartsRaw(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
@@ -71,6 +71,13 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'workorderId',
                 'Required parameter "workorderId" was null or undefined when calling consumeParts().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling consumeParts().'
             );
         }
 
@@ -111,7 +118,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records actual consumption of an issued part, incrementing the line\'s quantityConsumed and writing a CONSUME usage event. Use this tool when a part is actually installed on the vehicle; do not use issueParts, which only reserves quantity, or returnParts, which sends unused quantity back. Preconditions: the part must belong to the workorder and cumulative consumption must not exceed the quantity already issued. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_CONSUME event and marks the workorder fact changed. Returns 201 with the CONSUME event, 400 when the quantity is not positive, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when consumption would exceed the issued quantity or the part belongs to a different workorder. 
+     * Records actual consumption of an issued part, incrementing the line\'s quantityConsumed and writing a CONSUME usage event. Use this tool when a part is actually installed on the vehicle; do not use issueParts, which only reserves quantity, or returnParts, which sends unused quantity back. Preconditions: the part must belong to the workorder and cumulative consumption must not exceed the quantity already issued. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); the required Idempotency-Key header (a UUID) makes a replay return the original 201 usage event. Emits a WORKORDER_PART_CONSUME event and marks the workorder fact changed. Returns 201 with the CONSUME event, 400 when the quantity is not positive or the Idempotency-Key is missing or not a UUID, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when consumption would exceed the issued quantity, the part belongs to a different workorder, or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor. 
      * Record Part Consumption on Workorder
      */
     async consumeParts(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
@@ -167,7 +174,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Issues a quantity of a part line to the workorder, incrementing the line\'s quantityIssued and recording an ISSUE usage event with the acting user. Use this tool when stock is handed to the job; do not use consumeParts, which records actual installation against previously issued quantity. Preconditions: the workorder and part line must exist, the part must belong to the workorder, and the caller must have an authenticated username. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit) and travels with the reservation request; an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_ISSUE event and marks the workorder fact changed for downstream replication. Returns 201 with the ISSUE event, 400 when the quantity is not positive, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Issues a quantity of a part line to the workorder, incrementing the line\'s quantityIssued and recording an ISSUE usage event with the acting user. Use this tool when stock is handed to the job; do not use consumeParts, which records actual installation against previously issued quantity. Preconditions: the workorder and part line must exist, the part must belong to the workorder, and the caller must have an authenticated username. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit) and travels with the reservation request; the required Idempotency-Key header (a UUID) makes a replay return the original 201 usage event. Emits a WORKORDER_PART_ISSUE event and marks the workorder fact changed for downstream replication. Returns 201 with the ISSUE event, 400 when the quantity is not positive or the Idempotency-Key is missing or not a UUID, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor. 
      * Issue Parts to Workorder
      */
     async issuePartsRaw(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
@@ -175,6 +182,13 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'workorderId',
                 'Required parameter "workorderId" was null or undefined when calling issueParts().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling issueParts().'
             );
         }
 
@@ -215,7 +229,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Issues a quantity of a part line to the workorder, incrementing the line\'s quantityIssued and recording an ISSUE usage event with the acting user. Use this tool when stock is handed to the job; do not use consumeParts, which records actual installation against previously issued quantity. Preconditions: the workorder and part line must exist, the part must belong to the workorder, and the caller must have an authenticated username. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit) and travels with the reservation request; an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_ISSUE event and marks the workorder fact changed for downstream replication. Returns 201 with the ISSUE event, 400 when the quantity is not positive, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Issues a quantity of a part line to the workorder, incrementing the line\'s quantityIssued and recording an ISSUE usage event with the acting user. Use this tool when stock is handed to the job; do not use consumeParts, which records actual installation against previously issued quantity. Preconditions: the workorder and part line must exist, the part must belong to the workorder, and the caller must have an authenticated username. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit) and travels with the reservation request; the required Idempotency-Key header (a UUID) makes a replay return the original 201 usage event. Emits a WORKORDER_PART_ISSUE event and marks the workorder fact changed for downstream replication. Returns 201 with the ISSUE event, 400 when the quantity is not positive or the Idempotency-Key is missing or not a UUID, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor. 
      * Issue Parts to Workorder
      */
     async issueParts(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
@@ -224,7 +238,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns unused issued quantity of a part line to inventory, incrementing quantityReturned and writing a RETURN usage event. Use this tool for the normal return of leftover stock after partial consumption; do not use returnUnusedPartQuantity, which is the adjustment-flow return that also records a reason. Preconditions: the part must belong to the workorder, and the return cannot exceed the available quantity — issued minus consumed minus already returned. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_RETURN event and marks the workorder fact changed. Returns 201 with the RETURN event, 400 when the quantity is not positive, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the return would exceed the available quantity or the part belongs to a different workorder. 
+     * Returns unused issued quantity of a part line to inventory, incrementing quantityReturned and writing a RETURN usage event. Use this tool for the normal return of leftover stock after partial consumption; do not use returnUnusedPartQuantity, which is the adjustment-flow return that also records a reason. Preconditions: the part must belong to the workorder, and the return cannot exceed the available quantity — issued minus consumed minus already returned. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); the required Idempotency-Key header (a UUID) makes a replay return the original 201 usage event. Emits a WORKORDER_PART_RETURN event and marks the workorder fact changed. Returns 201 with the RETURN event, 400 when the quantity is not positive or the Idempotency-Key is missing or not a UUID, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the return would exceed the available quantity, the part belongs to a different workorder, or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor. 
      * Return Unused Parts to Inventory
      */
     async returnPartsRaw(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
@@ -232,6 +246,13 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'workorderId',
                 'Required parameter "workorderId" was null or undefined when calling returnParts().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling returnParts().'
             );
         }
 
@@ -272,7 +293,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns unused issued quantity of a part line to inventory, incrementing quantityReturned and writing a RETURN usage event. Use this tool for the normal return of leftover stock after partial consumption; do not use returnUnusedPartQuantity, which is the adjustment-flow return that also records a reason. Preconditions: the part must belong to the workorder, and the return cannot exceed the available quantity — issued minus consumed minus already returned. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_RETURN event and marks the workorder fact changed. Returns 201 with the RETURN event, 400 when the quantity is not positive, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the return would exceed the available quantity or the part belongs to a different workorder. 
+     * Returns unused issued quantity of a part line to inventory, incrementing quantityReturned and writing a RETURN usage event. Use this tool for the normal return of leftover stock after partial consumption; do not use returnUnusedPartQuantity, which is the adjustment-flow return that also records a reason. Preconditions: the part must belong to the workorder, and the return cannot exceed the available quantity — issued minus consumed minus already returned. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); the required Idempotency-Key header (a UUID) makes a replay return the original 201 usage event. Emits a WORKORDER_PART_RETURN event and marks the workorder fact changed. Returns 201 with the RETURN event, 400 when the quantity is not positive or the Idempotency-Key is missing or not a UUID, 404 when the workorder or part cannot be found, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the return would exceed the available quantity, the part belongs to a different workorder, or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor. 
      * Return Unused Parts to Inventory
      */
     async returnParts(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {

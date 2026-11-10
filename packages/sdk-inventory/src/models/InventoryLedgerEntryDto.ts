@@ -68,6 +68,12 @@ export interface InventoryLedgerEntryDto {
      */
     notes?: string;
     /**
+     * Business time the movement happened, when the posting path knows one: a picked-item consume replayed from an offline device carries the time the part was used. Never later than timestamp; null for postings that carry no business time
+     * @type {Date}
+     * @memberof InventoryLedgerEntryDto
+     */
+    occurredAt?: Date;
+    /**
      * Running quantity after this entry was applied
      * @type {number}
      * @memberof InventoryLedgerEntryDto
@@ -79,6 +85,12 @@ export interface InventoryLedgerEntryDto {
      * @memberof InventoryLedgerEntryDto
      */
     reasonCode?: string;
+    /**
+     * How occurredAt relates to timestamp: OFFLINE_REPLAY when the business time is more than two minutes before the posting time; null otherwise
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    source?: string;
     /**
      * Identifier of the originating source transaction
      * @type {string}
@@ -92,7 +104,7 @@ export interface InventoryLedgerEntryDto {
      */
     stockItemId: string;
     /**
-     * Business timestamp of the inventory event
+     * Posting timestamp of the inventory event: when this module applied the movement. Ordering and the running quantity are keyed to this instant, never to occurredAt
      * @type {Date}
      * @memberof InventoryLedgerEntryDto
      */
@@ -202,8 +214,10 @@ export function InventoryLedgerEntryDtoFromJSONTyped(json: any, ignoreDiscrimina
         'ledgerEntryId': json['ledgerEntryId'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
         'quantityAfter': json['quantityAfter'],
         'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'source': json['source'] == null ? undefined : json['source'],
         'sourceTransactionId': json['sourceTransactionId'] == null ? undefined : json['sourceTransactionId'],
         'stockItemId': json['stockItemId'],
         'timestamp': (new Date(json['timestamp'])),
@@ -231,8 +245,10 @@ export function InventoryLedgerEntryDtoToJSON(value?: InventoryLedgerEntryDto | 
         'ledgerEntryId': value['ledgerEntryId'],
         'locationId': value['locationId'],
         'notes': value['notes'],
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
         'quantityAfter': value['quantityAfter'],
         'reasonCode': value['reasonCode'],
+        'source': value['source'],
         'sourceTransactionId': value['sourceTransactionId'],
         'stockItemId': value['stockItemId'],
         'timestamp': ((value['timestamp']).toISOString()),
