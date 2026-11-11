@@ -69,7 +69,8 @@ function printPlan(harness: Harness): void {
   const { clock, slots } = harness.plan();
   console.log(`${clock.date} (ISO weekday ${clock.weekday}, week ${clock.week}) — now ${formatMinutes(clock.minutes)} shop time`);
   for (const slot of slots.filter((entry) => entry.status !== 'not-today')) {
-    console.log(`  ${formatMinutes(slot.minutes)}  ${slot.status.padEnd(8)}  ${slot.scenario.cadence.padEnd(7)}  ${slot.scenario.id}`);
+    const detail = slot.scenario.id.startsWith('visit-') ? `  (${slot.scenario.title})` : '';
+    console.log(`  ${formatMinutes(slot.minutes)}  ${slot.status.padEnd(8)}  ${slot.scenario.cadence.padEnd(7)}  ${slot.scenario.id}${detail}`);
   }
 }
 

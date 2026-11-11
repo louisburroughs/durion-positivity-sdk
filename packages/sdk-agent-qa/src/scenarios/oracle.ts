@@ -3,7 +3,8 @@
  *
  * The verdict separates three things a single pass/fail would blur:
  *
- * - `failed` — something is broken: a 5xx on any call, or a 2xx whose body the
+ * - `failed` — something is broken: a 5xx on any call (other than the
+ *   backend's documented "still replicating, retry" 503s), or a 2xx whose body the
  *   SDK could not decode (the backend and the generated client disagree about
  *   the contract). This is the only verdict that says "there is a defect to
  *   look at".
@@ -21,6 +22,18 @@ import type { LoopResult } from '../agent/loop';
 import { reachedBackend, type CallRecord } from '../ledger/CallLedger';
 import type { FinishReport } from '../tools/toolkit';
 import type { Expectation, Scenario } from './types';
+
+/**
+ * 503s the backend uses to say "not yet", not "broken": a read model that has
+ * not caught up with a record created moments ago. The integration suites
+ * retry through exactly these (see retryWhileReplicating and
+ * promoteWhenPromotable there), so the harness must not report them as defects.
+ */
+const TRANSIENT_CODE = /(_REPLICATION_PENDING|^CUSTOMER_REQUIREMENTS_UNAVAILABLE)$/;
+
+export function isTransientUnavailable(call: Pick<CallRecord, 'status' | 'errorCode'>): boolean {
+  return call.status === 503 && call.errorCode !== undefined && TRANSIENT_CODE.test(call.errorCode);
+}
 
 export type Verdict = 'passed' | 'failed' | 'inconclusive' | 'infra' | 'skipped';
 
@@ -82,7 +95,8 @@ export function judge(
 ): Judgement {
   const expectations = scenario.expect.map((expectation) => checkExpectation(expectation, calls));
   const serverErrors = calls.filter(
-    (call) => (call.status !== undefined && call.status >= 500) || call.kind === 'decode-error',
+    (call) =>
+      (call.status !== undefined && call.status >= 500 && !isTransientUnavailable(call)) || call.kind === 'decode-error',
   );
   const reasons: string[] = [];
 

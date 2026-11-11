@@ -8,6 +8,9 @@ import * as path from 'path';
 import type { ModelPort } from '../agent/loop';
 import type { Catalog } from '../catalog/types';
 import type { QaConfig } from '../config';
+import { describeVisit } from '../day/dayPlan';
+import { DayPlanStore } from '../day/DayPlanStore';
+import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
 import { CoverageStore, sweepQuota, type CoverageSummary } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
 import { SCENARIOS, SWEEP_SCENARIO_ID, SWEEP_SLOT } from '../scenarios/library';
@@ -37,6 +40,8 @@ export interface HarnessOptions {
   scenarios?: readonly Scenario[];
   log?(message: string): void;
   now?: () => Date;
+  /** Pause used by the agent's `wait` tool; tests replace it. */
+  sleep?(ms: number): Promise<void>;
 }
 
 const SWEEP_SCHEDULE: Schedulable = {
@@ -79,12 +84,36 @@ export class Harness {
     const { config } = this.options;
     const clock = this.clock();
     this.state.reload();
-    const slots = planDay([...this.scenarios, SWEEP_SCHEDULE], clock, this.state.lastRuns(), {
+    const lastRuns = this.state.lastRuns();
+    const day = this.dayStore(clock);
+    const stages: Schedulable[] = (day?.plan.visits ?? []).flatMap((visit) =>
+      visit.stages.map((stage) => ({ id: stage.id, title: describeVisit(visit), cadence: 'daily' as const, at: stage.at })),
+    );
+    const slots = planDay([...this.scenarios, SWEEP_SCHEDULE, ...stages], clock, lastRuns, {
       runDays: config.runDays,
       jitterMinutes: config.jitterMinutes,
       maxLatenessMinutes: config.maxLatenessMinutes,
     });
+    // A visit happens in order: the job cannot go on the floor before the customer has been seen.
+    for (const slot of slots) {
+      const found = day?.find(slot.scenario.id);
+      if (found && found.index > 0 && slot.status === 'due') {
+        const previous = found.visit.stages[found.index - 1];
+        if (lastRuns[previous.id]?.date !== clock.date) {
+          slot.status = 'upcoming';
+        }
+      }
+    }
     return { clock, slots };
+  }
+
+  /** Today's customers, or undefined when the shop is closed or visits are turned off. */
+  private dayStore(clock: LocalClock): DayPlanStore | undefined {
+    const { config } = this.options;
+    if (config.day.visitsMax === 0 || !config.runDays.includes(clock.weekday)) {
+      return undefined;
+    }
+    return DayPlanStore.open(this.dayDir(clock), clock.date, config.day);
   }
 
   coverageSummary(): CoverageSummary {
@@ -142,6 +171,15 @@ export class Harness {
             sweepTargets({ catalog, coverage, invoker, policy: config.policy, level: config.coverageLevel, quota: 1, writes: false }),
           );
         }
+        const day = this.dayStore(clock);
+        const stage = day?.find(id);
+        let memory: Record<string, string> | undefined;
+        let skipReason: string | undefined;
+        if (day && stage) {
+          memory = day.memoryOf(stage.visit.id);
+          scenario = stageScenario(stage.visit, stage.stage, memory, { roleMode: backend.roleMode });
+          skipReason = missingPrerequisite(stage.stage, memory);
+        }
         if (!scenario) {
           this.log(`${id}: no such scenario`);
           continue;
@@ -169,6 +207,17 @@ export class Harness {
           artifactsDir: dayDir,
           log: this.log,
           now: this.now,
+          memory,
+          skipReason,
+          sleep: this.options.sleep,
+          // Ids are taken from the responses that create them, and saved at once: a stage that
+          // dies halfway must still leave the next one what it had established.
+          onCall: memory
+            ? (operation, outcome) => {
+                harvestFacts(operation, outcome, memory);
+                day?.save();
+              }
+            : undefined,
           afterAgent: backstop
             ? async (runtime) => {
                 const { probed, unreachable } = await runBackstop(runtime, {
@@ -183,6 +232,7 @@ export class Harness {
             : undefined,
         });
         coverage.save();
+        day?.save();
         results.push(result);
         this.log(`■ ${scenario.id}: ${result.verdict}${result.reasons.length > 0 ? ` — ${result.reasons[0]}` : ''}`);
 
@@ -212,7 +262,8 @@ export class Harness {
     const dayDir = this.dayDir(clock);
     const file = path.join(dayDir, 'report.md');
     fs.mkdirSync(dayDir, { recursive: true });
-    fs.writeFileSync(file, renderReport(clock.date, readDayResults(dayDir), this.coverageSummary()), 'utf8');
+    const visits = this.dayStore(clock)?.plan.visits ?? [];
+    fs.writeFileSync(file, renderReport(clock.date, readDayResults(dayDir), this.coverageSummary(), visits), 'utf8');
     return file;
   }
 
@@ -264,6 +315,7 @@ export class Harness {
   }
 
   scenarioIds(): string[] {
-    return [...this.scenarios.map((scenario) => scenario.id), SWEEP_SCENARIO_ID];
+    const stages = (this.dayStore(this.clock())?.plan.visits ?? []).flatMap((visit) => visit.stages.map((stage) => stage.id));
+    return [...this.scenarios.map((scenario) => scenario.id), SWEEP_SCENARIO_ID, ...stages];
   }
 }

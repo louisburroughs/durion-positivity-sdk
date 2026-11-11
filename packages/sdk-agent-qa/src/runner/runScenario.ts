@@ -5,12 +5,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { runLoop, type LoopEvent, type LoopLimits, type LoopResult, type ModelPort } from '../agent/loop';
-import type { Catalog } from '../catalog/types';
+import type { Catalog, Operation } from '../catalog/types';
 import type { CoverageStore } from '../sdk-coverage/CoverageStore';
 import type { CallLedger, CallRecord } from '../ledger/CallLedger';
 import { judge, type ExpectationResult, type Verdict } from '../scenarios/oracle';
 import type { Scenario } from '../scenarios/types';
-import type { SdkInvoker } from '../sdk/SdkInvoker';
+import type { CallOutcome, SdkInvoker } from '../sdk/SdkInvoker';
 import { ToolRuntime, type FinishReport, type SafetyPolicy } from '../tools/toolkit';
 import { systemPrompt, taskPrompt, type PromptContext } from './prompt';
 
@@ -49,6 +49,12 @@ export interface ScenarioDeps {
   artifactsDir?: string;
   log(message: string): void;
   now?: () => Date;
+  /** When set, the scenario is recorded as skipped for this reason and nothing is called. */
+  skipReason?: string;
+  /** Visit memory: facts from earlier stages, updated in place by this one. */
+  memory?: Record<string, string>;
+  onCall?(operation: Operation, outcome: CallOutcome): void;
+  sleep?(ms: number): Promise<void>;
   /** Runs after the agent, with the same tool runtime — the coverage backstop hooks in here. */
   afterAgent?(runtime: ToolRuntime): Promise<void>;
 }
@@ -74,17 +80,30 @@ export async function runScenario(scenario: Scenario, deps: ScenarioDeps): Promi
     startedAt: startedAt.toISOString(),
   };
 
-  if (scenario.requiresRoleMode && !deps.roleMode) {
-    return {
+  const stamp = startedAt.toISOString().slice(11, 16).replace(':', '');
+  if (deps.artifactsDir) {
+    fs.mkdirSync(deps.artifactsDir, { recursive: true });
+  }
+  const skipReason =
+    deps.skipReason ??
+    (scenario.requiresRoleMode && !deps.roleMode
+      ? 'needs per-persona logins (ITEST_<PERSONA>_USERNAME/_PASSWORD); every persona currently shares the admin login'
+      : undefined);
+  if (skipReason !== undefined) {
+    const skipped: ScenarioResult = {
       ...base,
       finishedAt: now().toISOString(),
       verdict: 'skipped',
-      reasons: ['needs per-persona logins (ITEST_<PERSONA>_USERNAME/_PASSWORD); every persona currently shares the admin login'],
+      reasons: [skipReason],
       expectations: [],
       callsByStatus: {},
       packages: [],
       serverErrors: [],
     };
+    if (deps.artifactsDir) {
+      fs.writeFileSync(path.join(deps.artifactsDir, `${stamp}-${scenario.id}.json`), `${JSON.stringify(skipped, null, 2)}\n`, 'utf8');
+    }
+    return skipped;
   }
 
   const runtime = new ToolRuntime({
@@ -100,14 +119,13 @@ export async function runScenario(scenario: Scenario, deps: ScenarioDeps): Promi
     pinned: scenario.operations,
     allowUnvalidated: scenario.kind === 'error',
     maxCalls: scenario.limits.maxCalls ?? deps.limits.maxCalls,
+    memory: deps.memory,
+    onCall: deps.onCall,
+    sleep: deps.sleep,
     now,
   });
 
-  const stamp = startedAt.toISOString().slice(11, 16).replace(':', '');
   const transcript = deps.artifactsDir ? path.join(deps.artifactsDir, `${stamp}-${scenario.id}.transcript.jsonl`) : undefined;
-  if (deps.artifactsDir) {
-    fs.mkdirSync(deps.artifactsDir, { recursive: true });
-  }
   const onEvent = (event: LoopEvent): void => {
     if (transcript) {
       fs.appendFileSync(transcript, `${JSON.stringify(event)}\n`, 'utf8');

@@ -13,7 +13,8 @@ describe('loadQaConfig', () => {
       policy: { mode: 'mutating', allowDestructive: false, deny: [] },
       sweepWrites: false,
       maxPerTick: 1,
-      minGapMinutes: 10,
+      minGapMinutes: 2,
+      day: { visitsMin: 8, visitsMax: 12, newCustomerRatio: 0.3, commercialRatio: 0.3, newVehicleRatio: 0.2, openTime: '08:00', closeTime: '17:30', seed: 0 },
       stateDir: path.join(REPO_ROOT, '.agent-qa'),
     });
   });

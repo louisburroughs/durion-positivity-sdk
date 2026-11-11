@@ -44,6 +44,17 @@ describe('judge', () => {
     expect(judgement).toMatchObject({ verdict: 'failed', reasons: ['a.Api.list answered 200 with a body the SDK could not decode'] });
   });
 
+  it('does not fail on the documented "still replicating, retry" 503s, and does on any other 503', () => {
+    const lagging = [
+      { ...record('workorder.EstimateAPIApi.promoteEstimate', 503), errorCode: 'CUSTOMER_REQUIREMENTS_UNAVAILABLE' },
+      { ...record('shop-manager.AppointmentsAPIApi.createAppointment', 503), errorCode: 'CRM_REPLICATION_PENDING' },
+      record('workorder.EstimateAPIApi.promoteEstimate', 200),
+    ];
+    expect(judge(scenario(), lagging, FINISHED, COMPLETED).verdict).toBe('passed');
+    expect(judge(scenario(), [{ ...record('a.Api.list', 503), errorCode: 'SERVICE_UNAVAILABLE' }], FINISHED, COMPLETED).verdict).toBe('failed');
+    expect(judge(scenario(), [record('a.Api.list', 503)], FINISHED, COMPLETED).verdict).toBe('failed');
+  });
+
   it('does not treat a 4xx as a failure: it is the system answering', () => {
     expect(judge(scenario({ kind: 'call', operation: 'a.Api.close' }), [record('a.Api.close', 409)], FINISHED, COMPLETED).verdict).toBe('passed');
   });

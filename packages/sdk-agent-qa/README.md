@@ -1,8 +1,14 @@
 # @durion-sdk/agent-qa
 
-An agentic QA harness for the Durion Positivity SDK. It turns every method of every generated client into a tool a
-language model can call, and uses that to replay what a tenant does in a day, a week and a month against a live
-backend — including the things that are supposed to fail.
+An agentic QA harness for the Durion Positivity SDK. Every day it puts a day's worth of realistic business through
+a live backend: a roster of customers — new and returning, individuals and commercial accounts, with vehicles on
+file and vehicles never seen before — each carried by a language model from the service counter to the shop floor
+to checkout. Around that it runs the staff's own daily, weekly and monthly routines, deliberate error drills, and
+a sweep that makes sure every SDK gets called every month.
+
+The model does the work through tools, and each tool is one method of a generated client. Nothing about a visit is
+scripted beyond who walks in and what they want: finding the returning customer, choosing services that fit the
+complaint, working around a full shop and coping with whatever state the tenant is in are left to the agent.
 
 It is built from standard parts and owns very little: the TypeScript compiler reads the generated clients, **Zod**
 validates every tool input, **Vercel's AI SDK** talks to the model, and one short loop sits between them.
@@ -11,7 +17,7 @@ validates every tool input, **Vercel's AI SDK** talks to the model, and one shor
 packages/sdk-*/src/apis/*.ts ──► catalog ──► Zod schema per operation ──┐
         (generated clients)      1,381 ops                              │
                                                                         ▼
-scenario (goal + pinned ops + expectations) ──► tools ──► loop ◄──► model (AI SDK, fallback chain)
+day roster (visits) + staff scenarios ──► task ──► tools ──► loop ◄──► model (AI SDK, fallback chain)
                                                             │
                                               real generated client + transport
                                                             │
@@ -88,10 +94,11 @@ the top of the file.
 
 ### How the day is spaced
 
-Every scenario has a time of day in the shop's time zone (`QA_TIMEZONE`). Each slot is moved by a jitter of up to
+Every visit stage and every scenario has a time of day in the shop's time zone (`QA_TIMEZONE`). Each slot is moved by a jitter of up to
 `QA_JITTER_MINUTES` that is stable within a day and different the next, so the traffic does not arrive on the same
-minute every morning. One scenario runs per pass (`QA_MAX_PER_TICK`), with at least `QA_MIN_GAP_MINUTES` between
-them, so a backlog drains as a trickle rather than a burst.
+minute every morning. One task runs per pass (`QA_MAX_PER_TICK`), with at least `QA_MIN_GAP_MINUTES` (2) between
+them, so a backlog drains as a trickle rather than a burst. A default day is about 20 to 25 visit stages plus the
+staff routines — roughly 30 agent runs between opening and closing.
 
 A laptop is not always on, so each cadence has a catch-up rule:
 
@@ -143,23 +150,88 @@ properties that matter are properties of the loop:
 - **The model is a port.** The loop sees a `ModelPort`; `agent/aiSdkModel.ts` is the only file that imports `ai`.
   That is what lets the loop be unit-tested with a scripted model.
 
-## Scenarios
+## A day of customers
 
-`scenarios/library.ts` holds 29 scenarios. Each is a goal written the way an employee would describe the task,
-the operations it normally takes, and the facts that must appear in the call ledger.
+Each morning the harness generates the day's **visits** (`day/dayPlan.ts`) — 8 to 12 on a weekday by default, about
+60% of that on a Saturday. A visit is who comes in, what they drive, what they ask for, what they decide and how
+they pay:
+
+```text
+08:14  visit-01-intake    service: new individual (Kaylie Swaniawski), new vehicle, walk-in, approves, cash
+09:33  visit-03-sale      counter-sale: existing commercial
+09:58  visit-04-intake    service: new commercial (Romaguera Construction Co.), new vehicle, walk-in, approves, on-account
+10:02  visit-05-intake    service: existing commercial, existing vehicle, appointment, approves, on-account
+13:50  visit-10-call      appointment-call: existing individual, existing vehicle
+```
+
+**The mix is allocated, not sampled.** With ten visits, a 30% new-customer share and a 30% commercial share, there
+are exactly three new customers and exactly three commercial accounts every day, and which visits they are changes
+daily, so all four combinations turn up.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `QA_VISITS_MIN` / `QA_VISITS_MAX` | 8 / 12 | Visits on a full weekday. `QA_VISITS_MAX=0` turns visits off. |
+| `QA_NEW_CUSTOMER_RATIO` | 0.3 | Share of visits by a customer the shop has never seen. |
+| `QA_COMMERCIAL_RATIO` | 0.3 | Share of visits by a commercial account. |
+| `QA_NEW_VEHICLE_RATIO` | 0.2 | Share of returning customers who bring a vehicle not yet on file. |
+| `QA_OPEN_TIME` / `QA_CLOSE_TIME` | 08:00 / 17:30 | Arrivals follow a morning rush, a lunch lull and a smaller afternoon wave. |
+| `QA_SEED` | 0 | Mixed into the date; the roster is a pure function of the two. |
+
+**What is fixed and what is left to the agent.** The roster fixes the facts an agent left to itself would flatten.
+A *new* customer comes with a generated identity (name, email, phone, or a business with its driver) and a vehicle
+(year, make, model, VIN, plate) to create. A *returning* customer comes with only a place to start looking
+("search names containing 'm', take the third individual"), so a real record already in the tenant is used and a
+different one each day. Everything else — which services fit "brakes squeal when stopping", which bay is free,
+what to do when the estimate is refused — the agent works out from what the backend tells it.
+
+**A visit has stages, hours apart.** A service visit is three separate agent runs, as three different employees:
+
+| Stage | Who | What happens |
+| --- | --- | --- |
+| intake | advisor | Find or create the customer and vehicle, write the estimate, get the customer's decision, promote to a workorder. |
+| work | manager (and technician) | Approve, staff, find a free bay, start the job, clock labor, complete it. If more work is found on the lift, raise and approve a change request. |
+| checkout | advisor | Invoice and finalize; take cash, or leave it open on a commercial account's terms. |
+
+About 15% of customers decline the estimate and the visit ends at the counter; about 12% have work added mid-job;
+about 30% of returning customers arrive on a booked appointment. Counter sales (about 20% of visits) and phone
+bookings (about 15%) are single-stage.
+
+A stage starts only after the one before it has run, and is skipped when its prerequisite never came to exist (no
+workorder, no work). What one stage learns reaches the next through the visit's memory: ids are captured straight
+from the responses that create them, and the agent adds the rest with a `remember` tool. It is saved after every
+call, so a stage that dies halfway still leaves the next one what it had established.
+
+The work stage is told that bays are often all taken and that it must not take one from another job. If alpha's
+daily floor load has filled every position, visits will end "waiting for a bay" — see *Running alongside the
+populate runs* below.
+
+## Staff routines and error drills
+
+`scenarios/library.ts` holds 25 fixed scenarios for the work that does not walk in through the door. Each is a
+goal written the way an employee would describe the task, the operations it normally takes, and the facts that
+must appear in the call ledger.
 
 | Cadence | Scenarios |
 | --- | --- |
-| Daily (9 + sweep) | open the shop · book appointments · walk-in estimate to workorder · counter sale · work a job · receive a delivery · invoice and payment · 404 drill · close out the day · coverage sweep |
+| Daily (5 + sweep) | open the shop · receive a delivery · invoices and receivables · 404 drill · close out the day · coverage sweep |
 | Weekly (10) | stock order · cycle count · access review · customer follow-ups · warranty claims · authorization drill · timesheet approval · payables run · bank deposit · catalog and pricing |
 | Monthly (10) | period close · financial statements · bank reconciliation · inventory review · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
 
 **Error conditions** are scenarios of kind `error`: lookups that must answer 404, a technician reaching for
 finance (403 — needs per-persona logins, and is skipped rather than failed without them), and the validation,
 conflict and idempotency contracts (400/422/409). Only these may send a request that skips client-side
-validation (`validate: false`), which is how a deliberately malformed body reaches the server.
+validation (`validate: false`), which is how a deliberately malformed body reaches the server. Visits produce
+their own errors too, naturally: a full shop, a refused VIN, a register that is not open.
 
 To add a scenario, add an entry. `scenarios.test.ts` fails if it names an operation the clients do not have.
+
+### Running alongside the populate runs
+
+The `Alpha Daily Shop Floor` workflow puts a started workorder on every free bay each morning and closes them out
+the next day. That leaves no free position for the agent's own jobs, so their work stages will mostly end
+"waiting for a bay" and their checkouts will find nothing to invoice. Intake, counter sales and bookings are
+unaffected. To have visits run all the way through, give them room — reduce what the floor load fills, or let the
+agent harness take over the day's floor work on the days it runs.
 
 ### Verdicts come from the ledger, not from the model
 
@@ -168,10 +240,10 @@ Every call is written to a ledger as it returns. `scenarios/oracle.ts` judges th
 | Verdict | Meaning |
 | --- | --- |
 | `passed` | The agent finished and every expectation is visible in the ledger. |
-| `failed` | A call answered **5xx**, or answered 2xx with a body the SDK could not decode (contract drift). The only verdict that means "there is a defect". |
+| `failed` | A call answered **5xx**, or answered 2xx with a body the SDK could not decode (contract drift). The only verdict that means "there is a defect". The backend's documented "still replicating, retry" 503s after a record was just created are not counted; the agent is told to wait and retry. |
 | `inconclusive` | The agent did not get there: out of steps, model error, or an expected call never happened. A harness or model matter until shown otherwise. |
 | `infra` | Nothing answered. The slot is left due and retried when the backend is back. |
-| `skipped` | The scenario needs per-persona logins that are not configured. |
+| `skipped` | The scenario needs per-persona logins that are not configured, or a visit stage's prerequisite never came to exist (the customer declined; the job was never finished). |
 
 A 4xx is never a failure by itself: a 409 on a workorder that is already complete is the system working. What the
 model reports as findings is included in the report, labelled unverified.
@@ -184,7 +256,8 @@ Coverage is counted from the ledger: an operation is *called* when a backend ans
 
 Three things keep the promise, each a backstop for the one before:
 
-1. **The scenarios** already pin operations in all 23 packages the gateway routes (asserted by a test).
+1. **A day of visits plus the staff scenarios** already pin operations in all 23 packages the gateway routes
+   (asserted by a test).
 2. **The coverage sweep** runs daily with no fixed script: it is handed the operations the month has not reached
    yet — a quota sized to finish by month end, untouched packages first, spread across services — and the agent
    works out how to call each one.
@@ -206,7 +279,7 @@ The harness writes to a shared tenant, so every operation has a risk class, assi
 | Class | Examples | When it runs |
 | --- | --- | --- |
 | `read` | GETs; POSTs that only compute or search | Always |
-| `write` | create a cart, approve an estimate, record a payment | When `QA_MODE=mutating` (default) |
+| `write` | create a customer, approve an estimate, record a payment, give a bay back | When `QA_MODE=mutating` (default) |
 | `destructive` | deletes, account lockouts, bulk ingest, the tenant registry, tenant signup and password-reset mail, campaign dispatch, closing an accounting period | Only when a scenario pins it **and** `QA_ALLOW_DESTRUCTIVE=true` |
 
 Out of the box nothing destructive runs: the month-end scenario reads close readiness and is refused the close
@@ -226,7 +299,8 @@ Records the agent writes carry the run id (`qa-<date>-<time>`) in their free-tex
   state.json                     what has run today / this week / this month
   coverage-2026-11.json          the month's coverage, per operation, with status counts
   runs/2026-11-10/
-    report.md                    the day so far: verdicts, server errors with correlation ids, coverage
+    day-plan.json                today's visits, and what each has established so far
+    report.md                    the day so far: customers and their stages, verdicts, server errors, coverage
     calls.jsonl                  every SDK call: operation, persona, status, error code, correlation id, duration
     1205-open-shop.json          one scenario's result
     1205-open-shop.transcript.jsonl   every model turn and tool result
@@ -256,7 +330,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 114 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 149 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 

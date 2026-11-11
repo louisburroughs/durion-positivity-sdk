@@ -4,6 +4,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { describeVisit, type Visit } from '../day/dayPlan';
 import type { CoverageSummary } from '../sdk-coverage/CoverageStore';
 import type { ScenarioResult } from './runScenario';
 
@@ -28,7 +29,12 @@ export function readDayResults(dayDir: string): ScenarioResult[] {
 
 const cell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\s+/g, ' ');
 
-export function renderReport(date: string, results: readonly ScenarioResult[], coverage: CoverageSummary): string {
+export function renderReport(
+  date: string,
+  results: readonly ScenarioResult[],
+  coverage: CoverageSummary,
+  visits: readonly Visit[] = [],
+): string {
   const count = (verdict: string): number => results.filter((result) => result.verdict === verdict).length;
   const tokens = results.reduce((sum, result) => sum + (result.loop ? result.loop.usage.inputTokens + result.loop.usage.outputTokens : 0), 0);
   const calls = results.reduce((sum, result) => sum + Object.values(result.callsByStatus).reduce((a, b) => a + b, 0), 0);
@@ -49,6 +55,29 @@ export function renderReport(date: string, results: readonly ScenarioResult[], c
       `| ${result.startedAt.slice(11, 16)} | ${cell(result.scenarioId)} | ${result.cadence} | ${MARK[result.verdict] ?? result.verdict} | ` +
         `${statuses || '—'} | ${result.loop?.steps ?? '—'} | ${cell(result.loop?.models.join(', ') || '—')} |`,
     );
+  }
+
+  if (visits.length > 0) {
+    const verdictOf = new Map(results.map((result) => [result.scenarioId, result.verdict]));
+    const count = (test: (visit: Visit) => boolean): number => visits.filter(test).length;
+    lines.push(
+      '',
+      "## Today's customers",
+      '',
+      `${visits.length} visits: ${count((visit) => visit.customer.status === 'new')} new and ` +
+        `${count((visit) => visit.customer.status === 'existing')} returning customers; ` +
+        `${count((visit) => visit.customer.type === 'commercial')} commercial and ` +
+        `${count((visit) => visit.customer.type === 'individual')} individual.`,
+      '',
+      '| Visit | Customer and vehicle | Stages |',
+      '| --- | --- | --- |',
+    );
+    for (const visit of visits) {
+      const stages = visit.stages
+        .map((stage) => `${stage.at} ${stage.name}: ${MARK[verdictOf.get(stage.id) ?? ''] ?? 'pending'}`)
+        .join(' · ');
+      lines.push(`| ${visit.id} | ${cell(describeVisit(visit))} | ${stages} |`);
+    }
   }
 
   const failed = results.filter((result) => result.verdict === 'failed');

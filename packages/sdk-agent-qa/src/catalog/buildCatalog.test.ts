@@ -81,6 +81,16 @@ describe('classifyRisk', () => {
     expect(riskOf('workorder.EstimateAPIApi.approveEstimate')).toBe('write');
   });
 
+  it('treats giving back a bay or a technician, and taking a line off a cart, as ordinary work', () => {
+    for (const id of [
+      'workorder.ServicePositionAPIApi.releaseServicePosition',
+      'workorder.TechnicianAssignmentAPIApi.releaseTechnician',
+      'order.SalesOrdersApi.removeCartItem',
+    ]) {
+      expect([id, riskOf(id)]).toEqual([id, 'write']);
+    }
+  });
+
   it('marks deletions, lockouts, bulk ingest, the tenant registry and book-locking as destructive', () => {
     for (const id of [
       'customer.CustomerAPIApi.deleteCustomer',

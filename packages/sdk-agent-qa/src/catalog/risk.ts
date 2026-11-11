@@ -32,6 +32,20 @@ const DESTRUCTIVE_OPERATIONS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Everyday shop work that happens to be a DELETE or to carry a destructive-
+ * sounding name. Giving a bay or a technician back, taking a line off a cart
+ * or an estimate: a day of business cannot be replayed without them, and each
+ * undoes only something the same workflow just did.
+ */
+const ROUTINE_OPERATIONS: ReadonlySet<string> = new Set([
+  'releaseServicePosition',
+  'releaseTechnician',
+  'removeCartItem',
+  'clearOrderDiscount',
+  'deleteEstimateItem',
+]);
+
+/**
  * Anonymous endpoints that create tenants or send mail to an address in the
  * request. They are rate-limited per client IP at the gateway, and a harness
  * that trips those limits locks real users out of signup and recovery.
@@ -45,6 +59,9 @@ const READ_ONLY_POST_PATH =
 export function classifyRisk(operation: Pick<Operation, 'pkg' | 'method' | 'http' | 'path'>): Risk {
   if (operation.http === 'GET' || operation.http === 'HEAD' || operation.http === 'OPTIONS') {
     return 'read';
+  }
+  if (ROUTINE_OPERATIONS.has(operation.method) && !DESTRUCTIVE_PACKAGES.has(operation.pkg)) {
+    return 'write';
   }
   if (
     operation.http === 'DELETE' ||

@@ -65,6 +65,15 @@ export interface ToolRuntimeOptions {
   allowUnvalidated: boolean;
   /** Hard ceiling on SDK calls for the scenario. */
   maxCalls: number;
+  /**
+   * Facts carried between the stages of one customer visit (ids, names, what
+   * the customer decided). When given, the model gets a `remember` tool.
+   */
+  memory?: Record<string, string>;
+  /** Called after every answered call, with the full response body. */
+  onCall?(operation: Operation, outcome: CallOutcome): void;
+  /** Pause used by the `wait` tool. */
+  sleep?(ms: number): Promise<void>;
   /** Characters of response body returned to the model per call. */
   resultBudget?: number;
   now?: () => Date;
@@ -213,6 +222,10 @@ export class ToolRuntime {
     };
     this.options.ledger.record(record);
     this.options.coverage.record(record);
+    this.options.onCall?.(operation, outcome);
+
+    const transient =
+      outcome.status === 503 && /(_REPLICATION_PENDING|^CUSTOMER_REQUIREMENTS_UNAVAILABLE)$/.test(outcome.errorCode ?? '');
 
     return {
       outcome: outcome.kind,
@@ -221,6 +234,9 @@ export class ToolRuntime {
       message: outcome.message,
       body: shrink(outcome.body, this.options.resultBudget ?? 4000),
       correlationId: outcome.correlationId,
+      hint: transient
+        ? 'Temporary: a record created moments ago has not replicated yet. Call wait for a few seconds, then repeat this exact call (up to 5 times).'
+        : undefined,
     };
   }
 
@@ -356,10 +372,47 @@ export class ToolRuntime {
     ];
   }
 
+  private utilityTools(): QaTool[] {
+    const sleep = this.options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+    const tools: QaTool[] = [
+      {
+        name: 'wait',
+        description:
+          'Pause for a few seconds. Use it when a result says a record has not replicated yet, or when the task says to wait, then retry.',
+        schema: z.strictObject({ seconds: z.number().min(1).max(30) }),
+        execute: async (input) => {
+          const { seconds } = input as { seconds: number };
+          await sleep(seconds * 1000);
+          return { waited: seconds };
+        },
+      },
+    ];
+    const { memory } = this.options;
+    if (memory) {
+      tools.push({
+        name: 'remember',
+        description:
+          'Save a fact about this customer visit for the colleague who handles its next step later today (ids, names, what the customer decided). ' +
+          'Saving a key again replaces its value.',
+        schema: z.strictObject({
+          key: z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,39}$/, 'a short camelCase name, e.g. workorderId'),
+          value: z.string().min(1).max(300),
+        }),
+        execute: async (input) => {
+          const { key, value } = input as { key: string; value: string };
+          memory[key] = value;
+          return { remembered: Object.keys(memory) };
+        },
+      });
+    }
+    return tools;
+  }
+
   tools(): QaTool[] {
     return [
       ...this.pinnedTools(),
       ...this.catalogTools(),
+      ...this.utilityTools(),
       {
         name: 'finish',
         description: 'End the scenario and report what happened. Call exactly once, when the goal is met or cannot be.',

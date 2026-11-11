@@ -4,10 +4,12 @@ import * as path from 'path';
 import type { ModelPort } from '../agent/loop';
 import { buildCatalog } from '../catalog/buildCatalog';
 import { loadQaConfig, type QaConfig } from '../config';
+import { buildDayPlan, type DayPlanOptions } from '../day/dayPlan';
 import { SWEEP_SCENARIO_ID } from '../scenarios/library';
 import { defineScenarios } from '../scenarios/types';
 import { call, fakeBackend, invokerFor, ScriptedModel, type FakeBackend, type Route, type Script } from '../testing/fakes';
 import { Harness, type BackendPort } from './Harness';
+import type { ScenarioResult } from './runScenario';
 
 const catalog = buildCatalog();
 
@@ -65,7 +67,7 @@ interface World {
 function world(options: { model?: ModelPort; route?: Route; env?: Record<string, string>; scenarios?: typeof SCENARIOS; preflight?: () => Promise<void> } = {}): World {
   const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-qa-harness-'));
   const backend = fakeBackend(options.route ?? ((request) => (request.method === 'GET' ? { status: 200, body: [] } : undefined)));
-  const config = loadQaConfig({ QA_STATE_DIR: stateDir, QA_JITTER_MINUTES: '0', QA_MIN_GAP_MINUTES: '0', QA_SWEEP_MAX: '0', ...options.env }, 'http://gateway.test');
+  const config = loadQaConfig({ QA_STATE_DIR: stateDir, QA_JITTER_MINUTES: '0', QA_MIN_GAP_MINUTES: '0', QA_SWEEP_MAX: '0', QA_VISITS_MAX: '0', ...options.env }, 'http://gateway.test');
   let now = new Date('2026-03-10T10:00:00-04:00');
   const self: World = {
     backend,
@@ -264,5 +266,113 @@ describe('monthly coverage', () => {
     const tick = await state.harness.tick();
     expect(tick).toMatchObject({ status: 'ran', results: [] });
     expect(state.backend.requests).toHaveLength(before);
+  });
+});
+
+describe('a customer visit', () => {
+  const DAY: DayPlanOptions = { visitsMin: 1, visitsMax: 1, newCustomerRatio: 0, commercialRatio: 0, newVehicleRatio: 0, openTime: '08:00', closeTime: '17:30', seed: 0 };
+  /** A seed whose single visit on the 10th is a service job with the given outcome. */
+  const seedFor = (disposition: string): number => {
+    for (let seed = 0; seed < 500; seed += 1) {
+      const [visit] = buildDayPlan('2026-03-10', { ...DAY, seed }).visits;
+      if (visit.kind === 'service' && visit.disposition === disposition && visit.arrival === 'walk-in') {
+        return seed;
+      }
+    }
+    throw new Error(`no seed gives a ${disposition} service visit`);
+  };
+  const env = (seed: number): Record<string, string> => ({
+    QA_VISITS_MIN: '1',
+    QA_VISITS_MAX: '1',
+    QA_NEW_CUSTOMER_RATIO: '0',
+    QA_COMMERCIAL_RATIO: '0',
+    QA_NEW_VEHICLE_RATIO: '0',
+    QA_SEED: String(seed),
+    QA_MAX_LATENESS_MINUTES: '900',
+  });
+  const route: Route = (request) => {
+    if (request.method === 'POST' && request.path.endsWith('/estimates')) {
+      return { status: 201, body: { id: 'est-1', status: 'DRAFT' } };
+    }
+    if (request.method === 'POST' && request.path.endsWith('/promote')) {
+      return { status: 200, body: { id: 'wo-1', status: 'APPROVED' } };
+    }
+    return request.method === 'GET' ? { status: 200, body: {} } : { status: 200, body: {} };
+  };
+  const ESTIMATE = {
+    operationId: 'workorder.EstimateAPIApi.createEstimate',
+    input: { createEstimateRequest: { customerId: 'p-1', vehicleId: 'v-1', crmPartyId: 'p-1', crmVehicleId: 'v-1', crmContactIds: [], currencyUomId: 'USD', locationId: 'l-1' } },
+  };
+  const FINISH = [call('finish', { verdict: 'completed', summary: 'done' })];
+
+  it('carries what the intake established to the stage that runs later, in another pass', async () => {
+    const model = new ScriptedModel([
+      [call('sdk_call', ESTIMATE)],
+      [call('sdk_call', { operationId: 'workorder.EstimateAPIApi.promoteEstimate', input: { estimateId: 'est-1' } })],
+      [call('remember', { key: 'customerName', value: 'Dana Ortiz' })],
+      FINISH,
+      FINISH,
+    ]);
+    const state = world({ model, route, scenarios: defineScenarios([]), env: env(seedFor('approves')) });
+    state.setTime('2026-03-10 17:00');
+
+    // Only the intake is due: the job cannot go on the floor before the customer has been seen.
+    const dueVisitStages = (): string[] =>
+      state.harness.plan().slots.filter((slot) => slot.status === 'due' && slot.scenario.id.startsWith('visit-')).map((slot) => slot.scenario.id);
+    const nextResult = async (): Promise<ScenarioResult> => {
+      for (let pass = 0; pass < 5; pass += 1) {
+        const [result] = (await state.harness.tick()).results;
+        if (result) {
+          return result;
+        }
+      }
+      throw new Error('nothing ran');
+    };
+    expect(dueVisitStages()).toEqual(['visit-01-intake']);
+    const intake = await nextResult();
+    expect(intake).toMatchObject({ scenarioId: 'visit-01-intake', persona: 'advisor', verdict: 'passed' });
+
+    const saved = JSON.parse(fs.readFileSync(path.join(state.stateDir, 'runs', '2026-03-10', 'day-plan.json'), 'utf8'));
+    expect(saved.memory['visit-01']).toEqual({ estimateId: 'est-1', workorderId: 'wo-1', customerName: 'Dana Ortiz' });
+
+    const before = model.requests.length;
+    expect(dueVisitStages()).toEqual(['visit-01-work']);
+    const work = await nextResult();
+    expect(work).toMatchObject({ scenarioId: 'visit-01-work', persona: 'manager' });
+    const brief = model.requests[before].messages[0];
+    expect(brief).toMatchObject({ role: 'user', content: expect.stringContaining('- workorderId: wo-1') });
+    expect(brief).toMatchObject({ content: expect.stringContaining('- customerName: Dana Ortiz') });
+
+    const report = fs.readFileSync(state.harness.reportPath(), 'utf8');
+    expect(report).toMatch(/## Today's customers/);
+    expect(report).toMatch(/1 visits: 0 new and 1 returning customers; 0 commercial and 1 individual\./);
+    expect(report).toMatch(/intake: PASS · \d\d:\d\d work: /);
+  });
+
+  it('skips the work and the checkout when the intake produced no workorder', async () => {
+    const model = new ScriptedModel([[call('finish', { verdict: 'blocked', summary: 'no customer found' })]]);
+    const state = world({ model, route, scenarios: defineScenarios([]), env: env(seedFor('approves')) });
+    state.setTime('2026-03-10 17:00');
+    const verdicts: string[] = [];
+    for (let pass = 0; pass < 6; pass += 1) {
+      for (const result of (await state.harness.tick()).results) {
+        verdicts.push(`${result.scenarioId}: ${result.verdict}`);
+      }
+    }
+    expect(verdicts).toEqual(['visit-01-intake: inconclusive', 'visit-01-work: skipped', 'visit-01-checkout: skipped']);
+    expect(state.backend.requests).toEqual([]);
+  });
+
+  it('plans only the intake for a customer who declines', () => {
+    const state = world({ scenarios: defineScenarios([]), env: env(seedFor('declines')) });
+    state.setTime('2026-03-10 07:00');
+    expect(state.harness.plan().slots.map((slot) => slot.scenario.id).filter((id) => id.startsWith('visit-'))).toEqual(['visit-01-intake']);
+  });
+
+  it('has no visits on a closed day', () => {
+    const state = world({ scenarios: defineScenarios([]), env: env(0) });
+    state.setTime('2026-03-15 10:00');
+    expect(state.harness.plan().slots.filter((slot) => slot.scenario.id.startsWith('visit-'))).toEqual([]);
+    expect(fs.existsSync(path.join(state.stateDir, 'runs', '2026-03-15'))).toBe(false);
   });
 });

@@ -1,8 +1,20 @@
 import { buildCatalog } from '../catalog/buildCatalog';
+import { buildDayPlan, type DayPlanOptions } from '../day/dayPlan';
+import { stageScenario } from '../day/visitScenarios';
 import { SCENARIOS, SWEEP_SCENARIO_ID } from './library';
 import { defineScenarios, type ScenarioInput } from './types';
 
 const catalog = buildCatalog();
+const DAY: DayPlanOptions = {
+  visitsMin: 10,
+  visitsMax: 10,
+  newCustomerRatio: 0.3,
+  commercialRatio: 0.3,
+  newVehicleRatio: 0.2,
+  openTime: '08:00',
+  closeTime: '17:30',
+  seed: 0,
+};
 
 describe('scenario library', () => {
   it('names only operations the generated clients have', () => {
@@ -23,16 +35,24 @@ describe('scenario library', () => {
   });
 
   it('covers a day, a week and a month, with error drills at every cadence', () => {
+    // Daily holds only the staff routines; the day's customers are generated (day/dayPlan.ts).
+    const minimum = { daily: 5, weekly: 8, monthly: 8 } as const;
     for (const cadence of ['daily', 'weekly', 'monthly'] as const) {
       const set = SCENARIOS.filter((scenario) => scenario.cadence === cadence);
-      expect(set.length).toBeGreaterThanOrEqual(8);
+      expect(set.length).toBeGreaterThanOrEqual(minimum[cadence]);
       expect(set.some((scenario) => scenario.kind === 'error')).toBe(true);
     }
     expect(SCENARIOS.map((scenario) => scenario.id)).not.toContain(SWEEP_SCENARIO_ID);
   });
 
-  it('by itself reaches every package the gateway routes, before the sweep adds anything', () => {
-    const pinned = new Set(SCENARIOS.flatMap((scenario) => scenario.operations.map((id) => id.split('.')[0])));
+  it('with a day of visits reaches every package the gateway routes, before the sweep adds anything', () => {
+    const day = buildDayPlan('2026-03-10', DAY);
+    const visitOperations = day.visits.flatMap((visit) =>
+      visit.stages.flatMap((stage) => stageScenario(visit, stage, {}, { roleMode: false }).operations),
+    );
+    const pinned = new Set(
+      [...SCENARIOS.flatMap((scenario) => scenario.operations), ...visitOperations].map((id) => id.split('.')[0]),
+    );
     const routed = catalog.packages.filter((pkg) => pkg !== 'internal' && pkg !== 'documents');
     expect(routed.filter((pkg) => !pinned.has(pkg))).toEqual([]);
   });

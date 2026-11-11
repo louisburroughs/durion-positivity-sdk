@@ -8,6 +8,7 @@
  */
 import * as path from 'path';
 import { z } from 'zod';
+import type { DayPlanOptions } from './day/dayPlan';
 import type { CoverageLevel } from './sdk-coverage/CoverageStore';
 import type { SafetyPolicy } from './tools/toolkit';
 
@@ -64,7 +65,16 @@ const schema = z.object({
   QA_MAX_LATENESS_MINUTES: intIn(1, 1_440).default(180),
   /** How many due scenarios one pass may run, and how long to leave between scenario starts. */
   QA_MAX_PER_TICK: intIn(1, 500).default(1),
-  QA_MIN_GAP_MINUTES: intIn(0, 1_440).default(10),
+  QA_MIN_GAP_MINUTES: intIn(0, 1_440).default(2),
+  /** The day's customers. */
+  QA_VISITS_MIN: intIn(0, 200).default(8),
+  QA_VISITS_MAX: intIn(0, 200).default(12),
+  QA_NEW_CUSTOMER_RATIO: z.coerce.number().min(0).max(1).default(0.3),
+  QA_COMMERCIAL_RATIO: z.coerce.number().min(0).max(1).default(0.3),
+  QA_NEW_VEHICLE_RATIO: z.coerce.number().min(0).max(1).default(0.2),
+  QA_OPEN_TIME: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('08:00'),
+  QA_CLOSE_TIME: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('17:30'),
+  QA_SEED: z.coerce.number().int().default(0),
 });
 
 export interface QaConfig {
@@ -89,6 +99,8 @@ export interface QaConfig {
   maxPerTick: number;
   /** Minimum minutes between the end of one scenario and the start of the next pass. */
   minGapMinutes: number;
+  /** How the day's customer visits are generated; `visitsMax` 0 turns them off. */
+  day: DayPlanOptions;
   /** Base URL for a package's requests, or undefined when it cannot be reached. */
   baseUrlFor(pkg: string): string | undefined;
 }
@@ -149,6 +161,16 @@ export function loadQaConfig(env: Env, gatewayBaseUrl: string): QaConfig {
     maxLatenessMinutes: data.QA_MAX_LATENESS_MINUTES,
     maxPerTick: data.QA_MAX_PER_TICK,
     minGapMinutes: data.QA_MIN_GAP_MINUTES,
+    day: {
+      visitsMin: Math.min(data.QA_VISITS_MIN, data.QA_VISITS_MAX),
+      visitsMax: data.QA_VISITS_MAX,
+      newCustomerRatio: data.QA_NEW_CUSTOMER_RATIO,
+      commercialRatio: data.QA_COMMERCIAL_RATIO,
+      newVehicleRatio: data.QA_NEW_VEHICLE_RATIO,
+      openTime: data.QA_OPEN_TIME,
+      closeTime: data.QA_CLOSE_TIME,
+      seed: data.QA_SEED,
+    },
     baseUrlFor(pkg: string): string | undefined {
       const direct = env[`QA_SERVICE_URL_${pkg.toUpperCase().replace(/-/g, '_')}`];
       if (direct) {

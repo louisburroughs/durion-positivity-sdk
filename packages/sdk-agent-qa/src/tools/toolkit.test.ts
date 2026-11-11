@@ -62,8 +62,50 @@ describe('ToolRuntime tools', () => {
       'sdk_search',
       'sdk_describe',
       'sdk_call',
+      'wait',
       'finish',
     ]);
+  });
+
+  it('offers remember only to a scenario with a memory, and writes what it is told', async () => {
+    const memory: Record<string, string> = { partyId: 'p-1' };
+    const context = setup({ memory });
+    const remember = context.tool('remember');
+    expect(await remember.execute(remember.schema.parse({ key: 'workorderId', value: 'w-9' }))).toEqual({ remembered: ['partyId', 'workorderId'] });
+    expect(memory).toEqual({ partyId: 'p-1', workorderId: 'w-9' });
+    expect(remember.schema.safeParse({ key: 'not a key!', value: 'x' }).success).toBe(false);
+  });
+
+  it('waits when asked, without really sleeping in tests', async () => {
+    const slept: number[] = [];
+    const context = setup({ sleep: async (ms) => void slept.push(ms) });
+    expect(await context.tool('wait').execute({ seconds: 5 })).toEqual({ waited: 5 });
+    expect(slept).toEqual([5000]);
+    expect(context.tool('wait').schema.safeParse({ seconds: 600 }).success).toBe(false);
+  });
+
+  it('tells the model a replication-lag 503 is temporary, and reports every answered call to onCall', async () => {
+    const seen: string[] = [];
+    const context = setup({ onCall: (operation, outcome) => void seen.push(`${operation.method} ${outcome.status}`) });
+    context.backend.fetchImpl = fakeBackend(() => ({ status: 503, body: { code: 'CUSTOMER_REQUIREMENTS_UNAVAILABLE' } })).fetchImpl;
+    const runtime = new ToolRuntime({
+      catalog,
+      invoker: invokerFor(context.backend),
+      ledger: context.ledger,
+      coverage: context.coverage,
+      policy: { mode: 'mutating', allowDestructive: false, deny: [] },
+      runId: 'r',
+      scenarioId: 's',
+      persona: 'advisor',
+      personas: ['advisor'],
+      pinned: [],
+      allowUnvalidated: false,
+      maxCalls: 5,
+      onCall: (operation, outcome) => void seen.push(`${operation.method} ${outcome.status}`),
+    });
+    const result = await runtime.callOperation(catalog.byId.get('workorder.EstimateAPIApi.promoteEstimate')!, { estimateId: 'e-1' });
+    expect(result).toMatchObject({ outcome: 'http-error', status: 503, hint: expect.stringMatching(/Temporary/) });
+    expect(seen).toEqual(['promoteEstimate 503']);
   });
 
   it('runs a pinned tool as the scenario persona and records the call in the ledger and coverage', async () => {

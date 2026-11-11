@@ -1,6 +1,11 @@
 /**
  * The scenario library: what a tenant does in a day, a week and a month.
  *
+ * These are the staff's own routines — opening and closing, receiving, the
+ * books, the weekly and monthly back-office work — and the error drills. The
+ * customers who come through the door each day are not here: they are
+ * generated fresh every morning (see day/dayPlan.ts).
+ *
  * Each scenario states a goal the way a shop employee would describe the task,
  * pins the operations the task normally takes, and lists the facts that must
  * show up in the call ledger. The model works out the order, finds the ids it
@@ -46,133 +51,6 @@ const daily: ScenarioInput[] = [
       { kind: 'call', operation: 'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard' },
       { kind: 'call', operation: 'order.RegisterSessionsApi.getSessionPolicy' },
       { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
-    ],
-  },
-  {
-    id: 'appointments-intake',
-    title: 'Book and review appointments',
-    cadence: 'daily',
-    at: '08:30',
-    persona: 'advisor',
-    kind: 'operations',
-    goal:
-      'A customer calls to book a service visit. Look at today\'s appointments and the schedule for one site, search for open ' +
-      'slots in the next few days, find an existing customer (search parties), and book an appointment for them in one of the ' +
-      'openings. Then read the appointment back to confirm it was stored as booked.',
-    operations: [
-      'location.LocationAPIApi.listLocations',
-      'shop-manager.AppointmentsAPIApi.listAppointments',
-      'shop-manager.ScheduleAPIApi.viewSchedule',
-      'shop-manager.ScheduleAPIApi.searchOpenings',
-      'shop-manager.ScheduleAPIApi.getScheduleCapacity',
-      'customer.CRMAccountsApi.searchParties',
-      'customer.CRMVehiclesApi.listVehiclesForCustomer',
-      'shop-manager.AppointmentsAPIApi.createAppointment',
-      'shop-manager.AppointmentsAPIApi.getAppointmentById',
-    ],
-    expect: [
-      { kind: 'call', operation: 'shop-manager.AppointmentsAPIApi.listAppointments' },
-      { kind: 'call', operation: 'customer.CRMAccountsApi.searchParties' },
-      { kind: 'call', operation: 'shop-manager.AppointmentsAPIApi.createAppointment' },
-    ],
-  },
-  {
-    id: 'walk-in-estimate',
-    title: 'Write an estimate for a walk-in and turn it into a workorder',
-    cadence: 'daily',
-    at: '09:30',
-    persona: 'advisor',
-    kind: 'operations',
-    goal:
-      'A walk-in customer wants a brake inspection and an oil change. Find the customer (or create a person if the search finds ' +
-      'nobody suitable), find one of their vehicles, and write a draft estimate for a site with one or two service lines from ' +
-      'the catalog. Calculate the totals, submit the estimate for approval, approve it, and promote it to a workorder. Read the ' +
-      'workorder back.',
-    operations: [
-      'location.LocationAPIApi.listLocations',
-      'customer.CRMAccountsApi.searchParties',
-      'customer.CRMPersonsApi.createCrmPerson',
-      'customer.CRMVehiclesApi.listVehiclesForCustomer',
-      'vehicle-inventory.VehicleSearchApi.searchVehicles',
-      'catalog.ProductsAPIApi.listClaimableServices',
-      'workorder.EstimateAPIApi.createEstimate',
-      'workorder.EstimateAPIApi.addEstimateItem',
-      'workorder.EstimateAPIApi.calculateEstimateTotals',
-      'workorder.EstimateAPIApi.submitEstimateForApproval',
-      'workorder.EstimateAPIApi.approveEstimate',
-      'workorder.EstimateAPIApi.promoteEstimate',
-      'workorder.EstimateAPIApi.getEstimate',
-      'workorder.WorkOrderAPIApi.getWorkorder',
-    ],
-    expect: [
-      { kind: 'call', operation: 'customer.CRMAccountsApi.searchParties' },
-      { kind: 'call', operation: 'workorder.EstimateAPIApi.createEstimate' },
-      { kind: 'calls', min: 6 },
-    ],
-    limits: { maxSteps: 40 },
-  },
-  {
-    id: 'counter-sale',
-    title: 'Ring up a parts counter sale',
-    cadence: 'daily',
-    at: '10:30',
-    persona: 'advisor',
-    kind: 'operations',
-    goal:
-      'A customer buys a part over the counter. Find a product that is in stock, start a cart on the open register session, add ' +
-      'the product, quote the cart, attach a customer, check the order out and take a cash tender for the total. Read the order ' +
-      'back and confirm its status.',
-    operations: [
-      'inventory.InventoryStockApi.listStock',
-      'catalog.ProductsAPIApi.findProductByCode',
-      'order.RegisterSessionsApi.getCurrentRegisterSession',
-      'order.SalesOrdersApi.listCarts',
-      'order.SalesOrdersApi.createCart',
-      'order.SalesOrdersApi.addCartItem',
-      'order.SalesOrdersApi.quoteCart',
-      'order.SalesOrdersApi.setCartCustomer',
-      'order.SalesOrdersApi.checkoutOrder',
-      'order.SalesOrdersApi.recordCashTender',
-      'order.SalesOrdersApi.getOrder',
-      'customer.CRMAccountsApi.searchParties',
-      'price.PriceQuotesApi.calculatePriceQuote',
-    ],
-    expect: [
-      { kind: 'call', operation: 'order.SalesOrdersApi.createCart' },
-      { kind: 'call', operation: 'inventory.InventoryStockApi.listStock' },
-      { kind: 'calls', min: 5 },
-    ],
-    limits: { maxSteps: 40 },
-  },
-  {
-    id: 'workorder-execution',
-    title: 'Work a job on the floor',
-    cadence: 'daily',
-    at: '11:30',
-    persona: 'tech',
-    kind: 'operations',
-    goal:
-      'You are a technician picking up your next job. List the work in progress, open one workorder that is in progress (or ' +
-      'ready to start), read its detail, pick list and labor history, add a note describing what you found, and check which ' +
-      'timers are active. If the workorder has an open labor session leave it running; otherwise start one. Finally check ' +
-      'whether the workorder meets its completion preconditions — do not complete it.',
-    operations: [
-      'workorder.WIPDashboardApi.listWipWorkorders',
-      'workorder.WorkorderSearchApi.searchWorkorders',
-      'workorder.WorkorderDetailApi.getWorkorderDetail',
-      'workorder.WorkorderPickFacadeApi.getWorkorderPickList',
-      'workorder.WorkorderLaborAPIApi.getLaborHistory',
-      'workorder.WorkorderLaborAPIApi.startLaborSession',
-      'workorder.WorkorderNoteAPIApi.addWorkorderNote',
-      'workorder.WorkorderNoteAPIApi.listWorkorderNotes',
-      'workorder.WorkexecTimeTrackingAPIApi.getActiveTimers',
-      'workorder.WorkOrderAPIApi.getCompletionPreconditions',
-      'workorder.WorkorderPartsUsageApi.getPartsUsageHistory',
-    ],
-    expect: [
-      { kind: 'call', operation: 'workorder.WIPDashboardApi.listWipWorkorders' },
-      { kind: 'call', operation: 'workorder.WorkorderDetailApi.getWorkorderDetail' },
-      { kind: 'calls', min: 5 },
     ],
   },
   {
