@@ -224,15 +224,23 @@ what to do when the estimate is refused — the agent works out from what the ba
 
 **Parts.** Service jobs are allocated across three kinds, at every site: labor only; a part from the shop's own
 stock, which goes on the estimate and is picked and issued to the job; and a part the shop does not stock, which
-makes the visit five stages, with the parts clerk in the middle:
+turns the visit into a job that spans **two days**, with the parts clerk in the middle:
 
-| Stage | Who | What happens |
-| --- | --- | --- |
-| intake | advisor | As above, with a part on the estimate that has nothing on hand at this location. |
-| order | parts clerk | Finds the shortage on the workorder, raises a purchase order for the part naming the workorder, and gets it approved (by the manager, when the manager has a login of their own). |
-| receive | parts clerk | The delivery arrives 90 to 150 minutes later: a receiving session on the purchase order, cross-docked to the workorder's part line. If the cross-dock is refused, the part is received into stock instead and the refusal reported. |
-| work | manager (and technician) | Only now: issue the part to the job and finish it — or, if the part did not arrive, leave the job waiting for parts. |
-| checkout | advisor | As above. |
+| Day | Stage | Who | What happens |
+| --- | --- | --- | --- |
+| 1 | intake | advisor | As above, with a part on the estimate that has nothing on hand at this location. The customer is told it will arrive the next working day. |
+| 1 | order | parts clerk | Finds the shortage on the workorder, raises a purchase order for the part with the workorder on the line, gets it approved (by the manager, when the manager has a login of their own), and notes the workorder as waiting. |
+| 2 | receive | parts clerk | The delivery arrives in the morning: a receiving session on the purchase order, cross-docked to the workorder's part line. If the cross-dock is refused, the part is received into stock instead and the refusal reported. |
+| 2 | work | manager (and technician) | Issue the part to the job and finish it — or, if the part did not arrive, leave the job waiting for parts. |
+| 2 | checkout | advisor | The customer comes back to collect and pay. |
+
+Day 2 is the next day the harness plans — a Saturday job continues on Monday. When that day's plan is made, the
+jobs that ordered a part on the most recent earlier day are brought into it (`day/carryOver.ts`) with everything
+they had established: customer, vehicle, workorder, purchase order, part line. They appear under an id that names
+the day they began (`main-d1110-v03-receive`), beside the day's own customers and in addition to them. A job is
+continued once; if its customer declined, or it never became a workorder, there is nothing to continue; and a
+delivery more than a week late is given up on. Between the two days the workorder holds no bay, so the nightly
+close-out leaves it alone.
 
 About 15% of customers decline the estimate and the visit ends at the counter; about 12% have work added mid-job;
 about 30% of returning customers arrive on a booked appointment. Counter sales (about 20% of visits) and phone
@@ -396,7 +404,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 179 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 192 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 

@@ -41,9 +41,25 @@ export class DayPlanStore {
     return undefined;
   }
 
-  /** Makes and saves the plan for `date` across the given sites. */
-  static create(dayDir: string, date: string, sites: readonly Site[], options: DayPlanOptions): DayPlanStore {
-    const store = new DayPlanStore(path.join(dayDir, 'day-plan.json'), { plan: buildDayPlan(date, sites, options), memory: {} });
+  /**
+   * Makes and saves the plan for `date` across the given sites: today's new
+   * visits, plus any jobs carried over from an earlier day with what they had
+   * already established.
+   */
+  static create(
+    dayDir: string,
+    date: string,
+    sites: readonly Site[],
+    options: DayPlanOptions,
+    carried: ReadonlyArray<{ visit: Visit; memory: VisitMemory }> = [],
+  ): DayPlanStore {
+    const plan = buildDayPlan(date, sites, options);
+    const memory: Record<string, VisitMemory> = {};
+    for (const entry of carried) {
+      plan.visits.push(entry.visit);
+      memory[entry.visit.id] = { ...entry.memory };
+    }
+    const store = new DayPlanStore(path.join(dayDir, 'day-plan.json'), { plan, memory });
     store.save();
     return store;
   }

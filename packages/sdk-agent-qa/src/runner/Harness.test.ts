@@ -82,7 +82,7 @@ function world(options: { model?: ModelPort; route?: Route; env?: Record<string,
   };
   const port: BackendPort = {
     roleMode: false,
-    personas: ['admin', 'advisor', 'tech', 'manager'],
+    personas: ['admin', 'advisor', 'tech', 'manager', 'parts', 'acct', 'controller'],
     tenantSlug: 'alpha',
     preflight:
       options.preflight ??
@@ -505,5 +505,118 @@ describe('a tenant with several sites', () => {
     locations = [];
     await state.harness.prepareDay();
     expect(state.harness.plan().slots.map((slot) => slot.scenario.id)).toEqual(before);
+  });
+});
+
+describe('a job that waits overnight for its part', () => {
+  const LOCATION = { id: 'loc-main', code: 'MAIN', name: 'Main Street', active: true, activeBayCount: 4, activeMobileUnitCount: 0 };
+  const route: Route = (request) => {
+    if (request.path === '/location/v1/locations') {
+      return { status: 200, body: [LOCATION] };
+    }
+    if (request.method === 'POST' && request.path.endsWith('/estimates')) {
+      return { status: 201, body: { id: 'est-1' } };
+    }
+    if (request.method === 'POST' && request.path.endsWith('/promote')) {
+      return { status: 200, body: { id: 'wo-1' } };
+    }
+    if (request.method === 'POST' && request.path.endsWith('/purchase-orders')) {
+      return { status: 201, body: { purchaseOrderId: 'po-1' } };
+    }
+    return { status: 200, body: {} };
+  };
+  /** One visit a day at one site, and that visit needs a part ordered in. */
+  const env = {
+    QA_VISITS_PER_SITE_MIN: '1',
+    QA_VISITS_PER_SITE_MAX: '1',
+    QA_NEW_CUSTOMER_RATIO: '0',
+    QA_COMMERCIAL_RATIO: '0',
+    QA_NEW_VEHICLE_RATIO: '0',
+    QA_STOCK_PARTS_RATIO: '0',
+    QA_SPECIAL_ORDER_RATIO: '1',
+    QA_MAX_PER_TICK: '10',
+    QA_MAX_LATENESS_MINUTES: '900',
+  };
+  const DAY: DayPlanOptions = { visitsMin: 1, visitsMax: 1, tenantMax: 60, newCustomerRatio: 0, commercialRatio: 0, newVehicleRatio: 0, stockPartsRatio: 0, specialOrderRatio: 1, openTime: '08:00', closeTime: '17:30', seed: 0 };
+  const SITE = { id: 'loc-main', code: 'MAIN', name: 'Main Street', slug: 'main', positions: 4 };
+  /** A seed whose Tuesday visit is a service job the customer approves. */
+  const seed = ((): number => {
+    for (let candidate = 0; candidate < 500; candidate += 1) {
+      const [visit] = buildDayPlan('2026-03-10', [SITE], { ...DAY, seed: candidate }).visits;
+      if (visit.kind === 'service' && visit.disposition === 'approves' && visit.arrival === 'walk-in') {
+        return candidate;
+      }
+    }
+    throw new Error('no suitable seed');
+  })();
+  const stagesOf = (state: World): string[] =>
+    state.harness.plan().slots.map((slot) => slot.scenario.id).filter((id) => /-v\d+-/.test(id));
+  const runUntilIdle = async (state: World): Promise<string[]> => {
+    const ran: string[] = [];
+    for (let pass = 0; pass < 8; pass += 1) {
+      for (const result of (await state.harness.tick()).results) {
+        ran.push(`${result.scenarioId}: ${result.verdict}`);
+      }
+    }
+    return ran;
+  };
+
+  it('orders the part on the first day and receives it, does the work and checks out on the next', async () => {
+    const model = new ScriptedModel([
+      // Day one, intake: estimate, promote, finish.
+      [call('sdk_call', { operationId: 'workorder.EstimateAPIApi.createEstimate', input: { createEstimateRequest: { customerId: 'p-1', vehicleId: 'v-1', crmPartyId: 'p-1', crmVehicleId: 'v-1', crmContactIds: [], currencyUomId: 'USD', locationId: 'loc-main' } } })],
+      [call('sdk_call', { operationId: 'workorder.EstimateAPIApi.promoteEstimate', input: { estimateId: 'est-1' } })],
+      [call('finish', { verdict: 'completed', summary: 'promoted' })],
+      // Day one, order: read the workorder, raise the purchase order, remember the part line, finish.
+      [call('sdk_call', { operationId: 'workorder.WorkorderDetailApi.getWorkorderDetail', input: { workorderId: 'wo-1' } })],
+      [call('sdk_call', { operationId: 'order.PurchaseOrdersApi.createPurchaseOrder', input: { createPurchaseOrderRequest: { vendorId: 'ven-1', poDate: '2026-03-10T14:00:00Z', currency: 'USD', shipToLocationId: 'loc-main', lines: [{ lineNumber: 1, skuId: 'prod-9', description: 'part', quantity: 1, unitCostMinor: 3200 }] } } })],
+      [call('remember', { key: 'partLineId', value: 'line-3' })],
+      [call('finish', { verdict: 'completed', summary: 'ordered' })],
+      // Day two: each stage just finishes; what matters here is that it runs, and what it is told.
+      [call('finish', { verdict: 'completed', summary: 'done' })],
+    ]);
+    const state = world({ model, route, scenarios: defineScenarios([]), env: { ...env, QA_SEED: String(seed) } });
+
+    // Tuesday: the visit is only an intake and an order.
+    state.setTime('2026-03-10 17:00');
+    await state.harness.prepareDay();
+    expect(stagesOf(state)).toEqual(['main-v01-intake', 'main-v01-order']);
+    const tuesday = await runUntilIdle(state);
+    expect(tuesday.filter((line) => /-v\d+-/.test(line))).toEqual(['main-v01-intake: passed', 'main-v01-order: passed']);
+    const day1 = JSON.parse(fs.readFileSync(path.join(state.stateDir, 'runs', '2026-03-10', 'day-plan.json'), 'utf8'));
+    expect(day1.memory['main-v01']).toEqual({ estimateId: 'est-1', workorderId: 'wo-1', purchaseOrderId: 'po-1', partLineId: 'line-3' });
+
+    // Wednesday: the job is back, under an id that names the day it began, beside the day's own visit.
+    state.setTime('2026-03-11 17:00');
+    await state.harness.prepareDay();
+    const carried = ['main-d0310-v01-receive', 'main-d0310-v01-work', 'main-d0310-v01-checkout'];
+    expect(stagesOf(state)).toEqual(expect.arrayContaining([...carried, 'main-v01-intake']));
+
+    const before = model.requests.length;
+    const wednesday = await runUntilIdle(state);
+    // All three ran, in order. (The scripted model only calls finish on day two, so they are not judged passed.)
+    expect(wednesday.filter((line) => line.startsWith('main-d0310-')).map((line) => line.split(':')[0])).toEqual(carried);
+
+    // Each of Wednesday's stages was told what Tuesday established.
+    const briefs = model.requests.slice(before).map((request) => (request.messages[0] as { content: string }).content);
+    const receive = briefs.find((brief) => brief.includes('the part ordered on 2026-03-10'));
+    expect(receive).toContain('- purchaseOrderId: po-1');
+    expect(receive).toContain('- workorderId: wo-1');
+    expect(receive).toContain('- partLineId: line-3');
+
+    const report = fs.readFileSync(state.harness.reportPath(), 'utf8');
+    expect(report).toMatch(/Plus 1 job\(s\) carried over from an earlier day/);
+    expect(report).toMatch(/### Main Street \(MAIN\) — 4 position\(s\), 1 visit\(s\), 1 carried over/);
+    expect(report).toMatch(/returning for a job started 2026-03-10/);
+  });
+
+  it('does not bring back a job whose customer declined', async () => {
+    const model = new ScriptedModel([[call('finish', { verdict: 'blocked', summary: 'nothing done' })]]);
+    const state = world({ model, route, scenarios: defineScenarios([]), env: { ...env, QA_SEED: String(seed) } });
+    state.setTime('2026-03-10 17:00');
+    await runUntilIdle(state); // the intake ends without a workorder
+    state.setTime('2026-03-11 08:00');
+    await state.harness.prepareDay();
+    expect(stagesOf(state).filter((id) => id.includes('-d0310-'))).toEqual([]);
   });
 });

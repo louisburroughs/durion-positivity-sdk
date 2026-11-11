@@ -34,8 +34,9 @@ export type PartsNeed =
   /** Parts the shop keeps on the shelf: picked and used on the job. */
   | 'stock'
   /**
-   * A part the shop does not stock: ordered from a vendor for this job,
-   * delivered later in the day, and received straight to the workorder.
+   * A part the shop does not stock: ordered from a vendor for this job today,
+   * delivered the next day the shop is open, and received straight to the
+   * workorder. The customer leaves and comes back.
    */
   | 'special-order';
 
@@ -99,6 +100,11 @@ export interface Visit {
   parts: PartsNeed;
   /** The shop the customer comes to. */
   site: Pick<Site, 'id' | 'name' | 'code' | 'slug'>;
+  /**
+   * Set on a visit continued from an earlier day (YYYY-MM-DD): a job whose part
+   * was ordered then and is delivered today.
+   */
+  carriedFrom?: string;
   stages: VisitStage[];
 }
 
@@ -206,6 +212,9 @@ const toClock = (minutes: number): string =>
   `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
 /** FNV-1a over the date and the configured seed. */
+export const clockToMinutes = (hhmm: string): number => toMinutes(hhmm);
+export const minutesToClock = (minutes: number): string => toClock(minutes);
+
 export function daySeed(date: string, seed: number): number {
   let hash = 0x811c9dc5;
   for (const char of `${date}|${seed}`) {
@@ -388,18 +397,12 @@ function buildSiteVisits(date: string, site: Site, count: number, options: DayPl
     } else if (disposition === 'declines') {
       stages = [{ id: `${id}-intake`, name: 'intake', at: toClock(draft.arrival) }];
     } else if (parts === 'special-order') {
-      // The part is ordered once the job is approved, arrives on a same-day delivery, and only
-      // then can the work be finished.
-      const order = Math.min(draft.arrival + random.int(20, 40), close - 150);
-      const receive = Math.min(order + random.int(90, 150), close - 90);
-      const work = Math.min(receive + random.int(20, 40), close - 45);
-      const checkout = Math.min(work + random.int(45, 90), close - 15);
+      // Today the job gets as far as ordering the part. The delivery, the work and the checkout
+      // happen on the next day the shop is open (see carryOver.ts).
+      const order = Math.min(draft.arrival + random.int(20, 40), close - 30);
       stages = [
         { id: `${id}-intake`, name: 'intake', at: toClock(Math.min(draft.arrival, order)) },
         { id: `${id}-order`, name: 'order', at: toClock(order) },
-        { id: `${id}-receive`, name: 'receive', at: toClock(receive) },
-        { id: `${id}-work`, name: 'work', at: toClock(work) },
-        { id: `${id}-checkout`, name: 'checkout', at: toClock(checkout) },
       ];
     } else {
       const work = Math.min(draft.arrival + random.int(30, 90), close - 60);
@@ -427,5 +430,8 @@ export function describeVisit(visit: Visit): string {
   const vehicle = visit.kind === 'counter-sale' ? '' : `, ${visit.vehicle.status} vehicle`;
   const parts = visit.parts === 'special-order' ? ', part ordered in' : visit.parts === 'stock' ? ', parts from stock' : '';
   const how = visit.kind === 'service' ? `, ${visit.arrival}, ${visit.disposition}${parts}, ${visit.payment}` : '';
+  if (visit.carriedFrom) {
+    return `${visit.site.name} — returning for a job started ${visit.carriedFrom}: part arriving today, ${visit.payment}`;
+  }
   return `${visit.site.name} — ${visit.kind}: ${who}${vehicle}${how}`;
 }

@@ -396,7 +396,7 @@ export class ToolRuntime {
       tools.push({
         name: 'remember',
         description:
-          'Save a fact about this customer visit for the colleague who handles its next step later today (ids, names, what the customer decided). ' +
+          'Save a fact about this customer visit for the colleague who handles its next step, later today or the next working day (ids, names, what the customer decided). ' +
           'Saving a key again replaces its value.',
         schema: z.strictObject({
           key: z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,39}$/, 'a short camelCase name, e.g. workorderId'),

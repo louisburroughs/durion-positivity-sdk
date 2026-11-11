@@ -125,7 +125,7 @@ describe('buildDayPlan', () => {
         visit.disposition === 'declines'
           ? ['intake']
           : visit.parts === 'special-order'
-            ? ['intake', 'order', 'receive', 'work', 'checkout']
+            ? ['intake', 'order'] // the rest happens the next day, when the part arrives
             : ['intake', 'work', 'checkout'],
       );
     }
@@ -144,18 +144,17 @@ describe('buildDayPlan', () => {
     expect(others.every((visit) => visit.parts === 'none')).toBe(true);
   });
 
-  it('orders the part before it is received, and receives it before the work', () => {
+  it('ends the first day of a special-order job once the part is ordered', () => {
     const special = WEEKDAYS.flatMap((date) => buildDayPlan(date, { ...OPTIONS, visitsMin: 30, visitsMax: 30 }).visits).filter(
       (visit) => visit.parts === 'special-order' && visit.disposition !== 'declines',
     );
     expect(special.length).toBeGreaterThan(10);
     for (const visit of special) {
-      const at = Object.fromEntries(visit.stages.map((stage) => [stage.name, minutes(stage.at)]));
-      expect(at['intake']).toBeLessThanOrEqual(at['order']);
-      expect(at['order']).toBeLessThan(at['receive']); // the delivery takes time
-      expect(at['receive']).toBeLessThan(at['work']);
-      expect(at['work']).toBeLessThan(at['checkout']);
-      expect(at['checkout']).toBeLessThanOrEqual(17 * 60 + 30);
+      const [intake, order] = visit.stages.map((stage) => minutes(stage.at));
+      expect(visit.stages.map((stage) => stage.name)).toEqual(['intake', 'order']);
+      expect(intake).toBeLessThanOrEqual(order);
+      expect(order).toBeLessThanOrEqual(17 * 60);
+      expect(visit.carriedFrom).toBeUndefined();
     }
   });
 

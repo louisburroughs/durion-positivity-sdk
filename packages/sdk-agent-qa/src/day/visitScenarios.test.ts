@@ -1,4 +1,5 @@
 import { buildCatalog } from '../catalog/buildCatalog';
+import { continueVisit } from './carryOver';
 import { buildDayPlan, type DayPlanOptions, type Visit } from './dayPlan';
 import { harvestFacts, missingPrerequisite, stageScenario } from './visitScenarios';
 
@@ -39,7 +40,8 @@ const stageNamed = (visit: Visit, name: string, memory: Record<string, string> =
 describe('stageScenario', () => {
   it('names only operations the generated clients have, none of them destructive, for every kind of visit', () => {
     const problems: string[] = [];
-    for (const visit of visits) {
+    const all = [...visits, ...visits.filter((visit) => visit.parts === 'special-order').map((visit) => continueVisit(visit, '2026-03-10', '2026-03-11', OPTIONS))];
+    for (const visit of all) {
       for (const stage of visit.stages) {
         const scenario = stageScenario(visit, stage, {}, { roleMode: true });
         expect(scenario.id).toBe(stage.id);
@@ -123,7 +125,7 @@ describe('stageScenario', () => {
   });
 
   it('hands later stages what earlier ones established', () => {
-    const visit = find((entry) => entry.kind === 'service' && entry.disposition === 'approves');
+    const visit = find((entry) => entry.kind === 'service' && entry.disposition === 'approves' && entry.parts !== 'special-order');
     const memory = { partyId: 'p-1', workorderId: 'w-7', customerName: 'Dana Ortiz' };
     const work = stageNamed(visit, 'work', memory);
     expect(work.persona).toBe('manager');
@@ -133,7 +135,7 @@ describe('stageScenario', () => {
   });
 
   it('raises a change request when more work is found on the lift', () => {
-    const work = stageNamed(find((entry) => entry.disposition === 'approves-then-adds-work' && entry.kind === 'service'), 'work');
+    const work = stageNamed(find((entry) => entry.disposition === 'approves-then-adds-work' && entry.kind === 'service' && entry.parts !== 'special-order'), 'work');
     expect(work.operations).toEqual(
       expect.arrayContaining(['workorder.ChangeRequestAPIApi.createChangeRequest', 'workorder.ChangeRequestAPIApi.approveChangeRequest']),
     );
@@ -141,15 +143,15 @@ describe('stageScenario', () => {
   });
 
   it('tells the manager to act as the technician only when the technician has a login of their own', () => {
-    const visit = find((entry) => entry.kind === 'service' && entry.disposition === 'approves');
+    const visit = find((entry) => entry.kind === 'service' && entry.disposition === 'approves' && entry.parts !== 'special-order');
     expect(stageNamed(visit, 'work', {}, true).goal).toMatch(/persona "tech"/);
     expect(stageNamed(visit, 'work', {}, false).goal).not.toMatch(/persona "tech"/);
   });
 
   it('takes cash from a customer who pays at pickup and bills an account customer instead', () => {
-    const cash = stageNamed(find((entry) => entry.kind === 'service' && entry.payment === 'cash' && entry.stages.length >= 3), 'checkout');
+    const cash = stageNamed(find((entry) => entry.kind === 'service' && entry.payment === 'cash' && entry.stages.length === 3), 'checkout');
     expect(cash.goal).toMatch(/record a cash payment/);
-    const account = stageNamed(find((entry) => entry.kind === 'service' && entry.payment === 'on-account' && entry.stages.length >= 3), 'checkout');
+    const account = stageNamed(find((entry) => entry.kind === 'service' && entry.payment === 'on-account' && entry.stages.length === 3), 'checkout');
     expect(account.goal).toMatch(/billed on account: do not take payment/);
   });
 
@@ -174,11 +176,14 @@ describe('stageScenario', () => {
 
   describe('a job that needs a part ordered in', () => {
     const visit = find((entry) => entry.parts === 'special-order' && entry.disposition === 'approves');
+    /** The same job the next day, when the part is delivered. */
+    const nextDay = continueVisit(visit, '2026-03-10', '2026-03-11', OPTIONS);
     const memory = { workorderId: 'w-1', partProductId: 'prod-9', purchaseOrderId: 'po-1', partLineId: 'line-3' };
 
     it('puts an unstocked part on the estimate', () => {
       const intake = stageNamed(visit, 'intake');
       expect(intake.goal).toMatch(/a part the shop does not keep in stock/);
+      expect(intake.goal).toMatch(/arrive on the next working day/);
       expect(intake.goal).toMatch(/nothing on hand at this location/);
       expect(intake.operations).toEqual(
         expect.arrayContaining(['catalog.ProductsAPIApi.searchCatalogProducts', 'inventory.InventoryAvailabilityApi.getAvailabilityByProduct']),
@@ -189,7 +194,7 @@ describe('stageScenario', () => {
       const order = stageNamed(visit, 'order', memory);
       expect(order.persona).toBe('parts');
       expect(order.goal).toContain('- workorderId: w-1');
-      expect(order.goal).toMatch(/a comment naming the workorder/);
+      expect(order.goal).toMatch(/the workorder id set on the line/);
       expect(order.operations).toEqual(
         expect.arrayContaining(['order.PurchaseOrdersApi.createPurchaseOrder', 'order.PurchaseOrdersApi.approvePurchaseOrder']),
       );
@@ -200,7 +205,9 @@ describe('stageScenario', () => {
     });
 
     it('receives the delivery against the workorder, with a fallback into stock', () => {
-      const receive = stageNamed(visit, 'receive', memory);
+      const receive = stageNamed(nextDay, 'receive', memory);
+      expect(receive.id).toBe(`${nextDay.id}-receive`);
+      expect(receive.goal).toMatch(/the part ordered on 2026-03-10 for a waiting job/);
       expect(receive.persona).toBe('parts');
       expect(receive.goal).toContain('- purchaseOrderId: po-1');
       expect(receive.goal).toMatch(/Receive it against the job, not into general stock/);
@@ -214,14 +221,15 @@ describe('stageScenario', () => {
     });
 
     it('finishes the job only once the part is there', () => {
-      const work = stageNamed(visit, 'work', { ...memory, partsStatus: 'received' });
-      expect(work.goal).toMatch(/waiting on a part ordered in/);
+      const work = stageNamed(nextDay, 'work', { ...memory, partsStatus: 'received' });
+      expect(work.goal).toMatch(/has been waiting since 2026-03-10 on a part ordered in/);
+      expect(stageNamed(nextDay, 'checkout', memory).goal).toMatch(/first brought in on 2026-03-10/);
       expect(work.goal).toContain('- partsStatus: received');
       expect(work.goal).toMatch(/If the part has not arrived[\s\S]*waiting for parts/);
     });
 
     it('holds each stage back until what it depends on exists', () => {
-      const stage = (name: string) => visit.stages.find((entry) => entry.name === name)!;
+      const stage = (name: string) => [...visit.stages, ...nextDay.stages].find((entry) => entry.name === name)!;
       expect(missingPrerequisite(stage('order'), {})).toMatch(/did not produce a workorder/);
       expect(missingPrerequisite(stage('order'), { workorderId: 'w-1' })).toBeUndefined();
       expect(missingPrerequisite(stage('receive'), { workorderId: 'w-1' })).toMatch(/no purchase order was raised/);

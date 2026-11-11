@@ -9,6 +9,7 @@ import type { ModelPort } from '../agent/loop';
 import type { Catalog } from '../catalog/types';
 import type { QaConfig } from '../config';
 import { describeVisit } from '../day/dayPlan';
+import { carriedVisits } from '../day/carryOver';
 import { DayPlanStore } from '../day/DayPlanStore';
 import { surveySites } from '../day/sites';
 import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
@@ -134,10 +135,14 @@ export class Harness {
     }
     await backend.preflight(this.log);
     const sites = await surveySites(invoker, catalog, 'admin');
-    const day = DayPlanStore.create(this.dayDir(clock), clock.date, sites, config.day);
+    const carried = carriedVisits(path.join(config.stateDir, 'runs'), clock.date, config.day);
+    const day = DayPlanStore.create(this.dayDir(clock), clock.date, sites, config.day, carried);
+    if (carried.length > 0) {
+      this.log(`${clock.date}: ${carried.length} job(s) carried over, waiting on a part delivery today`);
+    }
     this.log(
       `${clock.date}: ${sites.length} site(s) — ` +
-        (sites.map((site) => `${site.name} (${day.plan.visits.filter((visit) => visit.site.id === site.id).length} visits)`).join(', ') ||
+        (sites.map((site) => `${site.name} (${day.plan.visits.filter((visit) => visit.site.id === site.id && !visit.carriedFrom).length} new visits)`).join(', ') ||
           'no active location has a bay or mobile unit'),
     );
     return day;

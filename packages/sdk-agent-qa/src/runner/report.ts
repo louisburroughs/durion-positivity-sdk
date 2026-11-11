@@ -62,23 +62,30 @@ export function renderReport(
   if (sites.length > 0) {
     const verdictOf = new Map(results.map((result) => [result.scenarioId, result.verdict]));
     const count = (list: readonly Visit[], test: (visit: Visit) => boolean): number => list.filter(test).length;
+    /** Today's own customers; the mix is stated over these. */
+    const fresh = visits.filter((visit) => !visit.carriedFrom);
     lines.push(
       '',
       "## Today's customers, by site",
       '',
-      `${visits.length} visits across ${sites.length} site(s): ${count(visits, (visit) => visit.customer.status === 'new')} new and ` +
-        `${count(visits, (visit) => visit.customer.status === 'existing')} returning customers; ` +
-        `${count(visits, (visit) => visit.customer.type === 'commercial')} commercial and ` +
-        `${count(visits, (visit) => visit.customer.type === 'individual')} individual.`,
+      `${fresh.length} visits across ${sites.length} site(s): ${count(fresh, (visit) => visit.customer.status === 'new')} new and ` +
+        `${count(fresh, (visit) => visit.customer.status === 'existing')} returning customers; ` +
+        `${count(fresh, (visit) => visit.customer.type === 'commercial')} commercial and ` +
+        `${count(fresh, (visit) => visit.customer.type === 'individual')} individual.` +
+        (visits.length > fresh.length
+          ? ` Plus ${visits.length - fresh.length} job(s) carried over from an earlier day, waiting on a part delivered today.`
+          : ''),
     );
     for (const site of sites) {
       const here = visits.filter((visit) => visit.site.id === site.id);
+      const today = here.filter((visit) => !visit.carriedFrom);
       lines.push(
         '',
-        `### ${site.name} (${site.code}) — ${site.positions} position(s), ${here.length} visit(s)`,
+        `### ${site.name} (${site.code}) — ${site.positions} position(s), ${today.length} visit(s)` +
+          (here.length > today.length ? `, ${here.length - today.length} carried over` : ''),
         '',
-        `${count(here, (visit) => visit.customer.status === 'new')} new, ${count(here, (visit) => visit.customer.status === 'existing')} returning; ` +
-          `${count(here, (visit) => visit.customer.type === 'commercial')} commercial, ${count(here, (visit) => visit.customer.type === 'individual')} individual.`,
+        `${count(today, (visit) => visit.customer.status === 'new')} new, ${count(today, (visit) => visit.customer.status === 'existing')} returning; ` +
+          `${count(today, (visit) => visit.customer.type === 'commercial')} commercial, ${count(today, (visit) => visit.customer.type === 'individual')} individual.`,
       );
       if (here.length > 0) {
         lines.push('', '| Visit | Customer and vehicle | Stages |', '| --- | --- | --- |');

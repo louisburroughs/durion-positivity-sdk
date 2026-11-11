@@ -125,7 +125,8 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
     partsLine =
       ' The job also needs a part the shop does not keep in stock: search the product catalog for a part that fits the ' +
       'concern, check its availability, and pick one with nothing on hand at this location. Add it as a part line ' +
-      '(quantity 1 or 2) and tell the customer it has to be ordered in and should arrive later today.';
+      '(quantity 1 or 2) and tell the customer it has to be ordered in: it will arrive on the next working day, and the ' +
+      'job will be done then.';
   }
 
   let arrival = 'The customer has walked in without an appointment.';
@@ -216,7 +217,7 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
     );
     partsWork =
       visit.parts === 'special-order'
-        ? 'This job was waiting on a part ordered in for it (see partsStatus below). If the part has been received, get it ' +
+        ? `This job has been waiting${visit.carriedFrom ? ` since ${visit.carriedFrom}` : ''} on a part ordered in for it (see partsStatus below). If the part has been received, get it ` +
           "to the technician: read the workorder's pick list and pick tasks, confirm the pick, and issue the part to the job. " +
           'If the part has not arrived, add a note saying the job is waiting for parts, remember workStatus as "waiting for ' +
           'parts", and finish without completing the workorder.\n\n'
@@ -279,8 +280,12 @@ function orderPart(visit: Visit, stage: VisitStage, memory: VisitMemory, context
         'find the part line and note its line id, and look at its pick tasks and any backorder for the part: the shortage ' +
         'usually shows there within a minute or two.',
       'Buy the part: choose a vendor the shop can order from, and raise a purchase order for the part line\'s product and ' +
-        "quantity, shipping to this location, with a sensible unit cost and a comment naming the workorder. " + approval,
+        "quantity, shipping to this location, with a sensible unit cost, the workorder id set on the line, and a comment " +
+        'naming the workorder. ' +
+        approval,
       REPLICATION,
+      'The part will be delivered on the next working day; add a note to the workorder saying it is waiting for the part ' +
+        'and giving the purchase order.',
       REMEMBER('purchaseOrderId, vendorId, partLineId (the workorder\'s part line id), partQuantity, and partsStatus as "ordered"'),
     ].join('\n\n') + known(memory),
     operations: [
@@ -293,6 +298,7 @@ function orderPart(visit: Visit, stage: VisitStage, memory: VisitMemory, context
       'order.PurchaseOrdersApi.createPurchaseOrder',
       'order.PurchaseOrdersApi.approvePurchaseOrder',
       'order.PurchaseOrdersApi.getPurchaseOrder',
+      'workorder.WorkorderNoteAPIApi.addWorkorderNote',
     ],
     expect: [
       { kind: 'call', operation: 'workorder.WorkorderDetailApi.getWorkorderDetail' },
@@ -313,7 +319,7 @@ function receivePart(visit: Visit, stage: VisitStage, memory: VisitMemory): Scen
     kind: 'operations',
     goal: [
       `You are the parts clerk. ${siteBrief(visit)}`,
-      "The vendor's driver has arrived with the part ordered for a waiting job (purchase order and workorder below). Read " +
+      `The vendor's driver has arrived with the part ordered ${visit.carriedFrom ? `on ${visit.carriedFrom} ` : ''}for a waiting job (purchase order and workorder below). Read ` +
         'the purchase order to confirm it is approved and see its line.',
       'Receive it against the job, not into general stock: open a receiving session for the purchase order (its lines can ' +
         'take a minute to become available just after approval — if told so, wait and try again), then cross-dock the ' +
@@ -372,7 +378,7 @@ function checkout(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenari
     persona: 'advisor' satisfies Persona,
     kind: 'operations',
     goal: [
-      `You are the service advisor. The customer is back to collect their vehicle. ${siteBrief(visit)}`,
+      `You are the service advisor. The customer is back to collect their vehicle${visit.carriedFrom ? `, which they first brought in on ${visit.carriedFrom}` : ''}. ${siteBrief(visit)}`,
       'Check the workorder. If it is not completed (see workStatus below), tell the customer it is not ready: record an ' +
         'interaction saying so, and finish without invoicing.',
       'If it is completed, generate its invoice. The first call records the request and may answer without an invoice id; ' +
