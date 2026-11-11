@@ -32,12 +32,6 @@ export interface AllocateAPPaymentRequest {
      * @memberof AllocateAPPaymentRequest
      */
     allocations: Array<AllocationLineRequest>;
-    /**
-     * Caller-minted idempotency key: a replay with the same lines answers the same payment; another body under the same id is 409 IDEMPOTENCY_CONFLICT
-     * @type {string}
-     * @memberof AllocateAPPaymentRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -45,7 +39,6 @@ export interface AllocateAPPaymentRequest {
  */
 export function instanceOfAllocateAPPaymentRequest(value: object): boolean {
     if (!('allocations' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -60,7 +53,6 @@ export function AllocateAPPaymentRequestFromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'allocations': ((json['allocations'] as Array<any>).map(AllocationLineRequestFromJSON)),
-        'requestId': json['requestId'],
     };
 }
 
@@ -71,7 +63,6 @@ export function AllocateAPPaymentRequestToJSON(value?: AllocateAPPaymentRequest 
     return {
         
         'allocations': ((value['allocations'] as Array<any>).map(AllocationLineRequestToJSON)),
-        'requestId': value['requestId'],
     };
 }
 

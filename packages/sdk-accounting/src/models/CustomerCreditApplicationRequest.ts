@@ -31,12 +31,6 @@ export interface CustomerCreditApplicationRequest {
      * @memberof CustomerCreditApplicationRequest
      */
     invoiceId: string;
-    /**
-     * Caller-supplied idempotency key. Replaying the same key returns the original application instead of relieving the credit liability twice
-     * @type {string}
-     * @memberof CustomerCreditApplicationRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -45,7 +39,6 @@ export interface CustomerCreditApplicationRequest {
 export function instanceOfCustomerCreditApplicationRequest(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('invoiceId' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -61,7 +54,6 @@ export function CustomerCreditApplicationRequestFromJSONTyped(json: any, ignoreD
         
         'amount': json['amount'],
         'invoiceId': json['invoiceId'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -73,7 +65,6 @@ export function CustomerCreditApplicationRequestToJSON(value?: CustomerCreditApp
         
         'amount': value['amount'],
         'invoiceId': value['invoiceId'],
-        'requestId': value['requestId'],
     };
 }
 

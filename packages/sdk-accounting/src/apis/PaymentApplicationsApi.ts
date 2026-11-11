@@ -54,11 +54,13 @@ import {
 
 export interface ApplyPaymentRequest {
     paymentId: string;
+    idempotencyKey: string;
     paymentApplicationRequest: PaymentApplicationRequest;
 }
 
 export interface CreditPaymentRemainderRequest {
     paymentId: string;
+    idempotencyKey: string;
     remainderCreditRequest: RemainderCreditRequest;
 }
 
@@ -116,7 +118,7 @@ export interface VoidPaymentApplicationRequest {
 export class PaymentApplicationsApi extends runtime.BaseAPI {
 
     /**
-     * Applies a receivable payment to one or more invoices atomically, updating each invoice\'s balance and status and reducing the payment\'s unapplied amount. Use this tool to settle invoices from an available payment; do not use applyCustomerCredit, which draws down a standing credit rather than a payment. Preconditions: the payment must be AVAILABLE with sufficient unapplied funds, and every target invoice must be applicable (not paid in full, voided or cancelled); an overpayment creates a CustomerCredit for the excess, except on the CASH walk-in account, whose excess is refunded through pos-invoice instead. Required inputs: paymentId (UUID) as a path parameter, applicationRequestId (max 100 chars, the idempotency key) and a non-empty applications list of invoiceId plus amountToApply (min 0.01); allocationStrategy is optional, CALLER_ORDER when omitted or OLDEST_FIRST to allocate by ascending invoice date. Emits an ACCOUNTING_PAYMENT_APPLY event; the application is atomic across all invoices and idempotent on applicationRequestId. Returns 404 when the payment is not found, 400 for insufficient funds, 409 for an inapplicable invoice, 422 CURRENCY_NOT_SUPPORTED for a payment in a currency other than the ledger\'s, 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for an overpayment of a CASH walk-in payment (nothing is written in either case), and 503 when the invoice service is unreachable. 
+     * Applies a receivable payment to one or more invoices atomically, updating each invoice\'s balance and status and reducing the payment\'s unapplied amount. Use this tool to settle invoices from an available payment; do not use applyCustomerCredit, which draws down a standing credit rather than a payment. Preconditions: the payment must be AVAILABLE with sufficient unapplied funds, and every target invoice must be applicable (not paid in full, voided or cancelled); an overpayment creates a CustomerCredit for the excess, except on the CASH walk-in account, whose excess is refunded through pos-invoice instead. Required inputs: paymentId (UUID) as a path parameter, the Idempotency-Key header (UUID), applicationRequestId (max 100 chars, the application\'s business reference) and a non-empty applications list of invoiceId plus amountToApply (min 0.01); allocationStrategy is optional, CALLER_ORDER when omitted or OLDEST_FIRST to allocate by ascending invoice date. The body declares no deduplication key. Emits an ACCOUNTING_PAYMENT_APPLY event; the application is atomic across all invoices. A replay of the same key, payload and caller returns the original 201 answer and body with Idempotency-Replayed: true, emits no second event and applies nothing twice (an answer above the 64 KiB cap is not stored, and its replay renders the application in its current state); the same applicationRequestId reused for another payment, invoice set or amount is 409 IDEMPOTENCY_CONFLICT, and its GL posting key stays APPLY:<applicationRequestId>. Returns 404 when the payment is not found, 400 for insufficient funds or a missing or non-UUID Idempotency-Key, 409 IDEMPOTENCY_CONFLICT or an inapplicable invoice, 422 CURRENCY_NOT_SUPPORTED for a payment in a currency other than the ledger\'s, 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for an overpayment of a CASH walk-in payment (nothing is written in either case), and 503 when the invoice service is unreachable. 
      * Apply Payment To Invoices
      */
     async applyPaymentRaw(requestParameters: ApplyPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaymentApplicationResponse>> {
@@ -124,6 +126,13 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'paymentId',
                 'Required parameter "paymentId" was null or undefined when calling applyPayment().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling applyPayment().'
             );
         }
 
@@ -139,6 +148,10 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -160,7 +173,7 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a receivable payment to one or more invoices atomically, updating each invoice\'s balance and status and reducing the payment\'s unapplied amount. Use this tool to settle invoices from an available payment; do not use applyCustomerCredit, which draws down a standing credit rather than a payment. Preconditions: the payment must be AVAILABLE with sufficient unapplied funds, and every target invoice must be applicable (not paid in full, voided or cancelled); an overpayment creates a CustomerCredit for the excess, except on the CASH walk-in account, whose excess is refunded through pos-invoice instead. Required inputs: paymentId (UUID) as a path parameter, applicationRequestId (max 100 chars, the idempotency key) and a non-empty applications list of invoiceId plus amountToApply (min 0.01); allocationStrategy is optional, CALLER_ORDER when omitted or OLDEST_FIRST to allocate by ascending invoice date. Emits an ACCOUNTING_PAYMENT_APPLY event; the application is atomic across all invoices and idempotent on applicationRequestId. Returns 404 when the payment is not found, 400 for insufficient funds, 409 for an inapplicable invoice, 422 CURRENCY_NOT_SUPPORTED for a payment in a currency other than the ledger\'s, 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for an overpayment of a CASH walk-in payment (nothing is written in either case), and 503 when the invoice service is unreachable. 
+     * Applies a receivable payment to one or more invoices atomically, updating each invoice\'s balance and status and reducing the payment\'s unapplied amount. Use this tool to settle invoices from an available payment; do not use applyCustomerCredit, which draws down a standing credit rather than a payment. Preconditions: the payment must be AVAILABLE with sufficient unapplied funds, and every target invoice must be applicable (not paid in full, voided or cancelled); an overpayment creates a CustomerCredit for the excess, except on the CASH walk-in account, whose excess is refunded through pos-invoice instead. Required inputs: paymentId (UUID) as a path parameter, the Idempotency-Key header (UUID), applicationRequestId (max 100 chars, the application\'s business reference) and a non-empty applications list of invoiceId plus amountToApply (min 0.01); allocationStrategy is optional, CALLER_ORDER when omitted or OLDEST_FIRST to allocate by ascending invoice date. The body declares no deduplication key. Emits an ACCOUNTING_PAYMENT_APPLY event; the application is atomic across all invoices. A replay of the same key, payload and caller returns the original 201 answer and body with Idempotency-Replayed: true, emits no second event and applies nothing twice (an answer above the 64 KiB cap is not stored, and its replay renders the application in its current state); the same applicationRequestId reused for another payment, invoice set or amount is 409 IDEMPOTENCY_CONFLICT, and its GL posting key stays APPLY:<applicationRequestId>. Returns 404 when the payment is not found, 400 for insufficient funds or a missing or non-UUID Idempotency-Key, 409 IDEMPOTENCY_CONFLICT or an inapplicable invoice, 422 CURRENCY_NOT_SUPPORTED for a payment in a currency other than the ledger\'s, 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for an overpayment of a CASH walk-in payment (nothing is written in either case), and 503 when the invoice service is unreachable. 
      * Apply Payment To Invoices
      */
     async applyPayment(requestParameters: ApplyPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaymentApplicationResponse> {
@@ -169,7 +182,7 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Converts the whole unapplied remainder of a receivable payment into a customer credit in one transaction: the credit is created, the Dr Undeposited Funds / Cr Customer Credit Liability issuance is enqueued, and the payment becomes FULLY_APPLIED. Use this tool after applyPayment when the customer keeps the leftover on account, or when the credit will be refunded next with refundCustomerCredit; do not use applyCustomerCredit, which draws down a credit that already exists. Preconditions: the payment must be AVAILABLE, in the ledger currency, and still carry exactly expectedAmount unapplied; a replay with the same requestId returns the credit it issued and writes nothing. Required inputs: paymentId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key) and expectedAmount (the unapplied amount the caller read, min 0.01). Emits an ACCOUNTING_PAYMENT_REMAINDER_CREDIT event; the credit\'s creator and the issuance entry\'s actor come from the security context. Returns 201 with the credit, 404 PAYMENT_NOT_FOUND when the payment does not exist, 409 PAYMENT_NOT_AVAILABLE when it is already fully applied, 409 IDEMPOTENCY_CONFLICT when the requestId was used on another payment, 409 OPTIMISTIC_LOCK after a second concurrent update, 422 PAYMENT_REMAINDER_CHANGED when expectedAmount no longer matches (re-read the payment), 422 CURRENCY_NOT_SUPPORTED for a payment in another currency, and 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for a payment of the CASH walk-in account, whose remainder is refunded instead. 
+     * Converts the whole unapplied remainder of a receivable payment into a customer credit in one transaction: the credit is created, the Dr Undeposited Funds / Cr Customer Credit Liability issuance is enqueued, and the payment becomes FULLY_APPLIED. Use this tool after applyPayment when the customer keeps the leftover on account, or when the credit will be refunded next with refundCustomerCredit; do not use applyCustomerCredit, which draws down a credit that already exists. Preconditions: the payment must be AVAILABLE, in the ledger currency, and still carry exactly expectedAmount unapplied; a replay of the same Idempotency-Key, payload and caller returns the credit it issued, its status and body with Idempotency-Replayed: true, emits no second event and writes nothing (an answer above the 64 KiB cap is not stored, and its replay renders the credit in its current state). Required inputs: paymentId (UUID) as a path parameter, the Idempotency-Key header (UUID) and expectedAmount (the unapplied amount the caller read, min 0.01); the body declares no key. Emits an ACCOUNTING_PAYMENT_REMAINDER_CREDIT event; the credit\'s creator and the issuance entry\'s actor come from the security context. Returns 201 with the credit, 400 VALIDATION_ERROR when expectedAmount is missing or below 0.01 or the Idempotency-Key is missing or not a UUID, 404 PAYMENT_NOT_FOUND when the payment does not exist, 409 PAYMENT_NOT_AVAILABLE when it is already fully applied, 409 IDEMPOTENCY_CONFLICT when the key was used on another payment or with another payload, 409 OPTIMISTIC_LOCK after a second concurrent update, 422 PAYMENT_REMAINDER_CHANGED when expectedAmount no longer matches (re-read the payment), 422 CURRENCY_NOT_SUPPORTED for a payment in another currency, and 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for a payment of the CASH walk-in account, whose remainder is refunded instead. 
      * Keep Payment Remainder As Customer Credit
      */
     async creditPaymentRemainderRaw(requestParameters: CreditPaymentRemainderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RemainderCreditResponse>> {
@@ -177,6 +190,13 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'paymentId',
                 'Required parameter "paymentId" was null or undefined when calling creditPaymentRemainder().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling creditPaymentRemainder().'
             );
         }
 
@@ -192,6 +212,10 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -213,7 +237,7 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Converts the whole unapplied remainder of a receivable payment into a customer credit in one transaction: the credit is created, the Dr Undeposited Funds / Cr Customer Credit Liability issuance is enqueued, and the payment becomes FULLY_APPLIED. Use this tool after applyPayment when the customer keeps the leftover on account, or when the credit will be refunded next with refundCustomerCredit; do not use applyCustomerCredit, which draws down a credit that already exists. Preconditions: the payment must be AVAILABLE, in the ledger currency, and still carry exactly expectedAmount unapplied; a replay with the same requestId returns the credit it issued and writes nothing. Required inputs: paymentId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key) and expectedAmount (the unapplied amount the caller read, min 0.01). Emits an ACCOUNTING_PAYMENT_REMAINDER_CREDIT event; the credit\'s creator and the issuance entry\'s actor come from the security context. Returns 201 with the credit, 404 PAYMENT_NOT_FOUND when the payment does not exist, 409 PAYMENT_NOT_AVAILABLE when it is already fully applied, 409 IDEMPOTENCY_CONFLICT when the requestId was used on another payment, 409 OPTIMISTIC_LOCK after a second concurrent update, 422 PAYMENT_REMAINDER_CHANGED when expectedAmount no longer matches (re-read the payment), 422 CURRENCY_NOT_SUPPORTED for a payment in another currency, and 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for a payment of the CASH walk-in account, whose remainder is refunded instead. 
+     * Converts the whole unapplied remainder of a receivable payment into a customer credit in one transaction: the credit is created, the Dr Undeposited Funds / Cr Customer Credit Liability issuance is enqueued, and the payment becomes FULLY_APPLIED. Use this tool after applyPayment when the customer keeps the leftover on account, or when the credit will be refunded next with refundCustomerCredit; do not use applyCustomerCredit, which draws down a credit that already exists. Preconditions: the payment must be AVAILABLE, in the ledger currency, and still carry exactly expectedAmount unapplied; a replay of the same Idempotency-Key, payload and caller returns the credit it issued, its status and body with Idempotency-Replayed: true, emits no second event and writes nothing (an answer above the 64 KiB cap is not stored, and its replay renders the credit in its current state). Required inputs: paymentId (UUID) as a path parameter, the Idempotency-Key header (UUID) and expectedAmount (the unapplied amount the caller read, min 0.01); the body declares no key. Emits an ACCOUNTING_PAYMENT_REMAINDER_CREDIT event; the credit\'s creator and the issuance entry\'s actor come from the security context. Returns 201 with the credit, 400 VALIDATION_ERROR when expectedAmount is missing or below 0.01 or the Idempotency-Key is missing or not a UUID, 404 PAYMENT_NOT_FOUND when the payment does not exist, 409 PAYMENT_NOT_AVAILABLE when it is already fully applied, 409 IDEMPOTENCY_CONFLICT when the key was used on another payment or with another payload, 409 OPTIMISTIC_LOCK after a second concurrent update, 422 PAYMENT_REMAINDER_CHANGED when expectedAmount no longer matches (re-read the payment), 422 CURRENCY_NOT_SUPPORTED for a payment in another currency, and 422 CASH_CUSTOMER_CREDIT_NOT_ALLOWED for a payment of the CASH walk-in account, whose remainder is refunded instead. 
      * Keep Payment Remainder As Customer Credit
      */
     async creditPaymentRemainder(requestParameters: CreditPaymentRemainderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RemainderCreditResponse> {

@@ -68,13 +68,7 @@ export interface CustomerCreditTransactionResponse {
      */
     invoiceId?: string;
     /**
-     * True when this response replays an already-processed request id rather than recording a new draw-down
-     * @type {boolean}
-     * @memberof CustomerCreditTransactionResponse
-     */
-    replayed?: boolean;
-    /**
-     * Caller-supplied idempotency key this draw-down was recorded under
+     * The Idempotency-Key this draw-down was recorded under
      * @type {string}
      * @memberof CustomerCreditTransactionResponse
      */
@@ -122,7 +116,6 @@ export function CustomerCreditTransactionResponseFromJSONTyped(json: any, ignore
         'currency': json['currency'] == null ? undefined : json['currency'],
         'invoiceBalanceAfter': json['invoiceBalanceAfter'] == null ? undefined : json['invoiceBalanceAfter'],
         'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'transactionType': json['transactionType'] == null ? undefined : json['transactionType'],
     };
@@ -142,7 +135,6 @@ export function CustomerCreditTransactionResponseToJSON(value?: CustomerCreditTr
         'currency': value['currency'],
         'invoiceBalanceAfter': value['invoiceBalanceAfter'],
         'invoiceId': value['invoiceId'],
-        'replayed': value['replayed'],
         'requestId': value['requestId'],
         'transactionType': value['transactionType'],
     };

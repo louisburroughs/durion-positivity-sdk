@@ -39,6 +39,7 @@ import {
 
 export interface ApplyCustomerCreditRequest {
     creditId: string;
+    idempotencyKey: string;
     customerCreditApplicationRequest: CustomerCreditApplicationRequest;
 }
 
@@ -56,6 +57,7 @@ export interface ListCustomerCreditsRequest {
 
 export interface RefundCustomerCreditRequest {
     creditId: string;
+    idempotencyKey: string;
     customerCreditRefundRequest: CustomerCreditRefundRequest;
 }
 
@@ -65,7 +67,7 @@ export interface RefundCustomerCreditRequest {
 export class CustomerCreditsApi extends runtime.BaseAPI {
 
     /**
-     * Draws an open customer credit down against an outstanding invoice, posting debit Customer Credit Liability, credit Accounts Receivable for the applied amount. Use this tool to consume standing credit against an invoice; do not use refundCustomerCredit, which pays the credit back as cash, and do not use createCreditMemo, which issues new credit against an invoice. Preconditions: the credit must have sufficient open amount, the invoice must be AR-eligible and belong to the same customer, the amount must not exceed the invoice balance, and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key), invoiceId (UUID) and amount (min 0.01). Emits an ACCOUNTING_CUSTOMER_CREDIT_APPLY event; replaying the same requestId returns the original application instead of double-applying. Returns 404 when the credit or invoice is not found, 409 for insufficient open credit, an ineligible or foreign invoice, an amount over the invoice balance, a closed period, or a requestId reused for a different operation, and 400 when the amount is missing or non-positive. 
+     * Draws an open customer credit down against an outstanding invoice, posting debit Customer Credit Liability, credit Accounts Receivable for the applied amount. Use this tool to consume standing credit against an invoice; do not use refundCustomerCredit, which pays the credit back as cash, and do not use createCreditMemo, which issues new credit against an invoice. Preconditions: the credit must have sufficient open amount, the invoice must be AR-eligible and belong to the same customer, the amount must not exceed the invoice balance, and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, the Idempotency-Key header (UUID), invoiceId (UUID) and amount (min 0.01); the body declares no key. Emits an ACCOUNTING_CUSTOMER_CREDIT_APPLY event; a replay of the same key, payload and caller returns the original application, its status and body with Idempotency-Replayed: true, emits no second event and relieves nothing twice (an answer above the 64 KiB cap is not stored, and its replay renders the draw-down in its current state). Returns 400 VALIDATION_ERROR when the amount is missing or non-positive or the Idempotency-Key is absent or not a UUID, 404 when the credit or invoice is not found, 409 IDEMPOTENCY_CONFLICT when the key was used with another payload or by another caller, 409 for insufficient open credit, an ineligible or foreign invoice, an amount over the invoice balance or a closed period. 
      * Apply Customer Credit To Invoice
      */
     async applyCustomerCreditRaw(requestParameters: ApplyCustomerCreditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomerCreditTransactionResponse>> {
@@ -73,6 +75,13 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'creditId',
                 'Required parameter "creditId" was null or undefined when calling applyCustomerCredit().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling applyCustomerCredit().'
             );
         }
 
@@ -88,6 +97,10 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -109,7 +122,7 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Draws an open customer credit down against an outstanding invoice, posting debit Customer Credit Liability, credit Accounts Receivable for the applied amount. Use this tool to consume standing credit against an invoice; do not use refundCustomerCredit, which pays the credit back as cash, and do not use createCreditMemo, which issues new credit against an invoice. Preconditions: the credit must have sufficient open amount, the invoice must be AR-eligible and belong to the same customer, the amount must not exceed the invoice balance, and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key), invoiceId (UUID) and amount (min 0.01). Emits an ACCOUNTING_CUSTOMER_CREDIT_APPLY event; replaying the same requestId returns the original application instead of double-applying. Returns 404 when the credit or invoice is not found, 409 for insufficient open credit, an ineligible or foreign invoice, an amount over the invoice balance, a closed period, or a requestId reused for a different operation, and 400 when the amount is missing or non-positive. 
+     * Draws an open customer credit down against an outstanding invoice, posting debit Customer Credit Liability, credit Accounts Receivable for the applied amount. Use this tool to consume standing credit against an invoice; do not use refundCustomerCredit, which pays the credit back as cash, and do not use createCreditMemo, which issues new credit against an invoice. Preconditions: the credit must have sufficient open amount, the invoice must be AR-eligible and belong to the same customer, the amount must not exceed the invoice balance, and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, the Idempotency-Key header (UUID), invoiceId (UUID) and amount (min 0.01); the body declares no key. Emits an ACCOUNTING_CUSTOMER_CREDIT_APPLY event; a replay of the same key, payload and caller returns the original application, its status and body with Idempotency-Replayed: true, emits no second event and relieves nothing twice (an answer above the 64 KiB cap is not stored, and its replay renders the draw-down in its current state). Returns 400 VALIDATION_ERROR when the amount is missing or non-positive or the Idempotency-Key is absent or not a UUID, 404 when the credit or invoice is not found, 409 IDEMPOTENCY_CONFLICT when the key was used with another payload or by another caller, 409 for insufficient open credit, an ineligible or foreign invoice, an amount over the invoice balance or a closed period. 
      * Apply Customer Credit To Invoice
      */
     async applyCustomerCredit(requestParameters: ApplyCustomerCreditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomerCreditTransactionResponse> {
@@ -217,7 +230,7 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Refunds an open customer credit as cash back to the customer, posting debit Customer Credit Liability, credit Undeposited Funds for the refunded amount. Use this tool to pay standing credit out; do not use applyCustomerCredit, which consumes the credit against an invoice instead. Preconditions: the credit must have sufficient open amount and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key) and amount (min 0.01); note (max 500 chars) is optional. Emits an ACCOUNTING_CUSTOMER_CREDIT_REFUND event; replaying the same requestId returns the original refund instead of double-paying. Returns 404 when the credit is not found, 409 for insufficient open credit, a closed period, or a requestId reused for a different operation, and 400 when the amount is missing or non-positive. 
+     * Refunds an open customer credit as cash back to the customer, posting debit Customer Credit Liability, credit Undeposited Funds for the refunded amount. Use this tool to pay standing credit out; do not use applyCustomerCredit, which consumes the credit against an invoice instead. Preconditions: the credit must have sufficient open amount and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, the Idempotency-Key header (UUID) and amount (min 0.01); note (max 500 chars) is optional, and the body declares no key. Emits an ACCOUNTING_CUSTOMER_CREDIT_REFUND event; a replay of the same key, payload and caller returns the original refund, its status and body with Idempotency-Replayed: true, emits no second event and pays nothing twice (an answer above the 64 KiB cap is not stored, and its replay renders the draw-down in its current state). Returns 400 VALIDATION_ERROR when the amount is missing or non-positive or the Idempotency-Key is absent or not a UUID, 404 when the credit is not found, 409 IDEMPOTENCY_CONFLICT when the key was used with another payload or by another caller, 409 for insufficient open credit or a closed period. 
      * Refund Customer Credit
      */
     async refundCustomerCreditRaw(requestParameters: RefundCustomerCreditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomerCreditTransactionResponse>> {
@@ -225,6 +238,13 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'creditId',
                 'Required parameter "creditId" was null or undefined when calling refundCustomerCredit().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling refundCustomerCredit().'
             );
         }
 
@@ -240,6 +260,10 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -261,7 +285,7 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Refunds an open customer credit as cash back to the customer, posting debit Customer Credit Liability, credit Undeposited Funds for the refunded amount. Use this tool to pay standing credit out; do not use applyCustomerCredit, which consumes the credit against an invoice instead. Preconditions: the credit must have sufficient open amount and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key) and amount (min 0.01); note (max 500 chars) is optional. Emits an ACCOUNTING_CUSTOMER_CREDIT_REFUND event; replaying the same requestId returns the original refund instead of double-paying. Returns 404 when the credit is not found, 409 for insufficient open credit, a closed period, or a requestId reused for a different operation, and 400 when the amount is missing or non-positive. 
+     * Refunds an open customer credit as cash back to the customer, posting debit Customer Credit Liability, credit Undeposited Funds for the refunded amount. Use this tool to pay standing credit out; do not use applyCustomerCredit, which consumes the credit against an invoice instead. Preconditions: the credit must have sufficient open amount and the accounting period must be open. Required inputs: creditId (UUID) as a path parameter, the Idempotency-Key header (UUID) and amount (min 0.01); note (max 500 chars) is optional, and the body declares no key. Emits an ACCOUNTING_CUSTOMER_CREDIT_REFUND event; a replay of the same key, payload and caller returns the original refund, its status and body with Idempotency-Replayed: true, emits no second event and pays nothing twice (an answer above the 64 KiB cap is not stored, and its replay renders the draw-down in its current state). Returns 400 VALIDATION_ERROR when the amount is missing or non-positive or the Idempotency-Key is absent or not a UUID, 404 when the credit is not found, 409 IDEMPOTENCY_CONFLICT when the key was used with another payload or by another caller, 409 for insufficient open credit or a closed period. 
      * Refund Customer Credit
      */
     async refundCustomerCredit(requestParameters: RefundCustomerCreditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomerCreditTransactionResponse> {

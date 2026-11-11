@@ -33,7 +33,7 @@ export interface PaymentApplicationRequest {
      */
     allocationStrategy?: PaymentApplicationRequestAllocationStrategyEnum;
     /**
-     * Idempotency key for this application request; retries with the same key must not duplicate
+     * The application's business reference: unique per invoice and part of the application's GL posting key (APPLY:<applicationRequestId>). It is not the request's deduplication key, which is the Idempotency-Key header
      * @type {string}
      * @memberof PaymentApplicationRequest
      */

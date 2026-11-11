@@ -25,12 +25,6 @@ export interface RemainderCreditRequest {
      * @memberof RemainderCreditRequest
      */
     expectedAmount: number;
-    /**
-     * Idempotency key for this command; a replay returns the credit it issued, the same key on another payment is refused with IDEMPOTENCY_CONFLICT
-     * @type {string}
-     * @memberof RemainderCreditRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -38,7 +32,6 @@ export interface RemainderCreditRequest {
  */
 export function instanceOfRemainderCreditRequest(value: object): boolean {
     if (!('expectedAmount' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -53,7 +46,6 @@ export function RemainderCreditRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'expectedAmount': json['expectedAmount'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -64,7 +56,6 @@ export function RemainderCreditRequestToJSON(value?: RemainderCreditRequest | nu
     return {
         
         'expectedAmount': value['expectedAmount'],
-        'requestId': value['requestId'],
     };
 }
 

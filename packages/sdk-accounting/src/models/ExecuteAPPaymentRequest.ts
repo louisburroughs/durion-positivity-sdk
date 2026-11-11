@@ -75,7 +75,7 @@ export interface ExecuteAPPaymentRequest {
      */
     paymentMethod: ExecuteAPPaymentRequestPaymentMethodEnum;
     /**
-     * Unique payment reference (idempotency key)
+     * The vendor payment's business reference, unique per tenant: it keys the gateway call and a payment already made under it answers the existing payment rather than paying twice. It is not the request's deduplication key, which is the Idempotency-Key header
      * @type {string}
      * @memberof ExecuteAPPaymentRequest
      */
