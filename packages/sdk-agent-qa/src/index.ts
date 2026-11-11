@@ -110,7 +110,7 @@ async function daemon(harness: Harness, config: QaConfig): Promise<number> {
         log(`report: ${harness.reportPath()}`);
       }
     } catch (error) {
-      // A daemon outlives a dropped tunnel or a restarted stack: say what happened and try again next poll.
+      // A daemon outlives a dropped connection or a restarted stack: say what happened and try again next poll.
       log(`pass failed: ${error instanceof Error ? error.message : String(error)}`);
     }
     for (let waited = 0; waited < config.pollSeconds && !stopping; waited += 1) {

@@ -6,28 +6,29 @@ name: Agent QA
 # The laptop is the primary launcher (`npm run qa:daemon`, or `npm run qa:tick`
 # from cron / Task Scheduler); this is the same `tick`, reached a different way:
 #   1. build the workspace, so the harness calls the clients a consumer would;
-#   2. open the SSM port-forward to alpha that scripts/alpha-itest-tunnel.sh
-#      opens on a laptop (no ingress is opened and nothing on alpha changes);
-#   3. restore the harness state — what has run today, this week and this month,
-#      and the month's SDK coverage — run one pass, and save the state again.
+#   2. restore the harness state — today's sites and customers, what has run
+#      today, this week and this month, and the month's SDK coverage — run one
+#      pass against alpha's public API, and save the state again.
 #
-# Step 3 is what makes separate runs one schedule: the planner is a function of
+# Step 2 is what makes separate runs one schedule: the planner is a function of
 # the clock and that state, so a run only does what is due and not yet done.
+#
+# No tunnel and no AWS access: the harness talks only to the API gateway, which
+# alpha serves at https://durionpos.org/api.
 #
 # Manual by default. To have it keep the shop's hours without a laptop, enable
 # the schedule below: every half hour from 07:30 to 18:30 US Eastern, Monday to
-# Saturday, each run doing at most one scenario (the harness's own pacing).
+# Saturday, each run doing a few of the tasks that are due (the harness's own
+# pacing).
 #
-# Needs, beyond what the other alpha workflows already use (AWS_ROLE_ARN,
-# ALPHA_INSTANCE_ID):
+# Needs:
 #   secrets  ITEST_USERNAME, ITEST_PASSWORD      the admin login, as in .env.itest
 #            QA_ENV                              optional: extra KEY=value lines in .env.itest
 #                                                form (persona logins, QA_* overrides)
 #            OPENROUTER_API_KEY and/or OPENCODE_API_KEY, OLLAMA_API_KEY
 #   vars     QA_MODELS                           e.g. openrouter:anthropic/claude-sonnet-4.5
+#            QA_BASE_URL                         optional; default https://durionpos.org/api
 #            OLLAMA_BASE_URL                     only for Ollama cloud
-# and the role behind AWS_ROLE_ARN must allow ssm:StartSession on the alpha
-# instance with AWS-StartPortForwardingSession.
 on:
   workflow_dispatch:
     inputs:
@@ -51,11 +52,9 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  id-token: write # OIDC for the SSM tunnel
   contents: read
 
 env:
-  AWS_REGION: us-east-1
   QA_STATE_DIR: ${{ github.workspace }}/.agent-qa
 
 jobs:
@@ -88,42 +87,10 @@ jobs:
           key: agent-qa-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: agent-qa-state-
 
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Install the Session Manager plugin
-        run: |
-          set -euo pipefail
-          curl -fsSL -o /tmp/session-manager-plugin.deb \
-            https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
-          sudo dpkg -i /tmp/session-manager-plugin.deb
-
-      - name: Open the tunnel to alpha
-        env:
-          ALPHA_INSTANCE_ID: ${{ vars.ALPHA_INSTANCE_ID }}
-        run: |
-          set -euo pipefail
-          nohup ./scripts/alpha-itest-tunnel.sh > tunnel.log 2>&1 &
-          echo "TUNNEL_PID=$!" >> "$GITHUB_ENV"
-          for _ in $(seq 1 60); do
-            if (exec 3<>/dev/tcp/127.0.0.1/18080) 2> /dev/null; then
-              echo "gateway tunnel is up"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "::error::The tunnel did not come up"
-          cat tunnel.log
-          exit 1
-
       - name: Run the harness
         id: run
         env:
-          ITEST_BASE_URL: http://localhost:18080
-          ITEST_SECURITY_SERVICE_URL: http://localhost:18086
+          ITEST_BASE_URL: ${{ vars.QA_BASE_URL || 'https://durionpos.org/api' }}
           ITEST_USERNAME: ${{ secrets.ITEST_USERNAME }}
           ITEST_PASSWORD: ${{ secrets.ITEST_PASSWORD }}
           ALPHA_TENANT_SLUG: alpha
@@ -169,13 +136,6 @@ jobs:
             cat "${REPORT}" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "Nothing was due." >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Close the tunnel
-        if: always()
-        run: |
-          if [[ -n "${TUNNEL_PID:-}" ]]; then
-            kill -INT "${TUNNEL_PID}" 2> /dev/null || true
           fi
 
       - name: Save harness state

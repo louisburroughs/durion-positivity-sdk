@@ -32,16 +32,21 @@ day roster (visits) + staff scenarios ──► task ──► tools ──► l
 ```bash
 npm install
 npm run build                       # the harness calls the built clients, as a consumer would
-./scripts/alpha-itest-tunnel.sh     # in another terminal, as for the integration suites
 ```
 
-Add a model to the `.env.itest` you already use for the integration suites (see the `QA_*` section of
-`.env.itest.example`):
+Point it at alpha's public API and give it a model, in the `.env.itest` you already use for the integration
+suites (see the `QA_*` section of `.env.itest.example`):
 
 ```bash
+ITEST_BASE_URL=https://durionpos.org/api
 QA_MODELS=openrouter:anthropic/claude-sonnet-4.5,ollama:qwen3:14b
 OPENROUTER_API_KEY=...
 ```
+
+No tunnel is needed: the gateway is public at `https://durionpos.org/api` and every call the harness makes goes
+through it. (The integration suites' `ITEST_SECURITY_SERVICE_URL` and the SSM tunnel are for their
+direct-to-service bootstrap; the harness sends nothing there.) To run against a local stack or through the tunnel
+instead, leave `ITEST_BASE_URL` at its `http://localhost:…` value.
 
 ```bash
 npm run qa -- doctor                # configuration, model, backend and tenant binding, each checked
@@ -70,7 +75,7 @@ The harness is one process with two ways in, sharing a state directory (`.agent-
 mixed and can never run a slot twice.
 
 **Run constantly (laptop).** `npm run qa:daemon` checks once a minute and runs each scenario when its time comes.
-It survives a dropped tunnel or a restarted stack: the pass fails, it says why, and it tries again.
+It survives a dropped connection or a restarted stack: the pass fails, it says why, and it tries again.
 
 **Triggered regularly.** `npm run qa:tick` does one pass and exits. Schedule it every 10–15 minutes during shop
 hours:
@@ -88,10 +93,10 @@ schtasks /Create /TN "Durion Agent QA" /SC MINUTE /MO 15 /ST 07:30 /ET 18:30 `
 
 The task can fire on a closed day or with nothing due; the pass then exits without doing anything.
 
-**GitHub runner.** `.github/workflows/agent-qa.yml` runs the same `tick` from a hosted runner: it opens the SSM
-tunnel, restores the state directory from the Actions cache, runs one pass and saves the state back. It is
-manual (`workflow_dispatch`) until its schedule is uncommented; the secrets and variables it needs are listed at
-the top of the file.
+**GitHub runner.** `.github/workflows/agent-qa.yml` runs the same `tick` from a hosted runner against the public
+API: it restores the state directory from the Actions cache, runs one pass and saves the state back. It is manual
+(`workflow_dispatch`) until its schedule is uncommented; the secrets and variables it needs are listed at the top
+of the file.
 
 ### How the day is spaced
 
@@ -281,7 +286,7 @@ Every call is written to a ledger as it returns. `scenarios/oracle.ts` judges th
 | `passed` | The agent finished and every expectation is visible in the ledger. |
 | `failed` | A call answered **5xx**, or answered 2xx with a body the SDK could not decode (contract drift). The only verdict that means "there is a defect". The backend's documented "still replicating, retry" 503s after a record was just created are not counted; the agent is told to wait and retry. |
 | `inconclusive` | The agent did not get there: out of steps, model error, or an expected call never happened. A harness or model matter until shown otherwise. |
-| `infra` | Nothing answered. The slot is left due and retried when the backend is back. |
+| `infra` | Nothing answered: no network, or the stack is down. The slot is left due and retried when the backend is back. |
 | `skipped` | The scenario needs per-persona logins that are not configured, or a visit stage's prerequisite never came to exist (the customer declined; the job was never finished). |
 
 A 4xx is never a failure by itself: a 409 on a workorder that is already complete is the system working. What the

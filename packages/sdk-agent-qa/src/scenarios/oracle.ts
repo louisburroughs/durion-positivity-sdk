@@ -12,7 +12,7 @@
  *   steps, the model errored, or an expected call was never made or never
  *   answered as expected. This is a harness or model problem until shown
  *   otherwise, and must not page anyone as a backend failure.
- * - `infra` — nothing answered: the tunnel is down or the stack is stopped.
+ * - `infra` — nothing answered: no route to the backend, or the stack is stopped.
  *
  * A scenario of kind `error` treats 4xx as the goal, and both kinds treat 4xx
  * as information: a 409 on a workorder that is already complete is the system
@@ -114,7 +114,7 @@ export function judge(
 
   const answered = calls.filter(reachedBackend);
   if (calls.length > 0 && answered.length === 0) {
-    reasons.push(`none of ${calls.length} calls reached the backend — is the tunnel up and the stack running?`);
+    reasons.push(`none of ${calls.length} calls reached the backend — is it reachable from here and is the stack running?`);
     return { verdict: 'infra', reasons, expectations, serverErrors };
   }
 
