@@ -52,9 +52,12 @@ execute `globalSetup`, and they share no fixture or run id with a suite run.
 | `shopFloorCloseOut` (`npm run populate:shop-floor:close`) | Finishes every open workorder that has held its bay or mobile unit since before today (UTC, by the assignment's `assignedAt`, not the workorder's creation): starts it if it never was, completes its items and itself (which frees the position), then invoices, finalizes and pays it. A workorder it cannot complete has its position and technician released and stays open |
 
 `populate:shop-floor:daily` runs the close-out and then the load;
-`populate:alpha-daily` runs that and then `populate:appointments`, and is what the
-`Alpha Daily Shop Floor` workflow runs on the alpha host Monday to Saturday at
-11:00 UTC. The appointment run is a top-up, not a fixed count: shop-manager has
+`populate:alpha-daily` runs that and then `populate:appointments`.
+`populate:alpha-upkeep` is the same without the load — close-out, then
+appointments — and is what the `Alpha Daily Shop Floor` workflow runs on the alpha
+host Monday to Saturday at 11:00 UTC: the day's work is put on the bays by the
+agent QA harness (`packages/sdk-agent-qa`), which needs them free.
+`populate:alpha-daily` remains available from that workflow by manual dispatch. The appointment run is a top-up, not a fixed count: shop-manager has
 no endpoint that lists appointments, but `getScheduleCapacity` counts every
 non-cancelled appointment on a bay in that bay's `occupiedMinutes`, so days an
 earlier run filled read as booked and are left alone. The load alone only fills *free* positions, so without the close-out

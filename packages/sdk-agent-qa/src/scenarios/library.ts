@@ -148,7 +148,8 @@ const daily: ScenarioInput[] = [
       'It is closing time. Find the register session that is open on the front-counter terminal. Read its X report and its cash ' +
       'movements. If the session is open and has no orders awaiting payment, begin the close with a counted cash figure that ' +
       'matches the X report\'s expected cash, then confirm the close and read the Z report. Check which closed sessions are ' +
-      'still undeposited. Finally stop your own work session if one is open.',
+      'still undeposited. Then send the crew home: look at the people available at the site, and for each technician who ' +
+      'is still clocked in, stop their work session; finally stop your own if one is open.',
     operations: [
       'location.LocationAPIApi.listLocations',
       'order.RegisterSessionsApi.getCurrentRegisterSession',
@@ -159,6 +160,7 @@ const daily: ScenarioInput[] = [
       'order.RegisterSessionsApi.confirmSessionClose',
       'order.RegisterSessionsApi.getSessionZReport',
       'accounting.BankDepositsApi.listUndepositedSessions',
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
       'people.WorkSessionsAPIApi.getCurrentWorkSession',
       'people.WorkSessionsAPIApi.stopWorkSession',
     ],

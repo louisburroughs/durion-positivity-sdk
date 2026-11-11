@@ -201,9 +201,8 @@ workorder, no work). What one stage learns reaches the next through the visit's 
 from the responses that create them, and the agent adds the rest with a `remember` tool. It is saved after every
 call, so a stage that dies halfway still leaves the next one what it had established.
 
-The work stage is told that bays are often all taken and that it must not take one from another job. If alpha's
-daily floor load has filled every position, visits will end "waiting for a bay" — see *Running alongside the
-populate runs* below.
+The work stage must not take a bay from another job. When none is free the visit ends "waiting for a bay" and is
+finished by the nightly close-out — see *Running alongside the populate runs* below.
 
 ## Staff routines and error drills
 
@@ -227,11 +226,27 @@ To add a scenario, add an entry. `scenarios.test.ts` fails if it names an operat
 
 ### Running alongside the populate runs
 
-The `Alpha Daily Shop Floor` workflow puts a started workorder on every free bay each morning and closes them out
-the next day. That leaves no free position for the agent's own jobs, so their work stages will mostly end
-"waiting for a bay" and their checkouts will find nothing to invoice. Intake, counter sales and bookings are
-unaffected. To have visits run all the way through, give them room — reduce what the floor load fills, or let the
-agent harness take over the day's floor work on the days it runs.
+The harness has taken over the shop floor. The `Alpha Daily Shop Floor` workflow used to put a started workorder
+on every free bay each morning, which left no position for the agent's jobs; its scheduled run is now
+`populate:alpha-upkeep` — the close-out and the appointment top-up, without the load.
+
+Both halves that remain matter to the harness:
+
+- **The close-out is its night shift.** Any job still holding a bay from before today — one the agent left
+  "waiting", or started and did not finish — is completed, invoiced and paid there, so each morning starts with
+  free positions. Without it, unfinished jobs would accumulate until no bay was free.
+- **The appointment top-up keeps the calendar booked**, which is what "arriving on an appointment" visits find.
+
+What the load used to provide, the harness now has to:
+
+- **Volume.** The load filled every position at every site; a default day here is about six service jobs. Visits
+  are spread across the tenant's locations in turn, but each site's board will be much emptier than before. Raise
+  `QA_VISITS_MIN` / `QA_VISITS_MAX` to fill it.
+- **The payroll clock.** The load clocked technicians in and out. The work stage now clocks a technician in before
+  starting their job, and closing the shop clocks the crew out.
+- **Being there at all.** A day the harness does not run (laptop off, no model reachable) is a day with nothing on
+  the floor. For such a day, dispatch `Alpha Daily Shop Floor` by hand with `populate:alpha-daily`, which is the
+  old behaviour — or run the harness from the `Agent QA` workflow instead of a laptop.
 
 ### Verdicts come from the ledger, not from the model
 

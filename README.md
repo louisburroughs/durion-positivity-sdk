@@ -514,6 +514,7 @@ npm run populate:shop-floor:close  # finish + invoice work that has held a posit
 npm run populate:shop-floor:daily  # close-out, then the floor load
 npm run populate:appointments      # yesterday's arrivals -> estimates; book the next 14 days to target
 npm run populate:alpha-daily       # all of the above, in that order
+npm run populate:alpha-upkeep      # close-out and appointments, without the floor load
 ```
 
 The build matters here: runs resolve `@durion-sdk/*` through `node_modules`,
@@ -548,7 +549,8 @@ from the suites' `itest-*`.
 | `populate:shop-floor:close` | `npm run populate:shop-floor:close` | Finish, invoice and pay work that has held a position since before today (UTC) |
 | `populate:shop-floor:daily` | `npm run populate:shop-floor:daily` | Close-out, then the floor load |
 | `populate:appointments` | `npm run populate:appointments` | Convert yesterday's appointments to estimates; top the next 14 days up to a target share of booked bay time |
-| `populate:alpha-daily` | `npm run populate:alpha-daily` | Floor daily, then appointments; what the `Alpha Daily Shop Floor` workflow runs Mon-Sat on alpha |
+| `populate:alpha-daily` | `npm run populate:alpha-daily` | Floor daily, then appointments; available from the `Alpha Daily Shop Floor` workflow by manual dispatch |
+| `populate:alpha-upkeep` | `npm run populate:alpha-upkeep` | Close-out, then appointments, with no floor load; what the `Alpha Daily Shop Floor` workflow runs Mon-Sat on alpha now that the agent QA harness puts the day's work on the bays |
 
 ---
 

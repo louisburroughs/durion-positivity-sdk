@@ -8,15 +8,26 @@ name: Alpha Daily Shop Floor
 # dispatch board, shop dashboard and WIP views have no current work, and every
 # workorder in the history is already completed.
 #
-# Each morning this runs `populate:alpha-daily` on the alpha host, from the
+# Each morning this runs `populate:alpha-upkeep` on the alpha host, from the
 # checkout 'Build, Smoke Test and Deploy to Alpha' keeps current:
 #   1. populate:shop-floor:close — finishes, invoices and pays every workorder
 #      that has held a bay or mobile unit since before today, which frees it;
-#   2. populate:shop-floor       — puts a fresh, staffed, started workorder on
-#      every free position;
-#   3. populate:appointments     — turns yesterday's appointments into estimates
+#   2. populate:appointments     — turns yesterday's appointments into estimates
 #      and tops the next 14 days up to a target share of booked bay time.
-# All three refuse an accelerated clock that has not converged, and each holds
+#
+# It no longer loads the floor. The day's work is now put on the bays by the
+# agent QA harness (packages/sdk-agent-qa), which brings each customer in,
+# finds a free bay, does the job and checks the customer out — and cannot do
+# that on a floor this run has already filled, because it will not take a bay
+# from another job. What this run keeps doing is the night shift the harness
+# depends on: whatever was left on a bay yesterday, by the harness or anyone
+# else, is finished here so the morning starts with free positions.
+#
+# The old behaviour is still one click away: dispatch this workflow with
+# `populate:alpha-daily` (close-out, floor load, appointments) to fill every
+# free position on a day the harness is not running.
+#
+# Every run here refuses an accelerated clock that has not converged, and each holds
 # the accelerated run's own lock file for its whole run (environmentLock.ts), so
 # a daily run and an accelerated year cannot overlap on this checkout: whichever
 # starts second refuses. The pid check in the host script below is only an early,
@@ -33,8 +44,9 @@ on:
       script:
         description: "Run to execute on the alpha host"
         type: choice
-        default: populate:alpha-daily
+        default: populate:alpha-upkeep
         options:
+          - populate:alpha-upkeep
           - populate:alpha-daily
           - populate:shop-floor:daily
           - populate:appointments
@@ -53,7 +65,7 @@ env:
 
 jobs:
   floor:
-    name: Close out yesterday, load today
+    name: Close out yesterday, keep the calendar booked
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:
@@ -92,12 +104,12 @@ jobs:
           INSTANCE_ID: ${{ steps.host.outputs.instance_id }}
           # Through the environment, never interpolated into the script; the
           # schedule has no inputs, hence the default.
-          SDK_SCRIPT: ${{ inputs.script || 'populate:alpha-daily' }}
+          SDK_SCRIPT: ${{ inputs.script || 'populate:alpha-upkeep' }}
         run: |
           set -euo pipefail
 
           case "${SDK_SCRIPT}" in
-            populate:alpha-daily|populate:shop-floor:daily|populate:appointments|populate:shop-floor:close|populate:shop-floor) ;;
+            populate:alpha-upkeep|populate:alpha-daily|populate:shop-floor:daily|populate:appointments|populate:shop-floor:close|populate:shop-floor) ;;
             *) echo "::error::Unsupported script '${SDK_SCRIPT}'"; exit 1 ;;
           esac
 

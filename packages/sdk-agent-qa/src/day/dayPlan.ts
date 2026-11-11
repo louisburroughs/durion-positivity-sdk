@@ -79,6 +79,11 @@ export interface Visit {
   arrival: 'walk-in' | 'appointment';
   disposition: Disposition;
   payment: Payment;
+  /**
+   * Which of the tenant's shop locations the visit happens at, as a position in
+   * the location list (it wraps), so the day's work is spread over every site.
+   */
+  site: number;
   stages: VisitStage[];
 }
 
@@ -323,7 +328,7 @@ export function buildDayPlan(date: string, options: DayPlanOptions): DayPlan {
       ];
     }
 
-    return { id, kind: draft.kind, customer, vehicle, concern, arrival, disposition, payment, stages };
+    return { id, kind: draft.kind, customer, vehicle, concern, arrival, disposition, payment, site: order + 1 + random.int(0, 3), stages };
   });
 
   return { date, seed, visits };

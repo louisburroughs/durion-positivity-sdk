@@ -77,6 +77,11 @@ function vehicleBrief(visit: Visit): string {
   );
 }
 
+/** Spreads the day over every site instead of whichever one the list happens to start with. */
+const siteBrief = (visit: Visit): string =>
+  `This happens at one of the shop's locations: list the active shop locations and use number ${visit.site} in the list, ` +
+  'counting round again from the top if there are fewer.';
+
 const REMEMBER = (keys: string): string =>
   `Before you finish, save what the next colleague needs with the remember tool: ${keys}.`;
 
@@ -147,7 +152,7 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
       customerBrief(visit),
       vehicleBrief(visit),
       `What they tell you: "${visit.concern}"`,
-      'Pick an active shop location. Write a draft estimate for this customer, vehicle and location (currency USD), and add ' +
+      `${siteBrief(visit)} Write a draft estimate for this customer, vehicle and location (currency USD), and add ` +
         'one to three lines that fit the concern: search the service catalog for matching services and add them as labor lines ' +
         'with a sensible price. Calculate the totals and submit the estimate for approval.',
       decision,
@@ -166,6 +171,7 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
     'workorder.WorkOrderAPIApi.approveWorkorder',
     'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard',
     'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+    'people.WorkSessionsAPIApi.startWorkSession',
     'workorder.TechnicianAssignmentAPIApi.assignTechnician',
     'workorder.ServicePositionAPIApi.assignServicePosition',
     'workorder.OperationalContextApi.startWorkorder',
@@ -200,7 +206,9 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
       'Open the workorder. If it still needs the shop\'s approval to proceed, approve it (signer is the customer; any short ' +
         'base64 signature, image/png).',
       "Staff it and place it: look at the dispatch board and the people available at the workorder's location, assign a " +
-        'technician who is free, and assign the workorder to a free bay (or a mobile unit if no bay is free). The shop is ' +
+        'technician who is free, and assign the workorder to a free bay (or a mobile unit if no bay is free). If that ' +
+        'technician is not clocked in yet today, clock them in first (start a work session for their person id; a refusal ' +
+        'saying one is already open is fine). The shop is ' +
         'busy — bays are often all taken. If nothing is free, add a note that the job is waiting for a bay, remember ' +
         'workStatus as "waiting for a bay", and finish; do not take a bay away from another job.',
       `Once it has a technician and a position, start the workorder and open a labor session.${technician} Add a note ` +
@@ -295,8 +303,8 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
     goal: [
       `You are at the parts counter. A customer says: "${visit.concern}"`,
       customerBrief(visit),
-      'Find a product in stock that fits what they asked for (the closest match is fine). Start a cart on the register ' +
-        'session that is open at a shop location, add the product, attach the customer, and quote the cart. Check the order ' +
+      `${siteBrief(visit)} Find a product in stock that fits what they asked for (the closest match is fine). Start a cart ` +
+        'on the register session that is open at that location (or, failing that, at any location), add the product, attach the customer, and quote the cart. Check the order ' +
         'out and take cash for the total, then read the order back to confirm it is paid.',
       'If no register session is open, say so in your findings and stop: opening the register is the manager\'s job.',
       REPLICATION,
@@ -339,7 +347,7 @@ function phoneCall(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenar
       `You are the service advisor answering the phone. The caller: "${visit.concern}"`,
       customerBrief(visit),
       vehicleBrief(visit),
-      'Pick an active shop location and search for open appointment slots over the next seven days. Book the caller into ' +
+      `${siteBrief(visit)} Search for open appointment slots there over the next seven days. Book the caller into ` +
         'one that suits what they said, read the appointment back to confirm it, and record the call as an interaction on ' +
         'the customer.',
       REPLICATION,

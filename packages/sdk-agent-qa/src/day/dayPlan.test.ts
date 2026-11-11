@@ -124,6 +124,12 @@ describe('buildDayPlan', () => {
     expect(visits.filter((visit) => visit.arrival === 'appointment').every((visit) => visit.customer.status === 'existing')).toBe(true);
   });
 
+  it('spreads the day over several sites', () => {
+    const sites = buildDayPlan('2026-03-10', OPTIONS).visits.map((visit) => visit.site);
+    expect(new Set(sites).size).toBeGreaterThan(3);
+    expect(sites.every((site) => Number.isInteger(site) && site >= 1)).toBe(true);
+  });
+
   it('is quieter on a Saturday, and empty when visits are turned off', () => {
     expect(buildDayPlan('2026-03-14', OPTIONS).visits).toHaveLength(6);
     expect(buildDayPlan('2026-03-10', { ...OPTIONS, visitsMin: 0, visitsMax: 0 }).visits).toEqual([]);
