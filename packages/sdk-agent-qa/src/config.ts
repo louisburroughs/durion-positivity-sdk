@@ -64,11 +64,13 @@ const schema = z.object({
   /** A daily slot this late is skipped rather than run out of its time of day. */
   QA_MAX_LATENESS_MINUTES: intIn(1, 1_440).default(180),
   /** How many due scenarios one pass may run, and how long to leave between scenario starts. */
-  QA_MAX_PER_TICK: intIn(1, 500).default(1),
+  QA_MAX_PER_TICK: intIn(1, 500).default(3),
+  QA_CONCURRENCY: intIn(1, 32).default(3),
   QA_MIN_GAP_MINUTES: intIn(0, 1_440).default(2),
-  /** The day's customers. */
-  QA_VISITS_MIN: intIn(0, 200).default(8),
-  QA_VISITS_MAX: intIn(0, 200).default(12),
+  /** The day's customers, per site. */
+  QA_VISITS_PER_SITE_MIN: intIn(0, 200).default(4),
+  QA_VISITS_PER_SITE_MAX: intIn(0, 200).default(8),
+  QA_VISITS_TENANT_MAX: intIn(0, 2_000).default(60),
   QA_NEW_CUSTOMER_RATIO: z.coerce.number().min(0).max(1).default(0.3),
   QA_COMMERCIAL_RATIO: z.coerce.number().min(0).max(1).default(0.3),
   QA_NEW_VEHICLE_RATIO: z.coerce.number().min(0).max(1).default(0.2),
@@ -97,9 +99,11 @@ export interface QaConfig {
   maxLatenessMinutes: number;
   /** Due scenarios run per pass; the rest stay due. Keeps a backlog from turning into a burst. */
   maxPerTick: number;
+  /** How many of a pass's tasks run at the same time. A tenant's shops work in parallel. */
+  concurrency: number;
   /** Minimum minutes between the end of one scenario and the start of the next pass. */
   minGapMinutes: number;
-  /** How the day's customer visits are generated; `visitsMax` 0 turns them off. */
+  /** How each site's customer visits are generated; `visitsMax` 0 turns them off. */
   day: DayPlanOptions;
   /** Base URL for a package's requests, or undefined when it cannot be reached. */
   baseUrlFor(pkg: string): string | undefined;
@@ -160,10 +164,12 @@ export function loadQaConfig(env: Env, gatewayBaseUrl: string): QaConfig {
     jitterMinutes: data.QA_JITTER_MINUTES,
     maxLatenessMinutes: data.QA_MAX_LATENESS_MINUTES,
     maxPerTick: data.QA_MAX_PER_TICK,
+    concurrency: data.QA_CONCURRENCY,
     minGapMinutes: data.QA_MIN_GAP_MINUTES,
     day: {
-      visitsMin: Math.min(data.QA_VISITS_MIN, data.QA_VISITS_MAX),
-      visitsMax: data.QA_VISITS_MAX,
+      visitsMin: Math.min(data.QA_VISITS_PER_SITE_MIN, data.QA_VISITS_PER_SITE_MAX),
+      visitsMax: data.QA_VISITS_PER_SITE_MAX,
+      tenantMax: data.QA_VISITS_TENANT_MAX,
       newCustomerRatio: data.QA_NEW_CUSTOMER_RATIO,
       commercialRatio: data.QA_COMMERCIAL_RATIO,
       newVehicleRatio: data.QA_NEW_VEHICLE_RATIO,

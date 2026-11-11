@@ -10,6 +10,7 @@ import type { Catalog } from '../catalog/types';
 import type { QaConfig } from '../config';
 import { describeVisit } from '../day/dayPlan';
 import { DayPlanStore } from '../day/DayPlanStore';
+import { surveySites } from '../day/sites';
 import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
 import { CoverageStore, sweepQuota, type CoverageSummary } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
@@ -89,7 +90,7 @@ export class Harness {
     const stages: Schedulable[] = (day?.plan.visits ?? []).flatMap((visit) =>
       visit.stages.map((stage) => ({ id: stage.id, title: describeVisit(visit), cadence: 'daily' as const, at: stage.at })),
     );
-    const slots = planDay([...this.scenarios, SWEEP_SCHEDULE, ...stages], clock, lastRuns, {
+    const slots = planDay([...this.scenariosFor(day), SWEEP_SCHEDULE, ...stages], clock, lastRuns, {
       runDays: config.runDays,
       jitterMinutes: config.jitterMinutes,
       maxLatenessMinutes: config.maxLatenessMinutes,
@@ -107,13 +108,60 @@ export class Harness {
     return { clock, slots };
   }
 
-  /** Today's customers, or undefined when the shop is closed or visits are turned off. */
+  /** Today's plan — the tenant's sites and their customers — once it has been made. */
   private dayStore(clock: LocalClock): DayPlanStore | undefined {
-    const { config } = this.options;
-    if (config.day.visitsMax === 0 || !config.runDays.includes(clock.weekday)) {
+    if (!this.options.config.runDays.includes(clock.weekday)) {
       return undefined;
     }
-    return DayPlanStore.open(this.dayDir(clock), clock.date, config.day);
+    return DayPlanStore.load(this.dayDir(clock), clock.date);
+  }
+
+  /**
+   * Makes today's plan if there is none yet: asks the tenant which shops are
+   * open for work and gives each its roster. This is the one step that needs
+   * the backend before anything is scheduled, because the day's shape is the
+   * tenant's, not the harness's.
+   */
+  async prepareDay(): Promise<DayPlanStore | undefined> {
+    const { config, catalog, invoker, backend } = this.options;
+    const clock = this.clock();
+    if (!config.runDays.includes(clock.weekday)) {
+      return undefined;
+    }
+    const existing = this.dayStore(clock);
+    if (existing) {
+      return existing;
+    }
+    await backend.preflight(this.log);
+    const sites = await surveySites(invoker, catalog, 'admin');
+    const day = DayPlanStore.create(this.dayDir(clock), clock.date, sites, config.day);
+    this.log(
+      `${clock.date}: ${sites.length} site(s) — ` +
+        (sites.map((site) => `${site.name} (${day.plan.visits.filter((visit) => visit.site.id === site.id).length} visits)`).join(', ') ||
+          'no active location has a bay or mobile unit'),
+    );
+    return day;
+  }
+
+  /**
+   * The staff routines as they run today: a routine every shop does for itself
+   * becomes one task per site, each told where it is. Until the day's sites are
+   * known, per-site routines are simply not there yet.
+   */
+  private scenariosFor(day: DayPlanStore | undefined): Scenario[] {
+    return this.scenarios.flatMap((scenario) => {
+      if (!scenario.perSite) {
+        return [scenario];
+      }
+      return (day?.plan.sites ?? []).map((site) => ({
+        ...scenario,
+        id: `${scenario.id}-${site.slug}`,
+        title: `${scenario.title} — ${site.name}`,
+        goal:
+          `You work at the ${site.name} shop (location id ${site.id}, code ${site.code}). Everything in this task is about ` +
+          `that location; do not pick another.\n\n${scenario.goal}`,
+      }));
+    });
   }
 
   coverageSummary(): CoverageSummary {
@@ -154,24 +202,31 @@ export class Harness {
     const results: ScenarioResult[] = [];
     try {
       const ledger = new CallLedger(path.join(dayDir, 'calls.jsonl'));
-      for (const id of ids) {
-        // Re-opened per scenario: the month can roll over mid-run, and another process may have written.
-        const coverage = CoverageStore.open(config.stateDir, this.now());
-        let scenario = this.scenarios.find((entry) => entry.id === id);
+      // One of each for the whole pass: tasks running side by side must write through the same
+      // objects, or the last to save would erase what the others recorded.
+      const coverage = CoverageStore.open(config.stateDir, this.now());
+      const day = this.dayStore(clock);
+      const scenarios = this.scenariosFor(day);
+      let backendDown = false;
+
+      const runOne = async (id: string): Promise<void> => {
+        if (backendDown) {
+          return;
+        }
+        let scenario = scenarios.find((entry) => entry.id === id);
         let backstop = false;
         if (id === SWEEP_SCENARIO_ID) {
           ({ scenario, backstop } = this.buildSweep(coverage, clock));
           if (!scenario && !backstop) {
             this.log(`${id}: nothing left to cover this month`);
             this.state.markRun(id, { date: clock.date, week: clock.week, month: clock.month, at: this.now().toISOString(), verdict: 'passed' });
-            continue;
+            return;
           }
           // Backstop days with an empty agent quota still need a scenario to hang the probes on.
           scenario ??= sweepScenario(
             sweepTargets({ catalog, coverage, invoker, policy: config.policy, level: config.coverageLevel, quota: 1, writes: false }),
           );
         }
-        const day = this.dayStore(clock);
         const stage = day?.find(id);
         let memory: Record<string, string> | undefined;
         let skipReason: string | undefined;
@@ -182,11 +237,12 @@ export class Harness {
         }
         if (!scenario) {
           this.log(`${id}: no such scenario`);
-          continue;
+          return;
         }
+        const task = scenario;
 
-        this.log(`▶ ${scenario.id} (${scenario.cadence}, as ${scenario.persona})`);
-        const result = await runScenario(scenario, {
+        this.log(`▶ ${task.id} (${task.cadence}, as ${task.persona})`);
+        const result = await runScenario(task, {
           catalog,
           invoker,
           ledger,
@@ -205,7 +261,8 @@ export class Harness {
             runTag: runId,
           },
           artifactsDir: dayDir,
-          log: this.log,
+          // Tasks run side by side, so every line says whose it is.
+          log: (message) => this.log(`${task.id} ${message.trimStart()}`),
           now: this.now,
           memory,
           skipReason,
@@ -227,18 +284,23 @@ export class Harness {
                   policy: config.policy,
                   level: config.coverageLevel,
                 });
-                this.log(`  backstop: probed ${probed.length}, could not probe ${unreachable.length}`);
+                this.log(`${task.id} backstop: probed ${probed.length}, could not probe ${unreachable.length}`);
               }
             : undefined,
         });
         coverage.save();
         day?.save();
         results.push(result);
-        this.log(`■ ${scenario.id}: ${result.verdict}${result.reasons.length > 0 ? ` — ${result.reasons[0]}` : ''}`);
+        this.log(`■ ${task.id}: ${result.verdict}${result.reasons.length > 0 ? ` — ${result.reasons[0]}` : ''}`);
 
         // An infra verdict means nothing answered; leave the slot unmarked so it is retried once the backend is back.
-        if (result.verdict !== 'infra') {
-          this.state.markRun(scenario.id, {
+        if (result.verdict === 'infra') {
+          if (!backendDown) {
+            this.log('backend not answering; starting nothing more this pass');
+          }
+          backendDown = true;
+        } else {
+          this.state.markRun(task.id, {
             date: clock.date,
             week: clock.week,
             month: clock.month,
@@ -247,23 +309,32 @@ export class Harness {
           });
         }
         this.writeReport(clock);
-        if (result.verdict === 'infra') {
-          this.log('backend not answering; stopping this pass');
-          break;
+      };
+
+      // A tenant's shops work at the same time, so tasks do too: up to `concurrency` at once.
+      const queue = [...ids];
+      const worker = async (): Promise<void> => {
+        for (let id = queue.shift(); id !== undefined; id = queue.shift()) {
+          await runOne(id);
         }
-      }
+      };
+      await Promise.all(Array.from({ length: Math.max(1, Math.min(config.concurrency, ids.length)) }, worker));
     } finally {
       environmentLock.release();
     }
-    return results;
+    return results.sort((a, b) => ids.indexOf(a.scenarioId) - ids.indexOf(b.scenarioId));
   }
 
   private writeReport(clock: LocalClock): string {
     const dayDir = this.dayDir(clock);
     const file = path.join(dayDir, 'report.md');
     fs.mkdirSync(dayDir, { recursive: true });
-    const visits = this.dayStore(clock)?.plan.visits ?? [];
-    fs.writeFileSync(file, renderReport(clock.date, readDayResults(dayDir), this.coverageSummary(), visits), 'utf8');
+    const plan = this.dayStore(clock)?.plan;
+    fs.writeFileSync(
+      file,
+      renderReport(clock.date, readDayResults(dayDir), this.coverageSummary(), plan?.visits ?? [], plan?.sites ?? []),
+      'utf8',
+    );
     return file;
   }
 
@@ -274,6 +345,7 @@ export class Harness {
   /** Runs every scenario whose time has come and that has not run. Safe to call as often as you like. */
   async tick(): Promise<TickResult> {
     const { config } = this.options;
+    await this.prepareDay();
     const { clock, slots } = this.plan();
     if (!config.runDays.includes(clock.weekday)) {
       return { status: 'closed', results: [] };
@@ -304,6 +376,7 @@ export class Harness {
 
   /** Runs the named scenarios now, whatever the schedule says. */
   async runNow(ids: readonly string[]): Promise<TickResult> {
+    await this.prepareDay();
     if (!this.lock.tryAcquire(this.now())) {
       return { status: 'busy', results: [] };
     }
@@ -315,7 +388,8 @@ export class Harness {
   }
 
   scenarioIds(): string[] {
-    const stages = (this.dayStore(this.clock())?.plan.visits ?? []).flatMap((visit) => visit.stages.map((stage) => stage.id));
-    return [...this.scenarios.map((scenario) => scenario.id), SWEEP_SCENARIO_ID, ...stages];
+    const day = this.dayStore(this.clock());
+    const stages = (day?.plan.visits ?? []).flatMap((visit) => visit.stages.map((stage) => stage.id));
+    return [...this.scenariosFor(day).map((scenario) => scenario.id), SWEEP_SCENARIO_ID, ...stages];
   }
 }

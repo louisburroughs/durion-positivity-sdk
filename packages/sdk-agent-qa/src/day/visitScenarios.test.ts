@@ -6,6 +6,7 @@ const catalog = buildCatalog();
 const OPTIONS: DayPlanOptions = {
   visitsMin: 30,
   visitsMax: 30,
+  tenantMax: 1000,
   newCustomerRatio: 0.4,
   commercialRatio: 0.4,
   newVehicleRatio: 0.3,
@@ -13,7 +14,8 @@ const OPTIONS: DayPlanOptions = {
   closeTime: '17:30',
   seed: 0,
 };
-const visits = ['2026-03-10', '2026-03-11', '2026-03-12', '2026-03-13'].flatMap((date) => buildDayPlan(date, OPTIONS).visits);
+const SITE = { id: '0190aaaa-0000-7000-8000-00000000000a', code: 'MAIN', name: 'Main Street', slug: 'main', positions: 6 };
+const visits = ['2026-03-10', '2026-03-11', '2026-03-12', '2026-03-13'].flatMap((date) => buildDayPlan(date, [SITE], OPTIONS).visits);
 const find = (test: (visit: Visit) => boolean): Visit => {
   const visit = visits.find(test);
   if (!visit) {
@@ -48,6 +50,16 @@ describe('stageScenario', () => {
       }
     }
     expect([...new Set(problems)]).toEqual([]);
+  });
+
+  it('tells every stage which shop it is at, by id, and never asks the agent to choose one', () => {
+    for (const visit of visits.slice(0, 40)) {
+      for (const stage of visit.stages) {
+        const scenario = stageScenario(visit, stage, { workorderId: 'w-1' }, { roleMode: false });
+        expect([stage.id, scenario.goal.includes(`location id ${SITE.id}`)]).toEqual([stage.id, true]);
+        expect(scenario.goal).not.toMatch(/[Pp]ick an active shop location/);
+      }
+    }
   });
 
   it('has a new individual created as a person, with the identity from the roster', () => {

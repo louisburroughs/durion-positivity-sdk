@@ -45,6 +45,11 @@ export const scenarioSchema = z.strictObject({
   persona: z.enum(PERSONAS),
   /** `operations` replays normal work; `error` deliberately provokes failures. */
   kind: z.enum(['operations', 'error']),
+  /**
+   * A routine every shop does for itself (opening, receiving, closing): run
+   * once per site, each instance told which location it is at.
+   */
+  perSite: z.boolean().default(false),
   /** Skipped (not failed) when every persona shares the admin login, where a 403 can never happen. */
   requiresRoleMode: z.boolean().default(false),
   goal: z.string(),

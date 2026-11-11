@@ -1,15 +1,16 @@
 /**
  * Today's roster and what each visit has learned so far, on disk.
  *
- * The roster itself could be regenerated at any time (it is a function of the
- * date and the seed), but it is written once and read back so that a settings
- * change at noon cannot swap the customers a morning intake was run for. The
+ * The roster is made once each morning, from the sites the tenant has that day,
+ * and read back from then on, so that neither a settings change nor a site
+ * added at noon can swap the customers a morning intake was run for. The
  * memory beside it is what lets the checkout at 3pm find the workorder the
  * intake created at 9am, in another process.
  */
 import * as fs from 'fs';
 import * as path from 'path';
 import { buildDayPlan, type DayPlan, type DayPlanOptions, type Visit, type VisitStage } from './dayPlan';
+import type { Site } from './sites';
 import type { VisitMemory } from './visitScenarios';
 
 interface DayFile {
@@ -23,20 +24,26 @@ export class DayPlanStore {
     private data: DayFile,
   ) {}
 
-  /** Opens the plan for `date`, generating and saving it on first use. */
-  static open(dayDir: string, date: string, options: DayPlanOptions): DayPlanStore {
+  /** Today's plan if one has been made, otherwise undefined. */
+  static load(dayDir: string, date: string): DayPlanStore | undefined {
     const file = path.join(dayDir, 'day-plan.json');
-    if (fs.existsSync(file)) {
-      try {
-        const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<DayFile>;
-        if (parsed.plan?.date === date && Array.isArray(parsed.plan.visits)) {
-          return new DayPlanStore(file, { plan: parsed.plan, memory: parsed.memory ?? {} });
-        }
-      } catch {
-        // Fall through and regenerate: the roster is deterministic, only the memory is lost.
-      }
+    if (!fs.existsSync(file)) {
+      return undefined;
     }
-    const store = new DayPlanStore(file, { plan: buildDayPlan(date, options), memory: {} });
+    try {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<DayFile>;
+      if (parsed.plan?.date === date && Array.isArray(parsed.plan.visits) && Array.isArray(parsed.plan.sites)) {
+        return new DayPlanStore(file, { plan: parsed.plan, memory: parsed.memory ?? {} });
+      }
+    } catch {
+      // Unreadable: treated as not made yet. The roster is deterministic; only the memory is lost.
+    }
+    return undefined;
+  }
+
+  /** Makes and saves the plan for `date` across the given sites. */
+  static create(dayDir: string, date: string, sites: readonly Site[], options: DayPlanOptions): DayPlanStore {
+    const store = new DayPlanStore(path.join(dayDir, 'day-plan.json'), { plan: buildDayPlan(date, sites, options), memory: {} });
     store.save();
     return store;
   }

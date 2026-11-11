@@ -26,14 +26,15 @@ import { defineScenarios, type ScenarioInput } from './types';
 const daily: ScenarioInput[] = [
   {
     id: 'open-shop',
+    perSite: true,
     title: 'Open the shop for the day',
     cadence: 'daily',
     at: '07:45',
     persona: 'manager',
     kind: 'operations',
     goal:
-      'It is opening time. Pick one site (list locations and choose an active shop location). Review the dispatch board and ' +
-      'the shop dashboard for that site, read the register session policy, and check whether the front-counter terminal already ' +
+      'It is opening time. Review the dispatch board and ' +
+      'the shop dashboard for this location, read the register session policy, and check whether the front-counter terminal already ' +
       'has an open register session; if it has none, open one with a sensible opening float. Then make sure you are clocked in: ' +
       'check your current work session and start one if none is open.',
     operations: [
@@ -55,6 +56,7 @@ const daily: ScenarioInput[] = [
   },
   {
     id: 'parts-receiving',
+    perSite: true,
     title: 'Receive a delivery and put it away',
     cadence: 'daily',
     at: '13:00',
@@ -139,13 +141,14 @@ const daily: ScenarioInput[] = [
   },
   {
     id: 'close-shop',
+    perSite: true,
     title: 'Close out the day',
     cadence: 'daily',
     at: '17:45',
     persona: 'manager',
     kind: 'operations',
     goal:
-      'It is closing time. Find the register session that is open on the front-counter terminal. Read its X report and its cash ' +
+      'It is closing time. Find the register session that is open on the front-counter terminal at this location. Read its X report and its cash ' +
       'movements. If the session is open and has no orders awaiting payment, begin the close with a counted cash figure that ' +
       'matches the X report\'s expected cash, then confirm the close and read the Z report. Check which closed sessions are ' +
       'still undeposited. Then send the crew home: look at the people available at the site, and for each technician who ' +
@@ -175,6 +178,7 @@ const daily: ScenarioInput[] = [
 const weekly: ScenarioInput[] = [
   {
     id: 'weekly-purchasing',
+    perSite: true,
     title: 'Weekly stock order',
     cadence: 'weekly',
     weekday: 1,
@@ -205,6 +209,7 @@ const weekly: ScenarioInput[] = [
   },
   {
     id: 'weekly-cycle-count',
+    perSite: true,
     title: 'Weekly cycle count',
     cadence: 'weekly',
     weekday: 2,
@@ -346,6 +351,7 @@ const weekly: ScenarioInput[] = [
   },
   {
     id: 'weekly-timekeeping-approval',
+    perSite: true,
     title: 'Weekly timesheet approval',
     cadence: 'weekly',
     weekday: 4,
@@ -355,7 +361,7 @@ const weekly: ScenarioInput[] = [
     goal:
       'Approve the week\'s time. List the time periods and the people awaiting timekeeping approval, review time entries and ' +
       'any time entry exceptions for the current period, and read the attendance discrepancy report. If there are submitted ' +
-      'time entries with no open exception, approve a small batch of them. Also review staffing assignments for one site.',
+      'time entries with no open exception, approve a small batch of them. Also review staffing assignments for this location.',
     operations: [
       'people.TimekeepingApprovalAPIApi.listTimePeriods',
       'people.TimekeepingApprovalAPIApi.listTimekeepingApprovalPeople',
@@ -565,6 +571,7 @@ const monthly: ScenarioInput[] = [
   },
   {
     id: 'monthly-inventory-valuation',
+    perSite: true,
     title: 'Monthly inventory review',
     cadence: 'monthly',
     dayOfMonth: 5,
@@ -572,7 +579,7 @@ const monthly: ScenarioInput[] = [
     persona: 'parts',
     kind: 'operations',
     goal:
-      'Review inventory for the month. Read the inventory valuation and the site rollup for one site, the costing method ' +
+      'Review inventory for the month. Read the inventory valuation and the site rollup for this location, the costing method ' +
       'configuration, open revaluations, scraps, lots and transfer orders, and the inventory ledger for the last month. ' +
       'Raise one scrap request for a single damaged unit of a product that is in stock and read it back; do not approve it. ' +
       'Read the inventory settings and the location tree.',

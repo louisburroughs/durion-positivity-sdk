@@ -20,11 +20,10 @@ export interface StageContext {
   roleMode: boolean;
 }
 
-const WHO_AND_WHERE = [
+const WHO = [
   'customer.CRMAccountsApi.searchParties',
   'customer.CRMAccountsApi.getParty',
   'customer.CRMCustomerLookupApi.getCustomerSummary',
-  'location.LocationAPIApi.listLocations',
 ];
 
 function known(memory: VisitMemory): string {
@@ -77,10 +76,9 @@ function vehicleBrief(visit: Visit): string {
   );
 }
 
-/** Spreads the day over every site instead of whichever one the list happens to start with. */
+/** Where this is happening. The site is a fact of the visit, not something for the agent to choose. */
 const siteBrief = (visit: Visit): string =>
-  `This happens at one of the shop's locations: list the active shop locations and use number ${visit.site} in the list, ` +
-  'counting round again from the top if there are fewer.';
+  `This is at the ${visit.site.name} shop (location id ${visit.site.id}, code ${visit.site.code}); everything in this task happens at that location.`;
 
 const REMEMBER = (keys: string): string =>
   `Before you finish, save what the next colleague needs with the remember tool: ${keys}.`;
@@ -92,7 +90,7 @@ const REPLICATION =
 function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
   const expect: ExpectationInput[] = [{ kind: 'call', operation: 'workorder.EstimateAPIApi.createEstimate' }];
   const operations = [
-    ...WHO_AND_WHERE,
+    ...WHO,
     'customer.CRMVehiclesApi.listVehiclesForCustomer',
     'vehicle-inventory.VehicleRegistryAPIApi.createVehicle',
     'catalog.ProductsAPIApi.searchCatalogServices',
@@ -157,7 +155,7 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
         'with a sensible price. Calculate the totals and submit the estimate for approval.',
       decision,
       REPLICATION,
-      REMEMBER('partyId, customerName, customerType, vehicleId, vehicleDescription, locationId, estimateId, and workorderId once the estimate is promoted'),
+      REMEMBER('partyId, customerName, customerType, vehicleId, vehicleDescription, estimateId, and workorderId once the estimate is promoted'),
     ].join('\n\n') + known(memory),
     operations,
     expect,
@@ -205,7 +203,7 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
       `You are the shop manager, getting this customer's job done. The customer said: "${visit.concern}"`,
       'Open the workorder. If it still needs the shop\'s approval to proceed, approve it (signer is the customer; any short ' +
         'base64 signature, image/png).',
-      "Staff it and place it: look at the dispatch board and the people available at the workorder's location, assign a " +
+      `${siteBrief(visit)} Staff the job and place it: look at this location's dispatch board and the people available here, assign a ` +
         'technician who is free, and assign the workorder to a free bay (or a mobile unit if no bay is free). If that ' +
         'technician is not clocked in yet today, clock them in first (start a work session for their person id; a refusal ' +
         'saying one is already open is fine). The shop is ' +
@@ -256,7 +254,7 @@ function checkout(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenari
     persona: 'advisor' satisfies Persona,
     kind: 'operations',
     goal: [
-      'You are the service advisor. The customer is back to collect their vehicle.',
+      `You are the service advisor. The customer is back to collect their vehicle. ${siteBrief(visit)}`,
       'Check the workorder. If it is not completed (see workStatus below), tell the customer it is not ready: record an ' +
         'interaction saying so, and finish without invoicing.',
       'If it is completed, generate its invoice. The first call records the request and may answer without an invoice id; ' +
@@ -272,7 +270,7 @@ function checkout(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenari
 
 function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
   const operations = [
-    ...WHO_AND_WHERE,
+    ...WHO,
     'inventory.InventoryStockApi.listStock',
     'catalog.ProductsAPIApi.findProductByCode',
     'order.RegisterSessionsApi.getCurrentRegisterSession',
@@ -304,7 +302,7 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
       `You are at the parts counter. A customer says: "${visit.concern}"`,
       customerBrief(visit),
       `${siteBrief(visit)} Find a product in stock that fits what they asked for (the closest match is fine). Start a cart ` +
-        'on the register session that is open at that location (or, failing that, at any location), add the product, attach the customer, and quote the cart. Check the order ' +
+        'on the register session that is open at this location, add the product, attach the customer, and quote the cart. Check the order ' +
         'out and take cash for the total, then read the order back to confirm it is paid.',
       'If no register session is open, say so in your findings and stop: opening the register is the manager\'s job.',
       REPLICATION,
@@ -318,7 +316,7 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
 
 function phoneCall(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
   const operations = [
-    ...WHO_AND_WHERE,
+    ...WHO,
     'customer.CRMVehiclesApi.listVehiclesForCustomer',
     'vehicle-inventory.VehicleRegistryAPIApi.createVehicle',
     'shop-manager.ScheduleAPIApi.searchOpenings',

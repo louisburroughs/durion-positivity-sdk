@@ -12,9 +12,10 @@ describe('loadQaConfig', () => {
       coverageLevel: 'package',
       policy: { mode: 'mutating', allowDestructive: false, deny: [] },
       sweepWrites: false,
-      maxPerTick: 1,
+      maxPerTick: 3,
+      concurrency: 3,
       minGapMinutes: 2,
-      day: { visitsMin: 8, visitsMax: 12, newCustomerRatio: 0.3, commercialRatio: 0.3, newVehicleRatio: 0.2, openTime: '08:00', closeTime: '17:30', seed: 0 },
+      day: { visitsMin: 4, visitsMax: 8, tenantMax: 60, newCustomerRatio: 0.3, commercialRatio: 0.3, newVehicleRatio: 0.2, openTime: '08:00', closeTime: '17:30', seed: 0 },
       stateDir: path.join(REPO_ROOT, '.agent-qa'),
     });
   });

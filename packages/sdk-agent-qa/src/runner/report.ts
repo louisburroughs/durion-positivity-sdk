@@ -5,6 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { describeVisit, type Visit } from '../day/dayPlan';
+import type { Site } from '../day/sites';
 import type { CoverageSummary } from '../sdk-coverage/CoverageStore';
 import type { ScenarioResult } from './runScenario';
 
@@ -34,6 +35,7 @@ export function renderReport(
   results: readonly ScenarioResult[],
   coverage: CoverageSummary,
   visits: readonly Visit[] = [],
+  sites: readonly Site[] = [],
 ): string {
   const count = (verdict: string): number => results.filter((result) => result.verdict === verdict).length;
   const tokens = results.reduce((sum, result) => sum + (result.loop ? result.loop.usage.inputTokens + result.loop.usage.outputTokens : 0), 0);
@@ -57,26 +59,36 @@ export function renderReport(
     );
   }
 
-  if (visits.length > 0) {
+  if (sites.length > 0) {
     const verdictOf = new Map(results.map((result) => [result.scenarioId, result.verdict]));
-    const count = (test: (visit: Visit) => boolean): number => visits.filter(test).length;
+    const count = (list: readonly Visit[], test: (visit: Visit) => boolean): number => list.filter(test).length;
     lines.push(
       '',
-      "## Today's customers",
+      "## Today's customers, by site",
       '',
-      `${visits.length} visits: ${count((visit) => visit.customer.status === 'new')} new and ` +
-        `${count((visit) => visit.customer.status === 'existing')} returning customers; ` +
-        `${count((visit) => visit.customer.type === 'commercial')} commercial and ` +
-        `${count((visit) => visit.customer.type === 'individual')} individual.`,
-      '',
-      '| Visit | Customer and vehicle | Stages |',
-      '| --- | --- | --- |',
+      `${visits.length} visits across ${sites.length} site(s): ${count(visits, (visit) => visit.customer.status === 'new')} new and ` +
+        `${count(visits, (visit) => visit.customer.status === 'existing')} returning customers; ` +
+        `${count(visits, (visit) => visit.customer.type === 'commercial')} commercial and ` +
+        `${count(visits, (visit) => visit.customer.type === 'individual')} individual.`,
     );
-    for (const visit of visits) {
-      const stages = visit.stages
-        .map((stage) => `${stage.at} ${stage.name}: ${MARK[verdictOf.get(stage.id) ?? ''] ?? 'pending'}`)
-        .join(' · ');
-      lines.push(`| ${visit.id} | ${cell(describeVisit(visit))} | ${stages} |`);
+    for (const site of sites) {
+      const here = visits.filter((visit) => visit.site.id === site.id);
+      lines.push(
+        '',
+        `### ${site.name} (${site.code}) — ${site.positions} position(s), ${here.length} visit(s)`,
+        '',
+        `${count(here, (visit) => visit.customer.status === 'new')} new, ${count(here, (visit) => visit.customer.status === 'existing')} returning; ` +
+          `${count(here, (visit) => visit.customer.type === 'commercial')} commercial, ${count(here, (visit) => visit.customer.type === 'individual')} individual.`,
+      );
+      if (here.length > 0) {
+        lines.push('', '| Visit | Customer and vehicle | Stages |', '| --- | --- | --- |');
+      }
+      for (const visit of here) {
+        const stages = visit.stages
+          .map((stage) => `${stage.at} ${stage.name}: ${MARK[verdictOf.get(stage.id) ?? ''] ?? 'pending'}`)
+          .join(' · ');
+        lines.push(`| ${visit.id} | ${cell(describeVisit(visit).replace(`${site.name} — `, ''))} | ${stages} |`);
+      }
     }
   }
 

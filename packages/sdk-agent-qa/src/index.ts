@@ -69,7 +69,7 @@ function printPlan(harness: Harness): void {
   const { clock, slots } = harness.plan();
   console.log(`${clock.date} (ISO weekday ${clock.weekday}, week ${clock.week}) — now ${formatMinutes(clock.minutes)} shop time`);
   for (const slot of slots.filter((entry) => entry.status !== 'not-today')) {
-    const detail = slot.scenario.id.startsWith('visit-') ? `  (${slot.scenario.title})` : '';
+    const detail = /-v\d+-/.test(slot.scenario.id) ? `  (${slot.scenario.title})` : '';
     console.log(`  ${formatMinutes(slot.minutes)}  ${slot.status.padEnd(8)}  ${slot.scenario.cadence.padEnd(7)}  ${slot.scenario.id}${detail}`);
   }
 }
@@ -178,9 +178,17 @@ async function doctor(): Promise<number> {
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
   switch (command) {
-    case 'plan':
-      printPlan(build({ modelRequired: false }).harness);
+    case 'plan': {
+      const { harness } = build({ modelRequired: false });
+      try {
+        await harness.prepareDay();
+      } catch (error) {
+        // The day's shape comes from the tenant. Without it, show what can be known.
+        log(`could not ask the tenant for its sites (${error instanceof Error ? error.message : String(error)}); showing tenant-wide tasks only`);
+      }
+      printPlan(harness);
       return 0;
+    }
     case 'coverage':
       printCoverage(build({ modelRequired: false }).harness);
       return 0;

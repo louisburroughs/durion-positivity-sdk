@@ -8,6 +8,7 @@ const catalog = buildCatalog();
 const DAY: DayPlanOptions = {
   visitsMin: 10,
   visitsMax: 10,
+  tenantMax: 1000,
   newCustomerRatio: 0.3,
   commercialRatio: 0.3,
   newVehicleRatio: 0.2,
@@ -46,7 +47,7 @@ describe('scenario library', () => {
   });
 
   it('with a day of visits reaches every package the gateway routes, before the sweep adds anything', () => {
-    const day = buildDayPlan('2026-03-10', DAY);
+    const day = buildDayPlan('2026-03-10', [{ id: 'l-1', code: 'MAIN', name: 'Main Street', slug: 'main', positions: 6 }], DAY);
     const visitOperations = day.visits.flatMap((visit) =>
       visit.stages.flatMap((stage) => stageScenario(visit, stage, {}, { roleMode: false }).operations),
     );
@@ -55,6 +56,17 @@ describe('scenario library', () => {
     );
     const routed = catalog.packages.filter((pkg) => pkg !== 'internal' && pkg !== 'documents');
     expect(routed.filter((pkg) => !pinned.has(pkg))).toEqual([]);
+  });
+
+  it('runs at every site the routines every shop does for itself, and once the ones that belong to the tenant', () => {
+    const perSite = SCENARIOS.filter((scenario) => scenario.perSite).map((scenario) => scenario.id);
+    expect(perSite).toEqual(expect.arrayContaining(['open-shop', 'parts-receiving', 'close-shop', 'weekly-cycle-count']));
+    for (const id of ['invoice-and-payment', 'weekly-ap-run', 'monthly-period-close', 'monthly-financial-statements']) {
+      expect([id, perSite.includes(id)]).toEqual([id, false]);
+    }
+    for (const scenario of SCENARIOS.filter((entry) => entry.perSite)) {
+      expect([scenario.id, /one site|[Pp]ick (one|an active)/.test(scenario.goal)]).toEqual([scenario.id, false]);
+    }
   });
 
   it('pins a destructive operation only where that is the point of the scenario', () => {

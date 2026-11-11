@@ -1,8 +1,17 @@
-import { buildDayPlan, describeVisit, type DayPlanOptions, type Visit } from './dayPlan';
+import { buildDayPlan as buildTenantDay, describeVisit, visitCounts, type DayPlan, type DayPlanOptions, type Visit } from './dayPlan';
+import type { Site } from './sites';
+
+const MAIN: Site = { id: 'loc-main', code: 'MAIN', name: 'Main Street', slug: 'main', positions: 6 };
+const NORTH: Site = { id: 'loc-north', code: 'NORTH', name: 'Northside', slug: 'north', positions: 3 };
+const DEPOT: Site = { id: 'loc-depot', code: 'DEPOT', name: 'Fleet Depot', slug: 'depot', positions: 10 };
+
+/** One site's day: most of what follows is about a single shop's roster. */
+const buildDayPlan = (date: string, options: DayPlanOptions): DayPlan => buildTenantDay(date, [MAIN], options);
 
 const OPTIONS: DayPlanOptions = {
   visitsMin: 10,
   visitsMax: 10,
+  tenantMax: 1000,
   newCustomerRatio: 0.3,
   commercialRatio: 0.3,
   newVehicleRatio: 0.2,
@@ -124,12 +133,6 @@ describe('buildDayPlan', () => {
     expect(visits.filter((visit) => visit.arrival === 'appointment').every((visit) => visit.customer.status === 'existing')).toBe(true);
   });
 
-  it('spreads the day over several sites', () => {
-    const sites = buildDayPlan('2026-03-10', OPTIONS).visits.map((visit) => visit.site);
-    expect(new Set(sites).size).toBeGreaterThan(3);
-    expect(sites.every((site) => Number.isInteger(site) && site >= 1)).toBe(true);
-  });
-
   it('is quieter on a Saturday, and empty when visits are turned off', () => {
     expect(buildDayPlan('2026-03-14', OPTIONS).visits).toHaveLength(6);
     expect(buildDayPlan('2026-03-10', { ...OPTIONS, visitsMin: 0, visitsMax: 0 }).visits).toEqual([]);
@@ -137,6 +140,61 @@ describe('buildDayPlan', () => {
 
   it('describes a visit in one line', () => {
     const [visit] = buildDayPlan('2026-03-10', OPTIONS).visits;
-    expect(describeVisit(visit)).toMatch(/^(service|counter-sale|appointment-call): (new|existing) /);
+    expect(describeVisit(visit)).toMatch(/^Main Street — (service|counter-sale|appointment-call): (new|existing) /);
+  });
+});
+
+describe('a tenant with several sites', () => {
+  const SITES = [DEPOT, MAIN, NORTH];
+  const RANGE: DayPlanOptions = { ...OPTIONS, visitsMin: 4, visitsMax: 8 };
+
+  it('gives every site its own day', () => {
+    const plan = buildTenantDay('2026-03-10', SITES, RANGE);
+    expect(plan.sites).toEqual(SITES);
+    for (const site of SITES) {
+      const here = plan.visits.filter((visit) => visit.site.id === site.id);
+      expect(here.length).toBeGreaterThanOrEqual(4);
+      expect(here.every((visit) => visit.id.startsWith(`${site.slug}-v`) && visit.site.name === site.name)).toBe(true);
+      expect(here.some((visit) => visit.kind === 'service')).toBe(true);
+    }
+    expect(new Set(plan.visits.flatMap((visit) => visit.stages.map((stage) => stage.id))).size).toBe(
+      plan.visits.reduce((sum, visit) => sum + visit.stages.length, 0),
+    );
+  });
+
+  it('holds the mix at every site, not just across the tenant', () => {
+    const plan = buildTenantDay('2026-03-10', SITES, { ...RANGE, visitsMin: 10, visitsMax: 10 });
+    for (const site of SITES) {
+      const here = plan.visits.filter((visit) => visit.site.id === site.id);
+      expect([site.slug, here.filter((visit) => visit.customer.status === 'new').length]).toEqual([site.slug, 3]);
+      expect([site.slug, here.filter((visit) => visit.customer.type === 'commercial').length]).toEqual([site.slug, 3]);
+    }
+  });
+
+  it('gives the sites different customers from one another', () => {
+    const plan = buildTenantDay('2026-03-10', SITES, { ...RANGE, visitsMin: 10, visitsMax: 10, newCustomerRatio: 1 });
+    const emails = plan.visits.map((visit) => visit.customer.person?.email ?? visit.customer.company?.email);
+    expect(new Set(emails).size).toBe(30);
+  });
+
+  it('gives a bigger site a busier day', () => {
+    for (const date of WEEKDAYS) {
+      const [depot, main, north] = visitCounts(date, SITES, RANGE);
+      expect(depot).toBeGreaterThanOrEqual(7);
+      expect(north).toBeLessThanOrEqual(5);
+      expect(depot).toBeGreaterThan(north);
+      expect(main).toBeGreaterThanOrEqual(4);
+      expect(main).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it('trims the busiest sites first to stay under the tenant ceiling, and empties none', () => {
+    const counts = visitCounts('2026-03-10', SITES, { ...RANGE, tenantMax: 9 });
+    expect(counts.reduce((sum, count) => sum + count, 0)).toBe(9);
+    expect(counts.every((count) => count >= 2)).toBe(true);
+  });
+
+  it('plans nothing for a tenant with no sites', () => {
+    expect(buildTenantDay('2026-03-10', [], RANGE)).toMatchObject({ sites: [], visits: [] });
   });
 });

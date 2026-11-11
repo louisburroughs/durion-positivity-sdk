@@ -1,10 +1,11 @@
 # @durion-sdk/agent-qa
 
 An agentic QA harness for the Durion Positivity SDK. Every day it puts a day's worth of realistic business through
-a live backend: a roster of customers — new and returning, individuals and commercial accounts, with vehicles on
-file and vehicles never seen before — each carried by a language model from the service counter to the shop floor
-to checkout. Around that it runs the staff's own daily, weekly and monthly routines, deliberate error drills, and
-a sweep that makes sure every SDK gets called every month.
+a live backend, **for the whole tenant**: each of the tenant's shops opens, serves its own roster of customers —
+new and returning, individuals and commercial accounts, with vehicles on file and vehicles never seen before —
+receives its deliveries and closes, with a language model carrying every customer from the service counter to the
+shop floor to checkout. Around that it runs the tenant-wide back office (receivables, payables, the monthly
+close), deliberate error drills, and a sweep that makes sure every SDK gets called every month.
 
 The model does the work through tools, and each tool is one method of a generated client. Nothing about a visit is
 scripted beyond who walks in and what they want: finding the returning customer, choosing services that fit the
@@ -51,7 +52,7 @@ npm run qa:daemon                   # stay up and work the day
 
 | Command | What it does |
 | --- | --- |
-| `npm run qa -- plan` | Prints today's slots in shop time and their status. |
+| `npm run qa -- plan` | Asks the tenant for its sites if today's plan is not made yet, then prints today's tasks in shop time and their status. |
 | `npm run qa:tick` | Runs what is due, then exits. For cron, Task Scheduler or CI. |
 | `npm run qa:daemon` | Stays up, runs each scenario at its time of day. Ctrl-C stops after the current scenario. |
 | `npm run qa -- run <id>…` | Runs scenarios now, ignoring the schedule. `coverage-sweep` is an id too. |
@@ -96,9 +97,13 @@ the top of the file.
 
 Every visit stage and every scenario has a time of day in the shop's time zone (`QA_TIMEZONE`). Each slot is moved by a jitter of up to
 `QA_JITTER_MINUTES` that is stable within a day and different the next, so the traffic does not arrive on the same
-minute every morning. One task runs per pass (`QA_MAX_PER_TICK`), with at least `QA_MIN_GAP_MINUTES` (2) between
-them, so a backlog drains as a trickle rather than a burst. A default day is about 20 to 25 visit stages plus the
-staff routines — roughly 30 agent runs between opening and closing.
+minute every morning.
+
+A tenant's shops work at the same time, so tasks do too: each pass starts up to `QA_MAX_PER_TICK` (3) of the tasks
+that are due and runs `QA_CONCURRENCY` (3) of them side by side, with at least `QA_MIN_GAP_MINUTES` (2) between
+passes, so a backlog drains steadily rather than as a burst. With three sites a default day is roughly 50
+agent runs between opening and closing. Set `QA_CONCURRENCY=1` for a single local model that cannot serve several
+conversations at once, and lower the visit counts to match what it can get through in a day.
 
 A laptop is not always on, so each cadence has a catch-up rule:
 
@@ -150,32 +155,50 @@ properties that matter are properties of the loop:
 - **The model is a port.** The loop sees a `ModelPort`; `agent/aiSdkModel.ts` is the only file that imports `ai`.
   That is what lets the loop be unit-tested with a scripted model.
 
-## A day of customers
+## A day across the tenant
 
-Each morning the harness generates the day's **visits** (`day/dayPlan.ts`) — 8 to 12 on a weekday by default, about
-60% of that on a Saturday. A visit is who comes in, what they drive, what they ask for, what they decide and how
-they pay:
+Each morning the harness asks the tenant which locations are open for work — every active location with at least
+one bay or mobile unit — and plans a day **at each of them** (`day/sites.ts`, `day/dayPlan.ts`). Nothing about the
+sites is configured: a shop added to the tenant is in the next morning's plan.
+
+Every site gets:
+
+- **its own customers** — a roster of visits sized to the shop (4 to 8 on a weekday by default; a site with more
+  bays gets a busier day; about 60% on a Saturday);
+- **its own routines** — opening, receiving and closing run once per site, as do the weekly stock order, cycle
+  count and timesheet approval, and the monthly inventory review;
+
+while the work that belongs to the tenant as a whole — receivables, payables, the bank, the books, access reviews —
+runs once.
 
 ```text
-08:14  visit-01-intake    service: new individual (Kaylie Swaniawski), new vehicle, walk-in, approves, cash
-09:33  visit-03-sale      counter-sale: existing commercial
-09:58  visit-04-intake    service: new commercial (Romaguera Construction Co.), new vehicle, walk-in, approves, on-account
-10:02  visit-05-intake    service: existing commercial, existing vehicle, appointment, approves, on-account
-13:50  visit-10-call      appointment-call: existing individual, existing vehicle
+07:44  open-shop-main        Open the shop for the day — Main Street
+07:49  open-shop-north       Open the shop for the day — Northside
+08:14  main-v01-intake       Main Street — service: new individual (Kaylie Swaniawski), new vehicle, walk-in, approves, cash
+08:21  north-v01-intake      Northside — service: existing commercial, existing vehicle, appointment, approves, on-account
+09:33  main-v03-sale         Main Street — counter-sale: existing commercial
+09:58  north-v02-intake      Northside — service: new commercial (Romaguera Construction Co.), new vehicle, on-account
+13:50  main-v06-call         Main Street — appointment-call: existing individual, existing vehicle
+14:34  invoice-and-payment   (tenant-wide)
+17:38  close-shop-main       Close out the day — Main Street
 ```
 
-**The mix is allocated, not sampled.** With ten visits, a 30% new-customer share and a 30% commercial share, there
-are exactly three new customers and exactly three commercial accounts every day, and which visits they are changes
-daily, so all four combinations turn up.
+A visit is who comes in, what they drive, what they ask for, what they decide and how they pay. Every task is told
+which location it is at, by id; the agent never chooses a site.
+
+**The mix is allocated, not sampled, and it holds at every site.** With ten visits at a shop, a 30% new-customer
+share and a 30% commercial share, that shop sees exactly three new customers and exactly three commercial accounts
+that day, and which visits they are changes daily, so all four combinations turn up.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `QA_VISITS_MIN` / `QA_VISITS_MAX` | 8 / 12 | Visits on a full weekday. `QA_VISITS_MAX=0` turns visits off. |
+| `QA_VISITS_PER_SITE_MIN` / `_MAX` | 4 / 8 | Visits per site on a full weekday: the smallest site gets about the minimum, the largest about the maximum. `QA_VISITS_PER_SITE_MAX=0` turns visits off. |
+| `QA_VISITS_TENANT_MAX` | 60 | Ceiling on the whole tenant's visits in a day, to bound cost. The busiest sites are trimmed first; none is emptied. |
 | `QA_NEW_CUSTOMER_RATIO` | 0.3 | Share of visits by a customer the shop has never seen. |
 | `QA_COMMERCIAL_RATIO` | 0.3 | Share of visits by a commercial account. |
 | `QA_NEW_VEHICLE_RATIO` | 0.2 | Share of returning customers who bring a vehicle not yet on file. |
 | `QA_OPEN_TIME` / `QA_CLOSE_TIME` | 08:00 / 17:30 | Arrivals follow a morning rush, a lunch lull and a smaller afternoon wave. |
-| `QA_SEED` | 0 | Mixed into the date; the roster is a pure function of the two. |
+| `QA_SEED` | 0 | Mixed into the date and the site; a site's roster is a pure function of the three. |
 
 **What is fixed and what is left to the agent.** The roster fixes the facts an agent left to itself would flatten.
 A *new* customer comes with a generated identity (name, email, phone, or a business with its driver) and a vehicle
@@ -208,13 +231,14 @@ finished by the nightly close-out — see *Running alongside the populate runs* 
 
 `scenarios/library.ts` holds 25 fixed scenarios for the work that does not walk in through the door. Each is a
 goal written the way an employee would describe the task, the operations it normally takes, and the facts that
-must appear in the call ledger.
+must appear in the call ledger. A scenario marked `perSite` runs once at every shop, each instance told where it
+is; the rest run once for the tenant.
 
-| Cadence | Scenarios |
-| --- | --- |
-| Daily (5 + sweep) | open the shop · receive a delivery · invoices and receivables · 404 drill · close out the day · coverage sweep |
-| Weekly (10) | stock order · cycle count · access review · customer follow-ups · warranty claims · authorization drill · timesheet approval · payables run · bank deposit · catalog and pricing |
-| Monthly (10) | period close · financial statements · bank reconciliation · inventory review · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
+| Cadence | At every site | Once for the tenant |
+| --- | --- | --- |
+| Daily | open the shop · receive a delivery · close out the day | invoices and receivables · 404 drill · coverage sweep |
+| Weekly | stock order · cycle count · timesheet approval | access review · customer follow-ups · warranty claims · authorization drill · payables run · bank deposit · catalog and pricing |
+| Monthly | inventory review | period close · financial statements · bank reconciliation · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
 
 **Error conditions** are scenarios of kind `error`: lookups that must answer 404, a technician reaching for
 finance (403 — needs per-persona logins, and is skipped rather than failed without them), and the validation,
@@ -239,9 +263,9 @@ Both halves that remain matter to the harness:
 
 What the load used to provide, the harness now has to:
 
-- **Volume.** The load filled every position at every site; a default day here is about six service jobs. Visits
-  are spread across the tenant's locations in turn, but each site's board will be much emptier than before. Raise
-  `QA_VISITS_MIN` / `QA_VISITS_MAX` to fill it.
+- **Volume.** The load put a job on every position at every site. The harness plans a day at every site too, but
+  by default a smaller one — 4 to 8 visits per shop, of which about 60% are service jobs. Raise
+  `QA_VISITS_PER_SITE_MIN` / `_MAX` (and `QA_VISITS_TENANT_MAX`) to fill the boards.
 - **The payroll clock.** The load clocked technicians in and out. The work stage now clocks a technician in before
   starting their job, and closing the shop clocks the crew out.
 - **Being there at all.** A day the harness does not run (laptop off, no model reachable) is a day with nothing on
@@ -314,8 +338,8 @@ Records the agent writes carry the run id (`qa-<date>-<time>`) in their free-tex
   state.json                     what has run today / this week / this month
   coverage-2026-11.json          the month's coverage, per operation, with status counts
   runs/2026-11-10/
-    day-plan.json                today's visits, and what each has established so far
-    report.md                    the day so far: customers and their stages, verdicts, server errors, coverage
+    day-plan.json                today's sites and their visits, and what each visit has established so far
+    report.md                    the day so far: each site's customers and their stages, verdicts, server errors, coverage
     calls.jsonl                  every SDK call: operation, persona, status, error code, correlation id, duration
     1205-open-shop.json          one scenario's result
     1205-open-shop.transcript.jsonl   every model turn and tool result
@@ -345,7 +369,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 149 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 168 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 

@@ -1,23 +1,27 @@
 /**
- * Generates one day of customers for the shop.
+ * Generates one day of customers for the whole tenant.
  *
- * A day is a roster of **visits**: who comes in, what they drive, what they
- * want, what they decide and how they pay. The roster fixes the facts that
- * make a day realistic and that an agent left to itself would flatten — the
- * arrival curve, and the mix of new and returning customers, of individuals
- * and commercial accounts, of vehicles already on file and vehicles never seen
- * before. Everything else is left to the agent: finding the returning customer
- * in the CRM, choosing services that fit the complaint, working around a full
- * shop, dealing with whatever state alpha is in.
+ * A tenant's day is a day at each of its shops. Every site gets its own roster
+ * of **visits**: who comes in, what they drive, what they want, what they
+ * decide and how they pay. A bigger site (more bays and mobile units) gets a
+ * busier day. The roster fixes the facts that make a day realistic and that an
+ * agent left to itself would flatten — the arrival curve, and the mix of new
+ * and returning customers, of individuals and commercial accounts, of vehicles
+ * already on file and vehicles never seen before. Everything else is left to
+ * the agent: finding the returning customer in the CRM, choosing services that
+ * fit the complaint, working around a full shop, dealing with whatever state
+ * alpha is in.
  *
- * The mix is allocated, not sampled. With ten visits and a 30% commercial
- * share there are exactly three commercial visits, every day, rather than
- * "about three, sometimes none" — the point of the mix is that it is there.
+ * The mix is allocated, not sampled, and per site. With ten visits at a site
+ * and a 30% commercial share there are exactly three commercial visits there,
+ * every day, rather than "about three, sometimes none" — the point of the mix
+ * is that it is there, at every shop.
  *
  * The roster is a pure function of the date and the seed, so every process
  * that asks for today's plan gets the same one.
  */
 import { SeederRandom } from '@durion-sdk/seeder';
+import type { Site } from './sites';
 
 export type CustomerType = 'individual' | 'commercial';
 export type VisitKind = 'service' | 'counter-sale' | 'appointment-call';
@@ -60,7 +64,7 @@ export interface VisitVehicle {
 }
 
 export interface VisitStage {
-  /** `visit-03-intake` */
+  /** `main-v03-intake` */
   id: string;
   name: StageName;
   /** Shop-local HH:MM. */
@@ -68,7 +72,7 @@ export interface VisitStage {
 }
 
 export interface Visit {
-  /** `visit-03` */
+  /** `<site slug>-v03` */
   id: string;
   kind: VisitKind;
   customer: VisitCustomer;
@@ -79,24 +83,28 @@ export interface Visit {
   arrival: 'walk-in' | 'appointment';
   disposition: Disposition;
   payment: Payment;
-  /**
-   * Which of the tenant's shop locations the visit happens at, as a position in
-   * the location list (it wraps), so the day's work is spread over every site.
-   */
-  site: number;
+  /** The shop the customer comes to. */
+  site: Pick<Site, 'id' | 'name' | 'code' | 'slug'>;
   stages: VisitStage[];
 }
 
 export interface DayPlan {
   date: string;
   seed: number;
+  /** Every shop taking part in the day, including any whose roster is empty. */
+  sites: Site[];
   visits: Visit[];
 }
 
 export interface DayPlanOptions {
-  /** Visits on a full weekday. Saturdays get about 60%. */
+  /**
+   * Visits **per site** on a full weekday: the smallest site gets about
+   * `visitsMin`, the largest about `visitsMax`. Saturdays get about 60%.
+   */
   visitsMin: number;
   visitsMax: number;
+  /** Ceiling on the whole tenant's visits in a day, to bound cost. Sites are trimmed evenly. */
+  tenantMax: number;
   /** Share of visits by a customer the shop has never seen. */
   newCustomerRatio: number;
   /** Share of visits by a commercial account. */
@@ -221,19 +229,48 @@ const slug = (text: string): string => text.toLowerCase().replace(/[^a-z0-9]+/g,
 /** ISO weekday (1 = Monday) of a YYYY-MM-DD date. */
 const weekdayOf = (date: string): number => new Date(`${date}T00:00:00Z`).getUTCDay() || 7;
 
-export function buildDayPlan(date: string, options: DayPlanOptions): DayPlan {
-  const seed = daySeed(date, options.seed);
-  const random = new SeederRandom(seed);
+/** How many customers each site sees: scaled by its size, trimmed evenly to the tenant ceiling. */
+export function visitCounts(date: string, sites: readonly Site[], options: DayPlanOptions): number[] {
+  if (options.visitsMax === 0 || sites.length === 0) {
+    return sites.map(() => 0);
+  }
+  const saturday = weekdayOf(date) === 6;
+  const largest = Math.max(...sites.map((site) => site.positions), 1);
+  const smallest = Math.min(...sites.map((site) => site.positions));
+  const counts = sites.map((site) => {
+    const random = new SeederRandom(daySeed(`${date}|count|${site.id}`, options.seed));
+    const span = Math.max(0, options.visitsMax - options.visitsMin);
+    const size = largest === smallest ? 0.5 : (site.positions - smallest) / (largest - smallest);
+    const base = options.visitsMin + Math.round(span * size) + (span >= 2 ? random.int(-1, 1) : 0);
+    const bounded = Math.min(options.visitsMax, Math.max(options.visitsMin, base));
+    return saturday ? Math.round(bounded * 0.6) : bounded;
+  });
+  // Over the ceiling: take one from the busiest site at a time, so no site is emptied to keep another full.
+  for (let total = counts.reduce((sum, count) => sum + count, 0); total > options.tenantMax; total -= 1) {
+    counts[counts.indexOf(Math.max(...counts))] -= 1;
+  }
+  return counts;
+}
+
+export function buildDayPlan(date: string, sites: readonly Site[], options: DayPlanOptions): DayPlan {
+  const counts = visitCounts(date, sites, options);
+  return {
+    date,
+    seed: daySeed(date, options.seed),
+    sites: [...sites],
+    visits: sites.flatMap((site, index) => buildSiteVisits(date, site, counts[index], options)),
+  };
+}
+
+/** One site's customers for the day. */
+function buildSiteVisits(date: string, site: Site, count: number, options: DayPlanOptions): Visit[] {
+  if (count <= 0) {
+    return [];
+  }
+  const random = new SeederRandom(daySeed(`${date}|${site.id}`, options.seed));
   const open = toMinutes(options.openTime);
   const close = toMinutes(options.closeTime);
-  const tag = date.replace(/-/g, '');
-
-  const saturday = weekdayOf(date) === 6;
-  const base = random.int(options.visitsMin, Math.max(options.visitsMin, options.visitsMax));
-  const count = saturday ? Math.round(base * 0.6) : base;
-  if (options.visitsMax === 0 || count === 0) {
-    return { date, seed, visits: [] };
-  }
+  const tag = `${date.replace(/-/g, '')}${slug(site.slug)}`;
 
   const isNew = allocate(random, count, options.newCustomerRatio);
   const isCommercial = allocate(random, count, options.commercialRatio);
@@ -255,8 +292,8 @@ export function buildDayPlan(date: string, options: DayPlanOptions): DayPlan {
       kinds[index] === 'service' ? arrivalMinutes(random, open, close) : random.int(open + 15, Math.max(open + 15, close - 45)),
   })).sort((a, b) => a.arrival - b.arrival);
 
-  const visits = drafts.map((draft, order): Visit => {
-    const id = `visit-${String(order + 1).padStart(2, '0')}`;
+  return drafts.map((draft, order): Visit => {
+    const id = `${site.slug}-v${String(order + 1).padStart(2, '0')}`;
     const type: CustomerType = isCommercial[draft.index] ? 'commercial' : 'individual';
     const status = isNew[draft.index] ? 'new' : 'existing';
 
@@ -328,10 +365,9 @@ export function buildDayPlan(date: string, options: DayPlanOptions): DayPlan {
       ];
     }
 
-    return { id, kind: draft.kind, customer, vehicle, concern, arrival, disposition, payment, site: order + 1 + random.int(0, 3), stages };
+    const where = { id: site.id, name: site.name, code: site.code, slug: site.slug };
+    return { id, kind: draft.kind, customer, vehicle, concern, arrival, disposition, payment, site: where, stages };
   });
-
-  return { date, seed, visits };
 }
 
 /** One line per visit, for the plan printout and the report. */
@@ -344,5 +380,5 @@ export function describeVisit(visit: Visit): string {
       : `existing ${visit.customer.type}`;
   const vehicle = visit.kind === 'counter-sale' ? '' : `, ${visit.vehicle.status} vehicle`;
   const how = visit.kind === 'service' ? `, ${visit.arrival}, ${visit.disposition}, ${visit.payment}` : '';
-  return `${visit.kind}: ${who}${vehicle}${how}`;
+  return `${visit.site.name} — ${visit.kind}: ${who}${vehicle}${how}`;
 }
