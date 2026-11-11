@@ -15,6 +15,8 @@ const OPTIONS: DayPlanOptions = {
   newCustomerRatio: 0.3,
   commercialRatio: 0.3,
   newVehicleRatio: 0.2,
+  stockPartsRatio: 0.45,
+  specialOrderRatio: 0.2,
   openTime: '08:00',
   closeTime: '17:30',
   seed: 0,
@@ -120,9 +122,46 @@ describe('buildDayPlan', () => {
     expect(visits.some((visit) => visit.disposition === 'approves-then-adds-work')).toBe(true);
     for (const visit of visits) {
       expect(visit.stages.map((stage) => stage.name)).toEqual(
-        visit.disposition === 'declines' ? ['intake'] : ['intake', 'work', 'checkout'],
+        visit.disposition === 'declines'
+          ? ['intake']
+          : visit.parts === 'special-order'
+            ? ['intake', 'order', 'receive', 'work', 'checkout']
+            : ['intake', 'work', 'checkout'],
       );
     }
+  });
+
+  it('gives every site jobs that use stock parts, jobs that need a part ordered in, and labor-only jobs', () => {
+    for (const date of WEEKDAYS) {
+      const services = buildDayPlan(date, { ...OPTIONS, visitsMin: 20, visitsMax: 20 }).visits.filter((visit) => visit.kind === 'service');
+      const by = (need: string): number => services.filter((visit) => visit.parts === need).length;
+      expect(services).toHaveLength(13);
+      expect([date, by('special-order')]).toEqual([date, 3]); // 20% of 13, allocated
+      expect(by('stock')).toBeGreaterThanOrEqual(3);
+      expect(by('none')).toBeGreaterThanOrEqual(1);
+    }
+    const others = buildDayPlan('2026-03-10', OPTIONS).visits.filter((visit) => visit.kind !== 'service');
+    expect(others.every((visit) => visit.parts === 'none')).toBe(true);
+  });
+
+  it('orders the part before it is received, and receives it before the work', () => {
+    const special = WEEKDAYS.flatMap((date) => buildDayPlan(date, { ...OPTIONS, visitsMin: 30, visitsMax: 30 }).visits).filter(
+      (visit) => visit.parts === 'special-order' && visit.disposition !== 'declines',
+    );
+    expect(special.length).toBeGreaterThan(10);
+    for (const visit of special) {
+      const at = Object.fromEntries(visit.stages.map((stage) => [stage.name, minutes(stage.at)]));
+      expect(at['intake']).toBeLessThanOrEqual(at['order']);
+      expect(at['order']).toBeLessThan(at['receive']); // the delivery takes time
+      expect(at['receive']).toBeLessThan(at['work']);
+      expect(at['work']).toBeLessThan(at['checkout']);
+      expect(at['checkout']).toBeLessThanOrEqual(17 * 60 + 30);
+    }
+  });
+
+  it('can turn parts off', () => {
+    const { visits } = buildDayPlan('2026-03-10', { ...OPTIONS, stockPartsRatio: 0, specialOrderRatio: 0 });
+    expect(visits.every((visit) => visit.parts === 'none')).toBe(true);
   });
 
   it('bills only commercial accounts on account, and only returning customers arrive on an appointment', () => {

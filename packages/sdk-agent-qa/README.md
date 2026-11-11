@@ -106,7 +106,7 @@ minute every morning.
 
 A tenant's shops work at the same time, so tasks do too: each pass starts up to `QA_MAX_PER_TICK` (3) of the tasks
 that are due and runs `QA_CONCURRENCY` (3) of them side by side, with at least `QA_MIN_GAP_MINUTES` (2) between
-passes, so a backlog drains steadily rather than as a burst. With three sites a default day is roughly 50
+passes, so a backlog drains steadily rather than as a burst. With three sites a default day is roughly 60
 agent runs between opening and closing. Set `QA_CONCURRENCY=1` for a single local model that cannot serve several
 conversations at once, and lower the visit counts to match what it can get through in a day.
 
@@ -170,8 +170,8 @@ Every site gets:
 
 - **its own customers** — a roster of visits sized to the shop (4 to 8 on a weekday by default; a site with more
   bays gets a busier day; about 60% on a Saturday);
-- **its own routines** — opening, receiving and closing run once per site, as do the weekly stock order, cycle
-  count and timesheet approval, and the monthly inventory review;
+- **its own routines** — opening, the stock order, the stock delivery and closing run once per site, as do the
+  weekly purchasing review, cycle count and timesheet approval, and the monthly inventory review;
 
 while the work that belongs to the tenant as a whole — receivables, payables, the bank, the books, access reviews —
 runs once.
@@ -202,6 +202,8 @@ that day, and which visits they are changes daily, so all four combinations turn
 | `QA_NEW_CUSTOMER_RATIO` | 0.3 | Share of visits by a customer the shop has never seen. |
 | `QA_COMMERCIAL_RATIO` | 0.3 | Share of visits by a commercial account. |
 | `QA_NEW_VEHICLE_RATIO` | 0.2 | Share of returning customers who bring a vehicle not yet on file. |
+| `QA_STOCK_PARTS_RATIO` | 0.45 | Share of service jobs that use a part from the shop's own stock. |
+| `QA_SPECIAL_ORDER_RATIO` | 0.2 | Share of service jobs that need a part ordered in and received for the job. |
 | `QA_OPEN_TIME` / `QA_CLOSE_TIME` | 08:00 / 17:30 | Arrivals follow a morning rush, a lunch lull and a smaller afternoon wave. |
 | `QA_SEED` | 0 | Mixed into the date and the site; a site's roster is a pure function of the three. |
 
@@ -220,6 +222,18 @@ what to do when the estimate is refused — the agent works out from what the ba
 | work | manager (and technician) | Approve, staff, find a free bay, start the job, clock labor, complete it. If more work is found on the lift, raise and approve a change request. |
 | checkout | advisor | Invoice and finalize; take cash, or leave it open on a commercial account's terms. |
 
+**Parts.** Service jobs are allocated across three kinds, at every site: labor only; a part from the shop's own
+stock, which goes on the estimate and is picked and issued to the job; and a part the shop does not stock, which
+makes the visit five stages, with the parts clerk in the middle:
+
+| Stage | Who | What happens |
+| --- | --- | --- |
+| intake | advisor | As above, with a part on the estimate that has nothing on hand at this location. |
+| order | parts clerk | Finds the shortage on the workorder, raises a purchase order for the part naming the workorder, and gets it approved (by the manager, when the manager has a login of their own). |
+| receive | parts clerk | The delivery arrives 90 to 150 minutes later: a receiving session on the purchase order, cross-docked to the workorder's part line. If the cross-dock is refused, the part is received into stock instead and the refusal reported. |
+| work | manager (and technician) | Only now: issue the part to the job and finish it — or, if the part did not arrive, leave the job waiting for parts. |
+| checkout | advisor | As above. |
+
 About 15% of customers decline the estimate and the visit ends at the counter; about 12% have work added mid-job;
 about 30% of returning customers arrive on a booked appointment. Counter sales (about 20% of visits) and phone
 bookings (about 15%) are single-stage.
@@ -234,16 +248,24 @@ finished by the nightly close-out — see *Running alongside the populate runs* 
 
 ## Staff routines and error drills
 
-`scenarios/library.ts` holds 25 fixed scenarios for the work that does not walk in through the door. Each is a
+`scenarios/library.ts` holds 26 fixed scenarios for the work that does not walk in through the door. Each is a
 goal written the way an employee would describe the task, the operations it normally takes, and the facts that
 must appear in the call ledger. A scenario marked `perSite` runs once at every shop, each instance told where it
 is; the rest run once for the tenant.
 
 | Cadence | At every site | Once for the tenant |
 | --- | --- | --- |
-| Daily | open the shop · receive a delivery · close out the day | invoices and receivables · 404 drill · coverage sweep |
-| Weekly | stock order · cycle count · timesheet approval | access review · customer follow-ups · warranty claims · authorization drill · payables run · bank deposit · catalog and pricing |
+| Daily | open the shop · order replenishment stock · receive the stock delivery · close out the day | invoices and receivables · 404 drill · coverage sweep |
+| Weekly | purchasing review · cycle count · timesheet approval | access review · customer follow-ups · warranty claims · authorization drill · payables run · bank deposit · catalog and pricing |
 | Monthly | inventory review | period close · financial statements · bank reconciliation · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
+
+**Receiving happens two ways every day, at every site.** *Replenishment*: each morning the parts clerk reviews
+what is at or below its stocking level and raises a purchase order, which a manager approves; after lunch the
+delivery is received — the vendor's ship notice, a goods receipt (one line a unit short, on a multi-line order, so
+partial receipts occur), then putaway tasks generated, claimed and completed. The delivery routine takes the oldest
+approved order not yet received, so an order raised late is received the next day. *For a job*: the special-order
+visits above, received against the workorder rather than into stock. The replenishment routine is told to leave
+job orders alone.
 
 **Error conditions** are scenarios of kind `error`: lookups that must answer 404, a technician reaching for
 finance (403 — needs per-persona logins, and is skipped rather than failed without them), and the validation,
@@ -374,7 +396,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 168 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 179 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 

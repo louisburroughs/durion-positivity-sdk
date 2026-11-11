@@ -25,7 +25,19 @@ import type { Site } from './sites';
 
 export type CustomerType = 'individual' | 'commercial';
 export type VisitKind = 'service' | 'counter-sale' | 'appointment-call';
-export type StageName = 'intake' | 'work' | 'checkout' | 'sale' | 'call';
+export type StageName = 'intake' | 'order' | 'receive' | 'work' | 'checkout' | 'sale' | 'call';
+
+/** Where the parts for a service job come from. */
+export type PartsNeed =
+  /** Labor only. */
+  | 'none'
+  /** Parts the shop keeps on the shelf: picked and used on the job. */
+  | 'stock'
+  /**
+   * A part the shop does not stock: ordered from a vendor for this job,
+   * delivered later in the day, and received straight to the workorder.
+   */
+  | 'special-order';
 
 /** What the customer says when the advisor presents the estimate. */
 export type Disposition =
@@ -83,6 +95,8 @@ export interface Visit {
   arrival: 'walk-in' | 'appointment';
   disposition: Disposition;
   payment: Payment;
+  /** Service visits only: where the job's parts come from. */
+  parts: PartsNeed;
   /** The shop the customer comes to. */
   site: Pick<Site, 'id' | 'name' | 'code' | 'slug'>;
   stages: VisitStage[];
@@ -111,6 +125,10 @@ export interface DayPlanOptions {
   commercialRatio: number;
   /** Share of returning customers who bring a vehicle that is not on file yet. */
   newVehicleRatio: number;
+  /** Share of service jobs that use parts from the shop's own stock. */
+  stockPartsRatio: number;
+  /** Share of service jobs that need a part ordered in and received for the job. */
+  specialOrderRatio: number;
   /** Shop-local HH:MM. */
   openTime: string;
   closeTime: string;
@@ -285,6 +303,21 @@ function buildSiteVisits(date: string, site: Site, count: number, options: DayPl
     count,
   );
 
+  // Parts are allocated across the site's service jobs like the rest of the mix: some from the
+  // shelf, some ordered in for the job, the rest labor only.
+  const serviceCount = kinds.filter((kind) => kind === 'service').length;
+  const special = allocate(random, serviceCount, options.specialOrderRatio);
+  const fromStock = allocate(random, serviceCount, options.stockPartsRatio);
+  let serviceIndex = 0;
+  const partsByIndex = kinds.map((kind): PartsNeed => {
+    if (kind !== 'service') {
+      return 'none';
+    }
+    const need: PartsNeed = special[serviceIndex] ? 'special-order' : fromStock[serviceIndex] ? 'stock' : 'none';
+    serviceIndex += 1;
+    return need;
+  });
+
   const drafts = Array.from({ length: count }, (_, index) => ({
     index,
     kind: kinds[index],
@@ -346,27 +379,40 @@ function buildSiteVisits(date: string, site: Site, count: number, options: DayPl
     const payment: Payment = type === 'commercial' && random.chance(0.65) ? 'on-account' : 'cash';
     const arrival = draft.kind === 'service' && status === 'existing' && random.chance(0.3) ? 'appointment' : 'walk-in';
 
+    const parts = draft.kind === 'service' ? partsByIndex[draft.index] : 'none';
     let stages: VisitStage[];
     if (draft.kind === 'counter-sale') {
       stages = [{ id: `${id}-sale`, name: 'sale', at: toClock(draft.arrival) }];
     } else if (draft.kind === 'appointment-call') {
       stages = [{ id: `${id}-call`, name: 'call', at: toClock(draft.arrival) }];
+    } else if (disposition === 'declines') {
+      stages = [{ id: `${id}-intake`, name: 'intake', at: toClock(draft.arrival) }];
+    } else if (parts === 'special-order') {
+      // The part is ordered once the job is approved, arrives on a same-day delivery, and only
+      // then can the work be finished.
+      const order = Math.min(draft.arrival + random.int(20, 40), close - 150);
+      const receive = Math.min(order + random.int(90, 150), close - 90);
+      const work = Math.min(receive + random.int(20, 40), close - 45);
+      const checkout = Math.min(work + random.int(45, 90), close - 15);
+      stages = [
+        { id: `${id}-intake`, name: 'intake', at: toClock(Math.min(draft.arrival, order)) },
+        { id: `${id}-order`, name: 'order', at: toClock(order) },
+        { id: `${id}-receive`, name: 'receive', at: toClock(receive) },
+        { id: `${id}-work`, name: 'work', at: toClock(work) },
+        { id: `${id}-checkout`, name: 'checkout', at: toClock(checkout) },
+      ];
     } else {
       const work = Math.min(draft.arrival + random.int(30, 90), close - 60);
       const checkout = Math.min(work + random.int(60, 150), close - 15);
       stages = [
         { id: `${id}-intake`, name: 'intake', at: toClock(draft.arrival) },
-        ...(disposition === 'declines'
-          ? []
-          : [
-              { id: `${id}-work`, name: 'work' as const, at: toClock(work) },
-              { id: `${id}-checkout`, name: 'checkout' as const, at: toClock(checkout) },
-            ]),
+        { id: `${id}-work`, name: 'work', at: toClock(work) },
+        { id: `${id}-checkout`, name: 'checkout', at: toClock(checkout) },
       ];
     }
 
     const where = { id: site.id, name: site.name, code: site.code, slug: site.slug };
-    return { id, kind: draft.kind, customer, vehicle, concern, arrival, disposition, payment, site: where, stages };
+    return { id, kind: draft.kind, customer, vehicle, concern, arrival, disposition, payment, parts, site: where, stages };
   });
 }
 
@@ -379,6 +425,7 @@ export function describeVisit(visit: Visit): string {
         : `new individual (${visit.customer.person?.firstName} ${visit.customer.person?.lastName})`
       : `existing ${visit.customer.type}`;
   const vehicle = visit.kind === 'counter-sale' ? '' : `, ${visit.vehicle.status} vehicle`;
-  const how = visit.kind === 'service' ? `, ${visit.arrival}, ${visit.disposition}, ${visit.payment}` : '';
+  const parts = visit.parts === 'special-order' ? ', part ordered in' : visit.parts === 'stock' ? ', parts from stock' : '';
+  const how = visit.kind === 'service' ? `, ${visit.arrival}, ${visit.disposition}${parts}, ${visit.payment}` : '';
   return `${visit.site.name} — ${visit.kind}: ${who}${vehicle}${how}`;
 }

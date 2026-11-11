@@ -224,8 +224,12 @@ export class ToolRuntime {
     this.options.coverage.record(record);
     this.options.onCall?.(operation, outcome);
 
+    // "Not yet", not "no": a record created moments ago has not reached the service being asked.
+    // The 503s say so outright; the 409 and the PO-reference refusal are the same lag seen from
+    // receiving, where a purchase order approved seconds ago is not in inventory's copy yet.
     const transient =
-      outcome.status === 503 && /(_REPLICATION_PENDING|^CUSTOMER_REQUIREMENTS_UNAVAILABLE)$/.test(outcome.errorCode ?? '');
+      (outcome.status === 503 && /(_REPLICATION_PENDING|^CUSTOMER_REQUIREMENTS_UNAVAILABLE)$/.test(outcome.errorCode ?? '')) ||
+      /^(SOURCE_DOCUMENT_LINES_UNAVAILABLE|INVALID_PO_REFERENCE)$/.test(outcome.errorCode ?? '');
 
     return {
       outcome: outcome.kind,
@@ -235,7 +239,7 @@ export class ToolRuntime {
       body: shrink(outcome.body, this.options.resultBudget ?? 4000),
       correlationId: outcome.correlationId,
       hint: transient
-        ? 'Temporary: a record created moments ago has not replicated yet. Call wait for a few seconds, then repeat this exact call (up to 5 times).'
+        ? 'Temporary: a record created moments ago has not replicated yet. Call wait for 10 seconds, then repeat this exact call (up to 6 times).'
         : undefined,
     };
   }

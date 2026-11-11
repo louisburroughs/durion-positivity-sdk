@@ -55,36 +55,82 @@ const daily: ScenarioInput[] = [
     ],
   },
   {
-    id: 'parts-receiving',
+    id: 'stock-order',
     perSite: true,
-    title: 'Receive a delivery and put it away',
+    title: 'Order replenishment stock',
+    cadence: 'daily',
+    at: '08:40',
+    persona: 'parts',
+    kind: 'operations',
+    goal:
+      "Place today's stock order for this location. Review what needs replenishing: the replenishment needs and " +
+      'suggestions, the purchase suggestions and shortfalls, and the stocking levels against what is on hand here. Pick two ' +
+      'to four products that are at or below their minimum (if nothing is flagged, pick fast-moving parts that are lowest ' +
+      'on hand). Choose a vendor the shop can order from and raise one purchase order for them, shipping to this location, ' +
+      'with sensible quantities and unit costs and a comment saying it is replenishment stock. A purchase order is approved ' +
+      'by a manager, not by the person who raised it: make the approval call with sdk_call and persona "manager" (if the ' +
+      'harness refuses that persona, approve it yourself). Read the purchase order back to confirm it is approved. Do not ' +
+      'transmit it to the vendor.',
+    operations: [
+      'inventory.ReplenishmentApi.listReplenishmentNeeds',
+      'inventory.ReplenishmentApi.listReplenishmentSuggestions',
+      'inventory.PurchaseSuggestionsApi.listPurchaseSuggestions',
+      'inventory.PurchaseShortfallsApi.listPurchaseShortfalls',
+      'inventory.StockingLevelsApi.listStockingLevels',
+      'inventory.InventoryStockApi.listStock',
+      'order.PurchaseOrdersApi.listPurchaseOrderVendors',
+      'supplier.SupplierVendorsApi.listSupplierVendors',
+      'order.PurchaseOrdersApi.createPurchaseOrder',
+      'order.PurchaseOrdersApi.approvePurchaseOrder',
+      'order.PurchaseOrdersApi.getPurchaseOrder',
+    ],
+    expect: [
+      { kind: 'call', operation: 'inventory.StockingLevelsApi.listStockingLevels' },
+      { kind: 'call', operation: 'order.PurchaseOrdersApi.createPurchaseOrder' },
+      { kind: 'call', operation: 'order.PurchaseOrdersApi.approvePurchaseOrder' },
+    ],
+    limits: { maxSteps: 40, maxCalls: 45 },
+  },
+  {
+    id: 'receive-delivery',
+    perSite: true,
+    title: 'Receive the stock delivery and put it away',
     cadence: 'daily',
     at: '13:00',
     persona: 'parts',
     kind: 'operations',
     goal:
-      'The parts truck has arrived. Review open purchase orders and the receipts expected today, then check the putaway queue ' +
-      'and the workorder picks queue. If a purchase order is open and approved, start a receiving session for it and receive ' +
-      'one line into staging; if nothing is receivable, say so. Finish by checking stock status counts and current backorders.',
+      'The parts truck has arrived with replenishment stock for this location. List the purchase orders shipping here and ' +
+      'find one that is approved and not yet fully received — the oldest first, which is usually one raised earlier today or ' +
+      'yesterday. (Leave alone any purchase order whose comment says it is for a specific workorder: those are received ' +
+      "against the job.) If there is none, check the receipts expected and pending, say there was nothing to receive, and " +
+      'finish. Otherwise receive it properly: record the vendor\'s ship notice (an ASN for the purchase order, with its ' +
+      'lines), then post a goods receipt for the delivery at this location — every line in full, except that on a ' +
+      'purchase order with more than one line the last line arrives one unit short. (Inventory can take a minute to learn ' +
+      'of a purchase order approved moments ago; if told the reference is not known yet, wait and repeat.) Then put it ' +
+      'away: generate putaway tasks for the receipt, claim one, and complete it. Finish by reading the purchase order to ' +
+      'see how it now stands, and the stock on hand for one of the products received.',
     operations: [
       'order.PurchaseOrdersApi.listPurchaseOrders',
       'order.PurchaseOrdersApi.getPurchaseOrder',
-      'order.PurchaseOrdersApi.summarizePurchaseOrders',
       'inventory.ReceiptsApi.listExpectedReceipts',
       'inventory.ReceiptsApi.listPendingReceipts',
-      'inventory.ReceivingApi.createReceivingSession',
-      'inventory.ReceivingApi.receiveItemsIntoStaging',
-      'inventory.ReceivingApi.getReceivingSession',
+      'inventory.ASNApi.createAsn',
+      'inventory.ASNApi.createGoodsReceipt',
+      'inventory.ASNApi.getGoodsReceipt',
+      'inventory.PutawayApi.generatePutawayTasks',
+      'inventory.PutawayApi.listPutawayTasks',
+      'inventory.PutawayApi.claimPutawayTask',
+      'inventory.PutawayExecutionApi.executePutaway',
+      'inventory.PutawayQueueApi.completePutawayTask',
       'inventory.PutawayQueueApi.listPutawayQueue',
-      'inventory.WorkorderQueueApi.listWorkorderPicksQueue',
-      'inventory.InventoryStockApi.getStockStatusCounts',
-      'inventory.BackordersApi.listBackorders',
+      'inventory.InventoryStockApi.listStock',
     ],
     expect: [
       { kind: 'call', operation: 'order.PurchaseOrdersApi.listPurchaseOrders' },
-      { kind: 'call', operation: 'inventory.PutawayQueueApi.listPutawayQueue' },
-      { kind: 'calls', min: 5 },
+      { kind: 'calls', min: 3 },
     ],
+    limits: { maxSteps: 50, maxCalls: 55 },
   },
   {
     id: 'invoice-and-payment',
@@ -179,32 +225,33 @@ const weekly: ScenarioInput[] = [
   {
     id: 'weekly-purchasing',
     perSite: true,
-    title: 'Weekly stock order',
+    title: 'Weekly purchasing review',
     cadence: 'weekly',
     weekday: 1,
     at: '09:00',
     persona: 'parts',
     kind: 'operations',
     goal:
-      'Place the weekly stock order. Review replenishment needs and purchase suggestions, the purchase shortfalls, and the ' +
-      'vendors you can order from. Raise one purchase order to an approved vendor for one or two products that are below their ' +
-      'stocking level, then read it back and check its supplier availability. Do not transmit it.',
+      'Review the week\'s purchasing for this location. Summarize the purchase orders, then list the ones shipping here ' +
+      'and read any that have been open longest: for each, check its supplier availability and its transmission events, ' +
+      'and whether it has been received. Check the backorders and the purchase shortfalls. If a purchase order was fully ' +
+      'received more than a day ago and is still open, close it. Report anything ordered more than a week ago that has ' +
+      'not arrived.',
     operations: [
-      'inventory.ReplenishmentApi.listReplenishmentNeeds',
-      'inventory.ReplenishmentApi.listReplenishmentSuggestions',
-      'inventory.PurchaseSuggestionsApi.listPurchaseSuggestions',
-      'inventory.PurchaseShortfallsApi.listPurchaseShortfalls',
-      'inventory.StockingLevelsApi.listStockingLevels',
-      'order.PurchaseOrdersApi.listPurchaseOrderVendors',
-      'supplier.SupplierVendorsApi.listSupplierVendors',
-      'order.PurchaseOrdersApi.createPurchaseOrder',
+      'order.PurchaseOrdersApi.summarizePurchaseOrders',
+      'order.PurchaseOrdersApi.listPurchaseOrders',
       'order.PurchaseOrdersApi.getPurchaseOrder',
       'order.PurchaseOrdersApi.getPurchaseOrderSupplierAvailability',
+      'order.PurchaseOrdersApi.listPurchaseOrderTransmissionEvents',
+      'order.PurchaseOrdersApi.closePurchaseOrder',
+      'inventory.BackordersApi.listBackorders',
+      'inventory.PurchaseShortfallsApi.listPurchaseShortfalls',
+      'inventory.ReplenishmentApi.listReplenishmentPolicies',
     ],
     expect: [
-      { kind: 'call', operation: 'inventory.PurchaseSuggestionsApi.listPurchaseSuggestions' },
-      { kind: 'call', operation: 'order.PurchaseOrdersApi.listPurchaseOrderVendors' },
-      { kind: 'call', operation: 'order.PurchaseOrdersApi.createPurchaseOrder' },
+      { kind: 'call', operation: 'order.PurchaseOrdersApi.summarizePurchaseOrders' },
+      { kind: 'call', operation: 'order.PurchaseOrdersApi.listPurchaseOrders' },
+      { kind: 'call', operation: 'inventory.BackordersApi.listBackorders' },
     ],
   },
   {

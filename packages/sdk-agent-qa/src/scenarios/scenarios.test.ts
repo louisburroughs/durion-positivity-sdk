@@ -12,6 +12,8 @@ const DAY: DayPlanOptions = {
   newCustomerRatio: 0.3,
   commercialRatio: 0.3,
   newVehicleRatio: 0.2,
+  stockPartsRatio: 0.45,
+  specialOrderRatio: 0.2,
   openTime: '08:00',
   closeTime: '17:30',
   seed: 0,
@@ -60,13 +62,35 @@ describe('scenario library', () => {
 
   it('runs at every site the routines every shop does for itself, and once the ones that belong to the tenant', () => {
     const perSite = SCENARIOS.filter((scenario) => scenario.perSite).map((scenario) => scenario.id);
-    expect(perSite).toEqual(expect.arrayContaining(['open-shop', 'parts-receiving', 'close-shop', 'weekly-cycle-count']));
+    expect(perSite).toEqual(expect.arrayContaining(['open-shop', 'stock-order', 'receive-delivery', 'close-shop', 'weekly-cycle-count']));
     for (const id of ['invoice-and-payment', 'weekly-ap-run', 'monthly-period-close', 'monthly-financial-statements']) {
       expect([id, perSite.includes(id)]).toEqual([id, false]);
     }
     for (const scenario of SCENARIOS.filter((entry) => entry.perSite)) {
       expect([scenario.id, /one site|[Pp]ick (one|an active)/.test(scenario.goal)]).toEqual([scenario.id, false]);
     }
+  });
+
+  it('orders replenishment stock and receives it, at every site, every day', () => {
+    const order = SCENARIOS.find((scenario) => scenario.id === 'stock-order');
+    const receive = SCENARIOS.find((scenario) => scenario.id === 'receive-delivery');
+    expect(order).toMatchObject({ cadence: 'daily', perSite: true, persona: 'parts' });
+    expect(receive).toMatchObject({ cadence: 'daily', perSite: true, persona: 'parts' });
+    // The order is approved, or there would be nothing for the delivery to be received against.
+    expect(order?.operations).toEqual(
+      expect.arrayContaining(['order.PurchaseOrdersApi.createPurchaseOrder', 'order.PurchaseOrdersApi.approvePurchaseOrder']),
+    );
+    expect(order?.expect).toContainEqual({ kind: 'call', operation: 'order.PurchaseOrdersApi.approvePurchaseOrder', outcome: 'any' });
+    expect(receive?.operations).toEqual(
+      expect.arrayContaining([
+        'inventory.ASNApi.createAsn',
+        'inventory.ASNApi.createGoodsReceipt',
+        'inventory.PutawayApi.generatePutawayTasks',
+        'inventory.PutawayApi.claimPutawayTask',
+      ]),
+    );
+    // Ordered in the morning, delivered after lunch.
+    expect((order?.at ?? '') < (receive?.at ?? '')).toBe(true);
   });
 
   it('pins a destructive operation only where that is the point of the scenario', () => {

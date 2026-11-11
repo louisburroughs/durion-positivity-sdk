@@ -296,7 +296,7 @@ describe('monthly coverage', () => {
 
 describe('a customer visit', () => {
   const SITE = { id: 'loc-main', code: 'MAIN', name: 'Main Street', slug: 'main', positions: 5 };
-  const DAY: DayPlanOptions = { visitsMin: 1, visitsMax: 1, tenantMax: 100, newCustomerRatio: 0, commercialRatio: 0, newVehicleRatio: 0, openTime: '08:00', closeTime: '17:30', seed: 0 };
+  const DAY: DayPlanOptions = { visitsMin: 1, visitsMax: 1, tenantMax: 100, newCustomerRatio: 0, commercialRatio: 0, newVehicleRatio: 0, stockPartsRatio: 0, specialOrderRatio: 0, openTime: '08:00', closeTime: '17:30', seed: 0 };
   /** A seed whose single visit on the 10th is a service job with the given outcome. */
   const seedFor = (disposition: string): number => {
     for (let seed = 0; seed < 500; seed += 1) {
@@ -313,6 +313,8 @@ describe('a customer visit', () => {
     QA_NEW_CUSTOMER_RATIO: '0',
     QA_COMMERCIAL_RATIO: '0',
     QA_NEW_VEHICLE_RATIO: '0',
+    QA_STOCK_PARTS_RATIO: '0',
+    QA_SPECIAL_ORDER_RATIO: '0',
     QA_SEED: String(seed),
     QA_MAX_LATENESS_MINUTES: '900',
   });

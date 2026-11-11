@@ -114,6 +114,20 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
     expect.push({ kind: 'call', operation: 'vehicle-inventory.VehicleRegistryAPIApi.createVehicle' });
   }
 
+  let partsLine = '';
+  if (visit.parts === 'stock') {
+    operations.push('inventory.InventoryStockApi.listStock');
+    partsLine =
+      ' The job also needs a part the shop keeps on the shelf: look at the stock at this location, choose a product that ' +
+      'fits the concern (the closest match is fine) and is on hand, and add it as a part line with a quantity of 1 or 2.';
+  } else if (visit.parts === 'special-order') {
+    operations.push('catalog.ProductsAPIApi.searchCatalogProducts', 'inventory.InventoryAvailabilityApi.getAvailabilityByProduct');
+    partsLine =
+      ' The job also needs a part the shop does not keep in stock: search the product catalog for a part that fits the ' +
+      'concern, check its availability, and pick one with nothing on hand at this location. Add it as a part line ' +
+      '(quantity 1 or 2) and tell the customer it has to be ordered in and should arrive later today.';
+  }
+
   let arrival = 'The customer has walked in without an appointment.';
   if (visit.arrival === 'appointment') {
     operations.push('shop-manager.AppointmentsAPIApi.listAppointments', 'workorder.EstimatesFromAppointmentsApi.createEstimateFromAppointment');
@@ -152,14 +166,17 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
       `What they tell you: "${visit.concern}"`,
       `${siteBrief(visit)} Write a draft estimate for this customer, vehicle and location (currency USD), and add ` +
         'one to three lines that fit the concern: search the service catalog for matching services and add them as labor lines ' +
-        'with a sensible price. Calculate the totals and submit the estimate for approval.',
+        `with a sensible price.${partsLine} Calculate the totals and submit the estimate for approval.`,
       decision,
       REPLICATION,
-      REMEMBER('partyId, customerName, customerType, vehicleId, vehicleDescription, estimateId, and workorderId once the estimate is promoted'),
+      REMEMBER(
+        'partyId, customerName, customerType, vehicleId, vehicleDescription, estimateId, workorderId once the estimate is promoted' +
+          (visit.parts === 'none' ? '' : ', and partProductId and partDescription for the part line'),
+      ),
     ].join('\n\n') + known(memory),
     operations,
     expect,
-    limits: { maxSteps: 45, maxCalls: 50 },
+    limits: { maxSteps: 50, maxCalls: 55 },
   });
 }
 
@@ -188,6 +205,25 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
       'concern). Before completing the job, raise a change request on the workorder for the additional work; the customer ' +
       'approves it by phone, so approve the change request.\n\n';
   }
+  let partsWork = '';
+  if (visit.parts !== 'none') {
+    operations.push(
+      'workorder.WorkorderPickFacadeApi.getWorkorderPickList',
+      'workorder.WorkorderPickFacadeApi.getPickTasks',
+      'workorder.WorkorderPickFacadeApi.confirmPickLine',
+      'workorder.WorkorderPickFacadeApi.completePickTask',
+      'workorder.WorkorderPartsUsageApi.issueParts',
+    );
+    partsWork =
+      visit.parts === 'special-order'
+        ? 'This job was waiting on a part ordered in for it (see partsStatus below). If the part has been received, get it ' +
+          "to the technician: read the workorder's pick list and pick tasks, confirm the pick, and issue the part to the job. " +
+          'If the part has not arrived, add a note saying the job is waiting for parts, remember workStatus as "waiting for ' +
+          'parts", and finish without completing the workorder.\n\n'
+        : "The job uses a part from the shop's stock: read the workorder's pick list and pick tasks (they can take a minute " +
+          'to appear after the workorder is created — wait and look again if empty), confirm the pick, and issue the part ' +
+          'to the job before completing the part line.\n\n';
+  }
   const technician = context.roleMode
     ? ' The technician starts the workorder and clocks labor: make those calls with sdk_call and persona "tech".'
     : '';
@@ -211,7 +247,7 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
         'workStatus as "waiting for a bay", and finish; do not take a bay away from another job.',
       `Once it has a technician and a position, start the workorder and open a labor session.${technician} Add a note ` +
         'describing what was found and done.',
-      `${extra}Then finish the job: stop the labor session, complete each service and part line, and complete the workorder ` +
+      `${partsWork}${extra}Then finish the job: stop the labor session, complete each service and part line, and complete the workorder ` +
         'with completion notes. Completing it frees the bay.',
       REPLICATION,
       REMEMBER('workStatus ("completed", or why not), and technicianName'),
@@ -221,7 +257,89 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
       { kind: 'call', operation: 'workorder.WorkorderDetailApi.getWorkorderDetail' },
       { kind: 'call', operation: 'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard' },
     ],
-    limits: { maxSteps: 50, maxCalls: 60 },
+    limits: { maxSteps: 60, maxCalls: 70 },
+  });
+}
+
+/** Buying the part a job needs and the shop does not stock. */
+function orderPart(visit: Visit, stage: VisitStage, memory: VisitMemory, context: StageContext): Scenario {
+  const approval = context.roleMode
+    ? 'A purchase order is approved by a manager, not by the person who raised it: make the approval call with sdk_call and persona "manager".'
+    : 'Then approve the purchase order.';
+  return scenarioSchema.parse({
+    id: stage.id,
+    title: `${visit.id} — ordering the part for the job`,
+    cadence: 'daily',
+    at: stage.at,
+    persona: 'parts' satisfies Persona,
+    kind: 'operations',
+    goal: [
+      `You are the parts clerk. ${siteBrief(visit)}`,
+      "A workorder has been opened that needs a part the shop does not stock (see below). Read the workorder's detail to " +
+        'find the part line and note its line id, and look at its pick tasks and any backorder for the part: the shortage ' +
+        'usually shows there within a minute or two.',
+      'Buy the part: choose a vendor the shop can order from, and raise a purchase order for the part line\'s product and ' +
+        "quantity, shipping to this location, with a sensible unit cost and a comment naming the workorder. " + approval,
+      REPLICATION,
+      REMEMBER('purchaseOrderId, vendorId, partLineId (the workorder\'s part line id), partQuantity, and partsStatus as "ordered"'),
+    ].join('\n\n') + known(memory),
+    operations: [
+      'workorder.WorkorderDetailApi.getWorkorderDetail',
+      'workorder.WorkorderPickFacadeApi.getPickTasks',
+      'inventory.BackordersApi.listBackorders',
+      'inventory.InventoryAvailabilityApi.getAvailabilityByProduct',
+      'order.PurchaseOrdersApi.listPurchaseOrderVendors',
+      'supplier.SupplierVendorsApi.listSupplierVendors',
+      'order.PurchaseOrdersApi.createPurchaseOrder',
+      'order.PurchaseOrdersApi.approvePurchaseOrder',
+      'order.PurchaseOrdersApi.getPurchaseOrder',
+    ],
+    expect: [
+      { kind: 'call', operation: 'workorder.WorkorderDetailApi.getWorkorderDetail' },
+      { kind: 'call', operation: 'order.PurchaseOrdersApi.createPurchaseOrder' },
+    ],
+    limits: { maxSteps: 40, maxCalls: 45 },
+  });
+}
+
+/** The delivery for one job: received against the workorder that is waiting for it. */
+function receivePart(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
+  return scenarioSchema.parse({
+    id: stage.id,
+    title: `${visit.id} — the part for the job arrives`,
+    cadence: 'daily',
+    at: stage.at,
+    persona: 'parts' satisfies Persona,
+    kind: 'operations',
+    goal: [
+      `You are the parts clerk. ${siteBrief(visit)}`,
+      "The vendor's driver has arrived with the part ordered for a waiting job (purchase order and workorder below). Read " +
+        'the purchase order to confirm it is approved and see its line.',
+      'Receive it against the job, not into general stock: open a receiving session for the purchase order (its lines can ' +
+        'take a minute to become available just after approval — if told so, wait and try again), then cross-dock the ' +
+        "session line to the workorder's part line for the quantity ordered.",
+      'If the cross-dock is refused, do not force it: record the vendor\'s ship notice (an ASN for the purchase order) and ' +
+        'post a goods receipt for the line into this location instead, so the part is at least in the building, and say in ' +
+        'your findings what the cross-dock refusal was.',
+      'Finish by reading the workorder to see whether it still shows the part as short.',
+      REMEMBER('partsStatus ("received", or what went wrong) and receivingSessionId'),
+    ].join('\n\n') + known(memory),
+    operations: [
+      'order.PurchaseOrdersApi.getPurchaseOrder',
+      'inventory.ReceivingApi.createReceivingSession',
+      'inventory.ReceivingApi.getReceivingSession',
+      'inventory.ReceivingApi.crossDockReceivingLine',
+      'inventory.ASNApi.createAsn',
+      'inventory.ASNApi.createGoodsReceipt',
+      'inventory.InventoryAvailabilityApi.getAvailabilityByProduct',
+      'workorder.WorkorderDetailApi.getWorkorderDetail',
+      'workorder.WorkorderPickFacadeApi.getPickTasks',
+    ],
+    expect: [
+      { kind: 'call', operation: 'order.PurchaseOrdersApi.getPurchaseOrder' },
+      { kind: 'call', operation: 'inventory.ReceivingApi.createReceivingSession' },
+    ],
+    limits: { maxSteps: 40, maxCalls: 45 },
   });
 }
 
@@ -359,8 +477,11 @@ function phoneCall(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenar
 
 /** What a stage needs from earlier stages, and why it is skipped without it. */
 export function missingPrerequisite(stage: VisitStage, memory: VisitMemory): string | undefined {
-  if ((stage.name === 'work' || stage.name === 'checkout') && !memory['workorderId']) {
+  if (stage.name !== 'intake' && stage.name !== 'sale' && stage.name !== 'call' && !memory['workorderId']) {
     return 'the intake did not produce a workorder (the estimate was declined, or the intake did not complete)';
+  }
+  if (stage.name === 'receive' && !memory['purchaseOrderId']) {
+    return 'no purchase order was raised for the part, so there is no delivery to receive';
   }
   return undefined;
 }
@@ -369,6 +490,10 @@ export function stageScenario(visit: Visit, stage: VisitStage, memory: VisitMemo
   switch (stage.name) {
     case 'intake':
       return intake(visit, stage, memory);
+    case 'order':
+      return orderPart(visit, stage, memory, context);
+    case 'receive':
+      return receivePart(visit, stage, memory);
     case 'work':
       return work(visit, stage, memory, context);
     case 'checkout':
@@ -404,6 +529,8 @@ const HARVEST: Record<string, { fact: string; keys: string[] }> = {
   'workorder.EstimateAPIApi.promoteEstimate': { fact: 'workorderId', keys: ['id', 'workorderId'] },
   'workorder.WorkOrderAPIApi.generateWorkorderInvoice': { fact: 'invoiceId', keys: ['invoiceId'] },
   'order.SalesOrdersApi.createCart': { fact: 'orderId', keys: ['orderId', 'id'] },
+  'order.PurchaseOrdersApi.createPurchaseOrder': { fact: 'purchaseOrderId', keys: ['purchaseOrderId', 'id'] },
+  'inventory.ReceivingApi.createReceivingSession': { fact: 'receivingSessionId', keys: ['sessionId', 'id'] },
   'shop-manager.AppointmentsAPIApi.createAppointment': { fact: 'appointmentId', keys: ['appointmentId', 'id'] },
 };
 
@@ -418,6 +545,9 @@ export function harvestFacts(operation: Pick<Operation, 'id'>, outcome: Pick<Cal
   }
   if (operation.id === 'workorder.WorkOrderAPIApi.completeWorkorder') {
     memory['workStatus'] = 'completed';
+  }
+  if (operation.id === 'inventory.ReceivingApi.crossDockReceivingLine') {
+    memory['partsStatus'] = 'received';
   }
   const rule = HARVEST[operation.id];
   const value = rule ? idOf(outcome.body, ...rule.keys) : undefined;

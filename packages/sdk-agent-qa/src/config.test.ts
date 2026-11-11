@@ -15,7 +15,7 @@ describe('loadQaConfig', () => {
       maxPerTick: 3,
       concurrency: 3,
       minGapMinutes: 2,
-      day: { visitsMin: 4, visitsMax: 8, tenantMax: 60, newCustomerRatio: 0.3, commercialRatio: 0.3, newVehicleRatio: 0.2, openTime: '08:00', closeTime: '17:30', seed: 0 },
+      day: { visitsMin: 4, visitsMax: 8, tenantMax: 60, newCustomerRatio: 0.3, commercialRatio: 0.3, newVehicleRatio: 0.2, stockPartsRatio: 0.45, specialOrderRatio: 0.2, openTime: '08:00', closeTime: '17:30', seed: 0 },
       stateDir: path.join(REPO_ROOT, '.agent-qa'),
     });
   });

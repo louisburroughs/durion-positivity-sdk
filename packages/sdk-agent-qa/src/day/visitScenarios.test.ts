@@ -10,6 +10,8 @@ const OPTIONS: DayPlanOptions = {
   newCustomerRatio: 0.4,
   commercialRatio: 0.4,
   newVehicleRatio: 0.3,
+  stockPartsRatio: 0.45,
+  specialOrderRatio: 0.2,
   openTime: '08:00',
   closeTime: '17:30',
   seed: 0,
@@ -25,6 +27,14 @@ const find = (test: (visit: Visit) => boolean): Visit => {
 };
 const scenarioFor = (visit: Visit, stage: number, memory: Record<string, string> = {}, roleMode = false) =>
   stageScenario(visit, visit.stages[stage], memory, { roleMode });
+/** The stage with this name, whatever position it has in the visit. */
+const stageNamed = (visit: Visit, name: string, memory: Record<string, string> = {}, roleMode = false) => {
+  const stage = visit.stages.find((entry) => entry.name === name);
+  if (!stage) {
+    throw new Error(`${visit.id} has no ${name} stage`);
+  }
+  return stageScenario(visit, stage, memory, { roleMode });
+};
 
 describe('stageScenario', () => {
   it('names only operations the generated clients have, none of them destructive, for every kind of visit', () => {
@@ -33,7 +43,7 @@ describe('stageScenario', () => {
       for (const stage of visit.stages) {
         const scenario = stageScenario(visit, stage, {}, { roleMode: true });
         expect(scenario.id).toBe(stage.id);
-        expect(scenario.operations.length).toBeLessThanOrEqual(18);
+        expect(scenario.operations.length).toBeLessThanOrEqual(21);
         for (const id of scenario.operations) {
           const operation = catalog.byId.get(id);
           if (!operation) {
@@ -115,7 +125,7 @@ describe('stageScenario', () => {
   it('hands later stages what earlier ones established', () => {
     const visit = find((entry) => entry.kind === 'service' && entry.disposition === 'approves');
     const memory = { partyId: 'p-1', workorderId: 'w-7', customerName: 'Dana Ortiz' };
-    const work = scenarioFor(visit, 1, memory);
+    const work = stageNamed(visit, 'work', memory);
     expect(work.persona).toBe('manager');
     expect(work.goal).toContain('- workorderId: w-7');
     expect(work.goal).toContain('- customerName: Dana Ortiz');
@@ -123,7 +133,7 @@ describe('stageScenario', () => {
   });
 
   it('raises a change request when more work is found on the lift', () => {
-    const work = scenarioFor(find((entry) => entry.disposition === 'approves-then-adds-work' && entry.kind === 'service'), 1);
+    const work = stageNamed(find((entry) => entry.disposition === 'approves-then-adds-work' && entry.kind === 'service'), 'work');
     expect(work.operations).toEqual(
       expect.arrayContaining(['workorder.ChangeRequestAPIApi.createChangeRequest', 'workorder.ChangeRequestAPIApi.approveChangeRequest']),
     );
@@ -132,15 +142,91 @@ describe('stageScenario', () => {
 
   it('tells the manager to act as the technician only when the technician has a login of their own', () => {
     const visit = find((entry) => entry.kind === 'service' && entry.disposition === 'approves');
-    expect(scenarioFor(visit, 1, {}, true).goal).toMatch(/persona "tech"/);
-    expect(scenarioFor(visit, 1, {}, false).goal).not.toMatch(/persona "tech"/);
+    expect(stageNamed(visit, 'work', {}, true).goal).toMatch(/persona "tech"/);
+    expect(stageNamed(visit, 'work', {}, false).goal).not.toMatch(/persona "tech"/);
   });
 
   it('takes cash from a customer who pays at pickup and bills an account customer instead', () => {
-    const cash = scenarioFor(find((entry) => entry.kind === 'service' && entry.payment === 'cash' && entry.stages.length === 3), 2);
+    const cash = stageNamed(find((entry) => entry.kind === 'service' && entry.payment === 'cash' && entry.stages.length >= 3), 'checkout');
     expect(cash.goal).toMatch(/record a cash payment/);
-    const account = scenarioFor(find((entry) => entry.kind === 'service' && entry.payment === 'on-account' && entry.stages.length === 3), 2);
+    const account = stageNamed(find((entry) => entry.kind === 'service' && entry.payment === 'on-account' && entry.stages.length >= 3), 'checkout');
     expect(account.goal).toMatch(/billed on account: do not take payment/);
+  });
+
+  it('puts a stock part on the estimate and has it picked and issued on the job', () => {
+    const visit = find((entry) => entry.parts === 'stock' && entry.disposition === 'approves');
+    const intake = stageNamed(visit, 'intake');
+    expect(intake.goal).toMatch(/a part the shop keeps on the shelf/);
+    expect(intake.operations).toContain('inventory.InventoryStockApi.listStock');
+    const work = stageNamed(visit, 'work', { workorderId: 'w-1' });
+    expect(work.goal).toMatch(/uses a part from the shop's stock/);
+    expect(work.operations).toEqual(
+      expect.arrayContaining(['workorder.WorkorderPickFacadeApi.getPickTasks', 'workorder.WorkorderPartsUsageApi.issueParts']),
+    );
+    expect(visit.stages.map((stage) => stage.name)).toEqual(['intake', 'work', 'checkout']);
+  });
+
+  it('leaves a labor-only job free of parts work', () => {
+    const visit = find((entry) => entry.kind === 'service' && entry.parts === 'none' && entry.disposition === 'approves');
+    expect(stageNamed(visit, 'intake').goal).not.toMatch(/part line/);
+    expect(stageNamed(visit, 'work').operations).not.toContain('workorder.WorkorderPartsUsageApi.issueParts');
+  });
+
+  describe('a job that needs a part ordered in', () => {
+    const visit = find((entry) => entry.parts === 'special-order' && entry.disposition === 'approves');
+    const memory = { workorderId: 'w-1', partProductId: 'prod-9', purchaseOrderId: 'po-1', partLineId: 'line-3' };
+
+    it('puts an unstocked part on the estimate', () => {
+      const intake = stageNamed(visit, 'intake');
+      expect(intake.goal).toMatch(/a part the shop does not keep in stock/);
+      expect(intake.goal).toMatch(/nothing on hand at this location/);
+      expect(intake.operations).toEqual(
+        expect.arrayContaining(['catalog.ProductsAPIApi.searchCatalogProducts', 'inventory.InventoryAvailabilityApi.getAvailabilityByProduct']),
+      );
+    });
+
+    it('has the parts clerk raise a purchase order for the job and get it approved', () => {
+      const order = stageNamed(visit, 'order', memory);
+      expect(order.persona).toBe('parts');
+      expect(order.goal).toContain('- workorderId: w-1');
+      expect(order.goal).toMatch(/a comment naming the workorder/);
+      expect(order.operations).toEqual(
+        expect.arrayContaining(['order.PurchaseOrdersApi.createPurchaseOrder', 'order.PurchaseOrdersApi.approvePurchaseOrder']),
+      );
+      expect(order.expect).toContainEqual({ kind: 'call', operation: 'order.PurchaseOrdersApi.createPurchaseOrder', outcome: 'any' });
+      // Separation of duties only when there is a second login to hold the other duty.
+      expect(stageNamed(visit, 'order', memory, true).goal).toMatch(/persona "manager"/);
+      expect(order.goal).not.toMatch(/persona "manager"/);
+    });
+
+    it('receives the delivery against the workorder, with a fallback into stock', () => {
+      const receive = stageNamed(visit, 'receive', memory);
+      expect(receive.persona).toBe('parts');
+      expect(receive.goal).toContain('- purchaseOrderId: po-1');
+      expect(receive.goal).toMatch(/Receive it against the job, not into general stock/);
+      expect(receive.operations).toEqual(
+        expect.arrayContaining([
+          'inventory.ReceivingApi.createReceivingSession',
+          'inventory.ReceivingApi.crossDockReceivingLine',
+          'inventory.ASNApi.createGoodsReceipt',
+        ]),
+      );
+    });
+
+    it('finishes the job only once the part is there', () => {
+      const work = stageNamed(visit, 'work', { ...memory, partsStatus: 'received' });
+      expect(work.goal).toMatch(/waiting on a part ordered in/);
+      expect(work.goal).toContain('- partsStatus: received');
+      expect(work.goal).toMatch(/If the part has not arrived[\s\S]*waiting for parts/);
+    });
+
+    it('holds each stage back until what it depends on exists', () => {
+      const stage = (name: string) => visit.stages.find((entry) => entry.name === name)!;
+      expect(missingPrerequisite(stage('order'), {})).toMatch(/did not produce a workorder/);
+      expect(missingPrerequisite(stage('order'), { workorderId: 'w-1' })).toBeUndefined();
+      expect(missingPrerequisite(stage('receive'), { workorderId: 'w-1' })).toMatch(/no purchase order was raised/);
+      expect(missingPrerequisite(stage('receive'), memory)).toBeUndefined();
+    });
   });
 
   it('covers counter sales and phone bookings', () => {
@@ -152,7 +238,7 @@ describe('stageScenario', () => {
 });
 
 describe('missingPrerequisite', () => {
-  const visit = find((entry) => entry.kind === 'service' && entry.stages.length === 3);
+  const visit = find((entry) => entry.kind === 'service' && entry.stages.length === 3 && entry.parts !== 'special-order');
 
   it('holds back the work and the checkout until there is a workorder', () => {
     expect(missingPrerequisite(visit.stages[0], {})).toBeUndefined();
@@ -171,7 +257,20 @@ describe('harvestFacts', () => {
     harvestFacts({ id: 'workorder.EstimateAPIApi.promoteEstimate' }, { kind: 'success', body: { id: 'w-1' } }, memory);
     harvestFacts({ id: 'workorder.WorkOrderAPIApi.completeWorkorder' }, { kind: 'success', body: {} }, memory);
     harvestFacts({ id: 'workorder.WorkOrderAPIApi.generateWorkorderInvoice' }, { kind: 'success', body: { invoiceId: 'i-1' } }, memory);
-    expect(memory).toEqual({ partyId: 'p-1', vehicleId: 'v-1', estimateId: 'e-1', workorderId: 'w-1', workStatus: 'completed', invoiceId: 'i-1' });
+    harvestFacts({ id: 'order.PurchaseOrdersApi.createPurchaseOrder' }, { kind: 'success', body: { purchaseOrderId: 'po-1' } }, memory);
+    harvestFacts({ id: 'inventory.ReceivingApi.createReceivingSession' }, { kind: 'success', body: { sessionId: 's-1' } }, memory);
+    harvestFacts({ id: 'inventory.ReceivingApi.crossDockReceivingLine' }, { kind: 'success', body: {} }, memory);
+    expect(memory).toEqual({
+      partyId: 'p-1',
+      vehicleId: 'v-1',
+      estimateId: 'e-1',
+      workorderId: 'w-1',
+      workStatus: 'completed',
+      invoiceId: 'i-1',
+      purchaseOrderId: 'po-1',
+      receivingSessionId: 's-1',
+      partsStatus: 'received',
+    });
   });
 
   it('ignores failures, responses without the id, and operations it has no rule for', () => {
