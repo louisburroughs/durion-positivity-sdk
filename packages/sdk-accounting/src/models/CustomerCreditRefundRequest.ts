@@ -31,12 +31,6 @@ export interface CustomerCreditRefundRequest {
      * @memberof CustomerCreditRefundRequest
      */
     note?: string;
-    /**
-     * Caller-supplied idempotency key. Replaying the same key returns the original refund instead of relieving the credit liability twice
-     * @type {string}
-     * @memberof CustomerCreditRefundRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -44,7 +38,6 @@ export interface CustomerCreditRefundRequest {
  */
 export function instanceOfCustomerCreditRefundRequest(value: object): boolean {
     if (!('amount' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -60,7 +53,6 @@ export function CustomerCreditRefundRequestFromJSONTyped(json: any, ignoreDiscri
         
         'amount': json['amount'],
         'note': json['note'] == null ? undefined : json['note'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -72,7 +64,6 @@ export function CustomerCreditRefundRequestToJSON(value?: CustomerCreditRefundRe
         
         'amount': value['amount'],
         'note': value['note'],
-        'requestId': value['requestId'],
     };
 }
 

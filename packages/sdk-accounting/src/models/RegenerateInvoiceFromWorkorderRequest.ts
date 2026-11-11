@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface RegenerateInvoiceFromWorkorderRequest {
     /**
-     * Optional idempotency key to safely retry regeneration
-     * @type {string}
-     * @memberof RegenerateInvoiceFromWorkorderRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Identifier of the workorder to regenerate the invoice from
      * @type {string}
      * @memberof RegenerateInvoiceFromWorkorderRequest
@@ -51,7 +45,6 @@ export function RegenerateInvoiceFromWorkorderRequestFromJSONTyped(json: any, ig
     }
     return {
         
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'workorderId': json['workorderId'],
     };
 }
@@ -62,7 +55,6 @@ export function RegenerateInvoiceFromWorkorderRequestToJSON(value?: RegenerateIn
     }
     return {
         
-        'idempotencyKey': value['idempotencyKey'],
         'workorderId': value['workorderId'],
     };
 }

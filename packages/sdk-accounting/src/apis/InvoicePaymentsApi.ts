@@ -44,6 +44,7 @@ export interface GetInvoiceStatusRequest {
 
 export interface RegenerateInvoiceFromWorkorderOperationRequest {
     regenerateInvoiceFromWorkorderRequest: RegenerateInvoiceFromWorkorderRequest;
+    idempotencyKey?: string;
 }
 
 /**
@@ -138,7 +139,7 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Requests regeneration of an invoice from a completed workorder, either synchronously or via the asynchronous command path. Use this tool when an invoice must be rebuilt from its source workorder; do not use getInvoiceStatus, which only reads the current payment status. Preconditions: the workorder must exist and be in COMPLETED state. Required inputs: workorderId (UUID); idempotencyKey is optional and de-duplicates repeated regeneration commands. Emits an ACCOUNTING_INVOICE_REGENERATE event; on the async path the call returns 202 with status PENDING and the invoice arrives later via invoice.events.v1. Returns 202 when the command is accepted asynchronously, 404 when the workorder is not found, 409 when it is not COMPLETED, and 503 when the workorder service is unavailable. 
+     * Requests regeneration of an invoice from a completed workorder, either synchronously or via the asynchronous command path. Use this tool when an invoice must be rebuilt from its source workorder; do not use getInvoiceStatus, which only reads the current payment status. Preconditions: the workorder must exist and be in COMPLETED state. Required inputs: workorderId (UUID) in the body; the Idempotency-Key header (a UUID) is optional and de-duplicates repeated regeneration commands. Emits an ACCOUNTING_INVOICE_REGENERATE event; on the async path the call returns 202 with status PENDING and the invoice arrives later via invoice.events.v1. A repeat carrying the same Idempotency-Key, body and caller publishes nothing again, emits no second event and answers the original 202 PENDING body with Idempotency-Replayed: true: an asynchronous 202 is a success and is replayed like any other answer (ADR-0075 §5), so a client polls the invoice or the workorder for the outcome instead of resending the key (an answer above the 64 KiB cap is not stored, and its replay renders the request in its current state). Without a key the request is not de-duplicated, and every such request answers and emits as a new one. Returns 202 when the command is accepted asynchronously, 400 VALIDATION_ERROR when the Idempotency-Key is not a UUID, 404 when the workorder is not found, 409 IDEMPOTENCY_CONFLICT when the key was used with another workorder or by another caller, 409 when the workorder is not COMPLETED, and 503 when the workorder service is unavailable. 
      * Regenerate Invoice From Workorder
      */
     async regenerateInvoiceFromWorkorderRaw(requestParameters: RegenerateInvoiceFromWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceGenerationResponse>> {
@@ -154,6 +155,10 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -175,7 +180,7 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Requests regeneration of an invoice from a completed workorder, either synchronously or via the asynchronous command path. Use this tool when an invoice must be rebuilt from its source workorder; do not use getInvoiceStatus, which only reads the current payment status. Preconditions: the workorder must exist and be in COMPLETED state. Required inputs: workorderId (UUID); idempotencyKey is optional and de-duplicates repeated regeneration commands. Emits an ACCOUNTING_INVOICE_REGENERATE event; on the async path the call returns 202 with status PENDING and the invoice arrives later via invoice.events.v1. Returns 202 when the command is accepted asynchronously, 404 when the workorder is not found, 409 when it is not COMPLETED, and 503 when the workorder service is unavailable. 
+     * Requests regeneration of an invoice from a completed workorder, either synchronously or via the asynchronous command path. Use this tool when an invoice must be rebuilt from its source workorder; do not use getInvoiceStatus, which only reads the current payment status. Preconditions: the workorder must exist and be in COMPLETED state. Required inputs: workorderId (UUID) in the body; the Idempotency-Key header (a UUID) is optional and de-duplicates repeated regeneration commands. Emits an ACCOUNTING_INVOICE_REGENERATE event; on the async path the call returns 202 with status PENDING and the invoice arrives later via invoice.events.v1. A repeat carrying the same Idempotency-Key, body and caller publishes nothing again, emits no second event and answers the original 202 PENDING body with Idempotency-Replayed: true: an asynchronous 202 is a success and is replayed like any other answer (ADR-0075 §5), so a client polls the invoice or the workorder for the outcome instead of resending the key (an answer above the 64 KiB cap is not stored, and its replay renders the request in its current state). Without a key the request is not de-duplicated, and every such request answers and emits as a new one. Returns 202 when the command is accepted asynchronously, 400 VALIDATION_ERROR when the Idempotency-Key is not a UUID, 404 when the workorder is not found, 409 IDEMPOTENCY_CONFLICT when the key was used with another workorder or by another caller, 409 when the workorder is not COMPLETED, and 503 when the workorder service is unavailable. 
      * Regenerate Invoice From Workorder
      */
     async regenerateInvoiceFromWorkorder(requestParameters: RegenerateInvoiceFromWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceGenerationResponse> {

@@ -38,12 +38,6 @@ export interface RecordAPPaymentReturnRequest {
      */
     overrideJustification?: string;
     /**
-     * The caller's idempotency key (UUID): a replay with the same body answers the payment; a different body is 409 IDEMPOTENCY_CONFLICT
-     * @type {string}
-     * @memberof RecordAPPaymentReturnRequest
-     */
-    requestId: string;
-    /**
      * The date the bank or processor returned the charge; today when omitted. Not after today. The mirror entry is dated here when the period is open, else on the detection date
      * @type {Date}
      * @memberof RecordAPPaymentReturnRequest
@@ -56,7 +50,6 @@ export interface RecordAPPaymentReturnRequest {
  */
 export function instanceOfRecordAPPaymentReturnRequest(value: object): boolean {
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -73,7 +66,6 @@ export function RecordAPPaymentReturnRequestFromJSONTyped(json: any, ignoreDiscr
         'failureCode': json['failureCode'] == null ? undefined : json['failureCode'],
         'justification': json['justification'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
-        'requestId': json['requestId'],
         'returnDate': json['returnDate'] == null ? undefined : (new Date(json['returnDate'])),
     };
 }
@@ -87,7 +79,6 @@ export function RecordAPPaymentReturnRequestToJSON(value?: RecordAPPaymentReturn
         'failureCode': value['failureCode'],
         'justification': value['justification'],
         'overrideJustification': value['overrideJustification'],
-        'requestId': value['requestId'],
         'returnDate': value['returnDate'] == null ? undefined : ((value['returnDate']).toISOString().substring(0,10)),
     };
 }
