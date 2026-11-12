@@ -75,11 +75,35 @@ export interface WorkorderLaborEntryResponse {
      */
     lastAdjustment?: WorkorderLaborAdjustmentResponse;
     /**
+     * Whether the stop crossed a closed day at the workorder location or ran past closing, so a service advisor must review it. The entry is recorded and billed as usual; the flag lets genuine overtime be restored (#3319).
+     * @type {boolean}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    needsReview?: boolean;
+    /**
      * Session notes
      * @type {string}
      * @memberof WorkorderLaborEntryResponse
      */
     notes?: string;
+    /**
+     * The end the caller asked for when the location's calendar capped endTime at the closing time of the last open day (closed hours are not billed); null when nothing was capped (#3319).
+     * @type {Date}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    originalEndTime?: Date;
+    /**
+     * Server receipt instant, set only for an OFFLINE_REPLAY entry
+     * @type {Date}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    receivedAt?: Date;
+    /**
+     * How the entry arrived: LIVE when the server stamped it on receipt, OFFLINE_REPLAY when the technician app replayed work done offline (#3291).
+     * @type {string}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    source?: WorkorderLaborEntryResponseSourceEnum;
     /**
      * Labor session start time
      * @type {Date}
@@ -113,6 +137,16 @@ export interface WorkorderLaborEntryResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum WorkorderLaborEntryResponseSourceEnum {
+    Live = 'LIVE',
+    OfflineReplay = 'OFFLINE_REPLAY'
+}
+
+
+/**
  * Check if a given object implements the WorkorderLaborEntryResponse interface.
  */
 export function instanceOfWorkorderLaborEntryResponse(value: object): boolean {
@@ -140,7 +174,11 @@ export function WorkorderLaborEntryResponseFromJSONTyped(json: any, ignoreDiscri
         'hoursWorked': json['hoursWorked'] == null ? undefined : json['hoursWorked'],
         'id': json['id'],
         'lastAdjustment': json['lastAdjustment'] == null ? undefined : WorkorderLaborAdjustmentResponseFromJSON(json['lastAdjustment']),
+        'needsReview': json['needsReview'] == null ? undefined : json['needsReview'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'originalEndTime': json['originalEndTime'] == null ? undefined : (new Date(json['originalEndTime'])),
+        'receivedAt': json['receivedAt'] == null ? undefined : (new Date(json['receivedAt'])),
+        'source': json['source'] == null ? undefined : json['source'],
         'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
         'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
         'warnings': ((json['warnings'] as Array<any>).map(ResponseWarningFromJSON)),
@@ -162,7 +200,11 @@ export function WorkorderLaborEntryResponseToJSON(value?: WorkorderLaborEntryRes
         'hoursWorked': value['hoursWorked'],
         'id': value['id'],
         'lastAdjustment': WorkorderLaborAdjustmentResponseToJSON(value['lastAdjustment']),
+        'needsReview': value['needsReview'],
         'notes': value['notes'],
+        'originalEndTime': value['originalEndTime'] == null ? undefined : ((value['originalEndTime']).toISOString()),
+        'receivedAt': value['receivedAt'] == null ? undefined : ((value['receivedAt']).toISOString()),
+        'source': value['source'],
         'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
         'technicianId': value['technicianId'],
         'warnings': ((value['warnings'] as Array<any>).map(ResponseWarningToJSON)),

@@ -386,7 +386,7 @@ async function clockIn(admin: DomainClients, personIds: readonly string[]): Prom
     try {
       await closeOpenSession(admin, personId);
       const started = await call(`startWorkSession ${personId}`, () =>
-        admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
+        admin.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } }),
       );
       if (!readString(started, 'sessionId')) {
         throw new Error('startWorkSession returned no sessionId — the shift was not opened');
@@ -443,7 +443,7 @@ async function clockOut(admin: DomainClients, personIds: readonly string[]): Pro
  */
 async function closeOpenSession(admin: DomainClients, personId: string): Promise<void> {
   try {
-    await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+    await admin.people.workSessionsAPIApi.stopWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } });
   } catch (error) {
     if (!isHttpStatus(error, 404)) {
       throw error;

@@ -32,12 +32,6 @@ export interface PettyExpenseCategoryTaxRecoveryRequest {
      */
     recoverablePercent?: number;
     /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof PettyExpenseCategoryTaxRecoveryRequest
-     */
-    requestId: string;
-    /**
      * Whether the tax stated on this category's receipts is recovered
      * @type {boolean}
      * @memberof PettyExpenseCategoryTaxRecoveryRequest
@@ -56,7 +50,6 @@ export interface PettyExpenseCategoryTaxRecoveryRequest {
  */
 export function instanceOfPettyExpenseCategoryTaxRecoveryRequest(value: object): boolean {
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('taxRecoverable' in value)) return false;
     if (!('version' in value)) return false;
     return true;
@@ -74,7 +67,6 @@ export function PettyExpenseCategoryTaxRecoveryRequestFromJSONTyped(json: any, i
         
         'justification': json['justification'],
         'recoverablePercent': json['recoverablePercent'] == null ? undefined : json['recoverablePercent'],
-        'requestId': json['requestId'],
         'taxRecoverable': json['taxRecoverable'],
         'version': json['version'],
     };
@@ -88,7 +80,6 @@ export function PettyExpenseCategoryTaxRecoveryRequestToJSON(value?: PettyExpens
         
         'justification': value['justification'],
         'recoverablePercent': value['recoverablePercent'],
-        'requestId': value['requestId'],
         'taxRecoverable': value['taxRecoverable'],
         'version': value['version'],
     };

@@ -6,6 +6,7 @@ import { createInvoiceClient } from '@durion-sdk/invoice';
 import { createAccountingClient } from '@durion-sdk/accounting';
 import {
   AddEstimateItemRequestItemTypeEnum,
+  ApproveEstimateRequestApprovalMethodEnum,
   AssignServicePositionRequestResourceTypeEnum,
   createWorkorderClient,
 } from '@durion-sdk/workorder';
@@ -383,6 +384,7 @@ export class CustomerEventSimulator {
           await this.workorderClient.estimateAPIApi.approveEstimate({
             estimateId,
             approveEstimateRequest: {
+              approvalMethod: ApproveEstimateRequestApprovalMethodEnum.Signature,
               customerId: partyId,
               signatureData: this.random.base64(32),
               signerName: `${firstName} ${lastName}`,
@@ -475,7 +477,7 @@ export class CustomerEventSimulator {
         }
 
         try {
-          await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
+          await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
         } catch {
           // No active timer is common here; continue to start attempt.
         }
@@ -494,7 +496,7 @@ export class CustomerEventSimulator {
         } catch (startError) {
           if (isHttpStatus(startError, 409)) {
             try {
-              await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
+              await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
               await this.workorderClient.workexecTimeTrackingAPIApi.startTimer({
                 idempotencyKey: crypto.randomUUID(),
                 workexecTimerStartRequest: {
@@ -527,7 +529,7 @@ export class CustomerEventSimulator {
 
         await sleep(this.random.int(100, 500));
         try {
-          await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
+          await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
         } catch (postStopError) {
           const postStopMsg = await formatError(postStopError);
           console.log(`[Day ${dayNumber}] WARNING: post-stop failed after service ${serviceName} timer (workorder ${workorderId}): ${postStopMsg}`);
@@ -549,6 +551,7 @@ export class CustomerEventSimulator {
           }
 
           await this.workorderClient.workorderPickedItemsApi.consumeWorkorderPickedItems({
+            idempotencyKey: crypto.randomUUID(),
             workorderId,
             consumePickedItemsRequest: {
               items: pickTasks

@@ -50,6 +50,24 @@ export interface WorkSessionDto {
      */
     sessionId: string;
     /**
+     * Server time at which the start event was received
+     * @type {Date}
+     * @memberof WorkSessionDto
+     */
+    startReceivedAt?: Date;
+    /**
+     * Whether the start was a live call (LIVE) or replayed from the app's offline queue (OFFLINE_REPLAY, when occurredAt was more than 2 minutes before receipt).
+     * @type {string}
+     * @memberof WorkSessionDto
+     */
+    startSource?: WorkSessionDtoStartSourceEnum;
+    /**
+     * How the session started: MANUAL, or FIRST_SIGN_IN for the app's automatic clock-in. An undone session keeps the trigger it started with.
+     * @type {string}
+     * @memberof WorkSessionDto
+     */
+    startTrigger?: WorkSessionDtoStartTriggerEnum;
+    /**
      * Timestamp the session started
      * @type {Date}
      * @memberof WorkSessionDto
@@ -68,6 +86,25 @@ export interface WorkSessionDto {
      */
     submittedAt?: Date;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum WorkSessionDtoStartSourceEnum {
+    Live = 'LIVE',
+    OfflineReplay = 'OFFLINE_REPLAY'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum WorkSessionDtoStartTriggerEnum {
+    Manual = 'MANUAL',
+    FirstSignIn = 'FIRST_SIGN_IN',
+    Undo = 'UNDO'
+}
+
 
 /**
  * Check if a given object implements the WorkSessionDto interface.
@@ -94,6 +131,9 @@ export function WorkSessionDtoFromJSONTyped(json: any, ignoreDiscriminator: bool
         'endedAt': json['endedAt'] == null ? undefined : (new Date(json['endedAt'])),
         'personId': json['personId'],
         'sessionId': json['sessionId'],
+        'startReceivedAt': json['startReceivedAt'] == null ? undefined : (new Date(json['startReceivedAt'])),
+        'startSource': json['startSource'] == null ? undefined : json['startSource'],
+        'startTrigger': json['startTrigger'] == null ? undefined : json['startTrigger'],
         'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
         'status': json['status'],
         'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
@@ -111,6 +151,9 @@ export function WorkSessionDtoToJSON(value?: WorkSessionDto | null): any {
         'endedAt': value['endedAt'] == null ? undefined : ((value['endedAt']).toISOString()),
         'personId': value['personId'],
         'sessionId': value['sessionId'],
+        'startReceivedAt': value['startReceivedAt'] == null ? undefined : ((value['startReceivedAt']).toISOString()),
+        'startSource': value['startSource'],
+        'startTrigger': value['startTrigger'],
         'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
         'status': value['status'],
         'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),

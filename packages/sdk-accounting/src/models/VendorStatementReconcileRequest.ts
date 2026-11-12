@@ -33,12 +33,6 @@ export interface VendorStatementReconcileRequest {
      */
     comparisonVersion: string;
     /**
-     * Makes the command safe to retry: the same id with the same body answers the first result
-     * @type {string}
-     * @memberof VendorStatementReconcileRequest
-     */
-    requestId: string;
-    /**
      * One resolution per difference; none for an agreeing statement
      * @type {Array<Resolution>}
      * @memberof VendorStatementReconcileRequest
@@ -51,7 +45,6 @@ export interface VendorStatementReconcileRequest {
  */
 export function instanceOfVendorStatementReconcileRequest(value: object): boolean {
     if (!('comparisonVersion' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('resolutions' in value)) return false;
     return true;
 }
@@ -67,7 +60,6 @@ export function VendorStatementReconcileRequestFromJSONTyped(json: any, ignoreDi
     return {
         
         'comparisonVersion': json['comparisonVersion'],
-        'requestId': json['requestId'],
         'resolutions': ((json['resolutions'] as Array<any>).map(ResolutionFromJSON)),
     };
 }
@@ -79,7 +71,6 @@ export function VendorStatementReconcileRequestToJSON(value?: VendorStatementRec
     return {
         
         'comparisonVersion': value['comparisonVersion'],
-        'requestId': value['requestId'],
         'resolutions': ((value['resolutions'] as Array<any>).map(ResolutionToJSON)),
     };
 }

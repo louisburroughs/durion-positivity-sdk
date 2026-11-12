@@ -44,6 +44,30 @@ export interface WorkexecTimerEntryResponse {
      */
     mechanicId?: string;
     /**
+     * Whether the stop crossed a closed day at the workorder location or ran past closing, so a service advisor must review it. The entry is recorded and billed as usual; the flag lets genuine overtime be restored (#3319).
+     * @type {boolean}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    needsReview?: boolean;
+    /**
+     * The end the caller asked for when the location's calendar capped endTime at the closing time of the last open day (closed hours are not billed); null when nothing was capped (#3319).
+     * @type {Date}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    originalEndTime?: Date;
+    /**
+     * Server receipt instant, set only for an OFFLINE_REPLAY entry
+     * @type {Date}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    receivedAt?: Date;
+    /**
+     * How the entry arrived: LIVE when the server stamped it on receipt, OFFLINE_REPLAY when the technician app replayed work done offline (#3291).
+     * @type {string}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    source?: WorkexecTimerEntryResponseSourceEnum;
+    /**
      * Timer start timestamp
      * @type {Date}
      * @memberof WorkexecTimerEntryResponse
@@ -76,6 +100,16 @@ export interface WorkexecTimerEntryResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum WorkexecTimerEntryResponseSourceEnum {
+    Live = 'LIVE',
+    OfflineReplay = 'OFFLINE_REPLAY'
+}
+
+
+/**
  * Check if a given object implements the WorkexecTimerEntryResponse interface.
  */
 export function instanceOfWorkexecTimerEntryResponse(value: object): boolean {
@@ -96,6 +130,10 @@ export function WorkexecTimerEntryResponseFromJSONTyped(json: any, ignoreDiscrim
         'endTime': json['endTime'] == null ? undefined : (new Date(json['endTime'])),
         'laborCode': json['laborCode'] == null ? undefined : json['laborCode'],
         'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
+        'needsReview': json['needsReview'] == null ? undefined : json['needsReview'],
+        'originalEndTime': json['originalEndTime'] == null ? undefined : (new Date(json['originalEndTime'])),
+        'receivedAt': json['receivedAt'] == null ? undefined : (new Date(json['receivedAt'])),
+        'source': json['source'] == null ? undefined : json['source'],
         'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
         'status': json['status'] == null ? undefined : json['status'],
         'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
@@ -114,6 +152,10 @@ export function WorkexecTimerEntryResponseToJSON(value?: WorkexecTimerEntryRespo
         'endTime': value['endTime'] == null ? undefined : ((value['endTime']).toISOString()),
         'laborCode': value['laborCode'],
         'mechanicId': value['mechanicId'],
+        'needsReview': value['needsReview'],
+        'originalEndTime': value['originalEndTime'] == null ? undefined : ((value['originalEndTime']).toISOString()),
+        'receivedAt': value['receivedAt'] == null ? undefined : ((value['receivedAt']).toISOString()),
+        'source': value['source'],
         'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
         'status': value['status'],
         'timeEntryId': value['timeEntryId'],

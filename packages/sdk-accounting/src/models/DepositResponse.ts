@@ -99,12 +99,6 @@ export interface DepositResponse {
      */
     recordedBy?: string;
     /**
-     * True when this answers a replayed requestId with the first result
-     * @type {boolean}
-     * @memberof DepositResponse
-     */
-    replayed?: boolean;
-    /**
      * The reversal's date; null until reversed
      * @type {Date}
      * @memberof DepositResponse
@@ -193,7 +187,6 @@ export function DepositResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'journalEntryNumber': json['journalEntryNumber'] == null ? undefined : json['journalEntryNumber'],
         'recordedBy': json['recordedBy'] == null ? undefined : json['recordedBy'],
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'reversalDate': json['reversalDate'] == null ? undefined : (new Date(json['reversalDate'])),
         'reversalJournalEntryId': json['reversalJournalEntryId'] == null ? undefined : json['reversalJournalEntryId'],
         'reversalJournalEntryNumber': json['reversalJournalEntryNumber'] == null ? undefined : json['reversalJournalEntryNumber'],
@@ -223,7 +216,6 @@ export function DepositResponseToJSON(value?: DepositResponse | null): any {
         'journalEntryId': value['journalEntryId'],
         'journalEntryNumber': value['journalEntryNumber'],
         'recordedBy': value['recordedBy'],
-        'replayed': value['replayed'],
         'reversalDate': value['reversalDate'] == null ? undefined : ((value['reversalDate']).toISOString().substring(0,10)),
         'reversalJournalEntryId': value['reversalJournalEntryId'],
         'reversalJournalEntryNumber': value['reversalJournalEntryNumber'],

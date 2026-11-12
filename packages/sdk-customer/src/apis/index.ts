@@ -19,6 +19,7 @@ export * from './CRMServiceAgreementsApi';
 export * from './CRMSnapshotsApi';
 export * from './CRMSuppressionApi';
 export * from './CRMTagsApi';
+export * from './CRMVehiclePartiesApi';
 export * from './CRMVehiclesApi';
 export * from './CommercialBulkIngestAPIApi';
 export * from './CustomerAPIApi';

@@ -50,12 +50,6 @@ export interface RecordCashPaymentRequest {
      */
     currencyCode: string;
     /**
-     * Client-provided idempotency key for safe retry (the register's tender key)
-     * @type {string}
-     * @memberof RecordCashPaymentRequest
-     */
-    idempotencyKey: string;
-    /**
      * The register session (drawer) that holds the cash
      * @type {string}
      * @memberof RecordCashPaymentRequest
@@ -82,7 +76,6 @@ export function instanceOfRecordCashPaymentRequest(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('cashRoundingAmount' in value)) return false;
     if (!('currencyCode' in value)) return false;
-    if (!('idempotencyKey' in value)) return false;
     if (!('settledAmount' in value)) return false;
     return true;
 }
@@ -102,7 +95,6 @@ export function RecordCashPaymentRequestFromJSONTyped(json: any, ignoreDiscrimin
         'cashRoundingAmount': json['cashRoundingAmount'],
         'cashierId': json['cashierId'] == null ? undefined : json['cashierId'],
         'currencyCode': json['currencyCode'],
-        'idempotencyKey': json['idempotencyKey'],
         'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
         'settledAmount': json['settledAmount'],
         'terminalId': json['terminalId'] == null ? undefined : json['terminalId'],
@@ -120,7 +112,6 @@ export function RecordCashPaymentRequestToJSON(value?: RecordCashPaymentRequest 
         'cashRoundingAmount': value['cashRoundingAmount'],
         'cashierId': value['cashierId'],
         'currencyCode': value['currencyCode'],
-        'idempotencyKey': value['idempotencyKey'],
         'sessionId': value['sessionId'],
         'settledAmount': value['settledAmount'],
         'terminalId': value['terminalId'],

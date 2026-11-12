@@ -68,6 +68,12 @@ export interface TimeEntrySummary {
      */
     startAtUtc?: Date;
     /**
+     * How the work session started: MANUAL, or FIRST_SIGN_IN for the app's automatic clock-in (DECISION-PEOPLE-028). Null for entries that did not come from a work session
+     * @type {string}
+     * @memberof TimeEntrySummary
+     */
+    startTrigger?: TimeEntrySummaryStartTriggerEnum;
+    /**
      * Approval status
      * @type {string}
      * @memberof TimeEntrySummary
@@ -99,6 +105,15 @@ export interface TimeEntrySummary {
     workSessionId?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum TimeEntrySummaryStartTriggerEnum {
+    Manual = 'MANUAL',
+    FirstSignIn = 'FIRST_SIGN_IN',
+    Undo = 'UNDO'
+}
 /**
 * @export
 * @enum {string}
@@ -139,6 +154,7 @@ export function TimeEntrySummaryFromJSONTyped(json: any, ignoreDiscriminator: bo
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
         'startAtUtc': json['startAtUtc'] == null ? undefined : (new Date(json['startAtUtc'])),
+        'startTrigger': json['startTrigger'] == null ? undefined : json['startTrigger'],
         'status': json['status'],
         'submittedAtUtc': json['submittedAtUtc'] == null ? undefined : (new Date(json['submittedAtUtc'])),
         'timeEntryId': json['timeEntryId'],
@@ -161,6 +177,7 @@ export function TimeEntrySummaryToJSON(value?: TimeEntrySummary | null): any {
         'locationId': value['locationId'],
         'rejectionReason': value['rejectionReason'],
         'startAtUtc': value['startAtUtc'] == null ? undefined : ((value['startAtUtc']).toISOString()),
+        'startTrigger': value['startTrigger'],
         'status': value['status'],
         'submittedAtUtc': value['submittedAtUtc'] == null ? undefined : ((value['submittedAtUtc']).toISOString()),
         'timeEntryId': value['timeEntryId'],

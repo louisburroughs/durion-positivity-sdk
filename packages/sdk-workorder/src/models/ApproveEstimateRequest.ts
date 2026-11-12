@@ -21,11 +21,17 @@ import {
 } from './LineItemApprovalDto';
 
 /**
- * Approval request with customer ID, signature capture, and optional selective line item approvals
+ * Approval request with customer ID, approval method, signature capture, and optional selective line item approvals
  * @export
  * @interface ApproveEstimateRequest
  */
 export interface ApproveEstimateRequest {
+    /**
+     * How the customer approved. SIGNATURE requires signatureData and signerName; VERBAL_CONFIRMATION requires signerName and notes (how and when consent was obtained), and must not carry signatureData. Required: the method is evidence, not something the server infers from which fields happen to be present.
+     * @type {string}
+     * @memberof ApproveEstimateRequest
+     */
+    approvalMethod: ApproveEstimateRequestApprovalMethodEnum;
     /**
      * Customer ID who is approving the estimate
      * @type {string}
@@ -39,7 +45,7 @@ export interface ApproveEstimateRequest {
      */
     lineItemApprovals?: Array<LineItemApprovalDto>;
     /**
-     * Additional notes or comments
+     * Additional notes or comments. For VERBAL_CONFIRMATION this is required, must not be blank and is at most 500 characters: it is the only evidence of how and when consent was obtained.
      * @type {string}
      * @memberof ApproveEstimateRequest
      */
@@ -51,7 +57,7 @@ export interface ApproveEstimateRequest {
      */
     purchaseOrderNumber?: string;
     /**
-     * Base64-encoded signature image data (PNG format recommended)
+     * Base64-encoded signature image data (PNG format recommended). Required for approvalMethod SIGNATURE; must be absent for VERBAL_CONFIRMATION.
      * @type {string}
      * @memberof ApproveEstimateRequest
      */
@@ -63,7 +69,7 @@ export interface ApproveEstimateRequest {
      */
     signatureMimeType?: string;
     /**
-     * Name of person providing signature
+     * Name of the person who provided the approval: the signer for SIGNATURE, or the person who consented for VERBAL_CONFIRMATION. Required for both.
      * @type {string}
      * @memberof ApproveEstimateRequest
      */
@@ -71,9 +77,22 @@ export interface ApproveEstimateRequest {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum ApproveEstimateRequestApprovalMethodEnum {
+    ClickConfirm = 'CLICK_CONFIRM',
+    Signature = 'SIGNATURE',
+    ElectronicSignature = 'ELECTRONIC_SIGNATURE',
+    VerbalConfirmation = 'VERBAL_CONFIRMATION'
+}
+
+
+/**
  * Check if a given object implements the ApproveEstimateRequest interface.
  */
 export function instanceOfApproveEstimateRequest(value: object): boolean {
+    if (!('approvalMethod' in value)) return false;
     if (!('customerId' in value)) return false;
     return true;
 }
@@ -88,6 +107,7 @@ export function ApproveEstimateRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'approvalMethod': json['approvalMethod'],
         'customerId': json['customerId'],
         'lineItemApprovals': json['lineItemApprovals'] == null ? undefined : ((json['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoFromJSON)),
         'notes': json['notes'] == null ? undefined : json['notes'],
@@ -104,6 +124,7 @@ export function ApproveEstimateRequestToJSON(value?: ApproveEstimateRequest | nu
     }
     return {
         
+        'approvalMethod': value['approvalMethod'],
         'customerId': value['customerId'],
         'lineItemApprovals': value['lineItemApprovals'] == null ? undefined : ((value['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoToJSON)),
         'notes': value['notes'],

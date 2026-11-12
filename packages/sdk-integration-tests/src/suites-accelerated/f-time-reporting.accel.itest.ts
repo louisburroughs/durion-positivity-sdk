@@ -18,6 +18,7 @@
  */
 import { randomUUID } from 'crypto';
 import { SeederRandom } from '@durion-sdk/seeder';
+import { WorkSessionBreakStartRequestTypeEnum } from '@durion-sdk/people';
 import { AssignServicePositionRequestResourceTypeEnum } from '@durion-sdk/workorder';
 import {
   addLaborLine,
@@ -141,7 +142,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
    */
   const clockOutIfClockedIn = async (as: DomainClients, personId: string): Promise<void> => {
     try {
-      await as.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+      await as.people.workSessionsAPIApi.stopWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } });
     } catch (error) {
       // 404: no open session, which is the state this is trying to reach.
       if (!isHttpStatus(error, 404)) {
@@ -162,7 +163,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
    */
   const stopTimersIfRunning = async (as: DomainClients): Promise<void> => {
     try {
-      await as.workorder.workexecTimeTrackingAPIApi.stopTimers();
+      await as.workorder.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
     } catch (error) {
       // 409 NO_ACTIVE_TIMER: nothing was running for this user.
       if (!isHttpStatus(error, 409)) {
@@ -477,7 +478,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     // the accelerated one, so this is what puts measurable minutes on the entry.
     await accel.elapseVirtual(30);
     const stopped = await call('stopTimers', () =>
-      tech.workorder.workexecTimeTrackingAPIApi.stopTimers(),
+      tech.workorder.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() }),
     );
     expect(stopped.stopped?.length ?? 0).toBeGreaterThan(0);
 
@@ -599,7 +600,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     for (const service of current.services ?? []) {
       if (!service.id || !completable.has(String(service.status))) continue;
       await call(`completeServiceItem ${service.id}`, () =>
-        manager.workorder.workOrderAPIApi.completeServiceItem({ workorderId, serviceLineId: service.id as string }),
+        manager.workorder.workOrderAPIApi.completeServiceItem({ idempotencyKey: crypto.randomUUID(), workorderId, serviceLineId: service.id as string }),
       );
     }
     const completed = await call('completeWorkorder', () =>
@@ -642,7 +643,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     await clockOutIfClockedIn(admin, technicianId);
 
     const started = await call('startWorkSession', () =>
-      admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId: technicianId } }),
     );
     workSessionId = started.sessionId;
     console.log(`[F8] session ${workSessionId} status=${started.status}`);
@@ -650,18 +651,22 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     expect(started.status).toBe('ACTIVE');
 
     const breakStarted = await call('startWorkSessionBreak', () =>
-      admin.people.workSessionsAPIApi.startWorkSessionBreak({ id: workSessionId }),
+      admin.people.workSessionsAPIApi.startWorkSessionBreak({
+        idempotencyKey: crypto.randomUUID(),
+        id: workSessionId,
+        workSessionBreakStartRequest: { type: WorkSessionBreakStartRequestTypeEnum.Rest },
+      }),
     );
     expect(breakStarted.sessionId).toBe(workSessionId);
     expect(breakStarted.endedAt).toBeUndefined();
 
     const breakStopped = await call('stopWorkSessionBreak', () =>
-      admin.people.workSessionsAPIApi.stopWorkSessionBreak({ id: workSessionId }),
+      admin.people.workSessionsAPIApi.stopWorkSessionBreak({ idempotencyKey: crypto.randomUUID(), id: workSessionId }),
     );
     expect(breakStopped.endedAt).toBeDefined();
 
     const ended = await call('stopWorkSession', () =>
-      admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.stopWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId: technicianId } }),
     );
     console.log(`[F8] session ${workSessionId} -> ${ended.status}`);
     expect(ended.status).toBe('ENDED');
@@ -670,6 +675,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     const submittedAt = await accel.now();
     const submitted = await call('submitWorkSession', () =>
       admin.people.workSessionsAPIApi.submitWorkSession({
+        idempotencyKey: crypto.randomUUID(),
         id: workSessionId,
         workSessionSubmitRequest: {
           billableMinutes: BILLABLE_MINUTES,
@@ -687,6 +693,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   it('F9 — a session that is already submitted cannot be submitted again, and neither clock accepts a double start', async () => {
     const resubmitted = await expectHttpError(
       admin.people.workSessionsAPIApi.submitWorkSession({
+        idempotencyKey: crypto.randomUUID(),
         id: workSessionId,
         workSessionSubmitRequest: {
           billableMinutes: BILLABLE_MINUTES,
@@ -699,10 +706,10 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     console.log(`[F9] re-submitting a SUBMITTED session refused with HTTP ${resubmitted}`);
 
     const opened = await call('startWorkSession', () =>
-      admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId: technicianId } }),
     );
     const doubled = await expectHttpError(
-      admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId: technicianId } }),
       409,
     );
     console.log(`[F9] session ${opened.sessionId} open; a second clock-in refused with HTTP ${doubled}`);
@@ -718,7 +725,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   // went unnoticed that the rule had arrived at all.
   itInRoleMode('F8b — a technician cannot open somebody else\'s payroll session', async () => {
     const status = await expectHttpError(
-      tech.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      tech.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId: technicianId } }),
       403,
     );
     console.log(`[F8b] TECHNICIAN refused another person's work session with HTTP ${status}`);
@@ -840,7 +847,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
 
       await clockOutIfClockedIn(admin, personId);
       const started = await call('startWorkSession', () =>
-        admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
+        admin.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } }),
       );
       const sessionId = started.sessionId;
       expect(sessionId).toBeTruthy();
@@ -850,7 +857,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
 
       const endedAt = await accel.now();
       await call('stopWorkSession', () =>
-        admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } }),
+        admin.people.workSessionsAPIApi.stopWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } }),
       );
 
       console.log(

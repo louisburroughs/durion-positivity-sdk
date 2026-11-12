@@ -33,6 +33,7 @@ import {
 
 export interface ConsumeWorkorderPickedItemsRequest {
     workorderId: string;
+    idempotencyKey: string;
     consumePickedItemsRequest: ConsumePickedItemsRequest;
 }
 
@@ -46,7 +47,7 @@ export interface GetPickedItemsRequest {
 export class WorkorderPickedItemsApi extends runtime.BaseAPI {
 
     /**
-     * Queues asynchronous consumption of picked items into the workorder over the Kafka command feed per ADR-0044; each item is acknowledged with status PENDING, and the inventory consumption-recorded fact later updates the pick replicas. Use this tool when staged picked parts are installed on the job; do not use consumeParts, which operates on workorder part lines outside the pick flow. Preconditions: a pick list replica must exist for the workorder and every referenced pickTaskId must belong to it. Required inputs: workorderId (UUID) as a path parameter and a non-empty items list, each entry carrying pickTaskId (UUID) and quantityToConsume (integer). Emits a WORKORDER_PICKED_ITEMS_CONSUME event and publishes a consume command; callers must poll getPickedItems to observe the consumed quantities. Returns 202 with per-item PENDING results, 404 when the pick list or a referenced pick task is missing, 503 when the command feed is unavailable or, with PICK_LIST_REPLICATION_PENDING and a Retry-After header, when the workorder holds part lines but its pick list or tasks have not replicated from Inventory yet, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the workorder\'s own site (ADR-0061 mechanism, #2204). 
+     * Queues asynchronous consumption of picked items into the workorder over the Kafka command feed per ADR-0044; each item is acknowledged with status PENDING, and the inventory consumption-recorded fact later updates the pick replicas. Use this tool when staged picked parts are installed on the job; do not use consumeParts, which operates on workorder part lines outside the pick flow. Preconditions: a pick list replica must exist for the workorder and every referenced pickTaskId must belong to it. Required inputs: workorderId (UUID) as a path parameter and a non-empty items list, each entry carrying pickTaskId (UUID) and quantityToConsume (integer); the required Idempotency-Key header (a UUID) makes a retry of the same request replay the first answer without publishing a second command. occurredAt is the optional business time the parts were used, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, it travels on the inventory command, and a replay whose workorder was completed, cancelled, invoiced or put on hold meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKORDER_PICKED_ITEMS_CONSUME event and publishes a consume command; callers must poll getPickedItems to observe the consumed quantities. Returns 202 with per-item PENDING results, 404 when the pick list or a referenced pick task is missing, 503 when the command feed is unavailable or, with PICK_LIST_REPLICATION_PENDING and a Retry-After header, when the workorder holds part lines but its pick list or tasks have not replicated from Inventory yet, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile or IDEMPOTENCY_CONFLICT when the key was used for a different request, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the workorder\'s own site (ADR-0061 mechanism, #2204). 
      * Consume Picked Items into Workorder
      */
     async consumeWorkorderPickedItemsRaw(requestParameters: ConsumeWorkorderPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConsumePickedItemsResponse>> {
@@ -54,6 +55,13 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'workorderId',
                 'Required parameter "workorderId" was null or undefined when calling consumeWorkorderPickedItems().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling consumeWorkorderPickedItems().'
             );
         }
 
@@ -69,6 +77,10 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -90,7 +102,7 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Queues asynchronous consumption of picked items into the workorder over the Kafka command feed per ADR-0044; each item is acknowledged with status PENDING, and the inventory consumption-recorded fact later updates the pick replicas. Use this tool when staged picked parts are installed on the job; do not use consumeParts, which operates on workorder part lines outside the pick flow. Preconditions: a pick list replica must exist for the workorder and every referenced pickTaskId must belong to it. Required inputs: workorderId (UUID) as a path parameter and a non-empty items list, each entry carrying pickTaskId (UUID) and quantityToConsume (integer). Emits a WORKORDER_PICKED_ITEMS_CONSUME event and publishes a consume command; callers must poll getPickedItems to observe the consumed quantities. Returns 202 with per-item PENDING results, 404 when the pick list or a referenced pick task is missing, 503 when the command feed is unavailable or, with PICK_LIST_REPLICATION_PENDING and a Retry-After header, when the workorder holds part lines but its pick list or tasks have not replicated from Inventory yet, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the workorder\'s own site (ADR-0061 mechanism, #2204). 
+     * Queues asynchronous consumption of picked items into the workorder over the Kafka command feed per ADR-0044; each item is acknowledged with status PENDING, and the inventory consumption-recorded fact later updates the pick replicas. Use this tool when staged picked parts are installed on the job; do not use consumeParts, which operates on workorder part lines outside the pick flow. Preconditions: a pick list replica must exist for the workorder and every referenced pickTaskId must belong to it. Required inputs: workorderId (UUID) as a path parameter and a non-empty items list, each entry carrying pickTaskId (UUID) and quantityToConsume (integer); the required Idempotency-Key header (a UUID) makes a retry of the same request replay the first answer without publishing a second command. occurredAt is the optional business time the parts were used, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, it travels on the inventory command, and a replay whose workorder was completed, cancelled, invoiced or put on hold meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKORDER_PICKED_ITEMS_CONSUME event and publishes a consume command; callers must poll getPickedItems to observe the consumed quantities. Returns 202 with per-item PENDING results, 404 when the pick list or a referenced pick task is missing, 503 when the command feed is unavailable or, with PICK_LIST_REPLICATION_PENDING and a Retry-After header, when the workorder holds part lines but its pick list or tasks have not replicated from Inventory yet, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile or IDEMPOTENCY_CONFLICT when the key was used for a different request, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the workorder\'s own site (ADR-0061 mechanism, #2204). 
      * Consume Picked Items into Workorder
      */
     async consumeWorkorderPickedItems(requestParameters: ConsumeWorkorderPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConsumePickedItemsResponse> {

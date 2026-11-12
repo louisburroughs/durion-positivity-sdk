@@ -44,11 +44,13 @@ export interface ListUndepositedSessionsRequest {
 }
 
 export interface RecordBankDepositRequest {
+    idempotencyKey: string;
     depositRecordRequest: DepositRecordRequest;
 }
 
 export interface ReverseBankDepositRequest {
     depositId: string;
+    idempotencyKey: string;
     depositReversalRequest: DepositReversalRequest;
 }
 
@@ -145,10 +147,17 @@ export class BankDepositsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a bank deposit of whole closed register sessions\' drawer cash in one step: posts one BANK_DEPOSIT entry dated depositDate, Dr the bank account by the sessions\' bank drops (one line, the one bank reconciliation matches to the statement credit), Cr 1090 Undeposited Funds by their expected cash and Dr 1095 Register Cash Clearing when their clearing net is a credit (Cr when a debit) by its size, a zero line left out and every amount computed from the sessions; the sessions become DEPOSITED. Use this tool when the cash of one or more closed drawers reached the bank; do not use createJournalEntry, and never add a balancing line yourself: a deposit that does not balance is refused. To correct a deposit, reverse it and record it again. Preconditions: caller holds accounting:deposit:create and reaches every session\'s location (403 LOCATION_SCOPE_DENIED); currencyCode is the functional currency (422 CURRENCY_NOT_SUPPORTED); bankGlAccountId is an active, reconcilable BANK_CASH account in functional currency (422 DEPOSIT_BANK_ACCOUNT_NOT_ELIGIBLE); every sessionId names a closed session waiting to be deposited (400 VALIDATION_ERROR when unknown, 409 DEPOSIT_SESSION_ALREADY_DEPOSITED when a deposit already took it); the selection\'s drops equal its expected cash plus its clearing net (422 DEPOSIT_UNBALANCED naming the difference; list the sessions first to see it) and are more than zero (400 otherwise); no amount finer than the currency\'s minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY); depositDate is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on requestId: a replay returns the first result with 200 and replayed true, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: bankGlAccountId, depositDate, currencyCode (ISO 4217, ADR-0067), sessionIds (1 to 200, distinct), requestId; optional depositSlipReference and overrideJustification. Emits an ACCOUNTING_DEPOSIT_CREATE event, writes a BANK_DEPOSIT_RECORD audit row naming the caller, queues accounting.deposit.recorded (status RECORDED) and returns 201 with the deposit id, journalEntryNumber, slip reference, amounts and currencyCode, the sessions with their bag numbers and replayed false. 
+     * Records a bank deposit of whole closed register sessions\' drawer cash in one step: posts one BANK_DEPOSIT entry dated depositDate, Dr the bank account by the sessions\' bank drops (one line, the one bank reconciliation matches to the statement credit), Cr 1090 Undeposited Funds by their expected cash and Dr 1095 Register Cash Clearing when their clearing net is a credit (Cr when a debit) by its size, a zero line left out and every amount computed from the sessions; the sessions become DEPOSITED. Use this tool when the cash of one or more closed drawers reached the bank; do not use createJournalEntry, and never add a balancing line yourself: a deposit that does not balance is refused. To correct a deposit, reverse it and record it again. Preconditions: caller holds accounting:deposit:create and reaches every session\'s location (403 LOCATION_SCOPE_DENIED); currencyCode is the functional currency (422 CURRENCY_NOT_SUPPORTED); bankGlAccountId is an active, reconcilable BANK_CASH account in functional currency (422 DEPOSIT_BANK_ACCOUNT_NOT_ELIGIBLE); every sessionId names a closed session waiting to be deposited (400 VALIDATION_ERROR when unknown, 409 DEPOSIT_SESSION_ALREADY_DEPOSITED when a deposit already took it); the selection\'s drops equal its expected cash plus its clearing net (422 DEPOSIT_UNBALANCED naming the difference; list the sessions first to see it) and are more than zero (400 otherwise); no amount finer than the currency\'s minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY); depositDate is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on the Idempotency-Key header (a UUID): a replay of the same key and payload returns the first result with Idempotency-Replayed: true and posts nothing; another body or caller with the same key is 409 IDEMPOTENCY_CONFLICT. The replayed body is a snapshot of the first result, not the deposit\'s current state. Required inputs: the Idempotency-Key header and, in the body, bankGlAccountId, depositDate, currencyCode (ISO 4217, ADR-0067), sessionIds (1 to 200, distinct); optional depositSlipReference and overrideJustification. Emits an ACCOUNTING_DEPOSIT_CREATE event, writes a BANK_DEPOSIT_RECORD audit row naming the caller, queues accounting.deposit.recorded (status RECORDED) and returns 201 with the deposit id, journalEntryNumber, slip reference, amounts and currencyCode, the sessions with their bag numbers. 
      * Record Bank Deposit
      */
-    async recordBankDepositRaw(requestParameters: RecordBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DepositResponse>> {
+    async recordBankDepositRaw(requestParameters: RecordBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling recordBankDeposit().'
+            );
+        }
+
         if (requestParameters['depositRecordRequest'] == null) {
             throw new runtime.RequiredError(
                 'depositRecordRequest',
@@ -161,6 +170,10 @@ export class BankDepositsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -178,27 +191,34 @@ export class BankDepositsApi extends runtime.BaseAPI {
             body: DepositRecordRequestToJSON(requestParameters['depositRecordRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => DepositResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
-     * Records a bank deposit of whole closed register sessions\' drawer cash in one step: posts one BANK_DEPOSIT entry dated depositDate, Dr the bank account by the sessions\' bank drops (one line, the one bank reconciliation matches to the statement credit), Cr 1090 Undeposited Funds by their expected cash and Dr 1095 Register Cash Clearing when their clearing net is a credit (Cr when a debit) by its size, a zero line left out and every amount computed from the sessions; the sessions become DEPOSITED. Use this tool when the cash of one or more closed drawers reached the bank; do not use createJournalEntry, and never add a balancing line yourself: a deposit that does not balance is refused. To correct a deposit, reverse it and record it again. Preconditions: caller holds accounting:deposit:create and reaches every session\'s location (403 LOCATION_SCOPE_DENIED); currencyCode is the functional currency (422 CURRENCY_NOT_SUPPORTED); bankGlAccountId is an active, reconcilable BANK_CASH account in functional currency (422 DEPOSIT_BANK_ACCOUNT_NOT_ELIGIBLE); every sessionId names a closed session waiting to be deposited (400 VALIDATION_ERROR when unknown, 409 DEPOSIT_SESSION_ALREADY_DEPOSITED when a deposit already took it); the selection\'s drops equal its expected cash plus its clearing net (422 DEPOSIT_UNBALANCED naming the difference; list the sessions first to see it) and are more than zero (400 otherwise); no amount finer than the currency\'s minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY); depositDate is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on requestId: a replay returns the first result with 200 and replayed true, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: bankGlAccountId, depositDate, currencyCode (ISO 4217, ADR-0067), sessionIds (1 to 200, distinct), requestId; optional depositSlipReference and overrideJustification. Emits an ACCOUNTING_DEPOSIT_CREATE event, writes a BANK_DEPOSIT_RECORD audit row naming the caller, queues accounting.deposit.recorded (status RECORDED) and returns 201 with the deposit id, journalEntryNumber, slip reference, amounts and currencyCode, the sessions with their bag numbers and replayed false. 
+     * Records a bank deposit of whole closed register sessions\' drawer cash in one step: posts one BANK_DEPOSIT entry dated depositDate, Dr the bank account by the sessions\' bank drops (one line, the one bank reconciliation matches to the statement credit), Cr 1090 Undeposited Funds by their expected cash and Dr 1095 Register Cash Clearing when their clearing net is a credit (Cr when a debit) by its size, a zero line left out and every amount computed from the sessions; the sessions become DEPOSITED. Use this tool when the cash of one or more closed drawers reached the bank; do not use createJournalEntry, and never add a balancing line yourself: a deposit that does not balance is refused. To correct a deposit, reverse it and record it again. Preconditions: caller holds accounting:deposit:create and reaches every session\'s location (403 LOCATION_SCOPE_DENIED); currencyCode is the functional currency (422 CURRENCY_NOT_SUPPORTED); bankGlAccountId is an active, reconcilable BANK_CASH account in functional currency (422 DEPOSIT_BANK_ACCOUNT_NOT_ELIGIBLE); every sessionId names a closed session waiting to be deposited (400 VALIDATION_ERROR when unknown, 409 DEPOSIT_SESSION_ALREADY_DEPOSITED when a deposit already took it); the selection\'s drops equal its expected cash plus its clearing net (422 DEPOSIT_UNBALANCED naming the difference; list the sessions first to see it) and are more than zero (400 otherwise); no amount finer than the currency\'s minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY); depositDate is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on the Idempotency-Key header (a UUID): a replay of the same key and payload returns the first result with Idempotency-Replayed: true and posts nothing; another body or caller with the same key is 409 IDEMPOTENCY_CONFLICT. The replayed body is a snapshot of the first result, not the deposit\'s current state. Required inputs: the Idempotency-Key header and, in the body, bankGlAccountId, depositDate, currencyCode (ISO 4217, ADR-0067), sessionIds (1 to 200, distinct); optional depositSlipReference and overrideJustification. Emits an ACCOUNTING_DEPOSIT_CREATE event, writes a BANK_DEPOSIT_RECORD audit row naming the caller, queues accounting.deposit.recorded (status RECORDED) and returns 201 with the deposit id, journalEntryNumber, slip reference, amounts and currencyCode, the sessions with their bag numbers. 
      * Record Bank Deposit
      */
-    async recordBankDeposit(requestParameters: RecordBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DepositResponse> {
+    async recordBankDeposit(requestParameters: RecordBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.recordBankDepositRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Reverses a bank deposit of drawer cash through the journal-entry reversal (ADR-0047): a reversing entry restores 1090 Undeposited Funds and 1095 Register Cash Clearing and takes the amount off the bank account, the deposit becomes REVERSED and its sessions wait to be deposited again. A reversed bank line matched in an approved bank reconciliation invalidates that reconciliation. Use this tool to correct a wrong deposit, then record it again; do not edit a deposit or post a correcting journal entry instead (reverseJournalEntry on the deposit\'s entry has the same effect). Preconditions: caller holds accounting:deposit:reverse and reaches every location the deposit took cash from (403 LOCATION_SCOPE_DENIED); the deposit exists (404 DEPOSIT_NOT_FOUND) and is not already reversed (409 DEPOSIT_ALREADY_REVERSED); the reversal date (reversalDate, else the deposit\'s date if its period is open, else today) is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on requestId: a replay returns the first result with replayed true, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: depositId (path), reason (10 to 400 characters), requestId; optional reversalDate and overrideJustification. Emits an ACCOUNTING_DEPOSIT_REVERSE event, writes a BANK_DEPOSIT_REVERSE audit row naming the caller, queues accounting.deposit.recorded (status REVERSED) and returns 200 with the deposit, its reversal entry number, date and reason. 
+     * Reverses a bank deposit of drawer cash through the journal-entry reversal (ADR-0047): a reversing entry restores 1090 Undeposited Funds and 1095 Register Cash Clearing and takes the amount off the bank account, the deposit becomes REVERSED and its sessions wait to be deposited again. A reversed bank line matched in an approved bank reconciliation invalidates that reconciliation. Use this tool to correct a wrong deposit, then record it again; do not edit a deposit or post a correcting journal entry instead (reverseJournalEntry on the deposit\'s entry has the same effect). Preconditions: caller holds accounting:deposit:reverse and reaches every location the deposit took cash from (403 LOCATION_SCOPE_DENIED); the deposit exists (404 DEPOSIT_NOT_FOUND) and is not already reversed (409 DEPOSIT_ALREADY_REVERSED); the reversal date (reversalDate, else the deposit\'s date if its period is open, else today) is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on the Idempotency-Key header (a UUID): a replay of the same key and payload returns the first result with Idempotency-Replayed: true and reverses nothing twice; another body, caller or deposit with the same key is 409 IDEMPOTENCY_CONFLICT. The replayed body is a snapshot of the first result, not the deposit\'s current state. Required inputs: depositId (path), the Idempotency-Key header and, in the body, reason (10 to 400 characters); optional reversalDate and overrideJustification. Emits an ACCOUNTING_DEPOSIT_REVERSE event, writes a BANK_DEPOSIT_REVERSE audit row naming the caller, queues accounting.deposit.recorded (status REVERSED) and returns 200 with the deposit, its reversal entry number, date and reason. 
      * Reverse Bank Deposit
      */
-    async reverseBankDepositRaw(requestParameters: ReverseBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DepositResponse>> {
+    async reverseBankDepositRaw(requestParameters: ReverseBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['depositId'] == null) {
             throw new runtime.RequiredError(
                 'depositId',
                 'Required parameter "depositId" was null or undefined when calling reverseBankDeposit().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling reverseBankDeposit().'
             );
         }
 
@@ -214,6 +234,10 @@ export class BankDepositsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -231,14 +255,14 @@ export class BankDepositsApi extends runtime.BaseAPI {
             body: DepositReversalRequestToJSON(requestParameters['depositReversalRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => DepositResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
-     * Reverses a bank deposit of drawer cash through the journal-entry reversal (ADR-0047): a reversing entry restores 1090 Undeposited Funds and 1095 Register Cash Clearing and takes the amount off the bank account, the deposit becomes REVERSED and its sessions wait to be deposited again. A reversed bank line matched in an approved bank reconciliation invalidates that reconciliation. Use this tool to correct a wrong deposit, then record it again; do not edit a deposit or post a correcting journal entry instead (reverseJournalEntry on the deposit\'s entry has the same effect). Preconditions: caller holds accounting:deposit:reverse and reaches every location the deposit took cash from (403 LOCATION_SCOPE_DENIED); the deposit exists (404 DEPOSIT_NOT_FOUND) and is not already reversed (409 DEPOSIT_ALREADY_REVERSED); the reversal date (reversalDate, else the deposit\'s date if its period is open, else today) is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on requestId: a replay returns the first result with replayed true, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: depositId (path), reason (10 to 400 characters), requestId; optional reversalDate and overrideJustification. Emits an ACCOUNTING_DEPOSIT_REVERSE event, writes a BANK_DEPOSIT_REVERSE audit row naming the caller, queues accounting.deposit.recorded (status REVERSED) and returns 200 with the deposit, its reversal entry number, date and reason. 
+     * Reverses a bank deposit of drawer cash through the journal-entry reversal (ADR-0047): a reversing entry restores 1090 Undeposited Funds and 1095 Register Cash Clearing and takes the amount off the bank account, the deposit becomes REVERSED and its sessions wait to be deposited again. A reversed bank line matched in an approved bank reconciliation invalidates that reconciliation. Use this tool to correct a wrong deposit, then record it again; do not edit a deposit or post a correcting journal entry instead (reverseJournalEntry on the deposit\'s entry has the same effect). Preconditions: caller holds accounting:deposit:reverse and reaches every location the deposit took cash from (403 LOCATION_SCOPE_DENIED); the deposit exists (404 DEPOSIT_NOT_FOUND) and is not already reversed (409 DEPOSIT_ALREADY_REVERSED); the reversal date (reversalDate, else the deposit\'s date if its period is open, else today) is in an OPEN period, or in a CLOSED one with accounting:period:override and overrideJustification (422 PERIOD_CLOSED otherwise), never before the hard-lock date (422 PERIOD_HARD_LOCKED). Idempotent on the Idempotency-Key header (a UUID): a replay of the same key and payload returns the first result with Idempotency-Replayed: true and reverses nothing twice; another body, caller or deposit with the same key is 409 IDEMPOTENCY_CONFLICT. The replayed body is a snapshot of the first result, not the deposit\'s current state. Required inputs: depositId (path), the Idempotency-Key header and, in the body, reason (10 to 400 characters); optional reversalDate and overrideJustification. Emits an ACCOUNTING_DEPOSIT_REVERSE event, writes a BANK_DEPOSIT_REVERSE audit row naming the caller, queues accounting.deposit.recorded (status REVERSED) and returns 200 with the deposit, its reversal entry number, date and reason. 
      * Reverse Bank Deposit
      */
-    async reverseBankDeposit(requestParameters: ReverseBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DepositResponse> {
+    async reverseBankDeposit(requestParameters: ReverseBankDepositRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.reverseBankDepositRaw(requestParameters, initOverrides);
         return await response.value();
     }

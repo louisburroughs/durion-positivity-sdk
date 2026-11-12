@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   ApproveWorkorderRequest,
+  CompleteServiceItemRequest,
   CompleteWorkorderRequest,
   CompleteWorkorderResponse,
   CompletionPreconditionsResponse,
@@ -39,6 +40,8 @@ import {
     ApiErrorToJSON,
     ApproveWorkorderRequestFromJSON,
     ApproveWorkorderRequestToJSON,
+    CompleteServiceItemRequestFromJSON,
+    CompleteServiceItemRequestToJSON,
     CompleteWorkorderRequestFromJSON,
     CompleteWorkorderRequestToJSON,
     CompleteWorkorderResponseFromJSON,
@@ -83,9 +86,11 @@ export interface CompletePartItemRequest {
     partId: string;
 }
 
-export interface CompleteServiceItemRequest {
+export interface CompleteServiceItemOperationRequest {
     workorderId: string;
     serviceLineId: string;
+    idempotencyKey: string;
+    completeServiceItemRequest?: CompleteServiceItemRequest;
 }
 
 export interface CompleteWorkorderOperationRequest {
@@ -257,10 +262,10 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks one workorder service line as COMPLETED, leaving the workorder\'s own status untouched. Use this tool to close individual service lines as work finishes; do not use completeWorkorder, which completes the whole workorder, or completePartItem, which closes a part line. Preconditions: the service line must exist, belong to the given workorder, and not be in CANCELLED or PENDING_APPROVAL status; completing an already-COMPLETED line is an idempotent no-op. Required inputs: workorderId and serviceLineId (UUIDs) as path parameters; there is no request body. Emits a WORKORDER_SERVICE_ITEM_COMPLETE event. Returns 404 when the line is missing or belongs to another workorder, and 400 when the line is CANCELLED or PENDING_APPROVAL. 
+     * Marks one workorder service line as COMPLETED, leaving the workorder\'s own status untouched. Use this tool to close individual service lines as work finishes; do not use completeWorkorder, which completes the whole workorder, or completePartItem, which closes a part line. Preconditions: the service line must exist, belong to the given workorder, and not be in CANCELLED or PENDING_APPROVAL status; completing an already-COMPLETED line is an idempotent no-op. Required inputs: workorderId and serviceLineId (UUIDs) as path parameters; the body is optional and the Idempotency-Key header is required (a UUID) so a retry replays the original answer with Idempotency-Replayed: true. occurredAt is the optional business time the line was completed, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, and a replay whose workorder was completed, cancelled, invoiced, put on hold or reassigned meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKORDER_SERVICE_ITEM_COMPLETE event. Returns 404 when the line is missing or belongs to another workorder, 400 when the line is CANCELLED or PENDING_APPROVAL, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile or IDEMPOTENCY_CONFLICT when the key was used for a different request, and 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window. 
      * Complete a Workorder Service Line
      */
-    async completeServiceItemRaw(requestParameters: CompleteServiceItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderItemCompletionResponse>> {
+    async completeServiceItemRaw(requestParameters: CompleteServiceItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderItemCompletionResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -275,9 +280,22 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
             );
         }
 
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling completeServiceItem().'
+            );
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -292,16 +310,17 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: CompleteServiceItemRequestToJSON(requestParameters['completeServiceItemRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderItemCompletionResponseFromJSON(jsonValue));
     }
 
     /**
-     * Marks one workorder service line as COMPLETED, leaving the workorder\'s own status untouched. Use this tool to close individual service lines as work finishes; do not use completeWorkorder, which completes the whole workorder, or completePartItem, which closes a part line. Preconditions: the service line must exist, belong to the given workorder, and not be in CANCELLED or PENDING_APPROVAL status; completing an already-COMPLETED line is an idempotent no-op. Required inputs: workorderId and serviceLineId (UUIDs) as path parameters; there is no request body. Emits a WORKORDER_SERVICE_ITEM_COMPLETE event. Returns 404 when the line is missing or belongs to another workorder, and 400 when the line is CANCELLED or PENDING_APPROVAL. 
+     * Marks one workorder service line as COMPLETED, leaving the workorder\'s own status untouched. Use this tool to close individual service lines as work finishes; do not use completeWorkorder, which completes the whole workorder, or completePartItem, which closes a part line. Preconditions: the service line must exist, belong to the given workorder, and not be in CANCELLED or PENDING_APPROVAL status; completing an already-COMPLETED line is an idempotent no-op. Required inputs: workorderId and serviceLineId (UUIDs) as path parameters; the body is optional and the Idempotency-Key header is required (a UUID) so a retry replays the original answer with Idempotency-Replayed: true. occurredAt is the optional business time the line was completed, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, and a replay whose workorder was completed, cancelled, invoiced, put on hold or reassigned meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKORDER_SERVICE_ITEM_COMPLETE event. Returns 404 when the line is missing or belongs to another workorder, 400 when the line is CANCELLED or PENDING_APPROVAL, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile or IDEMPOTENCY_CONFLICT when the key was used for a different request, and 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window. 
      * Complete a Workorder Service Line
      */
-    async completeServiceItem(requestParameters: CompleteServiceItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderItemCompletionResponse> {
+    async completeServiceItem(requestParameters: CompleteServiceItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderItemCompletionResponse> {
         const response = await this.completeServiceItemRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -496,7 +515,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, the payer\'s billing rules must not set completionSignOffRequired (or a customer completion sign-off must already be recorded), and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 409 when it is not COMPLETED or when a required customer completion sign-off is outstanding (COMPLETION_SIGN_OFF_REQUIRED), and 503 when the Kafka feed is disabled or the broker rejects the command. 
+     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, the caller must not be bound by a location setting that leaves invoicing to a service advisor, the payer\'s billing rules must not set completionSignOffRequired (or a customer completion sign-off must already be recorded), and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 403 INVOICE_ON_FINISH_DISABLED when the workorder\'s location reserves invoicing for a service advisor and the caller does not hold workorder:location_settings:manage there (with a nextAction), 409 when it is not COMPLETED or when a required customer completion sign-off is outstanding (COMPLETION_SIGN_OFF_REQUIRED), and 503 when the Kafka feed is disabled or the broker rejects the command. 
      * Request Invoice Generation From Workorder
      */
     async generateWorkorderInvoiceRaw(requestParameters: GenerateWorkorderInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceGenerationResponse>> {
@@ -534,7 +553,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, the payer\'s billing rules must not set completionSignOffRequired (or a customer completion sign-off must already be recorded), and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 409 when it is not COMPLETED or when a required customer completion sign-off is outstanding (COMPLETION_SIGN_OFF_REQUIRED), and 503 when the Kafka feed is disabled or the broker rejects the command. 
+     * Queues asynchronous invoice generation for a completed workorder over the Kafka command feed; the invoiceId appears on the workorder later, once the invoicing domain\'s fact links it back. Use this tool after completeWorkorder succeeds; do not call it to fetch an invoice — poll getWorkorder for the linked invoiceId instead. Preconditions: the workorder must exist and be in COMPLETED status, the caller must not be bound by a location setting that leaves invoicing to a service advisor, the payer\'s billing rules must not set completionSignOffRequired (or a customer completion sign-off must already be recorded), and the Kafka event feed must be enabled; an already-invoiced workorder short-circuits to its linked invoice. Required inputs: workorderId (UUID) as a path parameter; an Idempotency-Key header collapses retries into one generation, defaulting to the workorderId itself. Emits a WORKORDER_INVOICE_GENERATE event and publishes an invoice-creation command; callers must treat a PENDING status as queued rather than generated. Returns 202 with status PENDING when generation is queued, 200 with the linked invoice on idempotent replay, 404 when the workorder does not exist, 403 INVOICE_ON_FINISH_DISABLED when the workorder\'s location reserves invoicing for a service advisor and the caller does not hold workorder:location_settings:manage there (with a nextAction), 409 when it is not COMPLETED or when a required customer completion sign-off is outstanding (COMPLETION_SIGN_OFF_REQUIRED), and 503 when the Kafka feed is disabled or the broker rejects the command. 
      * Request Invoice Generation From Workorder
      */
     async generateWorkorderInvoice(requestParameters: GenerateWorkorderInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceGenerationResponse> {

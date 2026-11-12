@@ -26,12 +26,6 @@ export interface ReconciliationJustificationRequest {
      */
     justification: string;
     /**
-     * Supersede only: caller-generated UUIDv7; a replay returns the successor it created
-     * @type {string}
-     * @memberof ReconciliationJustificationRequest
-     */
-    requestId?: string;
-    /**
      * The reconciliation version the caller read; a stale one answers 409 OPTIMISTIC_LOCK
      * @type {number}
      * @memberof ReconciliationJustificationRequest
@@ -58,7 +52,6 @@ export function ReconciliationJustificationRequestFromJSONTyped(json: any, ignor
     return {
         
         'justification': json['justification'],
-        'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'version': json['version'] == null ? undefined : json['version'],
     };
 }
@@ -70,7 +63,6 @@ export function ReconciliationJustificationRequestToJSON(value?: ReconciliationJ
     return {
         
         'justification': value['justification'],
-        'requestId': value['requestId'],
         'version': value['version'],
     };
 }

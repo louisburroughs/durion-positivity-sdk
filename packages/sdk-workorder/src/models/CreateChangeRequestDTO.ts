@@ -51,11 +51,23 @@ export interface CreateChangeRequestDTO {
      */
     parts?: Array<WorkorderItemDTO>;
     /**
+     * Photo image ids from pos-image showing what was found, at most 12 and without duplicates. Stored as given, without validating them against pos-image. At least one satisfies the photo evidence an emergency/safety item needs
+     * @type {Set<string>}
+     * @memberof CreateChangeRequestDTO
+     */
+    photoImageIds?: Set<string>;
+    /**
      * Service items included in this change request
      * @type {Array<WorkorderItemDTO>}
      * @memberof CreateChangeRequestDTO
      */
     services?: Array<WorkorderItemDTO>;
+    /**
+     * How soon the technician judges the work is needed: CAN_WAIT, SOON or UNSAFE. The technician's own judgement, shown to the advisor; it is not the emergency exception
+     * @type {string}
+     * @memberof CreateChangeRequestDTO
+     */
+    urgency?: CreateChangeRequestDTOUrgencyEnum;
     /**
      * Workorder identifier
      * @type {string}
@@ -63,6 +75,17 @@ export interface CreateChangeRequestDTO {
      */
     workorderId?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CreateChangeRequestDTOUrgencyEnum {
+    CanWait = 'CAN_WAIT',
+    Soon = 'SOON',
+    Unsafe = 'UNSAFE'
+}
+
 
 /**
  * Check if a given object implements the CreateChangeRequestDTO interface.
@@ -86,7 +109,9 @@ export function CreateChangeRequestDTOFromJSONTyped(json: any, ignoreDiscriminat
         'exceptionReason': json['exceptionReason'] == null ? undefined : json['exceptionReason'],
         'isEmergencyException': json['isEmergencyException'] == null ? undefined : json['isEmergencyException'],
         'parts': json['parts'] == null ? undefined : ((json['parts'] as Array<any>).map(WorkorderItemDTOFromJSON)),
+        'photoImageIds': json['photoImageIds'] == null ? undefined : json['photoImageIds'],
         'services': json['services'] == null ? undefined : ((json['services'] as Array<any>).map(WorkorderItemDTOFromJSON)),
+        'urgency': json['urgency'] == null ? undefined : json['urgency'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
@@ -101,7 +126,9 @@ export function CreateChangeRequestDTOToJSON(value?: CreateChangeRequestDTO | nu
         'exceptionReason': value['exceptionReason'],
         'isEmergencyException': value['isEmergencyException'],
         'parts': value['parts'] == null ? undefined : ((value['parts'] as Array<any>).map(WorkorderItemDTOToJSON)),
+        'photoImageIds': value['photoImageIds'] == null ? undefined : Array.from(value['photoImageIds'] as Set<any>),
         'services': value['services'] == null ? undefined : ((value['services'] as Array<any>).map(WorkorderItemDTOToJSON)),
+        'urgency': value['urgency'],
         'workorderId': value['workorderId'],
     };
 }

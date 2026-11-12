@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { EstimateCheckInResponse } from './EstimateCheckInResponse';
+import {
+    EstimateCheckInResponseFromJSON,
+    EstimateCheckInResponseFromJSONTyped,
+    EstimateCheckInResponseToJSON,
+} from './EstimateCheckInResponse';
+
 /**
  * Response DTO for estimates
  * @export
@@ -20,11 +27,23 @@ import { mapValues } from '../runtime';
  */
 export interface EstimateResponse {
     /**
+     * How the customer approved: CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE or VERBAL_CONFIRMATION. Null on estimates approved before the field existed.
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    approvalMethod?: EstimateResponseApprovalMethodEnum;
+    /**
      * Additional notes provided at approval time
      * @type {string}
      * @memberof EstimateResponse
      */
     approvalNotes?: string;
+    /**
+     * Actor from the security context who recorded the approval (ADR-0018), never the payload
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    approvalRecordedBy?: string;
     /**
      * Date and time the estimate was approved
      * @type {Date}
@@ -37,6 +56,12 @@ export interface EstimateResponse {
      * @memberof EstimateResponse
      */
     approvedBy?: string;
+    /**
+     * 
+     * @type {EstimateCheckInResponse}
+     * @memberof EstimateResponse
+     */
+    checkIn?: EstimateCheckInResponse;
     /**
      * Date and time the estimate was created
      * @type {Date}
@@ -184,6 +209,18 @@ export interface EstimateResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum EstimateResponseApprovalMethodEnum {
+    ClickConfirm = 'CLICK_CONFIRM',
+    Signature = 'SIGNATURE',
+    ElectronicSignature = 'ELECTRONIC_SIGNATURE',
+    VerbalConfirmation = 'VERBAL_CONFIRMATION'
+}
+
+
+/**
  * Check if a given object implements the EstimateResponse interface.
  */
 export function instanceOfEstimateResponse(value: object): boolean {
@@ -203,9 +240,12 @@ export function EstimateResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'approvalMethod': json['approvalMethod'] == null ? undefined : json['approvalMethod'],
         'approvalNotes': json['approvalNotes'] == null ? undefined : json['approvalNotes'],
+        'approvalRecordedBy': json['approvalRecordedBy'] == null ? undefined : json['approvalRecordedBy'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'checkIn': json['checkIn'] == null ? undefined : EstimateCheckInResponseFromJSON(json['checkIn']),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
         'crmContactIds': json['crmContactIds'] == null ? undefined : json['crmContactIds'],
@@ -239,9 +279,12 @@ export function EstimateResponseToJSON(value?: EstimateResponse | null): any {
     }
     return {
         
+        'approvalMethod': value['approvalMethod'],
         'approvalNotes': value['approvalNotes'],
+        'approvalRecordedBy': value['approvalRecordedBy'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedBy': value['approvedBy'],
+        'checkIn': EstimateCheckInResponseToJSON(value['checkIn']),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdByUserId': value['createdByUserId'],
         'crmContactIds': value['crmContactIds'],

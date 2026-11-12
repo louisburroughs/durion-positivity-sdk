@@ -11,6 +11,7 @@ export * from './OperationalContextApi';
 export * from './ServicePositionAPIApi';
 export * from './SubstituteLinkAPIApi';
 export * from './TechnicianAssignmentAPIApi';
+export * from './TechnicianLocationSettingsApi';
 export * from './TravelSegmentAPIApi';
 export * from './WIPDashboardApi';
 export * from './WorkOrderAPIApi';

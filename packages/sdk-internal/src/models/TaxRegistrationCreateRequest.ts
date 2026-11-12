@@ -55,12 +55,6 @@ export interface TaxRegistrationCreateRequest {
      * @memberof TaxRegistrationCreateRequest
      */
     registrationNumber: string;
-    /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof TaxRegistrationCreateRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -72,7 +66,6 @@ export function instanceOfTaxRegistrationCreateRequest(value: object): boolean {
     if (!('justification' in value)) return false;
     if (!('regime' in value)) return false;
     if (!('registrationNumber' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -92,7 +85,6 @@ export function TaxRegistrationCreateRequestFromJSONTyped(json: any, ignoreDiscr
         'justification': json['justification'],
         'regime': json['regime'],
         'registrationNumber': json['registrationNumber'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -108,7 +100,6 @@ export function TaxRegistrationCreateRequestToJSON(value?: TaxRegistrationCreate
         'justification': value['justification'],
         'regime': value['regime'],
         'registrationNumber': value['registrationNumber'],
-        'requestId': value['requestId'],
     };
 }
 

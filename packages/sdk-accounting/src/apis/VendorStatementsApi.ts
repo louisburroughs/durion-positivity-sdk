@@ -55,6 +55,7 @@ export interface ListVendorStatementsRequest {
 
 export interface ReconcileVendorStatementRequest {
     statementId: string;
+    idempotencyKey: string;
     vendorStatementReconcileRequest: VendorStatementReconcileRequest;
 }
 
@@ -67,7 +68,7 @@ export interface UploadVendorStatementRequest {
     vendorId: string;
     statementDate: Date;
     closingBalance: number;
-    requestId: string;
+    idempotencyKey: string;
     file: Blob;
     currency?: string;
     columnMapping?: string;
@@ -227,7 +228,7 @@ export class VendorStatementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records how each difference between a checked vendor statement and the books will be settled, and marks the statement RECONCILED. Every difference in the comparison needs exactly one resolution: TAKE_IN_BILL for a NOT_IN_BOOKS difference, REQUEST_CREDIT_NOTE for AMOUNT_DIFFERS or NOT_ON_STATEMENT, VENDOR_ERROR for any kind with a note of at least 10 characters. It posts nothing: no journal entry, bill, payment or vendor setting changes, and the vendor is not contacted; the bill or credit note arrives later through intake under normal approval. Use this tool when a person has checked a statement and decided what to do about each difference; do not use it to correct the statement\'s lines (edit it) or to take in a bill (use bill intake). Preconditions: the statement is READY_FOR_REVIEW with no field still marked Check this and no two lines for one document; comparisonVersion is the one you read, else 409 VENDOR_STATEMENT_COMPARISON_CHANGED with the new differences itemized (read the statement again for the full comparison); the caller holds accounting:vendor_statement:reconcile (the uploader may reconcile). Required inputs: comparisonVersion, resolutions (differenceKey, resolution, note) and requestId; the same requestId with the same body answers the first result. Emits an ACCOUNTING_VENDOR_STATEMENT_RECONCILE event and one VENDOR_STATEMENT audit row with each key and resolution; the statement\'s file is kept for the configured retention period from now unless on legal hold. Returns 200 with the reconciled statement; 400 JUSTIFICATION_REQUIRED or VALIDATION_ERROR; 403 without the permission; 404 VENDOR_STATEMENT_NOT_FOUND; 409 VENDOR_STATEMENT_NOT_EDITABLE, VENDOR_STATEMENT_COMPARISON_CHANGED or IDEMPOTENCY_CONFLICT; 422 VENDOR_STATEMENT_FIELDS_UNCHECKED, VENDOR_STATEMENT_RESOLUTION_MISSING or VENDOR_STATEMENT_RESOLUTION_NOT_ALLOWED (fieldErrors keyed by differenceKey). 
+     * Records how each difference between a checked vendor statement and the books will be settled, and marks the statement RECONCILED. Every difference in the comparison needs exactly one resolution: TAKE_IN_BILL for a NOT_IN_BOOKS difference, REQUEST_CREDIT_NOTE for AMOUNT_DIFFERS or NOT_ON_STATEMENT, VENDOR_ERROR for any kind with a note of at least 10 characters. It posts nothing: no journal entry, bill, payment or vendor setting changes, and the vendor is not contacted; the bill or credit note arrives later through intake under normal approval. Use this tool when a person has checked a statement and decided what to do about each difference; do not use it to correct the statement\'s lines (edit it) or to take in a bill (use bill intake). Preconditions: the statement is READY_FOR_REVIEW with no field still marked Check this and no two lines for one document; comparisonVersion is the one you read, else 409 VENDOR_STATEMENT_COMPARISON_CHANGED with the new differences itemized (read the statement again for the full comparison); the caller holds accounting:vendor_statement:reconcile (the uploader may reconcile). Required inputs: comparisonVersion, resolutions (differenceKey, resolution, note) and the Idempotency-Key header, a UUID generated once per reconciliation; the same key with the same statement and body answers the first result with Idempotency-Replayed: true, and another statement, body or caller under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_VENDOR_STATEMENT_RECONCILE event once, on the request that reconciles, and one VENDOR_STATEMENT audit row with each key and resolution; the statement\'s file is kept for the configured retention period from now unless on legal hold. Returns 200 with the reconciled statement; 400 JUSTIFICATION_REQUIRED or VALIDATION_ERROR (a missing or non-UUID Idempotency-Key included); 403 without the permission; 404 VENDOR_STATEMENT_NOT_FOUND; 409 VENDOR_STATEMENT_NOT_EDITABLE, VENDOR_STATEMENT_COMPARISON_CHANGED or IDEMPOTENCY_CONFLICT; 422 VENDOR_STATEMENT_FIELDS_UNCHECKED, VENDOR_STATEMENT_RESOLUTION_MISSING or VENDOR_STATEMENT_RESOLUTION_NOT_ALLOWED (fieldErrors keyed by differenceKey). 
      * Reconcile A Vendor Statement
      */
     async reconcileVendorStatementRaw(requestParameters: ReconcileVendorStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorStatementResponse>> {
@@ -235,6 +236,13 @@ export class VendorStatementsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'statementId',
                 'Required parameter "statementId" was null or undefined when calling reconcileVendorStatement().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling reconcileVendorStatement().'
             );
         }
 
@@ -250,6 +258,10 @@ export class VendorStatementsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -271,7 +283,7 @@ export class VendorStatementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records how each difference between a checked vendor statement and the books will be settled, and marks the statement RECONCILED. Every difference in the comparison needs exactly one resolution: TAKE_IN_BILL for a NOT_IN_BOOKS difference, REQUEST_CREDIT_NOTE for AMOUNT_DIFFERS or NOT_ON_STATEMENT, VENDOR_ERROR for any kind with a note of at least 10 characters. It posts nothing: no journal entry, bill, payment or vendor setting changes, and the vendor is not contacted; the bill or credit note arrives later through intake under normal approval. Use this tool when a person has checked a statement and decided what to do about each difference; do not use it to correct the statement\'s lines (edit it) or to take in a bill (use bill intake). Preconditions: the statement is READY_FOR_REVIEW with no field still marked Check this and no two lines for one document; comparisonVersion is the one you read, else 409 VENDOR_STATEMENT_COMPARISON_CHANGED with the new differences itemized (read the statement again for the full comparison); the caller holds accounting:vendor_statement:reconcile (the uploader may reconcile). Required inputs: comparisonVersion, resolutions (differenceKey, resolution, note) and requestId; the same requestId with the same body answers the first result. Emits an ACCOUNTING_VENDOR_STATEMENT_RECONCILE event and one VENDOR_STATEMENT audit row with each key and resolution; the statement\'s file is kept for the configured retention period from now unless on legal hold. Returns 200 with the reconciled statement; 400 JUSTIFICATION_REQUIRED or VALIDATION_ERROR; 403 without the permission; 404 VENDOR_STATEMENT_NOT_FOUND; 409 VENDOR_STATEMENT_NOT_EDITABLE, VENDOR_STATEMENT_COMPARISON_CHANGED or IDEMPOTENCY_CONFLICT; 422 VENDOR_STATEMENT_FIELDS_UNCHECKED, VENDOR_STATEMENT_RESOLUTION_MISSING or VENDOR_STATEMENT_RESOLUTION_NOT_ALLOWED (fieldErrors keyed by differenceKey). 
+     * Records how each difference between a checked vendor statement and the books will be settled, and marks the statement RECONCILED. Every difference in the comparison needs exactly one resolution: TAKE_IN_BILL for a NOT_IN_BOOKS difference, REQUEST_CREDIT_NOTE for AMOUNT_DIFFERS or NOT_ON_STATEMENT, VENDOR_ERROR for any kind with a note of at least 10 characters. It posts nothing: no journal entry, bill, payment or vendor setting changes, and the vendor is not contacted; the bill or credit note arrives later through intake under normal approval. Use this tool when a person has checked a statement and decided what to do about each difference; do not use it to correct the statement\'s lines (edit it) or to take in a bill (use bill intake). Preconditions: the statement is READY_FOR_REVIEW with no field still marked Check this and no two lines for one document; comparisonVersion is the one you read, else 409 VENDOR_STATEMENT_COMPARISON_CHANGED with the new differences itemized (read the statement again for the full comparison); the caller holds accounting:vendor_statement:reconcile (the uploader may reconcile). Required inputs: comparisonVersion, resolutions (differenceKey, resolution, note) and the Idempotency-Key header, a UUID generated once per reconciliation; the same key with the same statement and body answers the first result with Idempotency-Replayed: true, and another statement, body or caller under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_VENDOR_STATEMENT_RECONCILE event once, on the request that reconciles, and one VENDOR_STATEMENT audit row with each key and resolution; the statement\'s file is kept for the configured retention period from now unless on legal hold. Returns 200 with the reconciled statement; 400 JUSTIFICATION_REQUIRED or VALIDATION_ERROR (a missing or non-UUID Idempotency-Key included); 403 without the permission; 404 VENDOR_STATEMENT_NOT_FOUND; 409 VENDOR_STATEMENT_NOT_EDITABLE, VENDOR_STATEMENT_COMPARISON_CHANGED or IDEMPOTENCY_CONFLICT; 422 VENDOR_STATEMENT_FIELDS_UNCHECKED, VENDOR_STATEMENT_RESOLUTION_MISSING or VENDOR_STATEMENT_RESOLUTION_NOT_ALLOWED (fieldErrors keyed by differenceKey). 
      * Reconcile A Vendor Statement
      */
     async reconcileVendorStatement(requestParameters: ReconcileVendorStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorStatementResponse> {
@@ -333,7 +345,7 @@ export class VendorStatementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Uploads one vendor statement, a PDF or a CSV, and creates a statement for a person to check. The file is stored apart, scanned for malware and read: a CSV by its columns, a PDF by the extraction service or, where it cannot read statements, by typing the lines in; nothing is compared, reconciled or posted. Use this tool to bring in a statement a vendor sent so it can be checked against the books; do not use it for a bill (uploadBillDocuments), for a spreadsheet of bills (importBillSpreadsheet) or for a bank statement (createBankImport). Preconditions: the caller holds accounting:bill_intake:create; the vendor is in accounting\'s vendor list (an inactive vendor is allowed); the file\'s type is judged by its content, never by its name or declared type, and a file that is neither a PDF nor a CSV is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one PDF or CSV, at most 25 MB), vendorId, statementDate (yyyy-MM-dd), closingBalance (signed: negative means the vendor owes the shop) and a UUIDv7 requestId; optional: currency (the ledger currency, the default) and, for a CSV, columnMapping (a JSON object of column to the file\'s header; without it the headers must be document_number, document_date and amount, with document_type and reference optional); a replay of the same requestId with the same file and values returns the same statement. Emits an ACCOUNTING_VENDOR_STATEMENT_UPLOAD event and one VENDOR_STATEMENT audit row naming the file\'s sha-256. Returns 201 with the statement (QUARANTINED, or FILE_REJECTED with a reason); 400 VALIDATION_ERROR for a malformed mapping or an amount of more than four decimals; 403 without the permission; 409 IDEMPOTENCY_CONFLICT when the requestId was used with another file or values; 413 PAYLOAD_TOO_LARGE over 25 MB; 422 VENDOR_NOT_FOUND for a vendor that is not set up, CURRENCY_NOT_SUPPORTED for another currency than the ledger\'s. 
+     * Uploads one vendor statement, a PDF or a CSV, and creates a statement for a person to check. The file is stored apart, scanned for malware and read: a CSV by its columns, a PDF by the extraction service or, where it cannot read statements, by typing the lines in; nothing is compared, reconciled or posted. Use this tool to bring in a statement a vendor sent so it can be checked against the books; do not use it for a bill (uploadBillDocuments), for a spreadsheet of bills (importBillSpreadsheet) or for a bank statement (createBankImport). Preconditions: the caller holds accounting:bill_intake:create; the vendor is in accounting\'s vendor list (an inactive vendor is allowed); the file\'s type is judged by its content, never by its name or declared type, and a file that is neither a PDF nor a CSV is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one PDF or CSV, at most 25 MB), vendorId, statementDate (yyyy-MM-dd), closingBalance (signed: negative means the vendor owes the shop) and the Idempotency-Key header, a UUID generated once per upload; optional: currency (the ledger currency, the default) and, for a CSV, columnMapping (a JSON object of column to the file\'s header; without it the headers must be document_number, document_date and amount, with document_type and reference optional); a replay of the same key with the same file and values returns the same statement with Idempotency-Replayed: true, and another file, other values or another caller under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_VENDOR_STATEMENT_UPLOAD event once, on the request that stores the statement, and one VENDOR_STATEMENT audit row naming the file\'s sha-256. Returns 201 with the statement (QUARANTINED, or FILE_REJECTED with a reason); 400 VALIDATION_ERROR for a malformed mapping, an amount of more than four decimals, or a missing or non-UUID Idempotency-Key; 403 without the permission; 409 IDEMPOTENCY_CONFLICT when the key was used for another request; 413 PAYLOAD_TOO_LARGE over 25 MB; 422 VENDOR_NOT_FOUND for a vendor that is not set up, CURRENCY_NOT_SUPPORTED for another currency than the ledger\'s. 
      * Upload A Vendor Statement
      */
     async uploadVendorStatementRaw(requestParameters: UploadVendorStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorStatementResponse>> {
@@ -358,10 +370,10 @@ export class VendorStatementsApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['requestId'] == null) {
+        if (requestParameters['idempotencyKey'] == null) {
             throw new runtime.RequiredError(
-                'requestId',
-                'Required parameter "requestId" was null or undefined when calling uploadVendorStatement().'
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling uploadVendorStatement().'
             );
         }
 
@@ -386,10 +398,6 @@ export class VendorStatementsApi extends runtime.BaseAPI {
             queryParameters['closingBalance'] = requestParameters['closingBalance'];
         }
 
-        if (requestParameters['requestId'] != null) {
-            queryParameters['requestId'] = requestParameters['requestId'];
-        }
-
         if (requestParameters['currency'] != null) {
             queryParameters['currency'] = requestParameters['currency'];
         }
@@ -399,6 +407,10 @@ export class VendorStatementsApi extends runtime.BaseAPI {
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -440,7 +452,7 @@ export class VendorStatementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Uploads one vendor statement, a PDF or a CSV, and creates a statement for a person to check. The file is stored apart, scanned for malware and read: a CSV by its columns, a PDF by the extraction service or, where it cannot read statements, by typing the lines in; nothing is compared, reconciled or posted. Use this tool to bring in a statement a vendor sent so it can be checked against the books; do not use it for a bill (uploadBillDocuments), for a spreadsheet of bills (importBillSpreadsheet) or for a bank statement (createBankImport). Preconditions: the caller holds accounting:bill_intake:create; the vendor is in accounting\'s vendor list (an inactive vendor is allowed); the file\'s type is judged by its content, never by its name or declared type, and a file that is neither a PDF nor a CSV is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one PDF or CSV, at most 25 MB), vendorId, statementDate (yyyy-MM-dd), closingBalance (signed: negative means the vendor owes the shop) and a UUIDv7 requestId; optional: currency (the ledger currency, the default) and, for a CSV, columnMapping (a JSON object of column to the file\'s header; without it the headers must be document_number, document_date and amount, with document_type and reference optional); a replay of the same requestId with the same file and values returns the same statement. Emits an ACCOUNTING_VENDOR_STATEMENT_UPLOAD event and one VENDOR_STATEMENT audit row naming the file\'s sha-256. Returns 201 with the statement (QUARANTINED, or FILE_REJECTED with a reason); 400 VALIDATION_ERROR for a malformed mapping or an amount of more than four decimals; 403 without the permission; 409 IDEMPOTENCY_CONFLICT when the requestId was used with another file or values; 413 PAYLOAD_TOO_LARGE over 25 MB; 422 VENDOR_NOT_FOUND for a vendor that is not set up, CURRENCY_NOT_SUPPORTED for another currency than the ledger\'s. 
+     * Uploads one vendor statement, a PDF or a CSV, and creates a statement for a person to check. The file is stored apart, scanned for malware and read: a CSV by its columns, a PDF by the extraction service or, where it cannot read statements, by typing the lines in; nothing is compared, reconciled or posted. Use this tool to bring in a statement a vendor sent so it can be checked against the books; do not use it for a bill (uploadBillDocuments), for a spreadsheet of bills (importBillSpreadsheet) or for a bank statement (createBankImport). Preconditions: the caller holds accounting:bill_intake:create; the vendor is in accounting\'s vendor list (an inactive vendor is allowed); the file\'s type is judged by its content, never by its name or declared type, and a file that is neither a PDF nor a CSV is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one PDF or CSV, at most 25 MB), vendorId, statementDate (yyyy-MM-dd), closingBalance (signed: negative means the vendor owes the shop) and the Idempotency-Key header, a UUID generated once per upload; optional: currency (the ledger currency, the default) and, for a CSV, columnMapping (a JSON object of column to the file\'s header; without it the headers must be document_number, document_date and amount, with document_type and reference optional); a replay of the same key with the same file and values returns the same statement with Idempotency-Replayed: true, and another file, other values or another caller under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_VENDOR_STATEMENT_UPLOAD event once, on the request that stores the statement, and one VENDOR_STATEMENT audit row naming the file\'s sha-256. Returns 201 with the statement (QUARANTINED, or FILE_REJECTED with a reason); 400 VALIDATION_ERROR for a malformed mapping, an amount of more than four decimals, or a missing or non-UUID Idempotency-Key; 403 without the permission; 409 IDEMPOTENCY_CONFLICT when the key was used for another request; 413 PAYLOAD_TOO_LARGE over 25 MB; 422 VENDOR_NOT_FOUND for a vendor that is not set up, CURRENCY_NOT_SUPPORTED for another currency than the ledger\'s. 
      * Upload A Vendor Statement
      */
     async uploadVendorStatement(requestParameters: UploadVendorStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorStatementResponse> {

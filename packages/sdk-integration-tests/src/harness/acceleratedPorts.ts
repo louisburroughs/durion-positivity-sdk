@@ -153,7 +153,7 @@ export function createShiftPort(
     const outcomes = await Promise.allSettled(
       personIds.map(async (personId) => {
         try {
-          const ended = await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+          const ended = await admin.people.workSessionsAPIApi.stopWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } });
           awaitingSubmit.set(personId, ended);
         } catch (error) {
           if (!isHttpStatus(error, 404)) {
@@ -193,6 +193,7 @@ export function createShiftPort(
       : 0;
     await call(`submitWorkSession ${session.sessionId}`, () =>
       admin.people.workSessionsAPIApi.submitWorkSession({
+        idempotencyKey: crypto.randomUUID(),
         id: session.sessionId,
         workSessionSubmitRequest: { billableMinutes, breakMinutes: 0, submittedAt: endedAt },
       }),
@@ -212,7 +213,7 @@ export function createShiftPort(
   /** A stale session from an interrupted run is closed before a fresh one opens. */
   const closeStale = async (personId: string): Promise<void> => {
     try {
-      await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+      await admin.people.workSessionsAPIApi.stopWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } });
     } catch (error) {
       // 404 is the happy path: no session was open.
       if (!isHttpStatus(error, 404)) {
@@ -249,7 +250,7 @@ export function createShiftPort(
           await submitPending(personId);
           await closeStale(personId);
           const started = await call(`startWorkSession ${personId}`, () =>
-            admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
+            admin.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId } }),
           );
           if (!readString(started, 'sessionId')) {
             throw new Error(`startWorkSession for ${personId} returned no sessionId — the shift was not opened`);

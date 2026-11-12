@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface BillIntakeConfirmRequest {
     /**
-     * A caller-generated UUIDv7: a retry with the same id answers the same bill
-     * @type {string}
-     * @memberof BillIntakeConfirmRequest
-     */
-    requestId?: string;
-    /**
      * The draft's version as you read it
      * @type {number}
      * @memberof BillIntakeConfirmRequest
@@ -51,7 +45,6 @@ export function BillIntakeConfirmRequestFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'requestId': json['requestId'] == null ? undefined : json['requestId'],
         'version': json['version'],
     };
 }
@@ -62,7 +55,6 @@ export function BillIntakeConfirmRequestToJSON(value?: BillIntakeConfirmRequest 
     }
     return {
         
-        'requestId': value['requestId'],
         'version': value['version'],
     };
 }

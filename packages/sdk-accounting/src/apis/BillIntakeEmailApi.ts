@@ -38,6 +38,7 @@ import {
 } from '../models/index';
 
 export interface ChangeBillIntakeEmailAddressRequest {
+    idempotencyKey: string;
     emailAddressRequest: EmailAddressRequest;
 }
 
@@ -57,10 +58,17 @@ export interface UpdateBillIntakeSettingsRequest {
 export class BillIntakeEmailApi extends runtime.BaseAPI {
 
     /**
-     * Requests the tenant\'s private bill intake address, or rotates it. REQUEST returns the current address, asking the inbound-mail service to issue one only when there is none. ROTATE retires the current address, which stops working at once, and issues a new one; mail sent to the old address is refused and shows in the email log. Use this tool to get the first address or to replace one that has leaked; use getBillIntakeSettings instead to read the address you already have, and do not use it to change who may email in (updateBillIntakeSettings). Preconditions: the caller holds accounting:bill_intake:manage. Required inputs: action (REQUEST or ROTATE), requestId (a UUID generated once per command; a replay answers the same address and never rotates twice), and for ROTATE a reason of at least 10 characters. Emits an ACCOUNTING_BILL_INTAKE_EMAIL_ADDRESS_CHANGE event and audits the request or rotation with the address ids (never the address) and the reason. Returns 200 with the address and when it was issued, 400 VALIDATION_ERROR for a missing action or requestId, 400 JUSTIFICATION_REQUIRED for a rotation without a reason of 10 characters, 403 without accounting:bill_intake:manage, and 503 INBOUND_MAIL_UNAVAILABLE when the inbound-mail service cannot be reached, with the stored address unchanged. 
+     * Requests the tenant\'s private bill intake address, or rotates it. REQUEST returns the current address, asking the inbound-mail service to issue one only when there is none. ROTATE retires the current address, which stops working at once, and issues a new one; mail sent to the old address is refused and shows in the email log. Use this tool to get the first address or to replace one that has leaked; use getBillIntakeSettings instead to read the address you already have, and do not use it to change who may email in (updateBillIntakeSettings). Preconditions: the caller holds accounting:bill_intake:manage. Required inputs: action (REQUEST or ROTATE), the Idempotency-Key header (a UUID generated once per command: a replay answers the same address and never rotates twice, the same key with another body or by another caller is 409 IDEMPOTENCY_CONFLICT, and a retry while the command is still running answers 409 with Retry-After: 1), and for ROTATE a reason of at least 10 characters. Emits an ACCOUNTING_BILL_INTAKE_EMAIL_ADDRESS_CHANGE event once, on the request that issues the address, and audits the request or rotation with the address ids (never the address) and the reason. Returns 200 with the address and when it was issued, 400 VALIDATION_ERROR for a missing action, or a missing or non-UUID Idempotency-Key, 400 JUSTIFICATION_REQUIRED for a rotation without a reason of 10 characters, 403 without accounting:bill_intake:manage, 409 IDEMPOTENCY_CONFLICT when the key was used for another request, and 503 INBOUND_MAIL_UNAVAILABLE when the inbound-mail service cannot be reached, with the stored address unchanged. 
      * Request or Rotate Bill Intake Email Address
      */
     async changeBillIntakeEmailAddressRaw(requestParameters: ChangeBillIntakeEmailAddressRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmailAddressResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling changeBillIntakeEmailAddress().'
+            );
+        }
+
         if (requestParameters['emailAddressRequest'] == null) {
             throw new runtime.RequiredError(
                 'emailAddressRequest',
@@ -73,6 +81,10 @@ export class BillIntakeEmailApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -94,7 +106,7 @@ export class BillIntakeEmailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Requests the tenant\'s private bill intake address, or rotates it. REQUEST returns the current address, asking the inbound-mail service to issue one only when there is none. ROTATE retires the current address, which stops working at once, and issues a new one; mail sent to the old address is refused and shows in the email log. Use this tool to get the first address or to replace one that has leaked; use getBillIntakeSettings instead to read the address you already have, and do not use it to change who may email in (updateBillIntakeSettings). Preconditions: the caller holds accounting:bill_intake:manage. Required inputs: action (REQUEST or ROTATE), requestId (a UUID generated once per command; a replay answers the same address and never rotates twice), and for ROTATE a reason of at least 10 characters. Emits an ACCOUNTING_BILL_INTAKE_EMAIL_ADDRESS_CHANGE event and audits the request or rotation with the address ids (never the address) and the reason. Returns 200 with the address and when it was issued, 400 VALIDATION_ERROR for a missing action or requestId, 400 JUSTIFICATION_REQUIRED for a rotation without a reason of 10 characters, 403 without accounting:bill_intake:manage, and 503 INBOUND_MAIL_UNAVAILABLE when the inbound-mail service cannot be reached, with the stored address unchanged. 
+     * Requests the tenant\'s private bill intake address, or rotates it. REQUEST returns the current address, asking the inbound-mail service to issue one only when there is none. ROTATE retires the current address, which stops working at once, and issues a new one; mail sent to the old address is refused and shows in the email log. Use this tool to get the first address or to replace one that has leaked; use getBillIntakeSettings instead to read the address you already have, and do not use it to change who may email in (updateBillIntakeSettings). Preconditions: the caller holds accounting:bill_intake:manage. Required inputs: action (REQUEST or ROTATE), the Idempotency-Key header (a UUID generated once per command: a replay answers the same address and never rotates twice, the same key with another body or by another caller is 409 IDEMPOTENCY_CONFLICT, and a retry while the command is still running answers 409 with Retry-After: 1), and for ROTATE a reason of at least 10 characters. Emits an ACCOUNTING_BILL_INTAKE_EMAIL_ADDRESS_CHANGE event once, on the request that issues the address, and audits the request or rotation with the address ids (never the address) and the reason. Returns 200 with the address and when it was issued, 400 VALIDATION_ERROR for a missing action, or a missing or non-UUID Idempotency-Key, 400 JUSTIFICATION_REQUIRED for a rotation without a reason of 10 characters, 403 without accounting:bill_intake:manage, 409 IDEMPOTENCY_CONFLICT when the key was used for another request, and 503 INBOUND_MAIL_UNAVAILABLE when the inbound-mail service cannot be reached, with the stored address unchanged. 
      * Request or Rotate Bill Intake Email Address
      */
     async changeBillIntakeEmailAddress(requestParameters: ChangeBillIntakeEmailAddressRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmailAddressResponse> {

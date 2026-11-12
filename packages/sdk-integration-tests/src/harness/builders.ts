@@ -1,5 +1,5 @@
 import { CreatePersonRequestPreferredContactMethodEnum } from '@durion-sdk/customer';
-import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
+import { AddEstimateItemRequestItemTypeEnum, ApproveEstimateRequestApprovalMethodEnum } from '@durion-sdk/workorder';
 import { CoverageRuleRequestRuleTypeEnum, MobileUnitRequestStatusEnum } from '@durion-sdk/location';
 import { createPurchaseOrderOnceVendorReplicated, type ReferenceCache, type SeederRandom } from '@durion-sdk/seeder';
 import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
@@ -249,6 +249,7 @@ export async function approveAndPromote(
     as.workorder.estimateAPIApi.approveEstimate({
       estimateId,
       approveEstimateRequest: {
+        approvalMethod: ApproveEstimateRequestApprovalMethodEnum.Signature,
         customerId: customer.partyId,
         signatureData: ctx.random.base64(32),
         signerName: customer.fullName,

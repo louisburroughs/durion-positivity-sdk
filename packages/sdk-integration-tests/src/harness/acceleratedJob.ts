@@ -22,7 +22,10 @@
  * that fails fails the job, and a job that fails fails the run's day.
  */
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
-import { AssignServicePositionRequestResourceTypeEnum as ResourceType } from '@durion-sdk/workorder';
+import {
+  ApproveEstimateRequestApprovalMethodEnum,
+  AssignServicePositionRequestResourceTypeEnum as ResourceType,
+} from '@durion-sdk/workorder';
 import {
   addLaborLine,
   addPartLine,
@@ -506,6 +509,7 @@ export class AcceleratedJob {
         this.deps.as.advisor.workorder.estimateAPIApi.approveEstimate({
           estimateId,
           approveEstimateRequest: {
+            approvalMethod: ApproveEstimateRequestApprovalMethodEnum.Signature,
             customerId: customer.partyId,
             signatureData: this.ctx.random.base64(32),
             signerName: customer.fullName,
@@ -765,6 +769,7 @@ export class AcceleratedJob {
       if (!service.id || !COMPLETABLE.has(String(service.status))) continue;
       await call(`completeServiceItem ${service.id}`, () =>
         this.deps.as.manager.workorder.workOrderAPIApi.completeServiceItem({
+          idempotencyKey: crypto.randomUUID(),
           workorderId,
           serviceLineId: service.id as string,
         }),

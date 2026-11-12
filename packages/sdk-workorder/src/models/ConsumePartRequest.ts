@@ -26,6 +26,12 @@ export interface ConsumePartRequest {
      */
     notes?: string;
     /**
+     * Business time the parts were used, for work replayed from the technician app's offline queue (#3291). ISO-8601 with an offset; omitted means now. Must be no more than 72 hours old and no more than 2 minutes in the future.
+     * @type {Date}
+     * @memberof ConsumePartRequest
+     */
+    occurredAt?: Date;
+    /**
      * Quantity to consume
      * @type {number}
      * @memberof ConsumePartRequest
@@ -65,6 +71,7 @@ export function ConsumePartRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
         'quantity': json['quantity'],
         'uomCode': json['uomCode'] == null ? undefined : json['uomCode'],
         'workorderPartId': json['workorderPartId'],
@@ -78,6 +85,7 @@ export function ConsumePartRequestToJSON(value?: ConsumePartRequest | null): any
     return {
         
         'notes': value['notes'],
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
         'quantity': value['quantity'],
         'uomCode': value['uomCode'],
         'workorderPartId': value['workorderPartId'],

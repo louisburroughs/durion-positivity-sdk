@@ -51,11 +51,39 @@ export interface WorkorderNoteResponse {
     noteType?: string;
     /**
      * 
+     * @type {Date}
+     * @memberof WorkorderNoteResponse
+     */
+    occurredAt?: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof WorkorderNoteResponse
+     */
+    receivedAt?: Date;
+    /**
+     * 
+     * @type {string}
+     * @memberof WorkorderNoteResponse
+     */
+    source?: WorkorderNoteResponseSourceEnum;
+    /**
+     * 
      * @type {string}
      * @memberof WorkorderNoteResponse
      */
     workorderId?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum WorkorderNoteResponseSourceEnum {
+    Live = 'LIVE',
+    OfflineReplay = 'OFFLINE_REPLAY'
+}
+
 
 /**
  * Check if a given object implements the WorkorderNoteResponse interface.
@@ -79,6 +107,9 @@ export function WorkorderNoteResponseFromJSONTyped(json: any, ignoreDiscriminato
         'noteId': json['noteId'] == null ? undefined : json['noteId'],
         'noteText': json['noteText'] == null ? undefined : json['noteText'],
         'noteType': json['noteType'] == null ? undefined : json['noteType'],
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
+        'receivedAt': json['receivedAt'] == null ? undefined : (new Date(json['receivedAt'])),
+        'source': json['source'] == null ? undefined : json['source'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
@@ -94,6 +125,9 @@ export function WorkorderNoteResponseToJSON(value?: WorkorderNoteResponse | null
         'noteId': value['noteId'],
         'noteText': value['noteText'],
         'noteType': value['noteType'],
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
+        'receivedAt': value['receivedAt'] == null ? undefined : ((value['receivedAt']).toISOString()),
+        'source': value['source'],
         'workorderId': value['workorderId'],
     };
 }

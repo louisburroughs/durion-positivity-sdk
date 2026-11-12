@@ -26,12 +26,35 @@ export interface WorkSessionRequest {
      */
     actor?: string;
     /**
+     * Instant the technician actually clocked in or out, as the app recorded it. Omitted means now (the server clock). No more than 2 minutes in the future and no more than 72 hours old; a value outside those bounds is 422 OCCURRED_AT_OUT_OF_RANGE.
+     * @type {Date}
+     * @memberof WorkSessionRequest
+     */
+    occurredAt?: Date;
+    /**
      * ID of the person
      * @type {string}
      * @memberof WorkSessionRequest
      */
     personId: string;
+    /**
+     * What triggered the action: MANUAL or FIRST_SIGN_IN when starting, MANUAL or UNDO when stopping. Omitted means MANUAL; a value that does not fit the call is 400 VALIDATION_ERROR.
+     * @type {string}
+     * @memberof WorkSessionRequest
+     */
+    trigger?: WorkSessionRequestTriggerEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum WorkSessionRequestTriggerEnum {
+    Manual = 'MANUAL',
+    FirstSignIn = 'FIRST_SIGN_IN',
+    Undo = 'UNDO'
+}
+
 
 /**
  * Check if a given object implements the WorkSessionRequest interface.
@@ -52,7 +75,9 @@ export function WorkSessionRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'actor': json['actor'] == null ? undefined : json['actor'],
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
         'personId': json['personId'],
+        'trigger': json['trigger'] == null ? undefined : json['trigger'],
     };
 }
 
@@ -63,7 +88,9 @@ export function WorkSessionRequestToJSON(value?: WorkSessionRequest | null): any
     return {
         
         'actor': value['actor'],
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
         'personId': value['personId'],
+        'trigger': value['trigger'],
     };
 }
 

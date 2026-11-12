@@ -45,10 +45,12 @@ export interface SetAccountingTimeZoneRequest {
 }
 
 export interface SetAgedThresholdsRequest {
+    idempotencyKey: string;
     agedThresholdsRequest: AgedThresholdsRequest;
 }
 
 export interface SetCashSafetyCushionRequest {
+    idempotencyKey: string;
     cashSafetyCushionRequest: CashSafetyCushionRequest;
 }
 
@@ -176,10 +178,17 @@ export class AccountingConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (1 to 30), vendorCodUnappliedAgedDays (1 to 90) and deliveriesNotBilledDays (7 to 120). Use this tool when Finance changes how long undeposited register cash, an unapplied vendor cash-on-delivery payment or a delivery with no approved bill may wait before it is flagged; use getAgedThresholds instead to read them, and do not use it to act on an aged item. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: all three day counts, a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_SET event and writes one audit row per threshold whose value changes (old and new value, justification, requestId); an unchanged threshold writes nothing, and a replayed requestId changes nothing. Returns 400 VALIDATION_ERROR for a missing field or a value outside its range, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 409 for a requestId already used with another body. 
+     * Replaces the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (1 to 30), vendorCodUnappliedAgedDays (1 to 90) and deliveriesNotBilledDays (7 to 120). Use this tool when Finance changes how long undeposited register cash, an unapplied vendor cash-on-delivery payment or a delivery with no approved bill may wait before it is flagged; use getAgedThresholds instead to read them, and do not use it to act on an aged item. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: all three day counts, a justification of at least 10 characters, and the Idempotency-Key header, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_SET event and writes one audit row per threshold whose value changes (old and new value, justification); an unchanged threshold writes nothing, and a replay of the same Idempotency-Key returns the first answer. Returns 400 VALIDATION_ERROR for a missing field or a value outside its range, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 409 IDEMPOTENCY_CONFLICT for a key already used with another request. 
      * Set Aged Thresholds
      */
     async setAgedThresholdsRaw(requestParameters: SetAgedThresholdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AgedThresholdsResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling setAgedThresholds().'
+            );
+        }
+
         if (requestParameters['agedThresholdsRequest'] == null) {
             throw new runtime.RequiredError(
                 'agedThresholdsRequest',
@@ -192,6 +201,10 @@ export class AccountingConfigurationApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -213,7 +226,7 @@ export class AccountingConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (1 to 30), vendorCodUnappliedAgedDays (1 to 90) and deliveriesNotBilledDays (7 to 120). Use this tool when Finance changes how long undeposited register cash, an unapplied vendor cash-on-delivery payment or a delivery with no approved bill may wait before it is flagged; use getAgedThresholds instead to read them, and do not use it to act on an aged item. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: all three day counts, a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_SET event and writes one audit row per threshold whose value changes (old and new value, justification, requestId); an unchanged threshold writes nothing, and a replayed requestId changes nothing. Returns 400 VALIDATION_ERROR for a missing field or a value outside its range, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 409 for a requestId already used with another body. 
+     * Replaces the tenant\'s three aged-item thresholds, in calendar days on the accounting date: undepositedCashAgedDays (1 to 30), vendorCodUnappliedAgedDays (1 to 90) and deliveriesNotBilledDays (7 to 120). Use this tool when Finance changes how long undeposited register cash, an unapplied vendor cash-on-delivery payment or a delivery with no approved bill may wait before it is flagged; use getAgedThresholds instead to read them, and do not use it to act on an aged item. Preconditions: the caller holds accounting:period:hard_lock. Required inputs: all three day counts, a justification of at least 10 characters, and the Idempotency-Key header, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_AGED_THRESHOLDS_SET event and writes one audit row per threshold whose value changes (old and new value, justification); an unchanged threshold writes nothing, and a replay of the same Idempotency-Key returns the first answer. Returns 400 VALIDATION_ERROR for a missing field or a value outside its range, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 409 IDEMPOTENCY_CONFLICT for a key already used with another request. 
      * Set Aged Thresholds
      */
     async setAgedThresholds(requestParameters: SetAgedThresholdsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AgedThresholdsResponse> {
@@ -222,10 +235,17 @@ export class AccountingConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets or clears the tenant\'s cash safety cushion: the amount, in the functional currency, below which the 30-day cash outlook warns that the lowest projected balance falls short. It is only a threshold: it is never posted, never reserved and never taken off the cash shown, and it refuses nothing. Use this tool when Finance sets, raises, lowers or removes the cushion; use getCashSafetyCushion instead to read it, and do not use it to move money. Preconditions: the caller holds accounting:period:hard_lock, and currencyCode is the tenant\'s functional currency. Required inputs: amount (not negative, at the currency\'s minor-unit precision, 0 allowed; null clears the cushion), currencyCode (ISO 4217), a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_SET event and audits the old and new amount with the justification and requestId; setting the current value again, or replaying a requestId, changes nothing. Returns 400 VALIDATION_ERROR for a missing field, an unknown currency code, a negative amount or too many decimal places, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, 409 for a requestId already used with another body, and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional one. 
+     * Sets or clears the tenant\'s cash safety cushion: the amount, in the functional currency, below which the 30-day cash outlook warns that the lowest projected balance falls short. It is only a threshold: it is never posted, never reserved and never taken off the cash shown, and it refuses nothing. Use this tool when Finance sets, raises, lowers or removes the cushion; use getCashSafetyCushion instead to read it, and do not use it to move money. Preconditions: the caller holds accounting:period:hard_lock, and currencyCode is the tenant\'s functional currency. Required inputs: amount (not negative, at the currency\'s minor-unit precision, 0 allowed; null clears the cushion), currencyCode (ISO 4217), a justification of at least 10 characters, and the Idempotency-Key header, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_SET event and audits the old and new amount with the justification; setting the current value again changes nothing, and a replay of the same Idempotency-Key returns the first answer with Idempotency-Replayed: true. Returns 400 VALIDATION_ERROR for a missing field, an unknown currency code, a negative amount or too many decimal places, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, 409 IDEMPOTENCY_CONFLICT for a key already used with another request, and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional one. 
      * Set Cash Safety Cushion
      */
     async setCashSafetyCushionRaw(requestParameters: SetCashSafetyCushionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CashSafetyCushionResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling setCashSafetyCushion().'
+            );
+        }
+
         if (requestParameters['cashSafetyCushionRequest'] == null) {
             throw new runtime.RequiredError(
                 'cashSafetyCushionRequest',
@@ -238,6 +258,10 @@ export class AccountingConfigurationApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -259,7 +283,7 @@ export class AccountingConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets or clears the tenant\'s cash safety cushion: the amount, in the functional currency, below which the 30-day cash outlook warns that the lowest projected balance falls short. It is only a threshold: it is never posted, never reserved and never taken off the cash shown, and it refuses nothing. Use this tool when Finance sets, raises, lowers or removes the cushion; use getCashSafetyCushion instead to read it, and do not use it to move money. Preconditions: the caller holds accounting:period:hard_lock, and currencyCode is the tenant\'s functional currency. Required inputs: amount (not negative, at the currency\'s minor-unit precision, 0 allowed; null clears the cushion), currencyCode (ISO 4217), a justification of at least 10 characters, and requestId, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_SET event and audits the old and new amount with the justification and requestId; setting the current value again, or replaying a requestId, changes nothing. Returns 400 VALIDATION_ERROR for a missing field, an unknown currency code, a negative amount or too many decimal places, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, 409 for a requestId already used with another body, and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional one. 
+     * Sets or clears the tenant\'s cash safety cushion: the amount, in the functional currency, below which the 30-day cash outlook warns that the lowest projected balance falls short. It is only a threshold: it is never posted, never reserved and never taken off the cash shown, and it refuses nothing. Use this tool when Finance sets, raises, lowers or removes the cushion; use getCashSafetyCushion instead to read it, and do not use it to move money. Preconditions: the caller holds accounting:period:hard_lock, and currencyCode is the tenant\'s functional currency. Required inputs: amount (not negative, at the currency\'s minor-unit precision, 0 allowed; null clears the cushion), currencyCode (ISO 4217), a justification of at least 10 characters, and the Idempotency-Key header, a UUID generated once per change. Emits an ACCOUNTING_CONFIGURATION_CASH_SAFETY_CUSHION_SET event and audits the old and new amount with the justification; setting the current value again changes nothing, and a replay of the same Idempotency-Key returns the first answer with Idempotency-Replayed: true. Returns 400 VALIDATION_ERROR for a missing field, an unknown currency code, a negative amount or too many decimal places, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, 409 IDEMPOTENCY_CONFLICT for a key already used with another request, and 422 CURRENCY_NOT_SUPPORTED for a currency other than the functional one. 
      * Set Cash Safety Cushion
      */
     async setCashSafetyCushion(requestParameters: SetCashSafetyCushionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CashSafetyCushionResponse> {

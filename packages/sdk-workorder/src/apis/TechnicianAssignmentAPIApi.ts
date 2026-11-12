@@ -17,7 +17,9 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   AssignTechnicianRequest,
+  ClaimWorkorderRequest,
   ReassignTechnicianRequest,
+  ServicePositionResponse,
   TechnicianAssignmentResponse,
 } from '../models/index';
 import {
@@ -25,8 +27,12 @@ import {
     ApiErrorToJSON,
     AssignTechnicianRequestFromJSON,
     AssignTechnicianRequestToJSON,
+    ClaimWorkorderRequestFromJSON,
+    ClaimWorkorderRequestToJSON,
     ReassignTechnicianRequestFromJSON,
     ReassignTechnicianRequestToJSON,
+    ServicePositionResponseFromJSON,
+    ServicePositionResponseToJSON,
     TechnicianAssignmentResponseFromJSON,
     TechnicianAssignmentResponseToJSON,
 } from '../models/index';
@@ -35,6 +41,12 @@ export interface AssignTechnicianOperationRequest {
     workorderId: string;
     assignTechnicianRequest: AssignTechnicianRequest;
     idempotencyKey?: string;
+}
+
+export interface ClaimWorkorderOperationRequest {
+    workorderId: string;
+    idempotencyKey: string;
+    claimWorkorderRequest: ClaimWorkorderRequest;
 }
 
 export interface GetTechnicianAssignmentRequest {
@@ -111,6 +123,70 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
      */
     async assignTechnician(requestParameters: AssignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TechnicianAssignmentResponse> {
         const response = await this.assignTechnicianRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Assigns the calling technician to an open workorder and places it on a bay, a mobile unit or the site\'s HOLD position, in one transaction: either both happen or neither does. Use this tool when a technician takes an unassigned workorder for themselves; do not use assignTechnician, which assigns somebody else and needs the advisor\'s permission, and do not use assignServicePosition, which moves a workorder without changing who holds it. Preconditions: the caller\'s login must have a linked person, who becomes the technician; the workorder must exist, be APPROVED and have no current technician; a caller whose workorder:workorder:claim grant is location-scoped must have the workorder\'s shop within reach (ADR-0061); the position follows assignServicePosition\'s rules (a known, active BAY or MOBILE_UNIT at the workorder\'s site, within its duty class, with no other open workorder in an overlapping slot), and the technician follows assignTechnician\'s rules (employed, and staffed at the site where they have any ACTIVE staffing). Required inputs: workorderId (UUID) as a path parameter, a body with resourceType (BAY, MOBILE_UNIT or HOLD; resourceId required for BAY and MOBILE_UNIT, optional for HOLD) and optional slotStart/slotEnd with assignServicePosition\'s defaults, and the required Idempotency-Key header (a UUID). The body has no technician field: the technician is always the caller. A position the workorder already holds is replaced by the requested one, a BAY or MOBILE_UNIT claim leaves the workorder ASSIGNED, and a HOLD claim assigns the technician without a bay and the workorder stays APPROVED until it is placed. Emits a WORKORDER_CLAIM event on a fresh claim and none on a replay; a replay returns the original 200 answer with Idempotency-Replayed: true. Returns 400 when the body is invalid, the slot bounds are malformed, or the Idempotency-Key is missing or not a UUID; 403 NO_LINKED_PERSON when the caller has no linked person, and 403 LOCATION_SCOPE_DENIED outside the caller\'s reach; 404 when the workorder does not exist; 409 TECHNICIAN_ALREADY_ASSIGNED, naming the current technician in the message with their id as referenceId, when someone holds the workorder; 409 RESOURCE_OCCUPIED with conflicts[] when the slot is taken, and nothing is assigned; 409 WORKORDER_NOT_CLAIMABLE when the workorder is not APPROVED; 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor; 422 TECHNICIAN_NOT_STAFFED_AT_SITE, TECHNICIAN_NOT_ACTIVE, SERVICE_POSITION_INVALID, SERVICE_POSITION_INACTIVE or SERVICE_POSITION_DUTY_CLASS_EXCEEDED; and 503 TECHNICIAN_REPLICATION_PENDING or LOCATION_REPLICATION_PENDING with a Retry-After header. 
+     * Claim an Open Workorder Into a Position
+     */
+    async claimWorkorderRaw(requestParameters: ClaimWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServicePositionResponse>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling claimWorkorder().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling claimWorkorder().'
+            );
+        }
+
+        if (requestParameters['claimWorkorderRequest'] == null) {
+            throw new runtime.RequiredError(
+                'claimWorkorderRequest',
+                'Required parameter "claimWorkorderRequest" was null or undefined when calling claimWorkorder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:claim"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/claim`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ClaimWorkorderRequestToJSON(requestParameters['claimWorkorderRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServicePositionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Assigns the calling technician to an open workorder and places it on a bay, a mobile unit or the site\'s HOLD position, in one transaction: either both happen or neither does. Use this tool when a technician takes an unassigned workorder for themselves; do not use assignTechnician, which assigns somebody else and needs the advisor\'s permission, and do not use assignServicePosition, which moves a workorder without changing who holds it. Preconditions: the caller\'s login must have a linked person, who becomes the technician; the workorder must exist, be APPROVED and have no current technician; a caller whose workorder:workorder:claim grant is location-scoped must have the workorder\'s shop within reach (ADR-0061); the position follows assignServicePosition\'s rules (a known, active BAY or MOBILE_UNIT at the workorder\'s site, within its duty class, with no other open workorder in an overlapping slot), and the technician follows assignTechnician\'s rules (employed, and staffed at the site where they have any ACTIVE staffing). Required inputs: workorderId (UUID) as a path parameter, a body with resourceType (BAY, MOBILE_UNIT or HOLD; resourceId required for BAY and MOBILE_UNIT, optional for HOLD) and optional slotStart/slotEnd with assignServicePosition\'s defaults, and the required Idempotency-Key header (a UUID). The body has no technician field: the technician is always the caller. A position the workorder already holds is replaced by the requested one, a BAY or MOBILE_UNIT claim leaves the workorder ASSIGNED, and a HOLD claim assigns the technician without a bay and the workorder stays APPROVED until it is placed. Emits a WORKORDER_CLAIM event on a fresh claim and none on a replay; a replay returns the original 200 answer with Idempotency-Replayed: true. Returns 400 when the body is invalid, the slot bounds are malformed, or the Idempotency-Key is missing or not a UUID; 403 NO_LINKED_PERSON when the caller has no linked person, and 403 LOCATION_SCOPE_DENIED outside the caller\'s reach; 404 when the workorder does not exist; 409 TECHNICIAN_ALREADY_ASSIGNED, naming the current technician in the message with their id as referenceId, when someone holds the workorder; 409 RESOURCE_OCCUPIED with conflicts[] when the slot is taken, and nothing is assigned; 409 WORKORDER_NOT_CLAIMABLE when the workorder is not APPROVED; 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor; 422 TECHNICIAN_NOT_STAFFED_AT_SITE, TECHNICIAN_NOT_ACTIVE, SERVICE_POSITION_INVALID, SERVICE_POSITION_INACTIVE or SERVICE_POSITION_DUTY_CLASS_EXCEEDED; and 503 TECHNICIAN_REPLICATION_PENDING or LOCATION_REPLICATION_PENDING with a Retry-After header. 
+     * Claim an Open Workorder Into a Position
+     */
+    async claimWorkorder(requestParameters: ClaimWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServicePositionResponse> {
+        const response = await this.claimWorkorderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

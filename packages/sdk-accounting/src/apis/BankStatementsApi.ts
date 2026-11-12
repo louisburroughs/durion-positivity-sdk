@@ -32,6 +32,7 @@ import {
 } from '../models/index';
 
 export interface CreateBankStatementRequest {
+    idempotencyKey: string;
     bankStatementCreateRequest: BankStatementCreateRequest;
 }
 
@@ -53,10 +54,17 @@ export interface ListBankStatementsRequest {
 export class BankStatementsApi extends runtime.BaseAPI {
 
     /**
-     * Commits a bank statement keyed by hand — header, transactions and, when needed, a gap acknowledgement — for a reconcilable BANK_CASH account, through the same intake as a file. Use this tool when the bank offers no statement download or to reconcile to a date; do not use it to correct a committed statement, which is an explicit supersede instead. Preconditions: the statement must continue the account\'s previous statement (opening balance equals its closing balance, start date the day after its end) unless a gapAcknowledgement of at least 10 characters is given, which is required for the account\'s first statement, refused on a contiguous one and moves the account\'s reconciliation baseline. Required inputs: glAccountId, a UUIDv7 requestId, statement {startDate, endDate, openingBalance, closingBalance} and transactions[] each with a date, a description and either signedAmount or one of debit/credit; startReconciliation optionally starts the statement\'s reconciliation in the same transaction (listed under reconciliations). Emits an ACCOUNTING_BANK_STATEMENT_CREATE event and queues the accounting.bankstatement.committed fact; a replay of the same requestId and payload returns the original statement with replayed=true. Returns 422 when the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement, contiguity or the acknowledgement rule fails, a transaction lies outside the window or opening + activity differs from closing; 409 when the window is already committed or the requestId was used with another payload; and 400 when the request is malformed or a justification is shorter than 10 characters. 
+     * Commits a bank statement keyed by hand — header, transactions and, when needed, a gap acknowledgement — for a reconcilable BANK_CASH account, through the same intake as a file. Use this tool when the bank offers no statement download or to reconcile to a date; do not use it to correct a committed statement, which is an explicit supersede instead. Preconditions: the statement must continue the account\'s previous statement (opening balance equals its closing balance, start date the day after its end) unless a gapAcknowledgement of at least 10 characters is given, which is required for the account\'s first statement, refused on a contiguous one and moves the account\'s reconciliation baseline. Required inputs: the Idempotency-Key header (a UUID) and, in the body, glAccountId, statement {startDate, endDate, openingBalance, closingBalance} and transactions[] each with a date, a description and either signedAmount or one of debit/credit; startReconciliation optionally starts the statement\'s reconciliation in the same transaction (listed under reconciliations). Emits an ACCOUNTING_BANK_STATEMENT_CREATE event and queues the accounting.bankstatement.committed fact. A replay of the same Idempotency-Key and payload returns the original status and body with Idempotency-Replayed: true, and runs nothing a second time; the replayed body is a snapshot of the first outcome, not the statement\'s current state. Returns 422 when the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement, contiguity or the acknowledgement rule fails, a transaction lies outside the window or opening + activity differs from closing; 400 when the request is malformed, a justification is shorter than 10 characters or the Idempotency-Key is missing or not a UUID (VALIDATION_ERROR); and 409 when the window is already committed or the Idempotency-Key was used with another payload or by another caller (IDEMPOTENCY_CONFLICT). 
      * Enter Bank Statement
      */
     async createBankStatementRaw(requestParameters: CreateBankStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankStatementResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling createBankStatement().'
+            );
+        }
+
         if (requestParameters['bankStatementCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'bankStatementCreateRequest',
@@ -69,6 +77,10 @@ export class BankStatementsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -90,7 +102,7 @@ export class BankStatementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Commits a bank statement keyed by hand — header, transactions and, when needed, a gap acknowledgement — for a reconcilable BANK_CASH account, through the same intake as a file. Use this tool when the bank offers no statement download or to reconcile to a date; do not use it to correct a committed statement, which is an explicit supersede instead. Preconditions: the statement must continue the account\'s previous statement (opening balance equals its closing balance, start date the day after its end) unless a gapAcknowledgement of at least 10 characters is given, which is required for the account\'s first statement, refused on a contiguous one and moves the account\'s reconciliation baseline. Required inputs: glAccountId, a UUIDv7 requestId, statement {startDate, endDate, openingBalance, closingBalance} and transactions[] each with a date, a description and either signedAmount or one of debit/credit; startReconciliation optionally starts the statement\'s reconciliation in the same transaction (listed under reconciliations). Emits an ACCOUNTING_BANK_STATEMENT_CREATE event and queues the accounting.bankstatement.committed fact; a replay of the same requestId and payload returns the original statement with replayed=true. Returns 422 when the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement, contiguity or the acknowledgement rule fails, a transaction lies outside the window or opening + activity differs from closing; 409 when the window is already committed or the requestId was used with another payload; and 400 when the request is malformed or a justification is shorter than 10 characters. 
+     * Commits a bank statement keyed by hand — header, transactions and, when needed, a gap acknowledgement — for a reconcilable BANK_CASH account, through the same intake as a file. Use this tool when the bank offers no statement download or to reconcile to a date; do not use it to correct a committed statement, which is an explicit supersede instead. Preconditions: the statement must continue the account\'s previous statement (opening balance equals its closing balance, start date the day after its end) unless a gapAcknowledgement of at least 10 characters is given, which is required for the account\'s first statement, refused on a contiguous one and moves the account\'s reconciliation baseline. Required inputs: the Idempotency-Key header (a UUID) and, in the body, glAccountId, statement {startDate, endDate, openingBalance, closingBalance} and transactions[] each with a date, a description and either signedAmount or one of debit/credit; startReconciliation optionally starts the statement\'s reconciliation in the same transaction (listed under reconciliations). Emits an ACCOUNTING_BANK_STATEMENT_CREATE event and queues the accounting.bankstatement.committed fact. A replay of the same Idempotency-Key and payload returns the original status and body with Idempotency-Replayed: true, and runs nothing a second time; the replayed body is a snapshot of the first outcome, not the statement\'s current state. Returns 422 when the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement, contiguity or the acknowledgement rule fails, a transaction lies outside the window or opening + activity differs from closing; 400 when the request is malformed, a justification is shorter than 10 characters or the Idempotency-Key is missing or not a UUID (VALIDATION_ERROR); and 409 when the window is already committed or the Idempotency-Key was used with another payload or by another caller (IDEMPOTENCY_CONFLICT). 
      * Enter Bank Statement
      */
     async createBankStatement(requestParameters: CreateBankStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankStatementResponse> {

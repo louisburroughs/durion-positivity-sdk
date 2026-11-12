@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface StoreImageRequest {
     /**
+     * Caption shown beside the photo
+     * @type {string}
+     * @memberof StoreImageRequest
+     */
+    caption?: string;
+    /**
      * Base64 bytes (max 14,000,000 chars; 10 MiB decoded default). JPEG, PNG, WebP, and GIF only.
      * @type {string}
      * @memberof StoreImageRequest
@@ -44,12 +50,36 @@ export interface StoreImageRequest {
      */
     filename: string;
     /**
+     * Id of the record the image belongs to; a tag, not validated against the owning service
+     * @type {string}
+     * @memberof StoreImageRequest
+     */
+    ownerId?: string;
+    /**
+     * Kind of record the image belongs to (#3288); sent together with ownerId or not at all. An owned image is read only with image:image:view
+     * @type {string}
+     * @memberof StoreImageRequest
+     */
+    ownerType?: StoreImageRequestOwnerTypeEnum;
+    /**
      * Where the bytes were fetched from. Kept as provenance for audit and reconciliation, never used as a render source
      * @type {string}
      * @memberof StoreImageRequest
      */
     sourceUri?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum StoreImageRequestOwnerTypeEnum {
+    EstimateCheckIn = 'ESTIMATE_CHECK_IN',
+    Workorder = 'WORKORDER',
+    WorkorderService = 'WORKORDER_SERVICE',
+    ChangeRequest = 'CHANGE_REQUEST'
+}
+
 
 /**
  * Check if a given object implements the StoreImageRequest interface.
@@ -71,10 +101,13 @@ export function StoreImageRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
+        'caption': json['caption'] == null ? undefined : json['caption'],
         'content': json['content'],
         'contentType': json['contentType'],
         'context': json['context'] == null ? undefined : json['context'],
         'filename': json['filename'],
+        'ownerId': json['ownerId'] == null ? undefined : json['ownerId'],
+        'ownerType': json['ownerType'] == null ? undefined : json['ownerType'],
         'sourceUri': json['sourceUri'] == null ? undefined : json['sourceUri'],
     };
 }
@@ -85,10 +118,13 @@ export function StoreImageRequestToJSON(value?: StoreImageRequest | null): any {
     }
     return {
         
+        'caption': value['caption'],
         'content': value['content'],
         'contentType': value['contentType'],
         'context': value['context'],
         'filename': value['filename'],
+        'ownerId': value['ownerId'],
+        'ownerType': value['ownerType'],
         'sourceUri': value['sourceUri'],
     };
 }

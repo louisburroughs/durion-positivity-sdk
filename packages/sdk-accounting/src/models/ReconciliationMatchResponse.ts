@@ -128,12 +128,6 @@ export interface ReconciliationMatchResponse {
      */
     replacesMatchId?: string;
     /**
-     * True when this answers a replayed match command
-     * @type {boolean}
-     * @memberof ReconciliationMatchResponse
-     */
-    replayed?: boolean;
-    /**
      * bankTotal − ledgerTotal: what a residual settlement posts
      * @type {number}
      * @memberof ReconciliationMatchResponse
@@ -237,7 +231,6 @@ export function ReconciliationMatchResponseFromJSONTyped(json: any, ignoreDiscri
         'rejectedAt': json['rejectedAt'] == null ? undefined : (new Date(json['rejectedAt'])),
         'rejectedBy': json['rejectedBy'] == null ? undefined : json['rejectedBy'],
         'replacesMatchId': json['replacesMatchId'] == null ? undefined : json['replacesMatchId'],
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'residual': json['residual'] == null ? undefined : json['residual'],
         'state': json['state'] == null ? undefined : json['state'],
         'toleranceUsed': json['toleranceUsed'] == null ? undefined : json['toleranceUsed'],
@@ -271,7 +264,6 @@ export function ReconciliationMatchResponseToJSON(value?: ReconciliationMatchRes
         'rejectedAt': value['rejectedAt'] == null ? undefined : ((value['rejectedAt']).toISOString()),
         'rejectedBy': value['rejectedBy'],
         'replacesMatchId': value['replacesMatchId'],
-        'replayed': value['replayed'],
         'residual': value['residual'],
         'state': value['state'],
         'toleranceUsed': value['toleranceUsed'],

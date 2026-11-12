@@ -49,12 +49,6 @@ export interface PettyExpenseCategoryCreateRequest {
      * @memberof PettyExpenseCategoryCreateRequest
      */
     label: string;
-    /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof PettyExpenseCategoryCreateRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -65,7 +59,6 @@ export function instanceOfPettyExpenseCategoryCreateRequest(value: object): bool
     if (!('glAccountId' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('label' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -84,7 +77,6 @@ export function PettyExpenseCategoryCreateRequestFromJSONTyped(json: any, ignore
         'glAccountId': json['glAccountId'],
         'justification': json['justification'],
         'label': json['label'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -99,7 +91,6 @@ export function PettyExpenseCategoryCreateRequestToJSON(value?: PettyExpenseCate
         'glAccountId': value['glAccountId'],
         'justification': value['justification'],
         'label': value['label'],
-        'requestId': value['requestId'],
     };
 }
 

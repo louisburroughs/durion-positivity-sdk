@@ -50,12 +50,6 @@ export interface RegisterFloatRelocationRequest {
      */
     reason: RegisterFloatRelocationRequestReasonEnum;
     /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof RegisterFloatRelocationRequest
-     */
-    requestId: string;
-    /**
      * The location the register moves to; differs from fromLocationId
      * @type {string}
      * @memberof RegisterFloatRelocationRequest
@@ -80,7 +74,6 @@ export function instanceOfRegisterFloatRelocationRequest(value: object): boolean
     if (!('fromLocationId' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('reason' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('toLocationId' in value)) return false;
     return true;
 }
@@ -100,7 +93,6 @@ export function RegisterFloatRelocationRequestFromJSONTyped(json: any, ignoreDis
         'justification': json['justification'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
         'reason': json['reason'],
-        'requestId': json['requestId'],
         'toLocationId': json['toLocationId'],
     };
 }
@@ -116,7 +108,6 @@ export function RegisterFloatRelocationRequestToJSON(value?: RegisterFloatReloca
         'justification': value['justification'],
         'overrideJustification': value['overrideJustification'],
         'reason': value['reason'],
-        'requestId': value['requestId'],
         'toLocationId': value['toLocationId'],
     };
 }

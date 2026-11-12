@@ -30,6 +30,12 @@ export interface StoredImage {
      * @type {string}
      * @memberof StoredImage
      */
+    caption?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof StoredImage
+     */
     contentHash?: string;
     /**
      * 
@@ -60,8 +66,32 @@ export interface StoredImage {
      * @type {string}
      * @memberof StoredImage
      */
+    ownerId?: string;
+    /**
+     * Kind of record an image belongs to
+     * @type {string}
+     * @memberof StoredImage
+     */
+    ownerType?: StoredImageOwnerTypeEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof StoredImage
+     */
     sourceUri?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum StoredImageOwnerTypeEnum {
+    EstimateCheckIn = 'ESTIMATE_CHECK_IN',
+    Workorder = 'WORKORDER',
+    WorkorderService = 'WORKORDER_SERVICE',
+    ChangeRequest = 'CHANGE_REQUEST'
+}
+
 
 /**
  * Check if a given object implements the StoredImage interface.
@@ -81,11 +111,14 @@ export function StoredImageFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return {
         
         'byteSize': json['byteSize'] == null ? undefined : json['byteSize'],
+        'caption': json['caption'] == null ? undefined : json['caption'],
         'contentHash': json['contentHash'] == null ? undefined : json['contentHash'],
         'contentType': json['contentType'] == null ? undefined : json['contentType'],
         'filename': json['filename'] == null ? undefined : json['filename'],
         'imageId': json['imageId'] == null ? undefined : json['imageId'],
         'newlyStored': json['newlyStored'] == null ? undefined : json['newlyStored'],
+        'ownerId': json['ownerId'] == null ? undefined : json['ownerId'],
+        'ownerType': json['ownerType'] == null ? undefined : json['ownerType'],
         'sourceUri': json['sourceUri'] == null ? undefined : json['sourceUri'],
     };
 }
@@ -97,11 +130,14 @@ export function StoredImageToJSON(value?: StoredImage | null): any {
     return {
         
         'byteSize': value['byteSize'],
+        'caption': value['caption'],
         'contentHash': value['contentHash'],
         'contentType': value['contentType'],
         'filename': value['filename'],
         'imageId': value['imageId'],
         'newlyStored': value['newlyStored'],
+        'ownerId': value['ownerId'],
+        'ownerType': value['ownerType'],
         'sourceUri': value['sourceUri'],
     };
 }

@@ -25,12 +25,6 @@ export interface EnableTemplateAddOnRequest {
      * @memberof EnableTemplateAddOnRequest
      */
     justification: string;
-    /**
-     * Caller-generated UUIDv7 naming this request; a replay changes nothing and returns the current state
-     * @type {string}
-     * @memberof EnableTemplateAddOnRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -38,7 +32,6 @@ export interface EnableTemplateAddOnRequest {
  */
 export function instanceOfEnableTemplateAddOnRequest(value: object): boolean {
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -53,7 +46,6 @@ export function EnableTemplateAddOnRequestFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'justification': json['justification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -64,7 +56,6 @@ export function EnableTemplateAddOnRequestToJSON(value?: EnableTemplateAddOnRequ
     return {
         
         'justification': value['justification'],
-        'requestId': value['requestId'],
     };
 }
 

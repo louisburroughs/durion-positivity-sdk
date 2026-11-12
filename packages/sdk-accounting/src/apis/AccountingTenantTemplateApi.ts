@@ -29,6 +29,7 @@ import {
 } from '../models/index';
 
 export interface EnableRetreadPlantAddOnRequest {
+    idempotencyKey: string;
     enableTemplateAddOnRequest: EnableTemplateAddOnRequest;
 }
 
@@ -38,10 +39,17 @@ export interface EnableRetreadPlantAddOnRequest {
 export class AccountingTenantTemplateApi extends runtime.BaseAPI {
 
     /**
-     * Turns the retread-plant add-on on for the caller\'s tenant: the GL accounts only a shop that runs a retread plant needs (curing consumables, MRT equipment depreciation and leases, inventory charge, scrapped casings, production adjustments, rubber dust sales) and their Labor & Overhead report lines. Use this tool once, at tenant setup, when the shop runs a retread plant; do not use createGLAccount, which adds one account without its report line and leaves the tenant\'s choice unrecorded. Preconditions: caller holds accounting:coa:create. There is no switching off: nothing the template provisioned is ever removed. Idempotent: a replayed requestId, or a call for a tenant that already has the add-on, changes nothing and returns the current state. Required inputs: justification (at least 10 characters) and requestId. The tenant is the caller\'s own, taken from the token. Emits an ACCOUNTING_TENANT_TEMPLATE_ADD_ON_ENABLE event, writes one audit row naming the caller, and returns 200 with the tenant\'s template status after the accounts and lines were added; an account the tenant already holds under one of the add-on\'s codes is adopted when it is the same account and reported under attention when it is not. 
+     * Turns the retread-plant add-on on for the caller\'s tenant: the GL accounts only a shop that runs a retread plant needs (curing consumables, MRT equipment depreciation and leases, inventory charge, scrapped casings, production adjustments, rubber dust sales) and their Labor & Overhead report lines. Use this tool once, at tenant setup, when the shop runs a retread plant; do not use createGLAccount, which adds one account without its report line and leaves the tenant\'s choice unrecorded. Preconditions: caller holds accounting:coa:create. There is no switching off: nothing the template provisioned is ever removed. Idempotent: a replayed Idempotency-Key, or a call for a tenant that already has the add-on, changes nothing and returns the current state. Required inputs: justification (at least 10 characters) and the Idempotency-Key header. The tenant is the caller\'s own, taken from the token. Emits an ACCOUNTING_TENANT_TEMPLATE_ADD_ON_ENABLE event, writes one audit row naming the caller, and returns 200 with the tenant\'s template status after the accounts and lines were added; an account the tenant already holds under one of the add-on\'s codes is adopted when it is the same account and reported under attention when it is not. 
      * Enable Retread Plant Accounting Add-On
      */
     async enableRetreadPlantAddOnRaw(requestParameters: EnableRetreadPlantAddOnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TenantTemplateStatusResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling enableRetreadPlantAddOn().'
+            );
+        }
+
         if (requestParameters['enableTemplateAddOnRequest'] == null) {
             throw new runtime.RequiredError(
                 'enableTemplateAddOnRequest',
@@ -54,6 +62,10 @@ export class AccountingTenantTemplateApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -75,7 +87,7 @@ export class AccountingTenantTemplateApi extends runtime.BaseAPI {
     }
 
     /**
-     * Turns the retread-plant add-on on for the caller\'s tenant: the GL accounts only a shop that runs a retread plant needs (curing consumables, MRT equipment depreciation and leases, inventory charge, scrapped casings, production adjustments, rubber dust sales) and their Labor & Overhead report lines. Use this tool once, at tenant setup, when the shop runs a retread plant; do not use createGLAccount, which adds one account without its report line and leaves the tenant\'s choice unrecorded. Preconditions: caller holds accounting:coa:create. There is no switching off: nothing the template provisioned is ever removed. Idempotent: a replayed requestId, or a call for a tenant that already has the add-on, changes nothing and returns the current state. Required inputs: justification (at least 10 characters) and requestId. The tenant is the caller\'s own, taken from the token. Emits an ACCOUNTING_TENANT_TEMPLATE_ADD_ON_ENABLE event, writes one audit row naming the caller, and returns 200 with the tenant\'s template status after the accounts and lines were added; an account the tenant already holds under one of the add-on\'s codes is adopted when it is the same account and reported under attention when it is not. 
+     * Turns the retread-plant add-on on for the caller\'s tenant: the GL accounts only a shop that runs a retread plant needs (curing consumables, MRT equipment depreciation and leases, inventory charge, scrapped casings, production adjustments, rubber dust sales) and their Labor & Overhead report lines. Use this tool once, at tenant setup, when the shop runs a retread plant; do not use createGLAccount, which adds one account without its report line and leaves the tenant\'s choice unrecorded. Preconditions: caller holds accounting:coa:create. There is no switching off: nothing the template provisioned is ever removed. Idempotent: a replayed Idempotency-Key, or a call for a tenant that already has the add-on, changes nothing and returns the current state. Required inputs: justification (at least 10 characters) and the Idempotency-Key header. The tenant is the caller\'s own, taken from the token. Emits an ACCOUNTING_TENANT_TEMPLATE_ADD_ON_ENABLE event, writes one audit row naming the caller, and returns 200 with the tenant\'s template status after the accounts and lines were added; an account the tenant already holds under one of the add-on\'s codes is adopted when it is the same account and reported under attention when it is not. 
      * Enable Retread Plant Accounting Add-On
      */
     async enableRetreadPlantAddOn(requestParameters: EnableRetreadPlantAddOnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TenantTemplateStatusResponse> {

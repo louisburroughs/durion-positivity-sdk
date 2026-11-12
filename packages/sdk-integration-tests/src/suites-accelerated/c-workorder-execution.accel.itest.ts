@@ -62,7 +62,7 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
  */
 const stopTimersIfRunning = async (as: DomainClients): Promise<void> => {
   try {
-    await as.workorder.workexecTimeTrackingAPIApi.stopTimers();
+    await as.workorder.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
   } catch (error) {
     // 409 NO_ACTIVE_TIMER: no timer was running for this mechanic.
     if (!isHttpStatus(error, 409)) {
@@ -300,7 +300,7 @@ describe('Suite C — workorder execution', () => {
     const laborFrom = await accel.now();
     await accel.elapseVirtual(30);
     const stopped = await call('stopTimers', () =>
-      tech.workorder.workexecTimeTrackingAPIApi.stopTimers(),
+      tech.workorder.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() }),
     );
 
     console.log(`[C3] stopTimers -> ${JSON.stringify(stopped).slice(0, 200)}`);
@@ -352,7 +352,7 @@ describe('Suite C — workorder execution', () => {
     console.log(`[C4] a second concurrent timer is rejected with HTTP ${status}`);
 
     // Recover the way the seeder does: stop, restart on the second item, stop.
-    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers();
+    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
     await tech.workorder.workexecTimeTrackingAPIApi.startTimer({
       idempotencyKey: crypto.randomUUID(),
       workexecTimerStartRequest: {
@@ -362,7 +362,7 @@ describe('Suite C — workorder execution', () => {
       },
     });
     await accel.elapseVirtual(30);
-    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers();
+    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
 
     const afterBoth = await detail();
     const touched = (afterBoth.services ?? []).filter(
@@ -526,7 +526,7 @@ describe('Suite C — workorder execution', () => {
       },
     });
     await accel.elapseVirtual(30);
-    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers();
+    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers({ idempotencyKey: crypto.randomUUID() });
   }, 300_000);
 
   it('C8 — the manager completes every item, then the workorder', async () => {
@@ -537,6 +537,7 @@ describe('Suite C — workorder execution', () => {
       if (!service.id || !completable.has(String(service.status))) continue;
       await call(`completeServiceItem ${service.id}`, () =>
         manager.workorder.workOrderAPIApi.completeServiceItem({
+          idempotencyKey: crypto.randomUUID(),
           workorderId,
           serviceLineId: service.id as string,
         }),

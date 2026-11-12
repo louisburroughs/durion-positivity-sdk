@@ -51,12 +51,6 @@ export interface BankOpeningBalanceRequest {
      */
     outstandingItems?: Array<BankOpeningBalanceOutstandingItem>;
     /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof BankOpeningBalanceRequest
-     */
-    requestId: string;
-    /**
      * The bank's balance at the end of asOfDate, in functional currency; negative when the account was overdrawn
      * @type {number}
      * @memberof BankOpeningBalanceRequest
@@ -71,7 +65,6 @@ export function instanceOfBankOpeningBalanceRequest(value: object): boolean {
     if (!('asOfDate' in value)) return false;
     if (!('currencyCode' in value)) return false;
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('statementBalance' in value)) return false;
     return true;
 }
@@ -90,7 +83,6 @@ export function BankOpeningBalanceRequestFromJSONTyped(json: any, ignoreDiscrimi
         'currencyCode': json['currencyCode'],
         'justification': json['justification'],
         'outstandingItems': json['outstandingItems'] == null ? undefined : ((json['outstandingItems'] as Array<any>).map(BankOpeningBalanceOutstandingItemFromJSON)),
-        'requestId': json['requestId'],
         'statementBalance': json['statementBalance'],
     };
 }
@@ -105,7 +97,6 @@ export function BankOpeningBalanceRequestToJSON(value?: BankOpeningBalanceReques
         'currencyCode': value['currencyCode'],
         'justification': value['justification'],
         'outstandingItems': value['outstandingItems'] == null ? undefined : ((value['outstandingItems'] as Array<any>).map(BankOpeningBalanceOutstandingItemToJSON)),
-        'requestId': value['requestId'],
         'statementBalance': value['statementBalance'],
     };
 }

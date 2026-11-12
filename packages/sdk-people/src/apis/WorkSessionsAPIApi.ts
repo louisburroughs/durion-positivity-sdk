@@ -17,7 +17,11 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   BreakDto,
+  WorkSessionBreakStartRequest,
+  WorkSessionBreakStopRequest,
   WorkSessionClockStateResponse,
+  WorkSessionCloseMissedRequest,
+  WorkSessionCloseMissedResponse,
   WorkSessionDto,
   WorkSessionRequest,
   WorkSessionSubmitRequest,
@@ -27,8 +31,16 @@ import {
     ApiErrorToJSON,
     BreakDtoFromJSON,
     BreakDtoToJSON,
+    WorkSessionBreakStartRequestFromJSON,
+    WorkSessionBreakStartRequestToJSON,
+    WorkSessionBreakStopRequestFromJSON,
+    WorkSessionBreakStopRequestToJSON,
     WorkSessionClockStateResponseFromJSON,
     WorkSessionClockStateResponseToJSON,
+    WorkSessionCloseMissedRequestFromJSON,
+    WorkSessionCloseMissedRequestToJSON,
+    WorkSessionCloseMissedResponseFromJSON,
+    WorkSessionCloseMissedResponseToJSON,
     WorkSessionDtoFromJSON,
     WorkSessionDtoToJSON,
     WorkSessionRequestFromJSON,
@@ -37,29 +49,42 @@ import {
     WorkSessionSubmitRequestToJSON,
 } from '../models/index';
 
+export interface CloseMissedWorkSessionClockOutRequest {
+    id: string;
+    idempotencyKey: string;
+    workSessionCloseMissedRequest: WorkSessionCloseMissedRequest;
+}
+
 export interface GetCurrentWorkSessionRequest {
     personId?: string;
 }
 
 export interface StartWorkSessionRequest {
+    idempotencyKey: string;
     workSessionRequest: WorkSessionRequest;
 }
 
 export interface StartWorkSessionBreakRequest {
     id: string;
+    idempotencyKey: string;
+    workSessionBreakStartRequest: WorkSessionBreakStartRequest;
 }
 
 export interface StopWorkSessionRequest {
+    idempotencyKey: string;
     workSessionRequest: WorkSessionRequest;
 }
 
 export interface StopWorkSessionBreakRequest {
     id: string;
+    idempotencyKey: string;
+    workSessionBreakStopRequest?: WorkSessionBreakStopRequest;
 }
 
 export interface SubmitWorkSessionRequest {
     id: string;
-    workSessionSubmitRequest: WorkSessionSubmitRequest;
+    idempotencyKey: string;
+    workSessionSubmitRequest?: WorkSessionSubmitRequest;
 }
 
 /**
@@ -68,7 +93,71 @@ export interface SubmitWorkSessionRequest {
 export class WorkSessionsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Reads a person\'s current clock state — CLOCKED_IN, ON_BREAK or CLOCKED_OUT — with the open session id, its start time and the open break\'s start time when there is one. Derived on read from the open work session and break; nothing is created, closed or changed. Use this tool to render a clock-in/out toggle for one person, for example after a toggle press or on a self-service view; use listPeopleAvailability instead to read the clock state of everyone at a location in one call, which is what a dispatch board needs. Preconditions: the person must exist, either as an employee of this module or in the identity replica. Required inputs: none are mandatory; personId (UUID) as a query parameter defaults to the caller\'s own linked person when omitted. Authorization: a person reads their own state with people:self:view; reading another person\'s state needs people:timekeeping:view, and when that grant is location-scoped it must cover one of the person\'s active assignment locations. Emits a PEOPLE_WORK_SESSION_CURRENT_GET audit event but changes no state. Returns 200 with clockState CLOCKED_OUT and null session fields when nothing is open — never 404 for that; 404 PERSON_NOT_FOUND when the person is unknown, 404 when personId is omitted and the caller\'s person link is present but no longer active, 503 USER_LINK_REPLICATION_PENDING with a Retry-After header when personId is omitted and the caller has no person link in the replica yet, 403 FORBIDDEN when the caller is neither the person nor a people:timekeeping:view holder, and 403 LOCATION_SCOPE_DENIED when the caller\'s grant does not cover the person\'s location. 
+     * Closes the caller\'s own still-open work session at the end time they actually stopped, ends the attendance window there, and files the correction for a manager to approve. Use this tool when a technician forgot to clock out and the session is still open from an earlier day; do not use stopWorkSession, which records the server\'s now as the end (a shift of a day or more) and needs no approval, and do not use createTimeEntryAdjustment, which corrects an existing time entry rather than creating one. What it does: the session ends at proposedEndAt, any open break is closed at the same instant, the session becomes SUBMITTED with server-computed breakMinutes (the whole-minute sum of its breaks, an open one counted up to proposedEndAt) and billableMinutes (the whole-minute startedAt..proposedEndAt duration less that break time, floored at 0), and two rows are filed: a PENDING_APPROVAL time entry whose attendance window is startedAt..proposedEndAt, and a PENDING time_entry_adjustment against it with reasonCode MISSED_CLOCK_OUT, the proposed window and the caller\'s notes, so nothing reaches payroll until a manager decides on the entry. Preconditions: the session must exist, still be open (ACTIVE with no endedAt), have started before the start of the current local day, and belong to the caller, who must hold people:timeAdjustment:create (a manager is deliberately refused on this path, because the correction is the technician\'s and the decision is the manager\'s); the local day is the day of the optional timeZone in the body, and UTC when it is absent or blank. Required inputs: the work session id (UUID) as the path parameter and proposedEndAt (an instant) in the body; reasonCode, notes and timeZone are optional, and a supplied reasonCode must be MISSED_CLOCK_OUT. Emits a PEOPLE_WORK_SESSION_CLOSE_MISSED event; a replay writes and emits nothing, and the recorded actor is the authenticated username, never a request field. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body returns the stored answer with Idempotency-Replayed: true and creates no second time entry or adjustment, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Returns 200 with the submitted session and the new timeEntryId and adjustmentId, 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID, proposedEndAt is missing, not after startedAt, in the future or before the open break\'s start (fieldErrors names proposedEndAt), reasonCode is not MISSED_CLOCK_OUT, or timeZone is not a known zone id, 403 FORBIDDEN when the caller is not the session\'s person, 404 WORK_SESSION_NOT_FOUND when no session has that id, and 409 RESOURCE_STATE_CONFLICT when the session started on the current local day or is not open (ENDED, SUBMITTED or UNDONE). 
+     * Close A Missed Clock-Out At The Instant The Technician Stopped
+     */
+    async closeMissedWorkSessionClockOutRaw(requestParameters: CloseMissedWorkSessionClockOutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionCloseMissedResponse>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling closeMissedWorkSessionClockOut().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling closeMissedWorkSessionClockOut().'
+            );
+        }
+
+        if (requestParameters['workSessionCloseMissedRequest'] == null) {
+            throw new runtime.RequiredError(
+                'workSessionCloseMissedRequest',
+                'Required parameter "workSessionCloseMissedRequest" was null or undefined when calling closeMissedWorkSessionClockOut().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/workSessions/{id}/close-missed`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: WorkSessionCloseMissedRequestToJSON(requestParameters['workSessionCloseMissedRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkSessionCloseMissedResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Closes the caller\'s own still-open work session at the end time they actually stopped, ends the attendance window there, and files the correction for a manager to approve. Use this tool when a technician forgot to clock out and the session is still open from an earlier day; do not use stopWorkSession, which records the server\'s now as the end (a shift of a day or more) and needs no approval, and do not use createTimeEntryAdjustment, which corrects an existing time entry rather than creating one. What it does: the session ends at proposedEndAt, any open break is closed at the same instant, the session becomes SUBMITTED with server-computed breakMinutes (the whole-minute sum of its breaks, an open one counted up to proposedEndAt) and billableMinutes (the whole-minute startedAt..proposedEndAt duration less that break time, floored at 0), and two rows are filed: a PENDING_APPROVAL time entry whose attendance window is startedAt..proposedEndAt, and a PENDING time_entry_adjustment against it with reasonCode MISSED_CLOCK_OUT, the proposed window and the caller\'s notes, so nothing reaches payroll until a manager decides on the entry. Preconditions: the session must exist, still be open (ACTIVE with no endedAt), have started before the start of the current local day, and belong to the caller, who must hold people:timeAdjustment:create (a manager is deliberately refused on this path, because the correction is the technician\'s and the decision is the manager\'s); the local day is the day of the optional timeZone in the body, and UTC when it is absent or blank. Required inputs: the work session id (UUID) as the path parameter and proposedEndAt (an instant) in the body; reasonCode, notes and timeZone are optional, and a supplied reasonCode must be MISSED_CLOCK_OUT. Emits a PEOPLE_WORK_SESSION_CLOSE_MISSED event; a replay writes and emits nothing, and the recorded actor is the authenticated username, never a request field. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body returns the stored answer with Idempotency-Replayed: true and creates no second time entry or adjustment, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Returns 200 with the submitted session and the new timeEntryId and adjustmentId, 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID, proposedEndAt is missing, not after startedAt, in the future or before the open break\'s start (fieldErrors names proposedEndAt), reasonCode is not MISSED_CLOCK_OUT, or timeZone is not a known zone id, 403 FORBIDDEN when the caller is not the session\'s person, 404 WORK_SESSION_NOT_FOUND when no session has that id, and 409 RESOURCE_STATE_CONFLICT when the session started on the current local day or is not open (ENDED, SUBMITTED or UNDONE). 
+     * Close A Missed Clock-Out At The Instant The Technician Stopped
+     */
+    async closeMissedWorkSessionClockOut(requestParameters: CloseMissedWorkSessionClockOutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionCloseMissedResponse> {
+        const response = await this.closeMissedWorkSessionClockOutRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Reads a person\'s current clock state — CLOCKED_IN, ON_BREAK or CLOCKED_OUT — with the open session id, its start time and the open break\'s start time when there is one. Derived on read from the open work session and break; nothing is created, closed or changed; an undone session is closed, so it reads CLOCKED_OUT. Use this tool to render a clock-in/out toggle for one person, for example after a toggle press or on a self-service view; use listPeopleAvailability instead to read the clock state of everyone at a location in one call, which is what a dispatch board needs. Preconditions: the person must exist, either as an employee of this module or in the identity replica. Required inputs: none are mandatory; personId (UUID) as a query parameter defaults to the caller\'s own linked person when omitted. Authorization: a person reads their own state with people:self:view; reading another person\'s state needs people:timekeeping:view, and when that grant is location-scoped it must cover one of the person\'s active assignment locations. Emits a PEOPLE_WORK_SESSION_CURRENT_GET audit event but changes no state. Returns 200 with clockState CLOCKED_OUT and null session fields when nothing is open — never 404 for that; 404 PERSON_NOT_FOUND when the person is unknown, 404 when personId is omitted and the caller\'s person link is present but no longer active, 503 USER_LINK_REPLICATION_PENDING with a Retry-After header when personId is omitted and the caller has no person link in the replica yet, 403 FORBIDDEN when the caller is neither the person nor a people:timekeeping:view holder, and 403 LOCATION_SCOPE_DENIED when the caller\'s grant does not cover the person\'s location. 
      * Get A Person\'s Current Work-Session (Clock) State
      */
     async getCurrentWorkSessionRaw(requestParameters: GetCurrentWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionClockStateResponse>> {
@@ -99,7 +188,7 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reads a person\'s current clock state — CLOCKED_IN, ON_BREAK or CLOCKED_OUT — with the open session id, its start time and the open break\'s start time when there is one. Derived on read from the open work session and break; nothing is created, closed or changed. Use this tool to render a clock-in/out toggle for one person, for example after a toggle press or on a self-service view; use listPeopleAvailability instead to read the clock state of everyone at a location in one call, which is what a dispatch board needs. Preconditions: the person must exist, either as an employee of this module or in the identity replica. Required inputs: none are mandatory; personId (UUID) as a query parameter defaults to the caller\'s own linked person when omitted. Authorization: a person reads their own state with people:self:view; reading another person\'s state needs people:timekeeping:view, and when that grant is location-scoped it must cover one of the person\'s active assignment locations. Emits a PEOPLE_WORK_SESSION_CURRENT_GET audit event but changes no state. Returns 200 with clockState CLOCKED_OUT and null session fields when nothing is open — never 404 for that; 404 PERSON_NOT_FOUND when the person is unknown, 404 when personId is omitted and the caller\'s person link is present but no longer active, 503 USER_LINK_REPLICATION_PENDING with a Retry-After header when personId is omitted and the caller has no person link in the replica yet, 403 FORBIDDEN when the caller is neither the person nor a people:timekeeping:view holder, and 403 LOCATION_SCOPE_DENIED when the caller\'s grant does not cover the person\'s location. 
+     * Reads a person\'s current clock state — CLOCKED_IN, ON_BREAK or CLOCKED_OUT — with the open session id, its start time and the open break\'s start time when there is one. Derived on read from the open work session and break; nothing is created, closed or changed; an undone session is closed, so it reads CLOCKED_OUT. Use this tool to render a clock-in/out toggle for one person, for example after a toggle press or on a self-service view; use listPeopleAvailability instead to read the clock state of everyone at a location in one call, which is what a dispatch board needs. Preconditions: the person must exist, either as an employee of this module or in the identity replica. Required inputs: none are mandatory; personId (UUID) as a query parameter defaults to the caller\'s own linked person when omitted. Authorization: a person reads their own state with people:self:view; reading another person\'s state needs people:timekeeping:view, and when that grant is location-scoped it must cover one of the person\'s active assignment locations. Emits a PEOPLE_WORK_SESSION_CURRENT_GET audit event but changes no state. Returns 200 with clockState CLOCKED_OUT and null session fields when nothing is open — never 404 for that; 404 PERSON_NOT_FOUND when the person is unknown, 404 when personId is omitted and the caller\'s person link is present but no longer active, 503 USER_LINK_REPLICATION_PENDING with a Retry-After header when personId is omitted and the caller has no person link in the replica yet, 403 FORBIDDEN when the caller is neither the person nor a people:timekeeping:view holder, and 403 LOCATION_SCOPE_DENIED when the caller\'s grant does not cover the person\'s location. 
      * Get A Person\'s Current Work-Session (Clock) State
      */
     async getCurrentWorkSession(requestParameters: GetCurrentWorkSessionRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionClockStateResponse> {
@@ -108,10 +197,17 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts a new ACTIVE work session for a person, stamping the start time from the server clock and the actor from the security context. Use this tool when a person clocks in for the day; do not use startWorkSessionBreak, which pauses an already running session. Preconditions: the person must exist, either as an employee of this module or in the identity replica, and the person must have no session that is still open. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored, because the recorded actor is always the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_START event. Returns 404 when the person is unknown, and 409 when an active session already exists for the person, including under concurrent start races. 
+     * Starts a new ACTIVE work session for a person at the time the technician clocked in, and records the actor from the security context. Use this tool when a person clocks in for the day; do not use startWorkSessionBreak, which pauses an already running session. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body returns the session the first call created, with Idempotency-Replayed: true, and creates no second row, while the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Offline replay (DECISION-PEOPLE-029): occurredAt, when supplied, is the instant the technician actually clocked in and becomes the session\'s startedAt; it may be at most 2 minutes in the future and at most 72 hours old (422 OCCURRED_AT_OUT_OF_RANGE otherwise), and the server also records startReceivedAt and startSource, which is OFFLINE_REPLAY when occurredAt was more than 2 minutes before receipt and LIVE otherwise. Preconditions: the person must exist, either as an employee of this module or in the identity replica, and the person must have no session that is still open. Required inputs: personId (UUID) in the body; trigger is optional and is MANUAL (the default) or FIRST_SIGN_IN, the app\'s automatic clock-in (TM5, DECISION-PEOPLE-028), which is stored and shown on approval screens, while UNDO is not a start trigger; the body\'s actor field is ignored, because the recorded actor is always the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_START event; a replay writes and emits nothing. Returns 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID (fieldErrors names Idempotency-Key) or the trigger does not fit the call, 404 when the person is unknown, 409 when an active session already exists for the person (including under concurrent start races) or the key was already used, and 422 when occurredAt is out of range. 
      * Start A Work Session For Person
      */
     async startWorkSessionRaw(requestParameters: StartWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionDto>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling startWorkSession().'
+            );
+        }
+
         if (requestParameters['workSessionRequest'] == null) {
             throw new runtime.RequiredError(
                 'workSessionRequest',
@@ -124,6 +220,10 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -145,7 +245,7 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts a new ACTIVE work session for a person, stamping the start time from the server clock and the actor from the security context. Use this tool when a person clocks in for the day; do not use startWorkSessionBreak, which pauses an already running session. Preconditions: the person must exist, either as an employee of this module or in the identity replica, and the person must have no session that is still open. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored, because the recorded actor is always the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_START event. Returns 404 when the person is unknown, and 409 when an active session already exists for the person, including under concurrent start races. 
+     * Starts a new ACTIVE work session for a person at the time the technician clocked in, and records the actor from the security context. Use this tool when a person clocks in for the day; do not use startWorkSessionBreak, which pauses an already running session. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body returns the session the first call created, with Idempotency-Replayed: true, and creates no second row, while the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Offline replay (DECISION-PEOPLE-029): occurredAt, when supplied, is the instant the technician actually clocked in and becomes the session\'s startedAt; it may be at most 2 minutes in the future and at most 72 hours old (422 OCCURRED_AT_OUT_OF_RANGE otherwise), and the server also records startReceivedAt and startSource, which is OFFLINE_REPLAY when occurredAt was more than 2 minutes before receipt and LIVE otherwise. Preconditions: the person must exist, either as an employee of this module or in the identity replica, and the person must have no session that is still open. Required inputs: personId (UUID) in the body; trigger is optional and is MANUAL (the default) or FIRST_SIGN_IN, the app\'s automatic clock-in (TM5, DECISION-PEOPLE-028), which is stored and shown on approval screens, while UNDO is not a start trigger; the body\'s actor field is ignored, because the recorded actor is always the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_START event; a replay writes and emits nothing. Returns 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID (fieldErrors names Idempotency-Key) or the trigger does not fit the call, 404 when the person is unknown, 409 when an active session already exists for the person (including under concurrent start races) or the key was already used, and 422 when occurredAt is out of range. 
      * Start A Work Session For Person
      */
     async startWorkSession(requestParameters: StartWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionDto> {
@@ -154,7 +254,7 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts a break inside an active work session, stamping the start time from the server clock. Use this tool when a person pauses work; do not use stopWorkSession, which ends the whole session rather than pausing it. Preconditions: the session must exist and still be open, and no break may already be open on it. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_BREAK_START event. Returns 404 when no open session exists for the id, and 409 when a break is already open, including under concurrent break-start races. 
+     * Starts a break inside an active work session, recording the instant the technician started it and what kind of break it was. Use this tool when a person pauses work; do not use stopWorkSession, which ends the whole session rather than pausing it. Client rule (TM6, DECISION-PEOPLE-029 item 5): breaks and work are not coupled on the server, so the technician app stops the work in progress in pos-workorder before it starts the break and a meal is not recorded as time on the job; this API refuses nothing on that basis. Idempotency (ADR-0075) and offline replay (DECISION-PEOPLE-029): the Idempotency-Key header is required, and a repeat with the same key and body replays the stored answer with Idempotency-Replayed: true; occurredAt, when supplied, is the instant the break actually started and becomes its startedAt, at most 2 minutes in the future and 72 hours old and not earlier than the session\'s startedAt. Preconditions: the session must exist and still be open, and no break may already be open on it. Required inputs: the work session id (UUID) as the path parameter and a body with type, which is MEAL, REST or OTHER (DECISION-PEOPLE-007); note is required and must not be blank when type is OTHER (DECISION-PEOPLE-029 item 4), and is optional for MEAL and REST. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_BREAK_START event; a replay writes and emits nothing. Returns 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID, type is missing, or type is OTHER without a note (fieldErrors names note), 404 when no open session exists for the id, 409 when a break is already open (including under concurrent break-start races) or the key was already used with a different body or caller (IDEMPOTENCY_CONFLICT), and 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is out of range or before the session\'s start. 
      * Start A Break In Work Session
      */
     async startWorkSessionBreakRaw(requestParameters: StartWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BreakDto>> {
@@ -165,9 +265,29 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
             );
         }
 
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling startWorkSessionBreak().'
+            );
+        }
+
+        if (requestParameters['workSessionBreakStartRequest'] == null) {
+            throw new runtime.RequiredError(
+                'workSessionBreakStartRequest',
+                'Required parameter "workSessionBreakStartRequest" was null or undefined when calling startWorkSessionBreak().'
+            );
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -182,13 +302,14 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: WorkSessionBreakStartRequestToJSON(requestParameters['workSessionBreakStartRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BreakDtoFromJSON(jsonValue));
     }
 
     /**
-     * Starts a break inside an active work session, stamping the start time from the server clock. Use this tool when a person pauses work; do not use stopWorkSession, which ends the whole session rather than pausing it. Preconditions: the session must exist and still be open, and no break may already be open on it. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_BREAK_START event. Returns 404 when no open session exists for the id, and 409 when a break is already open, including under concurrent break-start races. 
+     * Starts a break inside an active work session, recording the instant the technician started it and what kind of break it was. Use this tool when a person pauses work; do not use stopWorkSession, which ends the whole session rather than pausing it. Client rule (TM6, DECISION-PEOPLE-029 item 5): breaks and work are not coupled on the server, so the technician app stops the work in progress in pos-workorder before it starts the break and a meal is not recorded as time on the job; this API refuses nothing on that basis. Idempotency (ADR-0075) and offline replay (DECISION-PEOPLE-029): the Idempotency-Key header is required, and a repeat with the same key and body replays the stored answer with Idempotency-Replayed: true; occurredAt, when supplied, is the instant the break actually started and becomes its startedAt, at most 2 minutes in the future and 72 hours old and not earlier than the session\'s startedAt. Preconditions: the session must exist and still be open, and no break may already be open on it. Required inputs: the work session id (UUID) as the path parameter and a body with type, which is MEAL, REST or OTHER (DECISION-PEOPLE-007); note is required and must not be blank when type is OTHER (DECISION-PEOPLE-029 item 4), and is optional for MEAL and REST. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_BREAK_START event; a replay writes and emits nothing. Returns 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID, type is missing, or type is OTHER without a note (fieldErrors names note), 404 when no open session exists for the id, 409 when a break is already open (including under concurrent break-start races) or the key was already used with a different body or caller (IDEMPOTENCY_CONFLICT), and 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is out of range or before the session\'s start. 
      * Start A Break In Work Session
      */
     async startWorkSessionBreak(requestParameters: StartWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BreakDto> {
@@ -197,10 +318,17 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stops a person\'s open work session, setting status ENDED and closing any break still open at the same timestamp. Use this tool when a person clocks out; do not use submitWorkSession, which sends an already ENDED session for approval. Preconditions: the person must have an open session; sessions are keyed by person here, not by session id. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored in favour of the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_STOP event. Returns 404 when no active session exists for the person. 
+     * Stops a person\'s open work session, setting status ENDED and closing any break still open at the same timestamp. Use this tool when a person clocks out; do not use submitWorkSession, which sends an already ENDED session for approval. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body replays the stored answer with Idempotency-Replayed: true, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Offline replay (DECISION-PEOPLE-029): occurredAt, when supplied, is the instant the technician actually clocked out and becomes the session\'s endedAt, subject to the same 2 minutes in the future and 72 hours old bounds (422 OCCURRED_AT_OUT_OF_RANGE); it must also not be earlier than the session\'s startedAt or than the open break\'s start, which is the same 422. Preconditions: the person must have an open session; sessions are keyed by person here, not by session id. Required inputs: personId (UUID) in the body; trigger is optional and is MANUAL (the default) or UNDO, where an UNDO stop retracts the clock-in (DECISION-PEOPLE-028): within 2 minutes of the session\'s start it ends the session with status UNDONE and zero duration, so it can never be submitted and produces no time entry, and FIRST_SIGN_IN is not a stop trigger; the body\'s actor field is ignored in favour of the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_STOP event, whether the session ended or was undone; a replay writes and emits nothing. Returns 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID or the trigger does not fit the call, 404 when no active session exists for the person, 409 for a key conflict or an undo more than 2 minutes after the start (UNDO_WINDOW_EXPIRED), and 422 when occurredAt is out of range or out of order. 
      * Stop An Active Work Session
      */
     async stopWorkSessionRaw(requestParameters: StopWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionDto>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling stopWorkSession().'
+            );
+        }
+
         if (requestParameters['workSessionRequest'] == null) {
             throw new runtime.RequiredError(
                 'workSessionRequest',
@@ -213,6 +341,10 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -234,7 +366,7 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stops a person\'s open work session, setting status ENDED and closing any break still open at the same timestamp. Use this tool when a person clocks out; do not use submitWorkSession, which sends an already ENDED session for approval. Preconditions: the person must have an open session; sessions are keyed by person here, not by session id. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored in favour of the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_STOP event. Returns 404 when no active session exists for the person. 
+     * Stops a person\'s open work session, setting status ENDED and closing any break still open at the same timestamp. Use this tool when a person clocks out; do not use submitWorkSession, which sends an already ENDED session for approval. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body replays the stored answer with Idempotency-Replayed: true, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Offline replay (DECISION-PEOPLE-029): occurredAt, when supplied, is the instant the technician actually clocked out and becomes the session\'s endedAt, subject to the same 2 minutes in the future and 72 hours old bounds (422 OCCURRED_AT_OUT_OF_RANGE); it must also not be earlier than the session\'s startedAt or than the open break\'s start, which is the same 422. Preconditions: the person must have an open session; sessions are keyed by person here, not by session id. Required inputs: personId (UUID) in the body; trigger is optional and is MANUAL (the default) or UNDO, where an UNDO stop retracts the clock-in (DECISION-PEOPLE-028): within 2 minutes of the session\'s start it ends the session with status UNDONE and zero duration, so it can never be submitted and produces no time entry, and FIRST_SIGN_IN is not a stop trigger; the body\'s actor field is ignored in favour of the authenticated username. Authorization: the caller must be the person themself, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_STOP event, whether the session ended or was undone; a replay writes and emits nothing. Returns 400 VALIDATION_ERROR when the Idempotency-Key is missing or not a UUID or the trigger does not fit the call, 404 when no active session exists for the person, 409 for a key conflict or an undo more than 2 minutes after the start (UNDO_WINDOW_EXPIRED), and 422 when occurredAt is out of range or out of order. 
      * Stop An Active Work Session
      */
     async stopWorkSession(requestParameters: StopWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionDto> {
@@ -243,7 +375,7 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Ends the open break on a work session, stamping the end time from the server clock. Use this tool when a person returns from a break; do not use stopWorkSession, which ends the session and auto-closes any open break itself. Preconditions: the session must have an open break with no recorded end time. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_BREAK_STOP event. Returns 409 when no open break exists for the session, including when the session id itself is unknown. 
+     * Ends the open break on a work session at the instant the technician returned. Use this tool when a person returns from a break; do not use stopWorkSession, which ends the session and auto-closes any open break itself. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body replays the stored answer with Idempotency-Replayed: true, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Offline replay (DECISION-PEOPLE-029): the optional body may carry occurredAt, the instant the break actually ended, which becomes its endedAt; it is subject to the same 2 minutes in the future and 72 hours old bounds and must not be earlier than the break\'s start (422 OCCURRED_AT_OUT_OF_RANGE), and a call with no body records the server clock. Preconditions: the session must have an open break with no recorded end time. Required inputs: the work session id (UUID) as the path parameter; the body is optional. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_BREAK_STOP event; a replay writes and emits nothing. Returns 400 when the Idempotency-Key is missing or not a UUID, 409 when no open break exists for the session (including when the session id itself is unknown) or the key was already used, and 422 when occurredAt is out of range or before the break\'s start. 
      * Stop The Open Work Session Break
      */
     async stopWorkSessionBreakRaw(requestParameters: StopWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BreakDto>> {
@@ -254,9 +386,22 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
             );
         }
 
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling stopWorkSessionBreak().'
+            );
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -271,13 +416,14 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: WorkSessionBreakStopRequestToJSON(requestParameters['workSessionBreakStopRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BreakDtoFromJSON(jsonValue));
     }
 
     /**
-     * Ends the open break on a work session, stamping the end time from the server clock. Use this tool when a person returns from a break; do not use stopWorkSession, which ends the session and auto-closes any open break itself. Preconditions: the session must have an open break with no recorded end time. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_BREAK_STOP event. Returns 409 when no open break exists for the session, including when the session id itself is unknown. 
+     * Ends the open break on a work session at the instant the technician returned. Use this tool when a person returns from a break; do not use stopWorkSession, which ends the session and auto-closes any open break itself. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body replays the stored answer with Idempotency-Replayed: true, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Offline replay (DECISION-PEOPLE-029): the optional body may carry occurredAt, the instant the break actually ended, which becomes its endedAt; it is subject to the same 2 minutes in the future and 72 hours old bounds and must not be earlier than the break\'s start (422 OCCURRED_AT_OUT_OF_RANGE), and a call with no body records the server clock. Preconditions: the session must have an open break with no recorded end time. Required inputs: the work session id (UUID) as the path parameter; the body is optional. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_BREAK_STOP event; a replay writes and emits nothing. Returns 400 when the Idempotency-Key is missing or not a UUID, 409 when no open break exists for the session (including when the session id itself is unknown) or the key was already used, and 422 when occurredAt is out of range or before the break\'s start. 
      * Stop The Open Work Session Break
      */
     async stopWorkSessionBreak(requestParameters: StopWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BreakDto> {
@@ -286,7 +432,7 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits an ENDED work session for approval, recording billable and break minute totals and marking the session SUBMITTED. Use this tool after stopWorkSession has ended the session; do not use approveTimeEntriesBatch, which decides time entries, not work sessions. Preconditions: the session must exist and be in ENDED status; ACTIVE or already SUBMITTED sessions are rejected. Required inputs: the work session id (UUID) path parameter and a body with billableMinutes and breakMinutes (both zero or greater) and submittedAt (ISO-8601 instant). Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_SUBMIT event. Returns 404 when the session does not exist, and 409 when the session is not in ENDED status. 
+     * Submits an ENDED work session for approval, computing its minutes on the server and marking the session SUBMITTED. Use this tool after stopWorkSession has ended the session; do not use approveTimeEntriesBatch, which decides time entries, not work sessions. Server-computed minutes (DECISION-PEOPLE-029 item 3): breakMinutes is the whole-minute sum of the session\'s breaks (an open break counts up to the stop) and billableMinutes is the whole-minute start-to-stop duration less that break time, never below zero; fractions truncate, nothing else is rounded, and submittedAt is the server\'s clock. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body replays the stored answer with Idempotency-Replayed: true and creates no second time entry, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Preconditions: the session must exist and be in ENDED status; ACTIVE, already SUBMITTED and UNDONE sessions are rejected, so a retracted clock-in never becomes a time entry. Required inputs: the work session id (UUID) path parameter; the body is optional, so the app can send an empty submit right after its stop, and any billableMinutes, breakMinutes or submittedAt in it is ignored and never stored, so the technician\'s phone cannot mis-send paid time. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_SUBMIT event; a replay writes and emits nothing. Returns 400 when the Idempotency-Key is missing or not a UUID, 404 when the session does not exist, and 409 when the session is not in ENDED status or the key was already used. 
      * Submit An Ended Work Session
      */
     async submitWorkSessionRaw(requestParameters: SubmitWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionDto>> {
@@ -297,10 +443,10 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['workSessionSubmitRequest'] == null) {
+        if (requestParameters['idempotencyKey'] == null) {
             throw new runtime.RequiredError(
-                'workSessionSubmitRequest',
-                'Required parameter "workSessionSubmitRequest" was null or undefined when calling submitWorkSession().'
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling submitWorkSession().'
             );
         }
 
@@ -309,6 +455,10 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -330,7 +480,7 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits an ENDED work session for approval, recording billable and break minute totals and marking the session SUBMITTED. Use this tool after stopWorkSession has ended the session; do not use approveTimeEntriesBatch, which decides time entries, not work sessions. Preconditions: the session must exist and be in ENDED status; ACTIVE or already SUBMITTED sessions are rejected. Required inputs: the work session id (UUID) path parameter and a body with billableMinutes and breakMinutes (both zero or greater) and submittedAt (ISO-8601 instant). Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails). Emits a PEOPLE_WORK_SESSION_SUBMIT event. Returns 404 when the session does not exist, and 409 when the session is not in ENDED status. 
+     * Submits an ENDED work session for approval, computing its minutes on the server and marking the session SUBMITTED. Use this tool after stopWorkSession has ended the session; do not use approveTimeEntriesBatch, which decides time entries, not work sessions. Server-computed minutes (DECISION-PEOPLE-029 item 3): breakMinutes is the whole-minute sum of the session\'s breaks (an open break counts up to the stop) and billableMinutes is the whole-minute start-to-stop duration less that break time, never below zero; fractions truncate, nothing else is rounded, and submittedAt is the server\'s clock. Idempotency (ADR-0075): the Idempotency-Key header is required; repeating the call with the same key and body replays the stored answer with Idempotency-Replayed: true and creates no second time entry, and the same key with a different body or caller is 409 IDEMPOTENCY_CONFLICT. Preconditions: the session must exist and be in ENDED status; ACTIVE, already SUBMITTED and UNDONE sessions are rejected, so a retracted clock-in never becomes a time entry. Required inputs: the work session id (UUID) path parameter; the body is optional, so the app can send an empty submit right after its stop, and any billableMinutes, breakMinutes or submittedAt in it is ignored and never stored, so the technician\'s phone cannot mis-send paid time. Authorization: the caller must be the session\'s person, or hold people:timekeeping:approve; when that grant is location-scoped it must cover one of the person\'s active assignment locations (403 FORBIDDEN otherwise, 403 LOCATION_SCOPE_DENIED when only the scope fails); emits a PEOPLE_WORK_SESSION_SUBMIT event; a replay writes and emits nothing. Returns 400 when the Idempotency-Key is missing or not a UUID, 404 when the session does not exist, and 409 when the session is not in ENDED status or the key was already used. 
      * Submit An Ended Work Session
      */
     async submitWorkSession(requestParameters: SubmitWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionDto> {

@@ -16,17 +16,29 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  AttachImageOwnerRequest,
+  ImageSummary,
   StoreImageRequest,
   StoredImage,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    AttachImageOwnerRequestFromJSON,
+    AttachImageOwnerRequestToJSON,
+    ImageSummaryFromJSON,
+    ImageSummaryToJSON,
     StoreImageRequestFromJSON,
     StoreImageRequestToJSON,
     StoredImageFromJSON,
     StoredImageToJSON,
 } from '../models/index';
+
+export interface AttachImageOwnerOperationRequest {
+    id: string;
+    idempotencyKey: string;
+    attachImageOwnerRequest: AttachImageOwnerRequest;
+}
 
 export interface GetImageByFilenameRequest {
     filename: string;
@@ -35,10 +47,17 @@ export interface GetImageByFilenameRequest {
 
 export interface GetImageByIdRequest {
     id: string;
+    size?: GetImageByIdSizeEnum;
     ifNoneMatch?: string;
 }
 
+export interface ListImagesByOwnerRequest {
+    ownerType: ListImagesByOwnerOwnerTypeEnum;
+    ownerId: string;
+}
+
 export interface StoreImageOperationRequest {
+    idempotencyKey: string;
     storeImageRequest: StoreImageRequest;
 }
 
@@ -48,7 +67,63 @@ export interface StoreImageOperationRequest {
 export class ImageAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
+     * Attaches an image stored earlier without an owner to a check-in, workorder, service line or change request, with an optional caption. Use this operation when the image was uploaded before its owner was known, as the technician app\'s offline queue does; do not use it to move an image between owners, store a new image instead. Preconditions: the image exists in the caller\'s tenant; the owner is a tag that the owning service never validates. Required inputs: the Idempotency-Key header (a UUID), id, ownerType and ownerId; caption is optional. Emits IMAGE_OWNER_ATTACH and no domain event (the owning record is authoritative); re-attaching to the owner the image already has is a no-op 200, and resending the same key and body replays the first answer with Idempotency-Replayed: true. Returns 400 for a missing or malformed key, id, ownerType or ownerId; 404 when the image is absent or another tenant\'s; 409 IMAGE_OWNER_CONFLICT when it has a different owner; and 409 IDEMPOTENCY_CONFLICT for a key reused with another body. 
+     * Attach a stored image to its owner
+     */
+    async attachImageOwnerRaw(requestParameters: AttachImageOwnerOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ImageSummary>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling attachImageOwner().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling attachImageOwner().'
+            );
+        }
+
+        if (requestParameters['attachImageOwnerRequest'] == null) {
+            throw new runtime.RequiredError(
+                'attachImageOwnerRequest',
+                'Required parameter "attachImageOwnerRequest" was null or undefined when calling attachImageOwner().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        const response = await this.request({
+            path: `/v1/images/{id}/owner`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AttachImageOwnerRequestToJSON(requestParameters['attachImageOwnerRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ImageSummaryFromJSON(jsonValue));
+    }
+
+    /**
+     * Attaches an image stored earlier without an owner to a check-in, workorder, service line or change request, with an optional caption. Use this operation when the image was uploaded before its owner was known, as the technician app\'s offline queue does; do not use it to move an image between owners, store a new image instead. Preconditions: the image exists in the caller\'s tenant; the owner is a tag that the owning service never validates. Required inputs: the Idempotency-Key header (a UUID), id, ownerType and ownerId; caption is optional. Emits IMAGE_OWNER_ATTACH and no domain event (the owning record is authoritative); re-attaching to the owner the image already has is a no-op 200, and resending the same key and body replays the first answer with Idempotency-Replayed: true. Returns 400 for a missing or malformed key, id, ownerType or ownerId; 404 when the image is absent or another tenant\'s; 409 IMAGE_OWNER_CONFLICT when it has a different owner; and 409 IDEMPOTENCY_CONFLICT for a key reused with another body. 
+     * Attach a stored image to its owner
+     */
+    async attachImageOwner(requestParameters: AttachImageOwnerOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ImageSummary> {
+        const response = await this.attachImageOwnerRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist in the caller\'s tenant; an image that has an owner is served only with image:image:view and reads as 404 otherwise; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
      * Get image by filename
      */
     async getImageByFilenameRaw(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -78,7 +153,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
+     * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist in the caller\'s tenant; an image that has an owner is served only with image:image:view and reads as 404 otherwise; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
      * Get image by filename
      */
     async getImageByFilename(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -87,7 +162,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for an image record ID (a UUID). Use this operation when the caller has the image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (the image UUID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID, and 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
+     * Returns image bytes inline for an image record ID (a UUID), or its 320 px thumbnail with size=thumb. Use this operation when the caller has the image ID; when only the filename is known, use getImageByFilename instead. Preconditions: the record exists in the caller\'s tenant; an image with an owner (a check-in, workorder, service-line or change-request photo) needs image:image:view, while unowned images (catalogue artwork, logos, employee photos) need no permission, and legacy records are served only when pos.image.legacy-root resolves their path safely. Required inputs: id; size (original or thumb, where a record without a thumbnail serves the original) and If-None-Match are optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag (the served rendition\'s content hash) and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID or size is unknown, and 404 for an unknown or other-tenant record, an owned record without image:image:view, or an unavailable legacy file. 
      * Get image by ID
      */
     async getImageByIdRaw(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -99,6 +174,10 @@ export class ImageAPIApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -117,7 +196,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for an image record ID (a UUID). Use this operation when the caller has the image ID; do not use it when only the filename is known, use getImageByFilename instead. Preconditions: the image record must exist; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: id (the image UUID); If-None-Match is optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID, and 404 for an unknown record, an unconfigured legacy root, a missing file, or an escaping path; use getImageByFilename for filename lookup. Variants are not currently supported. 
+     * Returns image bytes inline for an image record ID (a UUID), or its 320 px thumbnail with size=thumb. Use this operation when the caller has the image ID; when only the filename is known, use getImageByFilename instead. Preconditions: the record exists in the caller\'s tenant; an image with an owner (a check-in, workorder, service-line or change-request photo) needs image:image:view, while unowned images (catalogue artwork, logos, employee photos) need no permission, and legacy records are served only when pos.image.legacy-root resolves their path safely. Required inputs: id; size (original or thumb, where a record without a thumbnail serves the original) and If-None-Match are optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag (the served rendition\'s content hash) and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID or size is unknown, and 404 for an unknown or other-tenant record, an owned record without image:image:view, or an unavailable legacy file. 
      * Get image by ID
      */
     async getImageById(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -126,10 +205,67 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stores JPEG, PNG, WebP, or GIF image bytes and returns a reference, reusing the existing reference when the same origin and content hash were already stored. Use this operation when a caller has image bytes that must be served by pos-image; do not use it to register an image that remains at an external URL or an existing legacy filesystem path. Preconditions: decoded content is nonempty, has supported magic bytes, and does not exceed pos.image.max-bytes (10 MiB by default); SVG is not supported. Required inputs: filename, a MIME claim (which may be blank), and base64 content; sourceUri and context are optional, and sourceUri is provenance only. No events are emitted; the operation creates or reuses tenant-scoped image and image_content rows. Returns 413 for content over the configured decoded-size limit and 400 for invalid base64, empty or unsupported bytes, or a claim naming a different supported image type. 
+     * Lists the images attached to one owner (a check-in, workorder, service line or change request), newest first, without their bytes; fetch bytes with getImageById and thumbnails with size=thumb. Use this operation to show a job\'s photos; do not use it to decide what belongs to the job, read the owning record (photoImageIds on a check-in or change request) instead, because that record is authoritative. Preconditions: the caller holds image:image:view; the owner is not validated, so an unknown owner simply has no images. Required inputs: ownerType and ownerId; there is no request body. Emits IMAGE_LIST_BY_OWNER; no state changes occur, and images in another tenant are never listed. Returns 400 for a missing or malformed ownerType or ownerId, and 403 without image:image:view. 
+     * List an owner\'s images
+     */
+    async listImagesByOwnerRaw(requestParameters: ListImagesByOwnerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ImageSummary>>> {
+        if (requestParameters['ownerType'] == null) {
+            throw new runtime.RequiredError(
+                'ownerType',
+                'Required parameter "ownerType" was null or undefined when calling listImagesByOwner().'
+            );
+        }
+
+        if (requestParameters['ownerId'] == null) {
+            throw new runtime.RequiredError(
+                'ownerId',
+                'Required parameter "ownerId" was null or undefined when calling listImagesByOwner().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['ownerType'] != null) {
+            queryParameters['ownerType'] = requestParameters['ownerType'];
+        }
+
+        if (requestParameters['ownerId'] != null) {
+            queryParameters['ownerId'] = requestParameters['ownerId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/images`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ImageSummaryFromJSON));
+    }
+
+    /**
+     * Lists the images attached to one owner (a check-in, workorder, service line or change request), newest first, without their bytes; fetch bytes with getImageById and thumbnails with size=thumb. Use this operation to show a job\'s photos; do not use it to decide what belongs to the job, read the owning record (photoImageIds on a check-in or change request) instead, because that record is authoritative. Preconditions: the caller holds image:image:view; the owner is not validated, so an unknown owner simply has no images. Required inputs: ownerType and ownerId; there is no request body. Emits IMAGE_LIST_BY_OWNER; no state changes occur, and images in another tenant are never listed. Returns 400 for a missing or malformed ownerType or ownerId, and 403 without image:image:view. 
+     * List an owner\'s images
+     */
+    async listImagesByOwner(requestParameters: ListImagesByOwnerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ImageSummary>> {
+        const response = await this.listImagesByOwnerRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Stores JPEG, PNG, WebP, or GIF image bytes, optionally attached to an owner with a caption, and returns a reference. Use this operation when image bytes must be served by pos-image; do not use it to register an image kept at an external URL or a legacy filesystem path. Preconditions: decoded content is nonempty, well formed, a supported type (not SVG) and within pos.image.max-bytes (10 MiB by default); ownerType and ownerId come together or not at all, and the owner is a tag the owning service never validates. Required inputs: the Idempotency-Key header (a UUID), filename, a MIME claim (which may be blank) and base64 content; sourceUri (provenance only), context, the owner and caption are optional. Emits IMAGE_STORE; location metadata (EXIF except orientation, XMP, IPTC) is stripped before the content hash, a 320 px thumbnail is generated, and an unowned store from a sourceUri already held with the same bytes reuses that record. Resending the same Idempotency-Key and body answers the original 201 and body with Idempotency-Replayed: true and stores nothing. Returns 400 for a missing or malformed key, bad base64, empty, malformed or unsupported bytes, a conflicting type claim or half an owner; 409 IDEMPOTENCY_CONFLICT for a key reused with another body; and 413 over the size limit. 
      * Store An Image
      */
     async storeImageRaw(requestParameters: StoreImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StoredImage>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling storeImage().'
+            );
+        }
+
         if (requestParameters['storeImageRequest'] == null) {
             throw new runtime.RequiredError(
                 'storeImageRequest',
@@ -143,6 +279,10 @@ export class ImageAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
         const response = await this.request({
             path: `/v1/images`,
             method: 'POST',
@@ -155,7 +295,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stores JPEG, PNG, WebP, or GIF image bytes and returns a reference, reusing the existing reference when the same origin and content hash were already stored. Use this operation when a caller has image bytes that must be served by pos-image; do not use it to register an image that remains at an external URL or an existing legacy filesystem path. Preconditions: decoded content is nonempty, has supported magic bytes, and does not exceed pos.image.max-bytes (10 MiB by default); SVG is not supported. Required inputs: filename, a MIME claim (which may be blank), and base64 content; sourceUri and context are optional, and sourceUri is provenance only. No events are emitted; the operation creates or reuses tenant-scoped image and image_content rows. Returns 413 for content over the configured decoded-size limit and 400 for invalid base64, empty or unsupported bytes, or a claim naming a different supported image type. 
+     * Stores JPEG, PNG, WebP, or GIF image bytes, optionally attached to an owner with a caption, and returns a reference. Use this operation when image bytes must be served by pos-image; do not use it to register an image kept at an external URL or a legacy filesystem path. Preconditions: decoded content is nonempty, well formed, a supported type (not SVG) and within pos.image.max-bytes (10 MiB by default); ownerType and ownerId come together or not at all, and the owner is a tag the owning service never validates. Required inputs: the Idempotency-Key header (a UUID), filename, a MIME claim (which may be blank) and base64 content; sourceUri (provenance only), context, the owner and caption are optional. Emits IMAGE_STORE; location metadata (EXIF except orientation, XMP, IPTC) is stripped before the content hash, a 320 px thumbnail is generated, and an unowned store from a sourceUri already held with the same bytes reuses that record. Resending the same Idempotency-Key and body answers the original 201 and body with Idempotency-Replayed: true and stores nothing. Returns 400 for a missing or malformed key, bad base64, empty, malformed or unsupported bytes, a conflicting type claim or half an owner; 409 IDEMPOTENCY_CONFLICT for a key reused with another body; and 413 over the size limit. 
      * Store An Image
      */
     async storeImage(requestParameters: StoreImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StoredImage> {
@@ -163,4 +303,23 @@ export class ImageAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum GetImageByIdSizeEnum {
+    Original = 'original',
+    Thumb = 'thumb'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListImagesByOwnerOwnerTypeEnum {
+    EstimateCheckIn = 'ESTIMATE_CHECK_IN',
+    Workorder = 'WORKORDER',
+    WorkorderService = 'WORKORDER_SERVICE',
+    ChangeRequest = 'CHANGE_REQUEST'
 }

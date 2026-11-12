@@ -31,6 +31,12 @@ export interface AddWorkorderNoteRequest {
      * @memberof AddWorkorderNoteRequest
      */
     noteType?: string;
+    /**
+     * Business time the note was written, for work replayed from the technician app's offline queue (#3291). ISO-8601 with an offset; omitted means now. A note with this field is accepted in every workorder status, closed ones included.
+     * @type {Date}
+     * @memberof AddWorkorderNoteRequest
+     */
+    occurredAt?: Date;
 }
 
 /**
@@ -53,6 +59,7 @@ export function AddWorkorderNoteRequestFromJSONTyped(json: any, ignoreDiscrimina
         
         'noteText': json['noteText'],
         'noteType': json['noteType'] == null ? undefined : json['noteType'],
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
     };
 }
 
@@ -64,6 +71,7 @@ export function AddWorkorderNoteRequestToJSON(value?: AddWorkorderNoteRequest | 
         
         'noteText': value['noteText'],
         'noteType': value['noteType'],
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
     };
 }
 

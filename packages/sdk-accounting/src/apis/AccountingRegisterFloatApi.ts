@@ -36,16 +36,19 @@ import {
 
 export interface ChangeRegisterFloatRequest {
     registerId: string;
+    idempotencyKey: string;
     registerFloatChangeRequest: RegisterFloatChangeRequest;
 }
 
 export interface EstablishGoLiveRegisterFloatRequest {
     registerId: string;
+    idempotencyKey: string;
     registerFloatGoLiveRequest: RegisterFloatGoLiveRequest;
 }
 
 export interface RelocateRegisterFloatRequest {
     registerId: string;
+    idempotencyKey: string;
     registerFloatRelocationRequest: RegisterFloatRelocationRequest;
 }
 
@@ -55,7 +58,7 @@ export interface RelocateRegisterFloatRequest {
 export class AccountingRegisterFloatApi extends runtime.BaseAPI {
 
     /**
-     * Sets a register\'s change float to a new amount. The difference posts against the chosen bank account: an increase Dr 1080 Register Float / Cr bank, a decrease Dr bank / Cr 1080. A register with no float yet starts at zero, so a register added after go-live is funded from the bank. Use this tool when the shop decides a drawer should hold more or less change; do not use establishGoLiveRegisterFloat, which is once per register against opening balance equity, and do not use a drawer cash movement, which is not a float. Preconditions: caller holds accounting:float:manage; bankGlAccountId is an active BANK_CASH account in functional currency (422 FLOAT_BANK_ACCOUNT_NOT_ELIGIBLE); the new amount differs from the current one (422 FLOAT_AMOUNT_UNCHANGED); the effective date passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Idempotent on requestId: a replay returns the first result with 200, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path), locationId, amount (zero or more), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), bankGlAccountId, justification (at least 10 characters), requestId; effectiveDate defaults to today in the tenant\'s accounting time zone. Emits an ACCOUNTING_REGISTER_FLOAT_CHANGE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
+     * Sets a register\'s change float to a new amount. The difference posts against the chosen bank account: an increase Dr 1080 Register Float / Cr bank, a decrease Dr bank / Cr 1080. A register with no float yet starts at zero, so a register added after go-live is funded from the bank. Use this tool when the shop decides a drawer should hold more or less change; do not use establishGoLiveRegisterFloat, which is once per register against opening balance equity, and do not use a drawer cash movement, which is not a float. Preconditions: caller holds accounting:float:manage; bankGlAccountId is an active BANK_CASH account in functional currency (422 FLOAT_BANK_ACCOUNT_NOT_ELIGIBLE); the new amount differs from the current one (422 FLOAT_AMOUNT_UNCHANGED); the effective date passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Idempotent on the Idempotency-Key header: a replay returns the first result with 201 and Idempotency-Replayed: true, and another body with the same key is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path), locationId, amount (zero or more), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), bankGlAccountId, justification (at least 10 characters) and the Idempotency-Key header; effectiveDate defaults to today in the tenant\'s accounting time zone. Emits an ACCOUNTING_REGISTER_FLOAT_CHANGE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
      * Change Register Float
      */
     async changeRegisterFloatRaw(requestParameters: ChangeRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterFloatResponse>> {
@@ -63,6 +66,13 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'registerId',
                 'Required parameter "registerId" was null or undefined when calling changeRegisterFloat().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling changeRegisterFloat().'
             );
         }
 
@@ -78,6 +88,10 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -99,7 +113,7 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets a register\'s change float to a new amount. The difference posts against the chosen bank account: an increase Dr 1080 Register Float / Cr bank, a decrease Dr bank / Cr 1080. A register with no float yet starts at zero, so a register added after go-live is funded from the bank. Use this tool when the shop decides a drawer should hold more or less change; do not use establishGoLiveRegisterFloat, which is once per register against opening balance equity, and do not use a drawer cash movement, which is not a float. Preconditions: caller holds accounting:float:manage; bankGlAccountId is an active BANK_CASH account in functional currency (422 FLOAT_BANK_ACCOUNT_NOT_ELIGIBLE); the new amount differs from the current one (422 FLOAT_AMOUNT_UNCHANGED); the effective date passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Idempotent on requestId: a replay returns the first result with 200, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path), locationId, amount (zero or more), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), bankGlAccountId, justification (at least 10 characters), requestId; effectiveDate defaults to today in the tenant\'s accounting time zone. Emits an ACCOUNTING_REGISTER_FLOAT_CHANGE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
+     * Sets a register\'s change float to a new amount. The difference posts against the chosen bank account: an increase Dr 1080 Register Float / Cr bank, a decrease Dr bank / Cr 1080. A register with no float yet starts at zero, so a register added after go-live is funded from the bank. Use this tool when the shop decides a drawer should hold more or less change; do not use establishGoLiveRegisterFloat, which is once per register against opening balance equity, and do not use a drawer cash movement, which is not a float. Preconditions: caller holds accounting:float:manage; bankGlAccountId is an active BANK_CASH account in functional currency (422 FLOAT_BANK_ACCOUNT_NOT_ELIGIBLE); the new amount differs from the current one (422 FLOAT_AMOUNT_UNCHANGED); the effective date passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Idempotent on the Idempotency-Key header: a replay returns the first result with 201 and Idempotency-Replayed: true, and another body with the same key is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path), locationId, amount (zero or more), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), bankGlAccountId, justification (at least 10 characters) and the Idempotency-Key header; effectiveDate defaults to today in the tenant\'s accounting time zone. Emits an ACCOUNTING_REGISTER_FLOAT_CHANGE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
      * Change Register Float
      */
     async changeRegisterFloat(requestParameters: ChangeRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterFloatResponse> {
@@ -108,7 +122,7 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
     }
 
     /**
-     * Puts a register\'s change float on the books at go-live: posts Dr 1080 Register Float / Cr 3900 Opening Balance Equity for the amount, dated the go-live date, the 1080 line carrying the register and its location. Use this tool once per register, when the shop starts using the system with cash already in the drawer; do not use changeRegisterFloat, which moves the difference to or from a bank account, and do not use createJournalEntry, which records no float. Preconditions: caller holds accounting:float:manage; the go-live date falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise); the register has no standing go-live and no standing float change (409 FLOAT_ALREADY_ESTABLISHED; correct a mistake by reversing the entry and running go-live again; the reversal itself is final (409 FLOAT_REVERSAL_NOT_REVERSIBLE): never reverse it, run the go-live or change-float command again). Idempotent on requestId: a replay returns the first result with 200, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path, pos-order\'s terminalId), locationId, amount (more than zero), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), goLiveDate, justification (at least 10 characters), requestId. Emits an ACCOUNTING_REGISTER_FLOAT_GO_LIVE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
+     * Puts a register\'s change float on the books at go-live: posts Dr 1080 Register Float / Cr 3900 Opening Balance Equity for the amount, dated the go-live date, the 1080 line carrying the register and its location. Use this tool once per register, when the shop starts using the system with cash already in the drawer; do not use changeRegisterFloat, which moves the difference to or from a bank account, and do not use createJournalEntry, which records no float. Preconditions: caller holds accounting:float:manage; the go-live date falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise); the register has no standing go-live and no standing float change (409 FLOAT_ALREADY_ESTABLISHED; correct a mistake by reversing the entry and running go-live again; the reversal itself is final (409 FLOAT_REVERSAL_NOT_REVERSIBLE): never reverse it, run the go-live or change-float command again). Idempotent on the Idempotency-Key header: a replay returns the first result with 201 and Idempotency-Replayed: true, and another body with the same key is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path, pos-order\'s terminalId), locationId, amount (more than zero), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), goLiveDate, justification (at least 10 characters) and the Idempotency-Key header. Emits an ACCOUNTING_REGISTER_FLOAT_GO_LIVE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
      * Establish Go-Live Register Float
      */
     async establishGoLiveRegisterFloatRaw(requestParameters: EstablishGoLiveRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterFloatResponse>> {
@@ -116,6 +130,13 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'registerId',
                 'Required parameter "registerId" was null or undefined when calling establishGoLiveRegisterFloat().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling establishGoLiveRegisterFloat().'
             );
         }
 
@@ -131,6 +152,10 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -152,7 +177,7 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
     }
 
     /**
-     * Puts a register\'s change float on the books at go-live: posts Dr 1080 Register Float / Cr 3900 Opening Balance Equity for the amount, dated the go-live date, the 1080 line carrying the register and its location. Use this tool once per register, when the shop starts using the system with cash already in the drawer; do not use changeRegisterFloat, which moves the difference to or from a bank account, and do not use createJournalEntry, which records no float. Preconditions: caller holds accounting:float:manage; the go-live date falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise); the register has no standing go-live and no standing float change (409 FLOAT_ALREADY_ESTABLISHED; correct a mistake by reversing the entry and running go-live again; the reversal itself is final (409 FLOAT_REVERSAL_NOT_REVERSIBLE): never reverse it, run the go-live or change-float command again). Idempotent on requestId: a replay returns the first result with 200, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path, pos-order\'s terminalId), locationId, amount (more than zero), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), goLiveDate, justification (at least 10 characters), requestId. Emits an ACCOUNTING_REGISTER_FLOAT_GO_LIVE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
+     * Puts a register\'s change float on the books at go-live: posts Dr 1080 Register Float / Cr 3900 Opening Balance Equity for the amount, dated the go-live date, the 1080 line carrying the register and its location. Use this tool once per register, when the shop starts using the system with cash already in the drawer; do not use changeRegisterFloat, which moves the difference to or from a bank account, and do not use createJournalEntry, which records no float. Preconditions: caller holds accounting:float:manage; the go-live date falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise); the register has no standing go-live and no standing float change (409 FLOAT_ALREADY_ESTABLISHED; correct a mistake by reversing the entry and running go-live again; the reversal itself is final (409 FLOAT_REVERSAL_NOT_REVERSIBLE): never reverse it, run the go-live or change-float command again). Idempotent on the Idempotency-Key header: a replay returns the first result with 201 and Idempotency-Replayed: true, and another body with the same key is 409 IDEMPOTENCY_CONFLICT. Required inputs: registerId (path, pos-order\'s terminalId), locationId, amount (more than zero), currencyCode (ISO 4217, the functional currency: 422 CURRENCY_NOT_SUPPORTED otherwise), goLiveDate, justification (at least 10 characters) and the Idempotency-Key header. Emits an ACCOUNTING_REGISTER_FLOAT_GO_LIVE event, queues accounting.float.changed, writes an audit row naming the caller, and returns 201 with the previous and new amount, their currencyCode, and the journal entry id and number. 
      * Establish Go-Live Register Float
      */
     async establishGoLiveRegisterFloat(requestParameters: EstablishGoLiveRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterFloatResponse> {
@@ -161,7 +186,7 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves a register and its change float from fromLocationId to toLocationId, posting Dr 1080 Register Float at the destination / Cr 1080 at the origin for the current float on the effective date. The float is unchanged, there is no bank or 3900 line, and a zero float moves without an entry (journalEntryId null), which fixes a go-live made under a mistyped location. Use this tool for a register set up under the wrong location (ENTERED_IN_ERROR) or a drawer that moved (MOVED); do not use changeRegisterFloat, which changes the amount, and never reverse the relocation entry (409 FLOAT_RELOCATION_NOT_REVERSIBLE): move again instead. Preconditions: the caller holds accounting:float:manage with both locations in scope (403 LOCATION_SCOPE_DENIED), and the float is held at fromLocationId (404 FLOAT_REGISTER_NOT_FOUND, 422 FLOAT_REGISTER_LOCATION_MISMATCH) and moves elsewhere (422 FLOAT_RELOCATION_SAME_LOCATION). The register has no open pos-order session (422 FLOAT_REGISTER_SESSION_OPEN, referenceId names it) and its float is not negative (422 FLOAT_AMOUNT_NEGATIVE). The effective date is not after today nor before the register\'s latest float entry (422 FLOAT_RELOCATION_DATE_INVALID), and passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Required inputs: registerId (path), fromLocationId, toLocationId, reason, justification (10 or more characters) and requestId, on which the command is idempotent (a replay returns the first result with 200, another body is 409 IDEMPOTENCY_CONFLICT); effectiveDate defaults to today in the accounting time zone. Emits ACCOUNTING_REGISTER_FLOAT_RELOCATE, queues accounting.float.changed with kind RELOCATION, writes an audit row naming both locations and the reason, and returns 201. 
+     * Moves a register and its change float from fromLocationId to toLocationId, posting Dr 1080 Register Float at the destination / Cr 1080 at the origin for the current float on the effective date. The float is unchanged, there is no bank or 3900 line, and a zero float moves without an entry (journalEntryId null), which fixes a go-live made under a mistyped location. Use this tool for a register set up under the wrong location (ENTERED_IN_ERROR) or a drawer that moved (MOVED); do not use changeRegisterFloat, which changes the amount, and never reverse the relocation entry (409 FLOAT_RELOCATION_NOT_REVERSIBLE): move again instead. Preconditions: the caller holds accounting:float:manage with both locations in scope (403 LOCATION_SCOPE_DENIED), and the float is held at fromLocationId (404 FLOAT_REGISTER_NOT_FOUND, 422 FLOAT_REGISTER_LOCATION_MISMATCH) and moves elsewhere (422 FLOAT_RELOCATION_SAME_LOCATION). The register has no open pos-order session (422 FLOAT_REGISTER_SESSION_OPEN, referenceId names it) and its float is not negative (422 FLOAT_AMOUNT_NEGATIVE). The effective date is not after today nor before the register\'s latest float entry (422 FLOAT_RELOCATION_DATE_INVALID), and passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Required inputs: registerId (path), fromLocationId, toLocationId, reason, justification (10 or more characters) and the Idempotency-Key header, on which the command is idempotent (a replay returns the first result with 201 and Idempotency-Replayed: true, another body is 409 IDEMPOTENCY_CONFLICT); effectiveDate defaults to today in the accounting time zone. Emits ACCOUNTING_REGISTER_FLOAT_RELOCATE, queues accounting.float.changed with kind RELOCATION, writes an audit row naming both locations and the reason, and returns 201. 
      * Move a Register and Its Float to Another Location
      */
     async relocateRegisterFloatRaw(requestParameters: RelocateRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterFloatResponse>> {
@@ -169,6 +194,13 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'registerId',
                 'Required parameter "registerId" was null or undefined when calling relocateRegisterFloat().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling relocateRegisterFloat().'
             );
         }
 
@@ -184,6 +216,10 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -205,7 +241,7 @@ export class AccountingRegisterFloatApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves a register and its change float from fromLocationId to toLocationId, posting Dr 1080 Register Float at the destination / Cr 1080 at the origin for the current float on the effective date. The float is unchanged, there is no bank or 3900 line, and a zero float moves without an entry (journalEntryId null), which fixes a go-live made under a mistyped location. Use this tool for a register set up under the wrong location (ENTERED_IN_ERROR) or a drawer that moved (MOVED); do not use changeRegisterFloat, which changes the amount, and never reverse the relocation entry (409 FLOAT_RELOCATION_NOT_REVERSIBLE): move again instead. Preconditions: the caller holds accounting:float:manage with both locations in scope (403 LOCATION_SCOPE_DENIED), and the float is held at fromLocationId (404 FLOAT_REGISTER_NOT_FOUND, 422 FLOAT_REGISTER_LOCATION_MISMATCH) and moves elsewhere (422 FLOAT_RELOCATION_SAME_LOCATION). The register has no open pos-order session (422 FLOAT_REGISTER_SESSION_OPEN, referenceId names it) and its float is not negative (422 FLOAT_AMOUNT_NEGATIVE). The effective date is not after today nor before the register\'s latest float entry (422 FLOAT_RELOCATION_DATE_INVALID), and passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Required inputs: registerId (path), fromLocationId, toLocationId, reason, justification (10 or more characters) and requestId, on which the command is idempotent (a replay returns the first result with 200, another body is 409 IDEMPOTENCY_CONFLICT); effectiveDate defaults to today in the accounting time zone. Emits ACCOUNTING_REGISTER_FLOAT_RELOCATE, queues accounting.float.changed with kind RELOCATION, writes an audit row naming both locations and the reason, and returns 201. 
+     * Moves a register and its change float from fromLocationId to toLocationId, posting Dr 1080 Register Float at the destination / Cr 1080 at the origin for the current float on the effective date. The float is unchanged, there is no bank or 3900 line, and a zero float moves without an entry (journalEntryId null), which fixes a go-live made under a mistyped location. Use this tool for a register set up under the wrong location (ENTERED_IN_ERROR) or a drawer that moved (MOVED); do not use changeRegisterFloat, which changes the amount, and never reverse the relocation entry (409 FLOAT_RELOCATION_NOT_REVERSIBLE): move again instead. Preconditions: the caller holds accounting:float:manage with both locations in scope (403 LOCATION_SCOPE_DENIED), and the float is held at fromLocationId (404 FLOAT_REGISTER_NOT_FOUND, 422 FLOAT_REGISTER_LOCATION_MISMATCH) and moves elsewhere (422 FLOAT_RELOCATION_SAME_LOCATION). The register has no open pos-order session (422 FLOAT_REGISTER_SESSION_OPEN, referenceId names it) and its float is not negative (422 FLOAT_AMOUNT_NEGATIVE). The effective date is not after today nor before the register\'s latest float entry (422 FLOAT_RELOCATION_DATE_INVALID), and passes the period gate (a CLOSED period needs accounting:period:override and overrideJustification). Required inputs: registerId (path), fromLocationId, toLocationId, reason, justification (10 or more characters) and the Idempotency-Key header, on which the command is idempotent (a replay returns the first result with 201 and Idempotency-Replayed: true, another body is 409 IDEMPOTENCY_CONFLICT); effectiveDate defaults to today in the accounting time zone. Emits ACCOUNTING_REGISTER_FLOAT_RELOCATE, queues accounting.float.changed with kind RELOCATION, writes an audit row naming both locations and the reason, and returns 201. 
      * Move a Register and Its Float to Another Location
      */
     async relocateRegisterFloat(requestParameters: RelocateRegisterFloatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterFloatResponse> {

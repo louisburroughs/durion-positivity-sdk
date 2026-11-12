@@ -38,12 +38,6 @@ export interface PettyExpenseCategoryTaxRecoveryResponse {
      */
     recoverablePercent?: number;
     /**
-     * True when this answers a replayed requestId
-     * @type {boolean}
-     * @memberof PettyExpenseCategoryTaxRecoveryResponse
-     */
-    replayed: boolean;
-    /**
      * Whether the tax stated on its receipts is recovered
      * @type {boolean}
      * @memberof PettyExpenseCategoryTaxRecoveryResponse
@@ -63,7 +57,6 @@ export interface PettyExpenseCategoryTaxRecoveryResponse {
 export function instanceOfPettyExpenseCategoryTaxRecoveryResponse(value: object): boolean {
     if (!('code' in value)) return false;
     if (!('effectiveFrom' in value)) return false;
-    if (!('replayed' in value)) return false;
     if (!('taxRecoverable' in value)) return false;
     if (!('version' in value)) return false;
     return true;
@@ -82,7 +75,6 @@ export function PettyExpenseCategoryTaxRecoveryResponseFromJSONTyped(json: any, 
         'code': json['code'],
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'recoverablePercent': json['recoverablePercent'] == null ? undefined : json['recoverablePercent'],
-        'replayed': json['replayed'],
         'taxRecoverable': json['taxRecoverable'],
         'version': json['version'],
     };
@@ -97,7 +89,6 @@ export function PettyExpenseCategoryTaxRecoveryResponseToJSON(value?: PettyExpen
         'code': value['code'],
         'effectiveFrom': ((value['effectiveFrom']).toISOString()),
         'recoverablePercent': value['recoverablePercent'],
-        'replayed': value['replayed'],
         'taxRecoverable': value['taxRecoverable'],
         'version': value['version'],
     };

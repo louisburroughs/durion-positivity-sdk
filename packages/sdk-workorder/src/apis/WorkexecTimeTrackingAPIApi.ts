@@ -20,6 +20,7 @@ import type {
   WorkexecLaborPerformedResponse,
   WorkexecTimerEntryResponse,
   WorkexecTimerStartRequest,
+  WorkexecTimerStopRequest,
   WorkexecTimerStopResponse,
 } from '../models/index';
 import {
@@ -33,6 +34,8 @@ import {
     WorkexecTimerEntryResponseToJSON,
     WorkexecTimerStartRequestFromJSON,
     WorkexecTimerStartRequestToJSON,
+    WorkexecTimerStopRequestFromJSON,
+    WorkexecTimerStopRequestToJSON,
     WorkexecTimerStopResponseFromJSON,
     WorkexecTimerStopResponseToJSON,
 } from '../models/index';
@@ -54,6 +57,11 @@ export interface GetJobTimeTotalsRequest {
 export interface StartTimerRequest {
     idempotencyKey: string;
     workexecTimerStartRequest: WorkexecTimerStartRequest;
+}
+
+export interface StopTimersRequest {
+    idempotencyKey: string;
+    workexecTimerStopRequest?: WorkexecTimerStopRequest;
 }
 
 /**
@@ -236,7 +244,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts a live labor timer on a workorder, attributing the tracked time to the requested technician, the current assignment, or the caller, and creating a service line when the workorder has none. Use this tool for live time capture; do not use createLaborPerformed, which records an already-completed quantity of hours. Preconditions: the workorder must be in APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, and the tracked technician must have no timer already running; attributing to someone who is neither the caller nor the current assignee requires workorder:labor:add_on_behalf plus a reason. Required inputs: workorderId (UUID); workorderItemId, laborCode, technicianId, and reason are optional, and the required Idempotency-Key header replays the original 201 timer. Emits a WORKEXEC_TIMER_START event. Returns 201 on start and on a replay, 404 when the workorder or workorder item is missing, 409 with TIMER_ALREADY_ACTIVE or INVALID_STATE on conflicts or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 403 NO_LINKED_PERSON when the caller has no linked person or for unauthorized on-behalf attribution, and 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit), when the Idempotency-Key is missing or not a UUID, or when an on-behalf reason is missing. 
+     * Starts a live labor timer on a workorder, attributing the tracked time to the requested technician, the current assignment, or the caller, and creating a service line when the workorder has none. Use this tool for live time capture; do not use createLaborPerformed, which records an already-completed quantity of hours. Preconditions: the workorder must be in APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, and the tracked technician must have no timer already running; attributing to someone who is neither the caller nor the current assignee requires workorder:labor:add_on_behalf plus a reason. Required inputs: workorderId (UUID); workorderItemId, laborCode, technicianId, and reason are optional, and the required Idempotency-Key header replays the original 201 timer. occurredAt is the optional business time the timer started, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, the timer-active check is evaluated at that time, and a replay whose workorder was completed, cancelled, invoiced, put on hold or reassigned meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKEXEC_TIMER_START event. Returns 201 on start and on a replay, 404 when the workorder or workorder item is missing, 409 with TIMER_ALREADY_ACTIVE, INVALID_STATE or WORKORDER_STATE_CHANGED on conflicts or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, 403 NO_LINKED_PERSON when the caller has no linked person or for unauthorized on-behalf attribution, and 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit), when the Idempotency-Key is missing or not a UUID, or when an on-behalf reason is missing. 
      * Start Workexec Labor Timer
      */
     async startTimerRaw(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerEntryResponse>> {
@@ -284,7 +292,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts a live labor timer on a workorder, attributing the tracked time to the requested technician, the current assignment, or the caller, and creating a service line when the workorder has none. Use this tool for live time capture; do not use createLaborPerformed, which records an already-completed quantity of hours. Preconditions: the workorder must be in APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, and the tracked technician must have no timer already running; attributing to someone who is neither the caller nor the current assignee requires workorder:labor:add_on_behalf plus a reason. Required inputs: workorderId (UUID); workorderItemId, laborCode, technicianId, and reason are optional, and the required Idempotency-Key header replays the original 201 timer. Emits a WORKEXEC_TIMER_START event. Returns 201 on start and on a replay, 404 when the workorder or workorder item is missing, 409 with TIMER_ALREADY_ACTIVE or INVALID_STATE on conflicts or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 403 NO_LINKED_PERSON when the caller has no linked person or for unauthorized on-behalf attribution, and 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit), when the Idempotency-Key is missing or not a UUID, or when an on-behalf reason is missing. 
+     * Starts a live labor timer on a workorder, attributing the tracked time to the requested technician, the current assignment, or the caller, and creating a service line when the workorder has none. Use this tool for live time capture; do not use createLaborPerformed, which records an already-completed quantity of hours. Preconditions: the workorder must be in APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, and the tracked technician must have no timer already running; attributing to someone who is neither the caller nor the current assignee requires workorder:labor:add_on_behalf plus a reason. Required inputs: workorderId (UUID); workorderItemId, laborCode, technicianId, and reason are optional, and the required Idempotency-Key header replays the original 201 timer. occurredAt is the optional business time the timer started, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, the timer-active check is evaluated at that time, and a replay whose workorder was completed, cancelled, invoiced, put on hold or reassigned meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKEXEC_TIMER_START event. Returns 201 on start and on a replay, 404 when the workorder or workorder item is missing, 409 with TIMER_ALREADY_ACTIVE, INVALID_STATE or WORKORDER_STATE_CHANGED on conflicts or IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, 403 NO_LINKED_PERSON when the caller has no linked person or for unauthorized on-behalf attribution, and 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit), when the Idempotency-Key is missing or not a UUID, or when an on-behalf reason is missing. 
      * Start Workexec Labor Timer
      */
     async startTimer(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerEntryResponse> {
@@ -293,13 +301,26 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stops every active timer the authenticated mechanic is tracked on or initiated, stamping the stop time and returning the closed entries with their durations. Use this tool when a technician finishes timed work; do not use adjustLaborHours, which corrects hours on an entry after the fact. Preconditions: at least one active timer must exist for the caller, either as the tracked technician or as the initiator of an on-behalf timer. Required inputs: none — there is no request body, and identity comes from the security context. Emits a WORKEXEC_TIMER_STOP event. Returns 200 with the stopped entries, 403 NO_LINKED_PERSON when the caller has no linked person, 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit), and 409 with code NO_ACTIVE_TIMER when nothing is running. 
+     * Stops every active timer the authenticated mechanic is tracked on or initiated, stamping the stop time and returning the closed entries with their durations. Use this tool when a technician finishes timed work; do not use adjustLaborHours, which corrects hours on an entry after the fact. Preconditions: at least one active timer must exist for the caller, either as the tracked technician or as the initiator of an on-behalf timer. Required inputs: none required — the body is optional and may carry occurredAt, the business time the timers stopped for work replayed from the technician app\'s offline queue, and the Idempotency-Key header is required (a UUID) so a retry replays the original answer with Idempotency-Replayed: true. Identity comes from the security context. Emits a WORKEXEC_TIMER_STOP event. Returns 200 with the stopped entries, 403 NO_LINKED_PERSON when the caller has no linked person, 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit) or when the Idempotency-Key is not a UUID, 409 with code NO_ACTIVE_TIMER when nothing is running, LABOR_SEQUENCE_INVALID when occurredAt precedes a timer\'s start, WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile, or IDEMPOTENCY_CONFLICT when the key was used for a different request, and 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window. 
      * Stop Authenticated Mechanic Timers
      */
-    async stopTimersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerStopResponse>> {
+    async stopTimersRaw(requestParameters: StopTimersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerStopResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling stopTimers().'
+            );
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -314,17 +335,18 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: WorkexecTimerStopRequestToJSON(requestParameters['workexecTimerStopRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => WorkexecTimerStopResponseFromJSON(jsonValue));
     }
 
     /**
-     * Stops every active timer the authenticated mechanic is tracked on or initiated, stamping the stop time and returning the closed entries with their durations. Use this tool when a technician finishes timed work; do not use adjustLaborHours, which corrects hours on an entry after the fact. Preconditions: at least one active timer must exist for the caller, either as the tracked technician or as the initiator of an on-behalf timer. Required inputs: none — there is no request body, and identity comes from the security context. Emits a WORKEXEC_TIMER_STOP event. Returns 200 with the stopped entries, 403 NO_LINKED_PERSON when the caller has no linked person, 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit), and 409 with code NO_ACTIVE_TIMER when nothing is running. 
+     * Stops every active timer the authenticated mechanic is tracked on or initiated, stamping the stop time and returning the closed entries with their durations. Use this tool when a technician finishes timed work; do not use adjustLaborHours, which corrects hours on an entry after the fact. Preconditions: at least one active timer must exist for the caller, either as the tracked technician or as the initiator of an on-behalf timer. Required inputs: none required — the body is optional and may carry occurredAt, the business time the timers stopped for work replayed from the technician app\'s offline queue, and the Idempotency-Key header is required (a UUID) so a retry replays the original answer with Idempotency-Replayed: true. Identity comes from the security context. Emits a WORKEXEC_TIMER_STOP event. Returns 200 with the stopped entries, 403 NO_LINKED_PERSON when the caller has no linked person, 400 WORKEXEC_INVALID_REQUEST (USER_ID_REQUIRED when the token has no usable login user id for initiator audit) or when the Idempotency-Key is not a UUID, 409 with code NO_ACTIVE_TIMER when nothing is running, LABOR_SEQUENCE_INVALID when occurredAt precedes a timer\'s start, WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile, or IDEMPOTENCY_CONFLICT when the key was used for a different request, and 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window. 
      * Stop Authenticated Mechanic Timers
      */
-    async stopTimers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerStopResponse> {
-        const response = await this.stopTimersRaw(initOverrides);
+    async stopTimers(requestParameters: StopTimersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerStopResponse> {
+        const response = await this.stopTimersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

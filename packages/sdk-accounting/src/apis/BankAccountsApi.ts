@@ -20,7 +20,6 @@ import type {
   BankAccountProfileRequest,
   BankAccountProfileResponse,
   BankOpeningBalanceRequest,
-  BankOpeningBalanceResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -33,12 +32,11 @@ import {
     BankAccountProfileResponseToJSON,
     BankOpeningBalanceRequestFromJSON,
     BankOpeningBalanceRequestToJSON,
-    BankOpeningBalanceResponseFromJSON,
-    BankOpeningBalanceResponseToJSON,
 } from '../models/index';
 
 export interface EstablishBankOpeningBalanceRequest {
     glAccountId: string;
+    idempotencyKey: string;
     bankOpeningBalanceRequest: BankOpeningBalanceRequest;
 }
 
@@ -58,14 +56,21 @@ export interface SetBankAccountProfileRequest {
 export class BankAccountsApi extends runtime.BaseAPI {
 
     /**
-     * Puts a bank account\'s balance at cutover on the books, with the checks and deposits still in transit, against 3900 Opening Balance Equity. Posts one entry dated asOfDate: one bank line for statementBalance (a debit, a credit when overdrawn), one bank line per outstanding item carrying its reference and itemDate (an OUTSTANDING_CHECK credits the bank, a DEPOSIT_IN_TRANSIT debits it) and one 3900 line for the net, so the book balance is statement + deposits in transit − outstanding checks. Use this tool once per bank account, when a shop\'s books move onto the platform; do not use createJournalEntry, which records no opening, and do not use it for cash not yet deposited at cutover (deposit it on or before asOfDate and list it as a deposit in transit); AR, AP, inventory and loan openings are out of scope. Preconditions: caller holds accounting:je:create and accounting:je:post; the account exists (404 GL_ACCOUNT_NOT_FOUND) and is an active BANK_CASH account in functional currency (422 BANK_OPENING_BALANCE_ACCOUNT_NOT_ELIGIBLE); currencyCode is its currency (422 CURRENCY_NOT_SUPPORTED) and no amount is finer than its minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY, every such field in fieldErrors); it has no standing opening (409 BANK_OPENING_BALANCE_ALREADY_ESTABLISHED; correct a mistake by reversing the entry, dated on or before asOfDate, and running the opening again); the balance at the end of asOfDate holds no line and no committed statement starts on or before it (422 BANK_OPENING_BALANCE_NOT_FIRST; later lines are allowed); a zero balance needs at least one item (422 BANK_OPENING_BALANCE_EMPTY); asOfDate is not after today in the tenant\'s accounting time zone and falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise). Idempotent on requestId: a replay returns the first result with 200, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: glAccountId (path), asOfDate, statementBalance, currencyCode (ISO 4217, the code of every amount, ADR-0067), outstandingItems (type, reference, itemDate on or before asOfDate, amount more than zero; may be empty), justification (at least 10 characters), requestId. Emits an ACCOUNTING_BANK_OPENING_BALANCE_ESTABLISH event, writes a BANK_OPENING_BALANCE_ESTABLISH audit row naming the caller, and returns 201 with the balances and their currencyCode, the journal entry id and number and each item\'s glLineId; the account\'s first bank statement then starts on asOfDate + 1 with opening balance = statementBalance and a gapAcknowledgement; registering each item\'s glLineId as an outstanding item there leaves an opening difference of 0.00. 
+     * Puts a bank account\'s balance at cutover on the books, with the checks and deposits still in transit, against 3900 Opening Balance Equity. Posts one entry dated asOfDate: one bank line for statementBalance (a debit, a credit when overdrawn), one bank line per outstanding item carrying its reference and itemDate (an OUTSTANDING_CHECK credits the bank, a DEPOSIT_IN_TRANSIT debits it) and one 3900 line for the net, so the book balance is statement + deposits in transit − outstanding checks. Use this tool once per bank account, when a shop\'s books move onto the platform; do not use createJournalEntry, which records no opening, and do not use it for cash not yet deposited at cutover (deposit it on or before asOfDate and list it as a deposit in transit); AR, AP, inventory and loan openings are out of scope. Preconditions: caller holds accounting:je:create and accounting:je:post; the account exists (404 GL_ACCOUNT_NOT_FOUND) and is an active BANK_CASH account in functional currency (422 BANK_OPENING_BALANCE_ACCOUNT_NOT_ELIGIBLE); currencyCode is its currency (422 CURRENCY_NOT_SUPPORTED) and no amount is finer than its minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY, every such field in fieldErrors); it has no standing opening (409 BANK_OPENING_BALANCE_ALREADY_ESTABLISHED; correct a mistake by reversing the entry, dated on or before asOfDate, and running the opening again); the balance at the end of asOfDate holds no line and no committed statement starts on or before it (422 BANK_OPENING_BALANCE_NOT_FIRST; later lines are allowed); a zero balance needs at least one item (422 BANK_OPENING_BALANCE_EMPTY); asOfDate is not after today in the tenant\'s accounting time zone and falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise). Idempotent on the Idempotency-Key header (a UUID): a replay of the same key and payload returns the original status and body with Idempotency-Replayed: true and posts nothing; another payload or caller is 409 IDEMPOTENCY_CONFLICT. The replayed body is a snapshot of the first outcome, not the opening\'s current state. Required inputs: glAccountId (path), the Idempotency-Key header and, in the body, asOfDate, statementBalance, currencyCode (ISO 4217, the code of every amount, ADR-0067), outstandingItems (type, reference, itemDate on or before asOfDate, amount more than zero; may be empty) and justification (at least 10 characters). Emits an ACCOUNTING_BANK_OPENING_BALANCE_ESTABLISH event, writes a BANK_OPENING_BALANCE_ESTABLISH audit row naming the caller, and returns 201 with the balances and their currencyCode, the journal entry id and number and each item\'s glLineId; the account\'s first bank statement then starts on asOfDate + 1 with opening balance = statementBalance and a gapAcknowledgement; registering each item\'s glLineId as an outstanding item there leaves an opening difference of 0.00. 
      * Establish Bank Opening Balance
      */
-    async establishBankOpeningBalanceRaw(requestParameters: EstablishBankOpeningBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankOpeningBalanceResponse>> {
+    async establishBankOpeningBalanceRaw(requestParameters: EstablishBankOpeningBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['glAccountId'] == null) {
             throw new runtime.RequiredError(
                 'glAccountId',
                 'Required parameter "glAccountId" was null or undefined when calling establishBankOpeningBalance().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling establishBankOpeningBalance().'
             );
         }
 
@@ -81,6 +86,10 @@ export class BankAccountsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -98,14 +107,14 @@ export class BankAccountsApi extends runtime.BaseAPI {
             body: BankOpeningBalanceRequestToJSON(requestParameters['bankOpeningBalanceRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => BankOpeningBalanceResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
-     * Puts a bank account\'s balance at cutover on the books, with the checks and deposits still in transit, against 3900 Opening Balance Equity. Posts one entry dated asOfDate: one bank line for statementBalance (a debit, a credit when overdrawn), one bank line per outstanding item carrying its reference and itemDate (an OUTSTANDING_CHECK credits the bank, a DEPOSIT_IN_TRANSIT debits it) and one 3900 line for the net, so the book balance is statement + deposits in transit − outstanding checks. Use this tool once per bank account, when a shop\'s books move onto the platform; do not use createJournalEntry, which records no opening, and do not use it for cash not yet deposited at cutover (deposit it on or before asOfDate and list it as a deposit in transit); AR, AP, inventory and loan openings are out of scope. Preconditions: caller holds accounting:je:create and accounting:je:post; the account exists (404 GL_ACCOUNT_NOT_FOUND) and is an active BANK_CASH account in functional currency (422 BANK_OPENING_BALANCE_ACCOUNT_NOT_ELIGIBLE); currencyCode is its currency (422 CURRENCY_NOT_SUPPORTED) and no amount is finer than its minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY, every such field in fieldErrors); it has no standing opening (409 BANK_OPENING_BALANCE_ALREADY_ESTABLISHED; correct a mistake by reversing the entry, dated on or before asOfDate, and running the opening again); the balance at the end of asOfDate holds no line and no committed statement starts on or before it (422 BANK_OPENING_BALANCE_NOT_FIRST; later lines are allowed); a zero balance needs at least one item (422 BANK_OPENING_BALANCE_EMPTY); asOfDate is not after today in the tenant\'s accounting time zone and falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise). Idempotent on requestId: a replay returns the first result with 200, another body with the same requestId is 409 IDEMPOTENCY_CONFLICT. Required inputs: glAccountId (path), asOfDate, statementBalance, currencyCode (ISO 4217, the code of every amount, ADR-0067), outstandingItems (type, reference, itemDate on or before asOfDate, amount more than zero; may be empty), justification (at least 10 characters), requestId. Emits an ACCOUNTING_BANK_OPENING_BALANCE_ESTABLISH event, writes a BANK_OPENING_BALANCE_ESTABLISH audit row naming the caller, and returns 201 with the balances and their currencyCode, the journal entry id and number and each item\'s glLineId; the account\'s first bank statement then starts on asOfDate + 1 with opening balance = statementBalance and a gapAcknowledgement; registering each item\'s glLineId as an outstanding item there leaves an opening difference of 0.00. 
+     * Puts a bank account\'s balance at cutover on the books, with the checks and deposits still in transit, against 3900 Opening Balance Equity. Posts one entry dated asOfDate: one bank line for statementBalance (a debit, a credit when overdrawn), one bank line per outstanding item carrying its reference and itemDate (an OUTSTANDING_CHECK credits the bank, a DEPOSIT_IN_TRANSIT debits it) and one 3900 line for the net, so the book balance is statement + deposits in transit − outstanding checks. Use this tool once per bank account, when a shop\'s books move onto the platform; do not use createJournalEntry, which records no opening, and do not use it for cash not yet deposited at cutover (deposit it on or before asOfDate and list it as a deposit in transit); AR, AP, inventory and loan openings are out of scope. Preconditions: caller holds accounting:je:create and accounting:je:post; the account exists (404 GL_ACCOUNT_NOT_FOUND) and is an active BANK_CASH account in functional currency (422 BANK_OPENING_BALANCE_ACCOUNT_NOT_ELIGIBLE); currencyCode is its currency (422 CURRENCY_NOT_SUPPORTED) and no amount is finer than its minor unit (422 AMOUNT_PRECISION_EXCEEDS_CURRENCY, every such field in fieldErrors); it has no standing opening (409 BANK_OPENING_BALANCE_ALREADY_ESTABLISHED; correct a mistake by reversing the entry, dated on or before asOfDate, and running the opening again); the balance at the end of asOfDate holds no line and no committed statement starts on or before it (422 BANK_OPENING_BALANCE_NOT_FIRST; later lines are allowed); a zero balance needs at least one item (422 BANK_OPENING_BALANCE_EMPTY); asOfDate is not after today in the tenant\'s accounting time zone and falls in an OPEN period, with no override path (422 PERIOD_CLOSED or PERIOD_HARD_LOCKED otherwise). Idempotent on the Idempotency-Key header (a UUID): a replay of the same key and payload returns the original status and body with Idempotency-Replayed: true and posts nothing; another payload or caller is 409 IDEMPOTENCY_CONFLICT. The replayed body is a snapshot of the first outcome, not the opening\'s current state. Required inputs: glAccountId (path), the Idempotency-Key header and, in the body, asOfDate, statementBalance, currencyCode (ISO 4217, the code of every amount, ADR-0067), outstandingItems (type, reference, itemDate on or before asOfDate, amount more than zero; may be empty) and justification (at least 10 characters). Emits an ACCOUNTING_BANK_OPENING_BALANCE_ESTABLISH event, writes a BANK_OPENING_BALANCE_ESTABLISH audit row naming the caller, and returns 201 with the balances and their currencyCode, the journal entry id and number and each item\'s glLineId; the account\'s first bank statement then starts on asOfDate + 1 with opening balance = statementBalance and a gapAcknowledgement; registering each item\'s glLineId as an outstanding item there leaves an opening difference of 0.00. 
      * Establish Bank Opening Balance
      */
-    async establishBankOpeningBalance(requestParameters: EstablishBankOpeningBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankOpeningBalanceResponse> {
+    async establishBankOpeningBalance(requestParameters: EstablishBankOpeningBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.establishBankOpeningBalanceRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -25,12 +25,6 @@ export interface PettyExpenseCategoryDeactivateRequest {
      * @memberof PettyExpenseCategoryDeactivateRequest
      */
     justification: string;
-    /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof PettyExpenseCategoryDeactivateRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -38,7 +32,6 @@ export interface PettyExpenseCategoryDeactivateRequest {
  */
 export function instanceOfPettyExpenseCategoryDeactivateRequest(value: object): boolean {
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -53,7 +46,6 @@ export function PettyExpenseCategoryDeactivateRequestFromJSONTyped(json: any, ig
     return {
         
         'justification': json['justification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -64,7 +56,6 @@ export function PettyExpenseCategoryDeactivateRequestToJSON(value?: PettyExpense
     return {
         
         'justification': value['justification'],
-        'requestId': value['requestId'],
     };
 }
 

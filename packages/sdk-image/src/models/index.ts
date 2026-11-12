@@ -1,8 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './ApiError';
+export * from './AttachImageOwnerRequest';
 export * from './Conflict';
 export * from './FieldError';
+export * from './ImageSummary';
 export * from './PolicyBlocker';
 export * from './StoreImageRequest';
 export * from './StoredImage';
