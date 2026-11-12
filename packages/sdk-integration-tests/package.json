@@ -10,6 +10,7 @@
     "populate:shop-floor:daily": "npm run populate:shop-floor:close; close=$?; npm run populate:shop-floor || exit $?; exit $close",
     "populate:appointments": "ts-node src/runs/appointmentTopUp.ts",
     "populate:alpha-daily": "npm run populate:shop-floor:daily; floor=$?; npm run populate:appointments || exit $?; exit $floor",
+    "populate:alpha-upkeep": "npm run populate:shop-floor:close; close=$?; npm run populate:appointments || exit $?; exit $close",
     "populate:accelerated-year": "ts-node src/runs/acceleratedYear.ts"
   },
   "dependencies": {

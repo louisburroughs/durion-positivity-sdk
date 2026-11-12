@@ -16,12 +16,17 @@
     "populate:shop-floor:daily": "npm run populate:shop-floor:daily -w @durion-sdk/integration-tests",
     "populate:appointments": "npm run populate:appointments -w @durion-sdk/integration-tests",
     "populate:alpha-daily": "npm run populate:alpha-daily -w @durion-sdk/integration-tests",
+    "populate:alpha-upkeep": "npm run populate:alpha-upkeep -w @durion-sdk/integration-tests",
     "lint": "eslint . --ext .ts,.tsx",
     "generate": "bash scripts/generate-openapi.sh",
     "prune": "node scripts/prune-orphans.mjs",
     "test:accelerated": "jest --config packages/sdk-integration-tests/jest.accelerated.config.js --runInBand",
     "test:accelerated:parity": "jest --config packages/sdk-integration-tests/jest.accelerated.config.js --runInBand --testPathIgnorePatterns=/node_modules/ --testPathIgnorePatterns=z-year-volume",
-    "populate:accelerated-year": "npm run populate:accelerated-year -w @durion-sdk/integration-tests"
+    "populate:accelerated-year": "npm run populate:accelerated-year -w @durion-sdk/integration-tests",
+    "qa": "npm run qa -w @durion-sdk/agent-qa --",
+    "qa:tick": "npm run qa -w @durion-sdk/agent-qa -- tick",
+    "qa:daemon": "npm run qa -w @durion-sdk/agent-qa -- daemon",
+    "qa:smoke": "npm run smoke -w @durion-sdk/agent-qa"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.31.1",

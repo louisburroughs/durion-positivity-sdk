@@ -62,3 +62,8 @@ packages/*/dist/
 accelerated-*.log
 accelerated-latest.log
 .accelerated-run.pid
+
+# Agent QA harness state (packages/sdk-agent-qa): which scenarios have run, the
+# month's SDK coverage, call ledgers, transcripts and daily reports. Per-machine
+# run state, never committed.
+.agent-qa/
