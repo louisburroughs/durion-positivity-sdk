@@ -73,12 +73,6 @@ export interface RegisterFloatResponse {
      * @memberof RegisterFloatResponse
      */
     registerId: string;
-    /**
-     * True when this answers a replayed requestId with the first result
-     * @type {boolean}
-     * @memberof RegisterFloatResponse
-     */
-    replayed?: boolean;
 }
 
 /**
@@ -126,7 +120,6 @@ export function RegisterFloatResponseFromJSONTyped(json: any, ignoreDiscriminato
         'locationId': json['locationId'],
         'previousAmount': json['previousAmount'],
         'registerId': json['registerId'],
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
     };
 }
 
@@ -145,7 +138,6 @@ export function RegisterFloatResponseToJSON(value?: RegisterFloatResponse | null
         'locationId': value['locationId'],
         'previousAmount': value['previousAmount'],
         'registerId': value['registerId'],
-        'replayed': value['replayed'],
     };
 }
 

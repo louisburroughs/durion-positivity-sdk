@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { EstimateCheckInResponse } from './EstimateCheckInResponse';
+import {
+    EstimateCheckInResponseFromJSON,
+    EstimateCheckInResponseFromJSONTyped,
+    EstimateCheckInResponseToJSON,
+} from './EstimateCheckInResponse';
 import type { WorkorderCapabilities } from './WorkorderCapabilities';
 import {
     WorkorderCapabilitiesFromJSON,
@@ -62,6 +68,12 @@ export interface WorkorderDetailResponse {
      * @memberof WorkorderDetailResponse
      */
     capabilities: WorkorderCapabilities;
+    /**
+     * 
+     * @type {EstimateCheckInResponse}
+     * @memberof WorkorderDetailResponse
+     */
+    checkIn?: EstimateCheckInResponse;
     /**
      * Creation timestamp
      * @type {Date}
@@ -241,6 +253,7 @@ export function WorkorderDetailResponseFromJSONTyped(json: any, ignoreDiscrimina
         'assignedTechnicianId': json['assignedTechnicianId'] == null ? undefined : json['assignedTechnicianId'],
         'assignedTechnicianName': json['assignedTechnicianName'] == null ? undefined : json['assignedTechnicianName'],
         'capabilities': WorkorderCapabilitiesFromJSON(json['capabilities']),
+        'checkIn': json['checkIn'] == null ? undefined : EstimateCheckInResponseFromJSON(json['checkIn']),
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'],
         'customerId': json['customerId'],
@@ -276,6 +289,7 @@ export function WorkorderDetailResponseToJSON(value?: WorkorderDetailResponse | 
         'assignedTechnicianId': value['assignedTechnicianId'],
         'assignedTechnicianName': value['assignedTechnicianName'],
         'capabilities': WorkorderCapabilitiesToJSON(value['capabilities']),
+        'checkIn': EstimateCheckInResponseToJSON(value['checkIn']),
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'customerId': value['customerId'],

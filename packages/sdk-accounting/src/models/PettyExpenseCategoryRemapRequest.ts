@@ -37,12 +37,6 @@ export interface PettyExpenseCategoryRemapRequest {
      * @memberof PettyExpenseCategoryRemapRequest
      */
     justification: string;
-    /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof PettyExpenseCategoryRemapRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -52,7 +46,6 @@ export function instanceOfPettyExpenseCategoryRemapRequest(value: object): boole
     if (!('effectiveFrom' in value)) return false;
     if (!('glAccountId' in value)) return false;
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -69,7 +62,6 @@ export function PettyExpenseCategoryRemapRequestFromJSONTyped(json: any, ignoreD
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'glAccountId': json['glAccountId'],
         'justification': json['justification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -82,7 +74,6 @@ export function PettyExpenseCategoryRemapRequestToJSON(value?: PettyExpenseCateg
         'effectiveFrom': ((value['effectiveFrom']).toISOString().substring(0,10)),
         'glAccountId': value['glAccountId'],
         'justification': value['justification'],
-        'requestId': value['requestId'],
     };
 }
 

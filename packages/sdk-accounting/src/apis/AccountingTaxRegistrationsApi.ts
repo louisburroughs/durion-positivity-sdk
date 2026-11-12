@@ -39,6 +39,7 @@ import {
 
 export interface ChangeTaxRegistrationOperationRequest {
     registrationId: string;
+    idempotencyKey: string;
     changeTaxRegistrationRequest: ChangeTaxRegistrationRequest;
 }
 
@@ -51,6 +52,7 @@ export interface ListTaxRegistrationsRequest {
 }
 
 export interface RecordTaxRegistrationOperationRequest {
+    idempotencyKey: string;
     recordTaxRegistrationRequest: RecordTaxRegistrationRequest;
 }
 
@@ -60,7 +62,7 @@ export interface RecordTaxRegistrationOperationRequest {
 export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
 
     /**
-     * Changes a tax registration\'s number or dates in pos-tax\'s registry, or ends it by setting effectiveTo; the country and regime never change, and a registration is never deleted. Use this tool to correct or end a registration; do not use it to register another regime, which is recordTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the registration exists (404, relayed); version is the current one (409 OPTIMISTIC_LOCK, relayed). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); back-dating never changes an entry already posted. Emits an ACCOUNTING_TAX_REGISTRATION_UPDATE event and returns 200, also for a replayed requestId; pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing changes. 
+     * Changes a tax registration\'s number or dates in pos-tax\'s registry, or ends it by setting effectiveTo; the country and regime never change, and a registration is never deleted. Use this tool to correct or end a registration; do not use it to register another regime, which is recordTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the registration exists (404, relayed); version is the current one (409 OPTIMISTIC_LOCK, relayed). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version, justification (at least 10 characters) and the Idempotency-Key header; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); back-dating never changes an entry already posted. Emits an ACCOUNTING_TAX_REGISTRATION_UPDATE event and returns 200, also for a replay (with Idempotency-Replayed: true); pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing changes. 
      * Change Tax Registration
      */
     async changeTaxRegistrationRaw(requestParameters: ChangeTaxRegistrationOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRegistrationView>> {
@@ -68,6 +70,13 @@ export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'registrationId',
                 'Required parameter "registrationId" was null or undefined when calling changeTaxRegistration().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling changeTaxRegistration().'
             );
         }
 
@@ -83,6 +92,10 @@ export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -104,7 +117,7 @@ export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Changes a tax registration\'s number or dates in pos-tax\'s registry, or ends it by setting effectiveTo; the country and regime never change, and a registration is never deleted. Use this tool to correct or end a registration; do not use it to register another regime, which is recordTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the registration exists (404, relayed); version is the current one (409 OPTIMISTIC_LOCK, relayed). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); back-dating never changes an entry already posted. Emits an ACCOUNTING_TAX_REGISTRATION_UPDATE event and returns 200, also for a replayed requestId; pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing changes. 
+     * Changes a tax registration\'s number or dates in pos-tax\'s registry, or ends it by setting effectiveTo; the country and regime never change, and a registration is never deleted. Use this tool to correct or end a registration; do not use it to register another regime, which is recordTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the registration exists (404, relayed); version is the current one (409 OPTIMISTIC_LOCK, relayed). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version, justification (at least 10 characters) and the Idempotency-Key header; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); back-dating never changes an entry already posted. Emits an ACCOUNTING_TAX_REGISTRATION_UPDATE event and returns 200, also for a replay (with Idempotency-Replayed: true); pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing changes. 
      * Change Tax Registration
      */
     async changeTaxRegistration(requestParameters: ChangeTaxRegistrationOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegistrationView> {
@@ -193,10 +206,17 @@ export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records that the company is registered for one country\'s indirect-tax regime from a date, in pos-tax\'s registry, through this front door. Use this tool when the company registers for a regime; do not use it to end or correct an existing registration, which is changeTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the country has a tax profile that declares the regime (422 relayed). Required inputs: countryCode, regime, registrationNumber, effectiveFrom, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape: otherwise 400 VALIDATION_ERROR with fieldErrors[registrationNumber], nothing is stored, and the value is never echoed or logged. Emits an ACCOUNTING_TAX_REGISTRATION_CREATE event and returns 201, or 200 with the first result for a replayed requestId; pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing is stored. 
+     * Records that the company is registered for one country\'s indirect-tax regime from a date, in pos-tax\'s registry, through this front door. Use this tool when the company registers for a regime; do not use it to end or correct an existing registration, which is changeTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the country has a tax profile that declares the regime (422 relayed). Required inputs: countryCode, regime, registrationNumber, effectiveFrom, justification (at least 10 characters) and the Idempotency-Key header; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape: otherwise 400 VALIDATION_ERROR with fieldErrors[registrationNumber], nothing is stored, and the value is never echoed or logged. Emits an ACCOUNTING_TAX_REGISTRATION_CREATE event and returns 201, or the original status with the first result and Idempotency-Replayed: true for a replayed Idempotency-Key; pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing is stored. 
      * Record Tax Registration
      */
     async recordTaxRegistrationRaw(requestParameters: RecordTaxRegistrationOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRegistrationView>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling recordTaxRegistration().'
+            );
+        }
+
         if (requestParameters['recordTaxRegistrationRequest'] == null) {
             throw new runtime.RequiredError(
                 'recordTaxRegistrationRequest',
@@ -209,6 +229,10 @@ export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -230,7 +254,7 @@ export class AccountingTaxRegistrationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records that the company is registered for one country\'s indirect-tax regime from a date, in pos-tax\'s registry, through this front door. Use this tool when the company registers for a regime; do not use it to end or correct an existing registration, which is changeTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the country has a tax profile that declares the regime (422 relayed). Required inputs: countryCode, regime, registrationNumber, effectiveFrom, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape: otherwise 400 VALIDATION_ERROR with fieldErrors[registrationNumber], nothing is stored, and the value is never echoed or logged. Emits an ACCOUNTING_TAX_REGISTRATION_CREATE event and returns 201, or 200 with the first result for a replayed requestId; pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing is stored. 
+     * Records that the company is registered for one country\'s indirect-tax regime from a date, in pos-tax\'s registry, through this front door. Use this tool when the company registers for a regime; do not use it to end or correct an existing registration, which is changeTaxRegistration instead. Preconditions: caller holds accounting:tax_registration:manage and is a person (403 otherwise); the country has a tax profile that declares the regime (422 relayed). Required inputs: countryCode, regime, registrationNumber, effectiveFrom, justification (at least 10 characters) and the Idempotency-Key header; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape: otherwise 400 VALIDATION_ERROR with fieldErrors[registrationNumber], nothing is stored, and the value is never echoed or logged. Emits an ACCOUNTING_TAX_REGISTRATION_CREATE event and returns 201, or the original status with the first result and Idempotency-Replayed: true for a replayed Idempotency-Key; pos-tax\'s 409 TAX_REGISTRATION_OVERLAP and IDEMPOTENCY_CONFLICT are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached, and nothing is stored. 
      * Record Tax Registration
      */
     async recordTaxRegistration(requestParameters: RecordTaxRegistrationOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegistrationView> {

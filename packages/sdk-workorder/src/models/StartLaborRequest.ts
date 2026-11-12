@@ -26,6 +26,12 @@ export interface StartLaborRequest {
      */
     notes?: string;
     /**
+     * Business time the session started, for work replayed from the technician app's offline queue (#3291). ISO-8601 with an offset; omitted means now. Must be no more than 72 hours old and no more than 2 minutes in the future.
+     * @type {Date}
+     * @memberof StartLaborRequest
+     */
+    occurredAt?: Date;
+    /**
      * ID of the technician performing the work
      * @type {string}
      * @memberof StartLaborRequest
@@ -52,6 +58,7 @@ export function StartLaborRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
         'technicianId': json['technicianId'],
     };
 }
@@ -63,6 +70,7 @@ export function StartLaborRequestToJSON(value?: StartLaborRequest | null): any {
     return {
         
         'notes': value['notes'],
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
         'technicianId': value['technicianId'],
     };
 }

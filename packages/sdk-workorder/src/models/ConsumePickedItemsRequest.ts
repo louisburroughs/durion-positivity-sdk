@@ -32,6 +32,12 @@ export interface ConsumePickedItemsRequest {
      * @memberof ConsumePickedItemsRequest
      */
     items: Array<ConsumeItem>;
+    /**
+     * Business time the parts were used, for work replayed from the technician app's offline queue (#3291). ISO-8601 with an offset; omitted means now. Must be no more than 72 hours old and no more than 2 minutes in the future.
+     * @type {Date}
+     * @memberof ConsumePickedItemsRequest
+     */
+    occurredAt?: Date;
 }
 
 /**
@@ -53,6 +59,7 @@ export function ConsumePickedItemsRequestFromJSONTyped(json: any, ignoreDiscrimi
     return {
         
         'items': ((json['items'] as Array<any>).map(ConsumeItemFromJSON)),
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
     };
 }
 
@@ -63,6 +70,7 @@ export function ConsumePickedItemsRequestToJSON(value?: ConsumePickedItemsReques
     return {
         
         'items': ((value['items'] as Array<any>).map(ConsumeItemToJSON)),
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
     };
 }
 

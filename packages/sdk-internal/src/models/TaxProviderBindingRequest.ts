@@ -49,12 +49,6 @@ export interface TaxProviderBindingRequest {
      * @memberof TaxProviderBindingRequest
      */
     providerProfile?: string;
-    /**
-     * Request id; a replay with the same value returns the first result
-     * @type {string}
-     * @memberof TaxProviderBindingRequest
-     */
-    requestId?: string;
 }
 
 /**
@@ -79,7 +73,6 @@ export function TaxProviderBindingRequestFromJSONTyped(json: any, ignoreDiscrimi
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'providerId': json['providerId'] == null ? undefined : json['providerId'],
         'providerProfile': json['providerProfile'] == null ? undefined : json['providerProfile'],
-        'requestId': json['requestId'] == null ? undefined : json['requestId'],
     };
 }
 
@@ -94,7 +87,6 @@ export function TaxProviderBindingRequestToJSON(value?: TaxProviderBindingReques
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'providerId': value['providerId'],
         'providerProfile': value['providerProfile'],
-        'requestId': value['requestId'],
     };
 }
 

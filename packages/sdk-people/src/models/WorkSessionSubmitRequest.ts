@@ -14,38 +14,38 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to submit a completed work session for review
+ * Submit an ended work session. Optional, and every field is ignored: the server computes the minutes and the submission time
  * @export
  * @interface WorkSessionSubmitRequest
  */
 export interface WorkSessionSubmitRequest {
     /**
-     * Total billable minutes for the session
+     * Ignored. The server computes billable minutes from the session's start, stop and breaks.
      * @type {number}
      * @memberof WorkSessionSubmitRequest
+     * @deprecated
      */
-    billableMinutes: number;
+    billableMinutes?: number;
     /**
-     * Total break minutes for the session
+     * Ignored. The server computes break minutes from the session's breaks.
      * @type {number}
      * @memberof WorkSessionSubmitRequest
+     * @deprecated
      */
-    breakMinutes: number;
+    breakMinutes?: number;
     /**
-     * Timestamp the session was submitted
+     * Ignored. The server stamps the submission with its own clock.
      * @type {Date}
      * @memberof WorkSessionSubmitRequest
+     * @deprecated
      */
-    submittedAt: Date;
+    submittedAt?: Date;
 }
 
 /**
  * Check if a given object implements the WorkSessionSubmitRequest interface.
  */
 export function instanceOfWorkSessionSubmitRequest(value: object): boolean {
-    if (!('billableMinutes' in value)) return false;
-    if (!('breakMinutes' in value)) return false;
-    if (!('submittedAt' in value)) return false;
     return true;
 }
 
@@ -59,9 +59,9 @@ export function WorkSessionSubmitRequestFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'billableMinutes': json['billableMinutes'],
-        'breakMinutes': json['breakMinutes'],
-        'submittedAt': (new Date(json['submittedAt'])),
+        'billableMinutes': json['billableMinutes'] == null ? undefined : json['billableMinutes'],
+        'breakMinutes': json['breakMinutes'] == null ? undefined : json['breakMinutes'],
+        'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
     };
 }
 
@@ -73,7 +73,7 @@ export function WorkSessionSubmitRequestToJSON(value?: WorkSessionSubmitRequest 
         
         'billableMinutes': value['billableMinutes'],
         'breakMinutes': value['breakMinutes'],
-        'submittedAt': ((value['submittedAt']).toISOString()),
+        'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
     };
 }
 

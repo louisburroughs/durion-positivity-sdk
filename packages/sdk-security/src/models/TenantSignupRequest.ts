@@ -44,12 +44,6 @@ export interface TenantSignupRequest {
      */
     homeCountry?: string;
     /**
-     * Optional idempotency key: the same key with the same request replays the stored response instead of creating a second account and tenant; a different request for the same key is 409 IDEMPOTENCY_KEY_REUSED
-     * @type {string}
-     * @memberof TenantSignupRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Family name of the first administrator
      * @type {string}
      * @memberof TenantSignupRequest
@@ -110,7 +104,6 @@ export function TenantSignupRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'firstName': json['firstName'],
         'functionalCurrency': json['functionalCurrency'],
         'homeCountry': json['homeCountry'] == null ? undefined : json['homeCountry'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'lastName': json['lastName'],
         'locale': json['locale'],
         'organizationName': json['organizationName'],
@@ -129,7 +122,6 @@ export function TenantSignupRequestToJSON(value?: TenantSignupRequest | null): a
         'firstName': value['firstName'],
         'functionalCurrency': value['functionalCurrency'],
         'homeCountry': value['homeCountry'],
-        'idempotencyKey': value['idempotencyKey'],
         'lastName': value['lastName'],
         'locale': value['locale'],
         'organizationName': value['organizationName'],

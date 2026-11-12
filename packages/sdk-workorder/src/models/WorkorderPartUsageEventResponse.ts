@@ -62,6 +62,18 @@ export interface WorkorderPartUsageEventResponse {
      */
     quantity: number;
     /**
+     * Server receipt instant, set only for an OFFLINE_REPLAY event
+     * @type {Date}
+     * @memberof WorkorderPartUsageEventResponse
+     */
+    receivedAt?: Date;
+    /**
+     * How the event arrived: LIVE when the server stamped it on receipt, OFFLINE_REPLAY when the technician app replayed work done offline (#3291).
+     * @type {string}
+     * @memberof WorkorderPartUsageEventResponse
+     */
+    source?: WorkorderPartUsageEventResponseSourceEnum;
+    /**
      * Workorder identifier
      * @type {string}
      * @memberof WorkorderPartUsageEventResponse
@@ -74,6 +86,16 @@ export interface WorkorderPartUsageEventResponse {
      */
     workorderPartId: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum WorkorderPartUsageEventResponseSourceEnum {
+    Live = 'LIVE',
+    OfflineReplay = 'OFFLINE_REPLAY'
+}
+
 
 /**
  * Check if a given object implements the WorkorderPartUsageEventResponse interface.
@@ -106,6 +128,8 @@ export function WorkorderPartUsageEventResponseFromJSONTyped(json: any, ignoreDi
         'performedAt': (new Date(json['performedAt'])),
         'performedBy': json['performedBy'],
         'quantity': json['quantity'],
+        'receivedAt': json['receivedAt'] == null ? undefined : (new Date(json['receivedAt'])),
+        'source': json['source'] == null ? undefined : json['source'],
         'workorderId': json['workorderId'],
         'workorderPartId': json['workorderPartId'],
     };
@@ -124,6 +148,8 @@ export function WorkorderPartUsageEventResponseToJSON(value?: WorkorderPartUsage
         'performedAt': ((value['performedAt']).toISOString()),
         'performedBy': value['performedBy'],
         'quantity': value['quantity'],
+        'receivedAt': value['receivedAt'] == null ? undefined : ((value['receivedAt']).toISOString()),
+        'source': value['source'],
         'workorderId': value['workorderId'],
         'workorderPartId': value['workorderPartId'],
     };

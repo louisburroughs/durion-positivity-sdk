@@ -26,6 +26,12 @@ export interface WorkexecTimerStartRequest {
      */
     laborCode?: string;
     /**
+     * Business time the timer started, for work replayed from the technician app's offline queue (#3291). ISO-8601 with an offset; omitted means now. Must be no more than 72 hours old and no more than 2 minutes in the future; the timer-active check is evaluated at this time.
+     * @type {Date}
+     * @memberof WorkexecTimerStartRequest
+     */
+    occurredAt?: Date;
+    /**
      * Required when starting a timer on behalf of a technician other than yourself or the current assignee.
      * @type {string}
      * @memberof WorkexecTimerStartRequest
@@ -70,6 +76,7 @@ export function WorkexecTimerStartRequestFromJSONTyped(json: any, ignoreDiscrimi
     return {
         
         'laborCode': json['laborCode'] == null ? undefined : json['laborCode'],
+        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
         'reason': json['reason'] == null ? undefined : json['reason'],
         'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
         'workorderId': json['workorderId'],
@@ -84,6 +91,7 @@ export function WorkexecTimerStartRequestToJSON(value?: WorkexecTimerStartReques
     return {
         
         'laborCode': value['laborCode'],
+        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
         'reason': value['reason'],
         'technicianId': value['technicianId'],
         'workorderId': value['workorderId'],

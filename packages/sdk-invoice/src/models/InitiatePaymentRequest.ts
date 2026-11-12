@@ -26,12 +26,6 @@ export interface InitiatePaymentRequest {
      */
     amount: number;
     /**
-     * Client-provided idempotency key for safe retry
-     * @type {string}
-     * @memberof InitiatePaymentRequest
-     */
-    idempotencyKey: string;
-    /**
      * Payment flow: SALE_CAPTURE (default one-step) or AUTH_ONLY (two-step)
      * @type {string}
      * @memberof InitiatePaymentRequest
@@ -60,7 +54,6 @@ export enum InitiatePaymentRequestPaymentFlowEnum {
  */
 export function instanceOfInitiatePaymentRequest(value: object): boolean {
     if (!('amount' in value)) return false;
-    if (!('idempotencyKey' in value)) return false;
     if (!('paymentFlow' in value)) return false;
     if (!('paymentToken' in value)) return false;
     return true;
@@ -77,7 +70,6 @@ export function InitiatePaymentRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'amount': json['amount'],
-        'idempotencyKey': json['idempotencyKey'],
         'paymentFlow': json['paymentFlow'],
         'paymentToken': json['paymentToken'],
     };
@@ -90,7 +82,6 @@ export function InitiatePaymentRequestToJSON(value?: InitiatePaymentRequest | nu
     return {
         
         'amount': value['amount'],
-        'idempotencyKey': value['idempotencyKey'],
         'paymentFlow': value['paymentFlow'],
         'paymentToken': value['paymentToken'],
     };

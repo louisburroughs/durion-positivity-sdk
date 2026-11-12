@@ -38,12 +38,6 @@ export interface PettyExpenseCategoryUpdateRequest {
      */
     label: string;
     /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof PettyExpenseCategoryUpdateRequest
-     */
-    requestId: string;
-    /**
      * The category version the caller read; another version is 409 VERSION_CONFLICT
      * @type {number}
      * @memberof PettyExpenseCategoryUpdateRequest
@@ -57,7 +51,6 @@ export interface PettyExpenseCategoryUpdateRequest {
 export function instanceOfPettyExpenseCategoryUpdateRequest(value: object): boolean {
     if (!('justification' in value)) return false;
     if (!('label' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -74,7 +67,6 @@ export function PettyExpenseCategoryUpdateRequestFromJSONTyped(json: any, ignore
         'examples': json['examples'] == null ? undefined : json['examples'],
         'justification': json['justification'],
         'label': json['label'],
-        'requestId': json['requestId'],
         'version': json['version'] == null ? undefined : json['version'],
     };
 }
@@ -88,7 +80,6 @@ export function PettyExpenseCategoryUpdateRequestToJSON(value?: PettyExpenseCate
         'examples': value['examples'],
         'justification': value['justification'],
         'label': value['label'],
-        'requestId': value['requestId'],
         'version': value['version'],
     };
 }

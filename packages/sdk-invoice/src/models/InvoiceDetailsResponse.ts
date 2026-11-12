@@ -31,6 +31,12 @@ import {
     InvoiceTaxBreakdownRowFromJSONTyped,
     InvoiceTaxBreakdownRowToJSON,
 } from './InvoiceTaxBreakdownRow';
+import type { PolicyBlocker } from './PolicyBlocker';
+import {
+    PolicyBlockerFromJSON,
+    PolicyBlockerFromJSONTyped,
+    PolicyBlockerToJSON,
+} from './PolicyBlocker';
 import type { SellerTaxRegistration } from './SellerTaxRegistration';
 import {
     SellerTaxRegistrationFromJSON,
@@ -116,6 +122,12 @@ export interface InvoiceDetailsResponse {
      * @memberof InvoiceDetailsResponse
      */
     invoiceNumber?: string;
+    /**
+     * Why finalization would be refused right now, as of read time (CAP:550 #3279). Present only on a DRAFT invoice, and then [] when nothing blocks; absent on FINALIZED, POSTED, ERROR and CANCELLED. Each item is a PolicyBlocker { code, subject? } rendered from the code (ADR-0065): no message text and never a registration number. Codes: TAX_REGISTRATION_MISSING (subject = the regime code), INVOICE_PARTY_REQUIRED (no subject). Non-empty means finalize will refuse with these codes; [] means no known blocker, and finalize may still refuse (tax not calculated, permission or manager approval, or a regime surfacing after the re-price), so retry after re-reading this detail. There is no issuancePolicy and no issuableNow: readiness is derived from this list
+     * @type {Array<PolicyBlocker>}
+     * @memberof InvoiceDetailsResponse
+     */
+    issuanceBlockers?: Array<PolicyBlocker>;
     /**
      * Line items belonging to the invoice
      * @type {Array<InvoiceItemResponse>}
@@ -283,6 +295,7 @@ export function InvoiceDetailsResponseFromJSONTyped(json: any, ignoreDiscriminat
         'finalizedBy': json['finalizedBy'] == null ? undefined : json['finalizedBy'],
         'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'invoiceNumber': json['invoiceNumber'] == null ? undefined : json['invoiceNumber'],
+        'issuanceBlockers': json['issuanceBlockers'] == null ? undefined : ((json['issuanceBlockers'] as Array<any>).map(PolicyBlockerFromJSON)),
         'items': ((json['items'] as Array<any>).map(InvoiceItemResponseFromJSON)),
         'partyId': json['partyId'] == null ? undefined : json['partyId'],
         'paymentStatus': json['paymentStatus'] == null ? undefined : json['paymentStatus'],
@@ -321,6 +334,7 @@ export function InvoiceDetailsResponseToJSON(value?: InvoiceDetailsResponse | nu
         'finalizedBy': value['finalizedBy'],
         'invoiceId': value['invoiceId'],
         'invoiceNumber': value['invoiceNumber'],
+        'issuanceBlockers': value['issuanceBlockers'] == null ? undefined : ((value['issuanceBlockers'] as Array<any>).map(PolicyBlockerToJSON)),
         'items': ((value['items'] as Array<any>).map(InvoiceItemResponseToJSON)),
         'partyId': value['partyId'],
         'paymentStatus': value['paymentStatus'],

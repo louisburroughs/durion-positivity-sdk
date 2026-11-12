@@ -37,12 +37,6 @@ export interface ReconciliationMatchCreateRequest {
      * @memberof ReconciliationMatchCreateRequest
      */
     justification?: string;
-    /**
-     * Caller-generated UUIDv7; a replay with the same members returns the match
-     * @type {string}
-     * @memberof ReconciliationMatchCreateRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -51,7 +45,6 @@ export interface ReconciliationMatchCreateRequest {
 export function instanceOfReconciliationMatchCreateRequest(value: object): boolean {
     if (!('bankTransactionIds' in value)) return false;
     if (!('glLineIds' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -68,7 +61,6 @@ export function ReconciliationMatchCreateRequestFromJSONTyped(json: any, ignoreD
         'bankTransactionIds': json['bankTransactionIds'],
         'glLineIds': json['glLineIds'],
         'justification': json['justification'] == null ? undefined : json['justification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -81,7 +73,6 @@ export function ReconciliationMatchCreateRequestToJSON(value?: ReconciliationMat
         'bankTransactionIds': value['bankTransactionIds'],
         'glLineIds': value['glLineIds'],
         'justification': value['justification'],
-        'requestId': value['requestId'],
     };
 }
 

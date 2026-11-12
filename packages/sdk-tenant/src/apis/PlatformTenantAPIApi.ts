@@ -62,6 +62,7 @@ export interface ReactivateTenantRequest {
 
 export interface SetTenantTaxProviderBindingRequest {
     tenantId: string;
+    idempotencyKey: string;
     taxProviderBindingRequest: TaxProviderBindingRequest;
 }
 
@@ -331,7 +332,7 @@ export class PlatformTenantAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets the plug-in that prices one tenant\'s documents in one country from a date in pos-tax\'s registry, through this module\'s operator front door (ADR-0071 step 1, #2629); the binding that begins on the same day is replaced, and the change is recorded in pos-tax\'s binding history under the operator\'s id. Use this tool as the platform operator to bind a tenant to a plug-in; do not use it to price a document, which reads the binding in pos-tax, and do not expect a tax:* authority, which does not exist. Preconditions: the caller is bound to the platform tenant (403 otherwise) and holds platform:tenant_tax_provider:manage. Required inputs: tenantId (path), countryCode, providerId, effectiveFrom and requestId; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The target tenant comes only from the path and the actor only from the authenticated principal; neither is read from the body. Emits a TENANT_TAX_PROVIDER_BINDING_SET event and returns 200 with the binding pos-tax stored, also for a replayed requestId. pos-tax\'s 400 VALIDATION_ERROR, 409 TAX_PROVIDER_BINDING_OVERLAP or IDEMPOTENCY_CONFLICT and 422 TAX_PROVIDER_NOT_REGISTERED are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached; nothing is stored here. 
+     * Sets the plug-in that prices one tenant\'s documents in one country from a date in pos-tax\'s registry, through this module\'s operator front door (ADR-0071 step 1, #2629); the binding that begins on the same day is replaced, and the change is recorded in pos-tax\'s binding history under the operator\'s id. Use this tool as the platform operator to bind a tenant to a plug-in; do not use it to price a document, which reads the binding in pos-tax, and do not expect a tax:* authority, which does not exist. Preconditions: the caller is bound to the platform tenant (403 otherwise) and holds platform:tenant_tax_provider:manage. Required inputs: tenantId (path), the Idempotency-Key header (a UUID, ADR-0075 §3), countryCode, providerId and effectiveFrom; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The target tenant comes only from the path and the actor only from the authenticated principal; neither is read from the body, and the body carries no request id. Emits a TENANT_TAX_PROVIDER_BINDING_SET event and returns 200 with the binding pos-tax stored, for a first write and for a replay of the same Idempotency-Key, which also carries Idempotency-Replayed: true. The header is forwarded unchanged to pos-tax, which owns the key\'s record. pos-tax\'s 400 VALIDATION_ERROR, 409 TAX_PROVIDER_BINDING_OVERLAP or IDEMPOTENCY_CONFLICT and 422 TAX_PROVIDER_NOT_REGISTERED are relayed unchanged, with its Retry-After when it sends one. Returns 400 VALIDATION_ERROR with fieldErrors[Idempotency-Key] when the header is missing or not a UUID, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached; nothing is stored here. 
      * Set a Tenant\'s Tax-Provider Binding
      */
     async setTenantTaxProviderBindingRaw(requestParameters: SetTenantTaxProviderBindingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxProviderBindingResponse>> {
@@ -339,6 +340,13 @@ export class PlatformTenantAPIApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'tenantId',
                 'Required parameter "tenantId" was null or undefined when calling setTenantTaxProviderBinding().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling setTenantTaxProviderBinding().'
             );
         }
 
@@ -354,6 +362,10 @@ export class PlatformTenantAPIApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -375,7 +387,7 @@ export class PlatformTenantAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets the plug-in that prices one tenant\'s documents in one country from a date in pos-tax\'s registry, through this module\'s operator front door (ADR-0071 step 1, #2629); the binding that begins on the same day is replaced, and the change is recorded in pos-tax\'s binding history under the operator\'s id. Use this tool as the platform operator to bind a tenant to a plug-in; do not use it to price a document, which reads the binding in pos-tax, and do not expect a tax:* authority, which does not exist. Preconditions: the caller is bound to the platform tenant (403 otherwise) and holds platform:tenant_tax_provider:manage. Required inputs: tenantId (path), countryCode, providerId, effectiveFrom and requestId; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The target tenant comes only from the path and the actor only from the authenticated principal; neither is read from the body. Emits a TENANT_TAX_PROVIDER_BINDING_SET event and returns 200 with the binding pos-tax stored, also for a replayed requestId. pos-tax\'s 400 VALIDATION_ERROR, 409 TAX_PROVIDER_BINDING_OVERLAP or IDEMPOTENCY_CONFLICT and 422 TAX_PROVIDER_NOT_REGISTERED are relayed unchanged. Returns 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached; nothing is stored here. 
+     * Sets the plug-in that prices one tenant\'s documents in one country from a date in pos-tax\'s registry, through this module\'s operator front door (ADR-0071 step 1, #2629); the binding that begins on the same day is replaced, and the change is recorded in pos-tax\'s binding history under the operator\'s id. Use this tool as the platform operator to bind a tenant to a plug-in; do not use it to price a document, which reads the binding in pos-tax, and do not expect a tax:* authority, which does not exist. Preconditions: the caller is bound to the platform tenant (403 otherwise) and holds platform:tenant_tax_provider:manage. Required inputs: tenantId (path), the Idempotency-Key header (a UUID, ADR-0075 §3), countryCode, providerId and effectiveFrom; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The target tenant comes only from the path and the actor only from the authenticated principal; neither is read from the body, and the body carries no request id. Emits a TENANT_TAX_PROVIDER_BINDING_SET event and returns 200 with the binding pos-tax stored, for a first write and for a replay of the same Idempotency-Key, which also carries Idempotency-Replayed: true. The header is forwarded unchanged to pos-tax, which owns the key\'s record. pos-tax\'s 400 VALIDATION_ERROR, 409 TAX_PROVIDER_BINDING_OVERLAP or IDEMPOTENCY_CONFLICT and 422 TAX_PROVIDER_NOT_REGISTERED are relayed unchanged, with its Retry-After when it sends one. Returns 400 VALIDATION_ERROR with fieldErrors[Idempotency-Key] when the header is missing or not a UUID, and 503 SERVICE_UNAVAILABLE with Retry-After when pos-tax cannot be reached; nothing is stored here. 
      * Set a Tenant\'s Tax-Provider Binding
      */
     async setTenantTaxProviderBinding(requestParameters: SetTenantTaxProviderBindingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxProviderBindingResponse> {

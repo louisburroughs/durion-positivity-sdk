@@ -32,12 +32,6 @@ export interface AgedThresholdsRequest {
      */
     justification: string;
     /**
-     * Client-generated UUID that makes the PUT idempotent: a replay with the same body writes nothing, a reuse with another body is refused 409
-     * @type {string}
-     * @memberof AgedThresholdsRequest
-     */
-    requestId: string;
-    /**
      * Calendar days an undeposited register session waits before it is aged, from its business date; 1 to 30, default 3
      * @type {number}
      * @memberof AgedThresholdsRequest
@@ -57,7 +51,6 @@ export interface AgedThresholdsRequest {
 export function instanceOfAgedThresholdsRequest(value: object): boolean {
     if (!('deliveriesNotBilledDays' in value)) return false;
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('undepositedCashAgedDays' in value)) return false;
     if (!('vendorCodUnappliedAgedDays' in value)) return false;
     return true;
@@ -75,7 +68,6 @@ export function AgedThresholdsRequestFromJSONTyped(json: any, ignoreDiscriminato
         
         'deliveriesNotBilledDays': json['deliveriesNotBilledDays'],
         'justification': json['justification'],
-        'requestId': json['requestId'],
         'undepositedCashAgedDays': json['undepositedCashAgedDays'],
         'vendorCodUnappliedAgedDays': json['vendorCodUnappliedAgedDays'],
     };
@@ -89,7 +81,6 @@ export function AgedThresholdsRequestToJSON(value?: AgedThresholdsRequest | null
         
         'deliveriesNotBilledDays': value['deliveriesNotBilledDays'],
         'justification': value['justification'],
-        'requestId': value['requestId'],
         'undepositedCashAgedDays': value['undepositedCashAgedDays'],
         'vendorCodUnappliedAgedDays': value['vendorCodUnappliedAgedDays'],
     };

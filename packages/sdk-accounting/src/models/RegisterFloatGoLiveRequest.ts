@@ -49,12 +49,6 @@ export interface RegisterFloatGoLiveRequest {
      * @memberof RegisterFloatGoLiveRequest
      */
     locationId: string;
-    /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof RegisterFloatGoLiveRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -66,7 +60,6 @@ export function instanceOfRegisterFloatGoLiveRequest(value: object): boolean {
     if (!('goLiveDate' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('locationId' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -85,7 +78,6 @@ export function RegisterFloatGoLiveRequestFromJSONTyped(json: any, ignoreDiscrim
         'goLiveDate': (new Date(json['goLiveDate'])),
         'justification': json['justification'],
         'locationId': json['locationId'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -100,7 +92,6 @@ export function RegisterFloatGoLiveRequestToJSON(value?: RegisterFloatGoLiveRequ
         'goLiveDate': ((value['goLiveDate']).toISOString().substring(0,10)),
         'justification': value['justification'],
         'locationId': value['locationId'],
-        'requestId': value['requestId'],
     };
 }
 

@@ -176,12 +176,6 @@ export interface BankReconciliationResponse {
      */
     reconciliationId?: string;
     /**
-     * True when this answers a replayed create command (same requestId and payload)
-     * @type {boolean}
-     * @memberof BankReconciliationResponse
-     */
-    replayed?: boolean;
-    /**
      * Statement closing balance
      * @type {number}
      * @memberof BankReconciliationResponse
@@ -342,7 +336,6 @@ export function BankReconciliationResponseFromJSONTyped(json: any, ignoreDiscrim
         'invalidationReason': json['invalidationReason'] == null ? undefined : json['invalidationReason'],
         'openingDifference': json['openingDifference'] == null ? undefined : json['openingDifference'],
         'reconciliationId': json['reconciliationId'] == null ? undefined : json['reconciliationId'],
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'statementClosingBalance': json['statementClosingBalance'] == null ? undefined : json['statementClosingBalance'],
         'statementEndDate': json['statementEndDate'] == null ? undefined : (new Date(json['statementEndDate'])),
         'statementId': json['statementId'] == null ? undefined : json['statementId'],
@@ -395,7 +388,6 @@ export function BankReconciliationResponseToJSON(value?: BankReconciliationRespo
         'invalidationReason': value['invalidationReason'],
         'openingDifference': value['openingDifference'],
         'reconciliationId': value['reconciliationId'],
-        'replayed': value['replayed'],
         'statementClosingBalance': value['statementClosingBalance'],
         'statementEndDate': value['statementEndDate'] == null ? undefined : ((value['statementEndDate']).toISOString().substring(0,10)),
         'statementId': value['statementId'],

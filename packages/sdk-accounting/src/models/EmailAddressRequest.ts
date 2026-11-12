@@ -31,12 +31,6 @@ export interface EmailAddressRequest {
      * @memberof EmailAddressRequest
      */
     reason?: string;
-    /**
-     * Client-generated UUID that makes the command idempotent: a replay answers the same address and rotates nothing twice
-     * @type {string}
-     * @memberof EmailAddressRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -54,7 +48,6 @@ export enum EmailAddressRequestActionEnum {
  */
 export function instanceOfEmailAddressRequest(value: object): boolean {
     if (!('action' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -70,7 +63,6 @@ export function EmailAddressRequestFromJSONTyped(json: any, ignoreDiscriminator:
         
         'action': json['action'],
         'reason': json['reason'] == null ? undefined : json['reason'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -82,7 +74,6 @@ export function EmailAddressRequestToJSON(value?: EmailAddressRequest | null): a
         
         'action': value['action'],
         'reason': value['reason'],
-        'requestId': value['requestId'],
     };
 }
 

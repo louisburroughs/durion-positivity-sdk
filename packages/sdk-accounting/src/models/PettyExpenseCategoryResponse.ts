@@ -69,12 +69,6 @@ export interface PettyExpenseCategoryResponse {
      */
     laterAccount?: PettyExpenseCategoryAccount;
     /**
-     * True when this answers a replayed requestId
-     * @type {boolean}
-     * @memberof PettyExpenseCategoryResponse
-     */
-    replayed?: boolean;
-    /**
      * ACTIVE or INACTIVE (terminal)
      * @type {string}
      * @memberof PettyExpenseCategoryResponse
@@ -121,7 +115,6 @@ export function PettyExpenseCategoryResponseFromJSONTyped(json: any, ignoreDiscr
         'history': json['history'] == null ? undefined : ((json['history'] as Array<any>).map(PettyExpenseCategoryHistoryItemFromJSON)),
         'label': json['label'] == null ? undefined : json['label'],
         'laterAccount': json['laterAccount'] == null ? undefined : PettyExpenseCategoryAccountFromJSON(json['laterAccount']),
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'status': json['status'] == null ? undefined : json['status'],
         'version': json['version'] == null ? undefined : json['version'],
     };
@@ -139,7 +132,6 @@ export function PettyExpenseCategoryResponseToJSON(value?: PettyExpenseCategoryR
         'history': value['history'] == null ? undefined : ((value['history'] as Array<any>).map(PettyExpenseCategoryHistoryItemToJSON)),
         'label': value['label'],
         'laterAccount': PettyExpenseCategoryAccountToJSON(value['laterAccount']),
-        'replayed': value['replayed'],
         'status': value['status'],
         'version': value['version'],
     };

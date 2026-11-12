@@ -105,12 +105,6 @@ export interface BankImportCreateRequest {
      */
     glAccountId: string;
     /**
-     * Caller-generated UUIDv7; a replay with the same payload returns the original import
-     * @type {string}
-     * @memberof BankImportCreateRequest
-     */
-    requestId: string;
-    /**
      * SIGNED_AMOUNT (default, positive = cash in), SIGNED_AMOUNT_INVERTED or DEBIT_CREDIT_COLUMNS
      * @type {string}
      * @memberof BankImportCreateRequest
@@ -148,7 +142,6 @@ export interface BankImportCreateRequest {
 export function instanceOfBankImportCreateRequest(value: object): boolean {
     if (!('formatCode' in value)) return false;
     if (!('glAccountId' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('statement' in value)) return false;
     return true;
 }
@@ -175,7 +168,6 @@ export function BankImportCreateRequestFromJSONTyped(json: any, ignoreDiscrimina
         'formatCode': json['formatCode'],
         'gapAcknowledgement': json['gapAcknowledgement'] == null ? undefined : json['gapAcknowledgement'],
         'glAccountId': json['glAccountId'],
-        'requestId': json['requestId'],
         'signConvention': json['signConvention'] == null ? undefined : json['signConvention'],
         'splitAt': json['splitAt'] == null ? undefined : ((json['splitAt'] as Array<any>).map(BankImportSplitPointFromJSON)),
         'statement': BankImportStatementHeaderFromJSON(json['statement']),
@@ -202,7 +194,6 @@ export function BankImportCreateRequestToJSON(value?: BankImportCreateRequest | 
         'formatCode': value['formatCode'],
         'gapAcknowledgement': value['gapAcknowledgement'],
         'glAccountId': value['glAccountId'],
-        'requestId': value['requestId'],
         'signConvention': value['signConvention'],
         'splitAt': value['splitAt'] == null ? undefined : ((value['splitAt'] as Array<any>).map(BankImportSplitPointToJSON)),
         'statement': BankImportStatementHeaderToJSON(value['statement']),

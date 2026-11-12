@@ -51,12 +51,6 @@ export interface BankStatementCreateRequest {
      */
     glAccountId: string;
     /**
-     * Caller-generated UUIDv7; a replay with the same payload returns the original statement
-     * @type {string}
-     * @memberof BankStatementCreateRequest
-     */
-    requestId: string;
-    /**
      * Start an IN_PROGRESS reconciliation of the committed statement in the same transaction; it appears in reconciliations (story S4)
      * @type {boolean}
      * @memberof BankStatementCreateRequest
@@ -93,7 +87,6 @@ export interface BankStatementCreateRequest {
  */
 export function instanceOfBankStatementCreateRequest(value: object): boolean {
     if (!('glAccountId' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('statement' in value)) return false;
     if (!('transactions' in value)) return false;
     return true;
@@ -112,7 +105,6 @@ export function BankStatementCreateRequestFromJSONTyped(json: any, ignoreDiscrim
         'currency': json['currency'] == null ? undefined : json['currency'],
         'gapAcknowledgement': json['gapAcknowledgement'] == null ? undefined : json['gapAcknowledgement'],
         'glAccountId': json['glAccountId'],
-        'requestId': json['requestId'],
         'startReconciliation': json['startReconciliation'] == null ? undefined : json['startReconciliation'],
         'statement': BankStatementHeaderRequestFromJSON(json['statement']),
         'supersedesStatementId': json['supersedesStatementId'] == null ? undefined : json['supersedesStatementId'],
@@ -130,7 +122,6 @@ export function BankStatementCreateRequestToJSON(value?: BankStatementCreateRequ
         'currency': value['currency'],
         'gapAcknowledgement': value['gapAcknowledgement'],
         'glAccountId': value['glAccountId'],
-        'requestId': value['requestId'],
         'startReconciliation': value['startReconciliation'],
         'statement': BankStatementHeaderRequestToJSON(value['statement']),
         'supersedesStatementId': value['supersedesStatementId'],

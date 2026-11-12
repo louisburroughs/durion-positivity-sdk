@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface EstimateItemResponse {
     /**
+     * Check-in concern this line answers (#3287), or null when the line is ungrouped
+     * @type {string}
+     * @memberof EstimateItemResponse
+     */
+    concernId?: string;
+    /**
      * Record creation timestamp
      * @type {Date}
      * @memberof EstimateItemResponse
@@ -120,6 +126,7 @@ export function EstimateItemResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'concernId': json['concernId'] == null ? undefined : json['concernId'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'description': json['description'] == null ? undefined : json['description'],
         'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
@@ -141,6 +148,7 @@ export function EstimateItemResponseToJSON(value?: EstimateItemResponse | null):
     }
     return {
         
+        'concernId': value['concernId'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'description': value['description'],
         'estimateId': value['estimateId'],

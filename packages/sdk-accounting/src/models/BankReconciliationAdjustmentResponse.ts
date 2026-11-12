@@ -116,12 +116,6 @@ export interface BankReconciliationAdjustmentResponse {
      */
     reconciliationId?: string;
     /**
-     * True when this answers a replayed command (same requestId and payload)
-     * @type {boolean}
-     * @memberof BankReconciliationAdjustmentResponse
-     */
-    replayed?: boolean;
-    /**
      * 
      * @type {string}
      * @memberof BankReconciliationAdjustmentResponse
@@ -225,7 +219,6 @@ export function BankReconciliationAdjustmentResponseFromJSONTyped(json: any, ign
         'periodOverride': json['periodOverride'] == null ? undefined : json['periodOverride'],
         'postedPeriodCode': json['postedPeriodCode'] == null ? undefined : json['postedPeriodCode'],
         'reconciliationId': json['reconciliationId'] == null ? undefined : json['reconciliationId'],
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'reversalJournalEntryId': json['reversalJournalEntryId'] == null ? undefined : json['reversalJournalEntryId'],
         'reversalReason': json['reversalReason'] == null ? undefined : json['reversalReason'],
         'reversedAt': json['reversedAt'] == null ? undefined : (new Date(json['reversedAt'])),
@@ -259,7 +252,6 @@ export function BankReconciliationAdjustmentResponseToJSON(value?: BankReconcili
         'periodOverride': value['periodOverride'],
         'postedPeriodCode': value['postedPeriodCode'],
         'reconciliationId': value['reconciliationId'],
-        'replayed': value['replayed'],
         'reversalJournalEntryId': value['reversalJournalEntryId'],
         'reversalReason': value['reversalReason'],
         'reversedAt': value['reversedAt'] == null ? undefined : ((value['reversedAt']).toISOString()),

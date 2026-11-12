@@ -32,11 +32,13 @@ import {
 } from '../models/index';
 
 export interface CreateTaxRegistrationRequest {
+    idempotencyKey: string;
     taxRegistrationCreateRequest: TaxRegistrationCreateRequest;
 }
 
 export interface UpdateTaxRegistrationRequest {
     registrationId: string;
+    idempotencyKey: string;
     taxRegistrationUpdateRequest: TaxRegistrationUpdateRequest;
 }
 
@@ -46,10 +48,17 @@ export interface UpdateTaxRegistrationRequest {
 export class TaxRegistrationsApi extends runtime.BaseAPI {
 
     /**
-     * Records a tenant\'s registration for one country\'s indirect-tax regime from a date, and queues tax.registration.changed on the outbox in the same transaction. Use this tool only as the pos-accounting front door; do not use it from a screen or another service, which call POST /v1/accounting/tax-registrations instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise); the country has a tax profile (422 TAX_JURISDICTION_NOT_CONFIGURED) that declares the regime (422 TAX_REGIME_NOT_DECLARED). Required inputs: countryCode, regime, registrationNumber, effectiveFrom, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing is stored when it fails. Emits a TAX_REGISTRATION_CREATE event, writes a history row naming the forwarded actor, and returns 201, or 200 with the first result when the same request is replayed with its requestId. Returns 409 TAX_REGISTRATION_OVERLAP when another registration of the same country and regime is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the requestId was used for another request. 
+     * Records a tenant\'s registration for one country\'s indirect-tax regime from a date, and queues tax.registration.changed on the outbox in the same transaction. Use this tool only as the pos-accounting front door; do not use it from a screen or another service, which call POST /v1/accounting/tax-registrations instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise), and the Idempotency-Key header (UUID; missing or malformed is 400 VALIDATION_ERROR); the country has a tax profile (422 TAX_JURISDICTION_NOT_CONFIGURED) that declares the regime (422 TAX_REGIME_NOT_DECLARED). Required inputs: countryCode, regime, registrationNumber, effectiveFrom and justification (at least 10 characters); effectiveTo is optional and inclusive; the key travels in the Idempotency-Key header, never in the body. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing is stored when it fails. Emits a TAX_REGISTRATION_CREATE event, writes a history row naming the forwarded actor, and returns 201. A replay with the same key and request returns the stored 201 and body with Idempotency-Replayed: true, and writes no second history row or event. Returns 409 TAX_REGISTRATION_OVERLAP when another registration of the same country and regime is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the key was used for another request or by another actor. 
      * Record a tax registration
      */
     async createTaxRegistrationRaw(requestParameters: CreateTaxRegistrationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRegistrationResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling createTaxRegistration().'
+            );
+        }
+
         if (requestParameters['taxRegistrationCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'taxRegistrationCreateRequest',
@@ -62,6 +71,10 @@ export class TaxRegistrationsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["X-Pos-Tax-Front-Door-Secret"] = await this.configuration.apiKey("X-Pos-Tax-Front-Door-Secret"); // accountingFrontDoorSecret authentication
@@ -79,7 +92,7 @@ export class TaxRegistrationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a tenant\'s registration for one country\'s indirect-tax regime from a date, and queues tax.registration.changed on the outbox in the same transaction. Use this tool only as the pos-accounting front door; do not use it from a screen or another service, which call POST /v1/accounting/tax-registrations instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise); the country has a tax profile (422 TAX_JURISDICTION_NOT_CONFIGURED) that declares the regime (422 TAX_REGIME_NOT_DECLARED). Required inputs: countryCode, regime, registrationNumber, effectiveFrom, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing is stored when it fails. Emits a TAX_REGISTRATION_CREATE event, writes a history row naming the forwarded actor, and returns 201, or 200 with the first result when the same request is replayed with its requestId. Returns 409 TAX_REGISTRATION_OVERLAP when another registration of the same country and regime is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the requestId was used for another request. 
+     * Records a tenant\'s registration for one country\'s indirect-tax regime from a date, and queues tax.registration.changed on the outbox in the same transaction. Use this tool only as the pos-accounting front door; do not use it from a screen or another service, which call POST /v1/accounting/tax-registrations instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise), and the Idempotency-Key header (UUID; missing or malformed is 400 VALIDATION_ERROR); the country has a tax profile (422 TAX_JURISDICTION_NOT_CONFIGURED) that declares the regime (422 TAX_REGIME_NOT_DECLARED). Required inputs: countryCode, regime, registrationNumber, effectiveFrom and justification (at least 10 characters); effectiveTo is optional and inclusive; the key travels in the Idempotency-Key header, never in the body. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing is stored when it fails. Emits a TAX_REGISTRATION_CREATE event, writes a history row naming the forwarded actor, and returns 201. A replay with the same key and request returns the stored 201 and body with Idempotency-Replayed: true, and writes no second history row or event. Returns 409 TAX_REGISTRATION_OVERLAP when another registration of the same country and regime is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the key was used for another request or by another actor. 
      * Record a tax registration
      */
     async createTaxRegistration(requestParameters: CreateTaxRegistrationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegistrationResponse> {
@@ -88,7 +101,7 @@ export class TaxRegistrationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Changes a tax registration\'s number or dates, ending it by setting effectiveTo, and queues tax.registration.changed on the outbox in the same transaction; a registration is never deleted. Use this tool only as the pos-accounting front door; do not use it to register another regime, which is createTaxRegistration instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise); the registration exists for the tenant (404); version is the current one (409 OPTIMISTIC_LOCK). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing changes when it fails. Emits a TAX_REGISTRATION_UPDATE event, writes a history row naming the forwarded actor, and returns 200, also with the first result when the same change is replayed with its requestId. Returns 409 TAX_REGISTRATION_OVERLAP when the new dates overlap another registration of the same country and regime, and 409 IDEMPOTENCY_CONFLICT when the requestId was used for another request; back-dating never changes an entry already posted. 
+     * Changes a tax registration\'s number or dates, ending it by setting effectiveTo, and queues tax.registration.changed on the outbox in the same transaction; a registration is never deleted. Use this tool only as the pos-accounting front door; do not use it to register another regime, which is createTaxRegistration instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise), and the Idempotency-Key header (UUID; missing or malformed is 400 VALIDATION_ERROR); the registration exists for the tenant (404); version is the current one (409 OPTIMISTIC_LOCK). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version and justification (at least 10 characters); effectiveTo is optional and inclusive; the key travels in the Idempotency-Key header, never in the body. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing changes when it fails. Emits a TAX_REGISTRATION_UPDATE event, writes a history row naming the forwarded actor, and returns 200. A replay with the same key and request returns the stored 200 and body with Idempotency-Replayed: true, and writes no second history row or event. Returns 409 TAX_REGISTRATION_OVERLAP when the new dates overlap another registration of the same country and regime, and 409 IDEMPOTENCY_CONFLICT when the key was used for another request or by another actor; back-dating never changes an entry already posted. 
      * Change a tax registration
      */
     async updateTaxRegistrationRaw(requestParameters: UpdateTaxRegistrationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRegistrationResponse>> {
@@ -96,6 +109,13 @@ export class TaxRegistrationsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'registrationId',
                 'Required parameter "registrationId" was null or undefined when calling updateTaxRegistration().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling updateTaxRegistration().'
             );
         }
 
@@ -111,6 +131,10 @@ export class TaxRegistrationsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["X-Pos-Tax-Front-Door-Secret"] = await this.configuration.apiKey("X-Pos-Tax-Front-Door-Secret"); // accountingFrontDoorSecret authentication
@@ -128,7 +152,7 @@ export class TaxRegistrationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Changes a tax registration\'s number or dates, ending it by setting effectiveTo, and queues tax.registration.changed on the outbox in the same transaction; a registration is never deleted. Use this tool only as the pos-accounting front door; do not use it to register another regime, which is createTaxRegistration instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise); the registration exists for the tenant (404); version is the current one (409 OPTIMISTIC_LOCK). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version, justification (at least 10 characters) and requestId; effectiveTo is optional and inclusive. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing changes when it fails. Emits a TAX_REGISTRATION_UPDATE event, writes a history row naming the forwarded actor, and returns 200, also with the first result when the same change is replayed with its requestId. Returns 409 TAX_REGISTRATION_OVERLAP when the new dates overlap another registration of the same country and regime, and 409 IDEMPOTENCY_CONFLICT when the requestId was used for another request; back-dating never changes an entry already posted. 
+     * Changes a tax registration\'s number or dates, ending it by setting effectiveTo, and queues tax.registration.changed on the outbox in the same transaction; a registration is never deleted. Use this tool only as the pos-accounting front door; do not use it to register another regime, which is createTaxRegistration instead. Preconditions: the call carries pos-accounting\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise), and the Idempotency-Key header (UUID; missing or malformed is 400 VALIDATION_ERROR); the registration exists for the tenant (404); version is the current one (409 OPTIMISTIC_LOCK). Required inputs: registrationId (path), registrationNumber, effectiveFrom, version and justification (at least 10 characters); effectiveTo is optional and inclusive; the key travels in the Idempotency-Key header, never in the body. The number must match the regime\'s configured shape (400 VALIDATION_ERROR with fieldErrors[registrationNumber]); it is never echoed or logged, and nothing changes when it fails. Emits a TAX_REGISTRATION_UPDATE event, writes a history row naming the forwarded actor, and returns 200. A replay with the same key and request returns the stored 200 and body with Idempotency-Replayed: true, and writes no second history row or event. Returns 409 TAX_REGISTRATION_OVERLAP when the new dates overlap another registration of the same country and regime, and 409 IDEMPOTENCY_CONFLICT when the key was used for another request or by another actor; back-dating never changes an entry already posted. 
      * Change a tax registration
      */
     async updateTaxRegistration(requestParameters: UpdateTaxRegistrationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRegistrationResponse> {

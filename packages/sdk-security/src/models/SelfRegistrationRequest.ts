@@ -32,12 +32,6 @@ export interface SelfRegistrationRequest {
      */
     firstName: string;
     /**
-     * Optional idempotency key used to replay a completed registration attempt without creating duplicate side effects
-     * @type {string}
-     * @memberof SelfRegistrationRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Optional external identity subject for future federation support
      * @type {string}
      * @memberof SelfRegistrationRequest
@@ -92,7 +86,6 @@ export function SelfRegistrationRequestFromJSONTyped(json: any, ignoreDiscrimina
         
         'email': json['email'],
         'firstName': json['firstName'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'idpSubject': json['idpSubject'] == null ? undefined : json['idpSubject'],
         'lastName': json['lastName'],
         'password': json['password'],
@@ -109,7 +102,6 @@ export function SelfRegistrationRequestToJSON(value?: SelfRegistrationRequest | 
         
         'email': value['email'],
         'firstName': value['firstName'],
-        'idempotencyKey': value['idempotencyKey'],
         'idpSubject': value['idpSubject'],
         'lastName': value['lastName'],
         'password': value['password'],

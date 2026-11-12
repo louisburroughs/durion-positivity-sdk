@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface AddEstimateItemRequest {
     /**
+     * Check-in concern this line answers, or omit to leave the line ungrouped. Must be a concern of this estimate's check-in; setting it is gated by workorder:estimate_item:add, never by the check-in permission.
+     * @type {string}
+     * @memberof AddEstimateItemRequest
+     */
+    concernId?: string;
+    /**
      * Human-readable description when no catalog reference is provided
      * @type {string}
      * @memberof AddEstimateItemRequest
@@ -103,6 +109,7 @@ export function AddEstimateItemRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'concernId': json['concernId'] == null ? undefined : json['concernId'],
         'description': json['description'] == null ? undefined : json['description'],
         'itemType': json['itemType'],
         'productId': json['productId'] == null ? undefined : json['productId'],
@@ -121,6 +128,7 @@ export function AddEstimateItemRequestToJSON(value?: AddEstimateItemRequest | nu
     }
     return {
         
+        'concernId': value['concernId'],
         'description': value['description'],
         'itemType': value['itemType'],
         'productId': value['productId'],

@@ -45,12 +45,6 @@ export interface InvoiceCreationRequest {
      */
     estimateId?: string;
     /**
-     * Idempotency key to prevent duplicate invoice creation.
-     * @type {string}
-     * @memberof InvoiceCreationRequest
-     */
-    idempotencyKey?: string;
-    /**
      * Line items to include on the invoice.
      * @type {Array<InvoiceLineItem>}
      * @memberof InvoiceCreationRequest
@@ -90,7 +84,6 @@ export function InvoiceCreationRequestFromJSONTyped(json: any, ignoreDiscriminat
         'approvalId': json['approvalId'] == null ? undefined : json['approvalId'],
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'lineItems': json['lineItems'] == null ? undefined : ((json['lineItems'] as Array<any>).map(InvoiceLineItemFromJSON)),
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
@@ -106,7 +99,6 @@ export function InvoiceCreationRequestToJSON(value?: InvoiceCreationRequest | nu
         'approvalId': value['approvalId'],
         'customerId': value['customerId'],
         'estimateId': value['estimateId'],
-        'idempotencyKey': value['idempotencyKey'],
         'lineItems': value['lineItems'] == null ? undefined : ((value['lineItems'] as Array<any>).map(InvoiceLineItemToJSON)),
         'locationId': value['locationId'],
         'workorderId': value['workorderId'],

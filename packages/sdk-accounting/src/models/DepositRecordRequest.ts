@@ -50,12 +50,6 @@ export interface DepositRecordRequest {
      */
     overrideJustification?: string;
     /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof DepositRecordRequest
-     */
-    requestId: string;
-    /**
      * The undeposited sessions the deposit takes, each whole: all its bank drops and its whole clearing net
      * @type {Set<string>}
      * @memberof DepositRecordRequest
@@ -70,7 +64,6 @@ export function instanceOfDepositRecordRequest(value: object): boolean {
     if (!('bankGlAccountId' in value)) return false;
     if (!('currencyCode' in value)) return false;
     if (!('depositDate' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('sessionIds' in value)) return false;
     return true;
 }
@@ -90,7 +83,6 @@ export function DepositRecordRequestFromJSONTyped(json: any, ignoreDiscriminator
         'depositDate': (new Date(json['depositDate'])),
         'depositSlipReference': json['depositSlipReference'] == null ? undefined : json['depositSlipReference'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
-        'requestId': json['requestId'],
         'sessionIds': json['sessionIds'],
     };
 }
@@ -106,7 +98,6 @@ export function DepositRecordRequestToJSON(value?: DepositRecordRequest | null):
         'depositDate': ((value['depositDate']).toISOString().substring(0,10)),
         'depositSlipReference': value['depositSlipReference'],
         'overrideJustification': value['overrideJustification'],
-        'requestId': value['requestId'],
         'sessionIds': Array.from(value['sessionIds'] as Set<any>),
     };
 }

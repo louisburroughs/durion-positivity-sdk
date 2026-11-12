@@ -27,7 +27,7 @@ import {
 } from './VendorInformationReturnRequest';
 
 /**
- * The vendor's AP settings to change (defaults, AP hold, information-return flag, tax-on-resale acceptance), the justification and the request id. A field left out is unchanged; a default sent as null clears it.
+ * The vendor's AP settings to change (defaults, AP hold, information-return flag, tax-on-resale acceptance) and the justification; the request's key travels in the Idempotency-Key header. A field left out is unchanged; a default sent as null clears it.
  * @export
  * @interface VendorApSettingsRequest
  */
@@ -68,12 +68,6 @@ export interface VendorApSettingsRequest {
      * @memberof VendorApSettingsRequest
      */
     justification: string;
-    /**
-     * A UUID generated once per change: a request id already recorded writes nothing and returns the vendor as it is
-     * @type {string}
-     * @memberof VendorApSettingsRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -91,7 +85,6 @@ export enum VendorApSettingsRequestDefaultDebitClassEnum {
  */
 export function instanceOfVendorApSettingsRequest(value: object): boolean {
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -111,7 +104,6 @@ export function VendorApSettingsRequestFromJSONTyped(json: any, ignoreDiscrimina
         'defaultExpenseMappingKey': json['defaultExpenseMappingKey'] == null ? undefined : json['defaultExpenseMappingKey'],
         'informationReturn': json['informationReturn'] == null ? undefined : VendorInformationReturnRequestFromJSON(json['informationReturn']),
         'justification': json['justification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -127,7 +119,6 @@ export function VendorApSettingsRequestToJSON(value?: VendorApSettingsRequest | 
         'defaultExpenseMappingKey': value['defaultExpenseMappingKey'],
         'informationReturn': VendorInformationReturnRequestToJSON(value['informationReturn']),
         'justification': value['justification'],
-        'requestId': value['requestId'],
     };
 }
 

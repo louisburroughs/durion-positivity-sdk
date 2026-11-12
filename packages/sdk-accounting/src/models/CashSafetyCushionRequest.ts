@@ -37,12 +37,6 @@ export interface CashSafetyCushionRequest {
      * @memberof CashSafetyCushionRequest
      */
     justification: string;
-    /**
-     * Client-generated UUID that makes the PUT idempotent: a replay with the same body writes nothing, a reuse with another body is refused 409
-     * @type {string}
-     * @memberof CashSafetyCushionRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -52,7 +46,6 @@ export function instanceOfCashSafetyCushionRequest(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('currencyCode' in value)) return false;
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -69,7 +62,6 @@ export function CashSafetyCushionRequestFromJSONTyped(json: any, ignoreDiscrimin
         'amount': json['amount'],
         'currencyCode': json['currencyCode'],
         'justification': json['justification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -82,7 +74,6 @@ export function CashSafetyCushionRequestToJSON(value?: CashSafetyCushionRequest 
         'amount': value['amount'],
         'currencyCode': value['currencyCode'],
         'justification': value['justification'],
-        'requestId': value['requestId'],
     };
 }
 

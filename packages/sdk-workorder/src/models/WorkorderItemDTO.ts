@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderItemDTO {
     /**
-     * Emergency notes used when photo evidence is unavailable
+     * Emergency notes, required when photoNotPossible is true
      * @type {string}
      * @memberof WorkorderItemDTO
      */
@@ -38,13 +38,20 @@ export interface WorkorderItemDTO {
      */
     nonInventoryProductEntityId?: string;
     /**
-     * Photo evidence URL for emergency/safety documentation
+     * The technician's note on this item, kept as the line's description. Plain text, at most 500 characters
      * @type {string}
      * @memberof WorkorderItemDTO
      */
+    note?: string;
+    /**
+     * No longer accepted: a request that sends it is refused with 400. Photos are attached to the request as photoImageIds. Older change requests still return the URL they were created with
+     * @type {string}
+     * @memberof WorkorderItemDTO
+     * @deprecated
+     */
     photoEvidenceUrl?: string;
     /**
-     * Flag indicating photo capture was not possible
+     * Flag indicating photo capture was not possible; emergencyNotes must then explain. An emergency/safety item needs either this or at least one photoImageIds entry on the request
      * @type {boolean}
      * @memberof WorkorderItemDTO
      */
@@ -56,7 +63,7 @@ export interface WorkorderItemDTO {
      */
     productEntityId?: string;
     /**
-     * Requested quantity for part line items
+     * Suggested quantity: hours for a service item, units for a part item
      * @type {number}
      * @memberof WorkorderItemDTO
      */
@@ -89,6 +96,7 @@ export function WorkorderItemDTOFromJSONTyped(json: any, ignoreDiscriminator: bo
         'emergencyNotes': json['emergencyNotes'] == null ? undefined : json['emergencyNotes'],
         'isEmergencySafety': json['isEmergencySafety'] == null ? undefined : json['isEmergencySafety'],
         'nonInventoryProductEntityId': json['nonInventoryProductEntityId'] == null ? undefined : json['nonInventoryProductEntityId'],
+        'note': json['note'] == null ? undefined : json['note'],
         'photoEvidenceUrl': json['photoEvidenceUrl'] == null ? undefined : json['photoEvidenceUrl'],
         'photoNotPossible': json['photoNotPossible'] == null ? undefined : json['photoNotPossible'],
         'productEntityId': json['productEntityId'] == null ? undefined : json['productEntityId'],
@@ -106,6 +114,7 @@ export function WorkorderItemDTOToJSON(value?: WorkorderItemDTO | null): any {
         'emergencyNotes': value['emergencyNotes'],
         'isEmergencySafety': value['isEmergencySafety'],
         'nonInventoryProductEntityId': value['nonInventoryProductEntityId'],
+        'note': value['note'],
         'photoEvidenceUrl': value['photoEvidenceUrl'],
         'photoNotPossible': value['photoNotPossible'],
         'productEntityId': value['productEntityId'],

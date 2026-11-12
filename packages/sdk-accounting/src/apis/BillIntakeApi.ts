@@ -51,6 +51,7 @@ import {
 
 export interface ConfirmBillIntakeRequest {
     intakeId: string;
+    idempotencyKey: string;
     billIntakeConfirmRequest: BillIntakeConfirmRequest;
 }
 
@@ -64,7 +65,7 @@ export interface GetBillIntakeRequest {
 }
 
 export interface ImportBillSpreadsheetRequest {
-    requestId: string;
+    idempotencyKey: string;
     file: Blob;
     mapping?: string;
     templateId?: string;
@@ -94,7 +95,7 @@ export interface UpdateBillIntakeRequest {
 }
 
 export interface UploadBillDocumentsRequest {
-    requestId: string;
+    idempotencyKey: string;
     files: Array<Blob>;
 }
 
@@ -104,7 +105,7 @@ export interface UploadBillDocumentsRequest {
 export class BillIntakeApi extends runtime.BaseAPI {
 
     /**
-     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it; a due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version; an optional requestId (UUIDv7) makes a retry answer the same bill. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, or a total that is not above zero); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), VENDOR_NOT_FOUND or VENDOR_INACTIVE; a draft whose documentType is CREDIT_NOTE becomes a credit note, a bill with negative amounts, that waits to be sent for approval. 
+     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it; a due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version and the Idempotency-Key header, a UUID generated once per confirmation: a replay of the same key and version answers the bill it made with Idempotency-Replayed: true, and the same key on another draft, with another version, or by another caller is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event once, on the request that creates the bill, and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, a total that is not above zero, or a missing or non-UUID Idempotency-Key); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE, OPTIMISTIC_LOCK or IDEMPOTENCY_CONFLICT; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), VENDOR_NOT_FOUND or VENDOR_INACTIVE; a draft whose documentType is CREDIT_NOTE becomes a credit note, a bill with negative amounts, that waits to be sent for approval. 
      * Confirm Bill Draft
      */
     async confirmBillIntakeRaw(requestParameters: ConfirmBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -112,6 +113,13 @@ export class BillIntakeApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'intakeId',
                 'Required parameter "intakeId" was null or undefined when calling confirmBillIntake().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling confirmBillIntake().'
             );
         }
 
@@ -127,6 +135,10 @@ export class BillIntakeApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -148,7 +160,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it; a due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version; an optional requestId (UUIDv7) makes a retry answer the same bill. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, or a total that is not above zero); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE or OPTIMISTIC_LOCK; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), VENDOR_NOT_FOUND or VENDOR_INACTIVE; a draft whose documentType is CREDIT_NOTE becomes a credit note, a bill with negative amounts, that waits to be sent for approval. 
+     * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it; a due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version and the Idempotency-Key header, a UUID generated once per confirmation: a replay of the same key and version answers the bill it made with Idempotency-Replayed: true, and the same key on another draft, with another version, or by another caller is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event once, on the request that creates the bill, and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, a total that is not above zero, or a missing or non-UUID Idempotency-Key); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE, OPTIMISTIC_LOCK or IDEMPOTENCY_CONFLICT; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), VENDOR_NOT_FOUND or VENDOR_INACTIVE; a draft whose documentType is CREDIT_NOTE becomes a credit note, a bill with negative amounts, that waits to be sent for approval. 
      * Confirm Bill Draft
      */
     async confirmBillIntake(requestParameters: ConfirmBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
@@ -253,14 +265,14 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Imports one CSV or XLSX file of supplier bills and creates one bill draft per invoice: rows are grouped by supplier, invoice number and invoice date, header fields repeat on each line row, and a row that cannot be read is listed in the draft\'s rowErrors with its field marked CHECK_THIS. A person checks each draft before any bill exists, and nothing posts. Use this tool to bring in many bills at once from a spreadsheet; do not use it for a PDF or a photo of one bill (uploadBillDocuments), for a bank statement (createBankImport) or for a vendor statement. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the file is judged by its content, never by its name or declared type, and a file that is neither text nor a workbook is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one CSV or XLSX, at most 25 MB) and a UUIDv7 requestId; optional: mapping (a JSON object of import column to the file\'s header), templateId (a saved mapping), saveMappingAs (a name to save the mapping under; a name that is taken is 409 MAPPING_TEMPLATE_EXISTS unless replace is true) and replace; an optional document_type column says what a row is: credit memo or credit note (any case) makes a credit note, invoice or blank an invoice, anything else is marked CHECK_THIS; amounts in a row are never negative; required columns: supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms; with none of mapping and templateId the file\'s headers are matched against a saved template, then against the column names themselves; when none fits the draft waits in EXTRACTING with mappingRequired and the file\'s sourceColumns until mapping is sent; a replay of the same requestId with the same file returns the same drafts. Emits an ACCOUNTING_BILL_INTAKE_IMPORT event and one BILL_INTAKE audit row naming the file\'s sha-256. Returns 201 with the draft of the import (the first invoice; the others appear as READY_FOR_REVIEW drafts once the sheet is read); 400 VALIDATION_ERROR for no file, a malformed mapping or an unknown templateId; 403 without the permission (or saveMappingAs without manage); 409 IDEMPOTENCY_CONFLICT when the requestId was used with another file; 409 MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true; 413 PAYLOAD_TOO_LARGE over 25 MB. 
+     * Imports one CSV or XLSX file of supplier bills and creates one bill draft per invoice: rows are grouped by supplier, invoice number and invoice date, header fields repeat on each line row, and a row that cannot be read is listed in the draft\'s rowErrors with its field marked CHECK_THIS. A person checks each draft before any bill exists, and nothing posts. Use this tool to bring in many bills at once from a spreadsheet; do not use it for a PDF or a photo of one bill (uploadBillDocuments), for a bank statement (createBankImport) or for a vendor statement. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the file is judged by its content, never by its name or declared type, and a file that is neither text nor a workbook is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one CSV or XLSX, at most 25 MB) and the Idempotency-Key header, a UUID generated once per import; optional: mapping (a JSON object of import column to the file\'s header), templateId (a saved mapping), saveMappingAs (a name to save the mapping under; a name that is taken is 409 MAPPING_TEMPLATE_EXISTS unless replace is true) and replace; an optional document_type column says what a row is: credit memo or credit note (any case) makes a credit note, invoice or blank an invoice, anything else is marked CHECK_THIS; amounts in a row are never negative; required columns: supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms; with none of mapping and templateId the file\'s headers are matched against a saved template, then against the column names themselves; when none fits the draft waits in EXTRACTING with mappingRequired and the file\'s sourceColumns until mapping is sent; a replay of the same key with the same file and options returns the same drafts with Idempotency-Replayed: true, and another file, mapping or saved name under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_IMPORT event once, on the request that stores the draft, and one BILL_INTAKE audit row naming the file\'s sha-256. Returns 201 with the draft of the import (the first invoice; the others appear as READY_FOR_REVIEW drafts once the sheet is read); 400 VALIDATION_ERROR for no file, a malformed mapping, an unknown templateId, or a missing or non-UUID Idempotency-Key; 403 without the permission (or saveMappingAs without manage); 409 IDEMPOTENCY_CONFLICT when the key was used for another request; 409 MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true; 413 PAYLOAD_TOO_LARGE over 25 MB. 
      * Import Bills From A Spreadsheet
      */
     async importBillSpreadsheetRaw(requestParameters: ImportBillSpreadsheetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeUploadResponse>> {
-        if (requestParameters['requestId'] == null) {
+        if (requestParameters['idempotencyKey'] == null) {
             throw new runtime.RequiredError(
-                'requestId',
-                'Required parameter "requestId" was null or undefined when calling importBillSpreadsheet().'
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling importBillSpreadsheet().'
             );
         }
 
@@ -272,10 +284,6 @@ export class BillIntakeApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters['requestId'] != null) {
-            queryParameters['requestId'] = requestParameters['requestId'];
-        }
 
         if (requestParameters['mapping'] != null) {
             queryParameters['mapping'] = requestParameters['mapping'];
@@ -294,6 +302,10 @@ export class BillIntakeApi extends runtime.BaseAPI {
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -335,7 +347,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Imports one CSV or XLSX file of supplier bills and creates one bill draft per invoice: rows are grouped by supplier, invoice number and invoice date, header fields repeat on each line row, and a row that cannot be read is listed in the draft\'s rowErrors with its field marked CHECK_THIS. A person checks each draft before any bill exists, and nothing posts. Use this tool to bring in many bills at once from a spreadsheet; do not use it for a PDF or a photo of one bill (uploadBillDocuments), for a bank statement (createBankImport) or for a vendor statement. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the file is judged by its content, never by its name or declared type, and a file that is neither text nor a workbook is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one CSV or XLSX, at most 25 MB) and a UUIDv7 requestId; optional: mapping (a JSON object of import column to the file\'s header), templateId (a saved mapping), saveMappingAs (a name to save the mapping under; a name that is taken is 409 MAPPING_TEMPLATE_EXISTS unless replace is true) and replace; an optional document_type column says what a row is: credit memo or credit note (any case) makes a credit note, invoice or blank an invoice, anything else is marked CHECK_THIS; amounts in a row are never negative; required columns: supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms; with none of mapping and templateId the file\'s headers are matched against a saved template, then against the column names themselves; when none fits the draft waits in EXTRACTING with mappingRequired and the file\'s sourceColumns until mapping is sent; a replay of the same requestId with the same file returns the same drafts. Emits an ACCOUNTING_BILL_INTAKE_IMPORT event and one BILL_INTAKE audit row naming the file\'s sha-256. Returns 201 with the draft of the import (the first invoice; the others appear as READY_FOR_REVIEW drafts once the sheet is read); 400 VALIDATION_ERROR for no file, a malformed mapping or an unknown templateId; 403 without the permission (or saveMappingAs without manage); 409 IDEMPOTENCY_CONFLICT when the requestId was used with another file; 409 MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true; 413 PAYLOAD_TOO_LARGE over 25 MB. 
+     * Imports one CSV or XLSX file of supplier bills and creates one bill draft per invoice: rows are grouped by supplier, invoice number and invoice date, header fields repeat on each line row, and a row that cannot be read is listed in the draft\'s rowErrors with its field marked CHECK_THIS. A person checks each draft before any bill exists, and nothing posts. Use this tool to bring in many bills at once from a spreadsheet; do not use it for a PDF or a photo of one bill (uploadBillDocuments), for a bank statement (createBankImport) or for a vendor statement. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the file is judged by its content, never by its name or declared type, and a file that is neither text nor a workbook is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one CSV or XLSX, at most 25 MB) and the Idempotency-Key header, a UUID generated once per import; optional: mapping (a JSON object of import column to the file\'s header), templateId (a saved mapping), saveMappingAs (a name to save the mapping under; a name that is taken is 409 MAPPING_TEMPLATE_EXISTS unless replace is true) and replace; an optional document_type column says what a row is: credit memo or credit note (any case) makes a credit note, invoice or blank an invoice, anything else is marked CHECK_THIS; amounts in a row are never negative; required columns: supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms; with none of mapping and templateId the file\'s headers are matched against a saved template, then against the column names themselves; when none fits the draft waits in EXTRACTING with mappingRequired and the file\'s sourceColumns until mapping is sent; a replay of the same key with the same file and options returns the same drafts with Idempotency-Replayed: true, and another file, mapping or saved name under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_IMPORT event once, on the request that stores the draft, and one BILL_INTAKE audit row naming the file\'s sha-256. Returns 201 with the draft of the import (the first invoice; the others appear as READY_FOR_REVIEW drafts once the sheet is read); 400 VALIDATION_ERROR for no file, a malformed mapping, an unknown templateId, or a missing or non-UUID Idempotency-Key; 403 without the permission (or saveMappingAs without manage); 409 IDEMPOTENCY_CONFLICT when the key was used for another request; 409 MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true; 413 PAYLOAD_TOO_LARGE over 25 MB. 
      * Import Bills From A Spreadsheet
      */
     async importBillSpreadsheet(requestParameters: ImportBillSpreadsheetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeUploadResponse> {
@@ -581,14 +593,14 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Uploads up to 10 documents (PDF, JPEG, PNG, HEIC or TIFF, each at most 25 MB, 100 MB in all) and creates one bill draft per file. Each file is stored apart and waits to be scanned for malware and read; a person checks the draft before any bill exists, and nothing posts. Use this tool to bring in a vendor\'s bill that arrived as a document; do not use it for a spreadsheet of bills (an import), for a bank statement (createBankImport), or for a goods receipt (createVendorBillFromGoodsReceived). Preconditions: the caller holds accounting:bill_intake:create; the file\'s type is judged by its content, never by its name or declared type, and a file of any other type is refused at once with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: files (1 to 10 parts) and a UUIDv7 requestId. Replay: file i of a request is kept under an id derived from the requestId and i, so a replay of the same requestId with the same files, in the same order and number, returns the same drafts and stores nothing new; any other files under that requestId are refused with 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_UPLOAD event and one BILL_INTAKE audit row per file naming its sha-256. Returns 201 with one item per file (QUARANTINED, or FILE_REJECTED with a reason); an outage of the scanner or the reader never rejects a file, it stays QUARANTINED. 400 when no file or more than 10 are sent, 409 IDEMPOTENCY_CONFLICT when the requestId was used with other files, 413 PAYLOAD_TOO_LARGE over the size limits, 403 without the permission. 
+     * Uploads up to 10 documents (PDF, JPEG, PNG, HEIC or TIFF, each at most 25 MB, 100 MB in all) and creates one bill draft per file. Each file is stored apart and waits to be scanned for malware and read; a person checks the draft before any bill exists, and nothing posts. Use this tool to bring in a vendor\'s bill that arrived as a document; do not use it for a spreadsheet of bills (an import), for a bank statement (createBankImport), or for a goods receipt (createVendorBillFromGoodsReceived). Preconditions: the caller holds accounting:bill_intake:create; the file\'s type is judged by its content, never by its name or declared type, and a file of any other type is refused at once with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: files (1 to 10 parts) and the Idempotency-Key header, a UUID generated once per upload. Replay: the same key with the same files, in the same order and number, answers the first request\'s drafts with Idempotency-Replayed: true and stores nothing new; any other files, or another caller, under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_UPLOAD event once, on the request that stores the drafts, and one BILL_INTAKE audit row per file naming its sha-256. Returns 201 with one item per file (QUARANTINED, or FILE_REJECTED with a reason); an outage of the scanner or the reader never rejects a file, it stays QUARANTINED. 400 when no file or more than 10 are sent, or when the Idempotency-Key header is missing or not a UUID, 409 IDEMPOTENCY_CONFLICT when the key was used for another request, 413 PAYLOAD_TOO_LARGE over the size limits, 403 without the permission. 
      * Upload Bill Documents
      */
     async uploadBillDocumentsRaw(requestParameters: UploadBillDocumentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeUploadResponse>> {
-        if (requestParameters['requestId'] == null) {
+        if (requestParameters['idempotencyKey'] == null) {
             throw new runtime.RequiredError(
-                'requestId',
-                'Required parameter "requestId" was null or undefined when calling uploadBillDocuments().'
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling uploadBillDocuments().'
             );
         }
 
@@ -601,11 +613,11 @@ export class BillIntakeApi extends runtime.BaseAPI {
 
         const queryParameters: any = {};
 
-        if (requestParameters['requestId'] != null) {
-            queryParameters['requestId'] = requestParameters['requestId'];
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -649,7 +661,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Uploads up to 10 documents (PDF, JPEG, PNG, HEIC or TIFF, each at most 25 MB, 100 MB in all) and creates one bill draft per file. Each file is stored apart and waits to be scanned for malware and read; a person checks the draft before any bill exists, and nothing posts. Use this tool to bring in a vendor\'s bill that arrived as a document; do not use it for a spreadsheet of bills (an import), for a bank statement (createBankImport), or for a goods receipt (createVendorBillFromGoodsReceived). Preconditions: the caller holds accounting:bill_intake:create; the file\'s type is judged by its content, never by its name or declared type, and a file of any other type is refused at once with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: files (1 to 10 parts) and a UUIDv7 requestId. Replay: file i of a request is kept under an id derived from the requestId and i, so a replay of the same requestId with the same files, in the same order and number, returns the same drafts and stores nothing new; any other files under that requestId are refused with 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_UPLOAD event and one BILL_INTAKE audit row per file naming its sha-256. Returns 201 with one item per file (QUARANTINED, or FILE_REJECTED with a reason); an outage of the scanner or the reader never rejects a file, it stays QUARANTINED. 400 when no file or more than 10 are sent, 409 IDEMPOTENCY_CONFLICT when the requestId was used with other files, 413 PAYLOAD_TOO_LARGE over the size limits, 403 without the permission. 
+     * Uploads up to 10 documents (PDF, JPEG, PNG, HEIC or TIFF, each at most 25 MB, 100 MB in all) and creates one bill draft per file. Each file is stored apart and waits to be scanned for malware and read; a person checks the draft before any bill exists, and nothing posts. Use this tool to bring in a vendor\'s bill that arrived as a document; do not use it for a spreadsheet of bills (an import), for a bank statement (createBankImport), or for a goods receipt (createVendorBillFromGoodsReceived). Preconditions: the caller holds accounting:bill_intake:create; the file\'s type is judged by its content, never by its name or declared type, and a file of any other type is refused at once with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: files (1 to 10 parts) and the Idempotency-Key header, a UUID generated once per upload. Replay: the same key with the same files, in the same order and number, answers the first request\'s drafts with Idempotency-Replayed: true and stores nothing new; any other files, or another caller, under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_UPLOAD event once, on the request that stores the drafts, and one BILL_INTAKE audit row per file naming its sha-256. Returns 201 with one item per file (QUARANTINED, or FILE_REJECTED with a reason); an outage of the scanner or the reader never rejects a file, it stays QUARANTINED. 400 when no file or more than 10 are sent, or when the Idempotency-Key header is missing or not a UUID, 409 IDEMPOTENCY_CONFLICT when the key was used for another request, 413 PAYLOAD_TOO_LARGE over the size limits, 403 without the permission. 
      * Upload Bill Documents
      */
     async uploadBillDocuments(requestParameters: UploadBillDocumentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeUploadResponse> {

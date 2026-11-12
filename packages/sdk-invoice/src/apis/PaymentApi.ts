@@ -50,6 +50,7 @@ export interface GetInvoicePaymentRequest {
 
 export interface InitiatePaymentOperationRequest {
     invoiceId: string;
+    idempotencyKey: string;
     initiatePaymentRequest: InitiatePaymentRequest;
 }
 
@@ -59,6 +60,7 @@ export interface ListInvoicePaymentsRequest {
 
 export interface RecordCashPaymentOperationRequest {
     invoiceId: string;
+    idempotencyKey: string;
     recordCashPaymentRequest: RecordCashPaymentRequest;
 }
 
@@ -178,7 +180,7 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Initiates a card payment against an invoice through the payment gateway, creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive), idempotencyKey and paymentToken (tokenised card reference, never a PAN); a replayed idempotencyKey with an identical payload returns the existing intent instead of charging twice. Emits an INVOICE_PAYMENT_INITIATE event and records the gateway result on the intent. Returns 201 with the intent, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload, 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer (no intent is created and the gateway is not called), and 422 with PAYMENT_DECLINED when the gateway declines. 
+     * Initiates a card payment against an invoice through the payment gateway, creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: the Idempotency-Key header (a UUID), paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive) and paymentToken (tokenised card reference, never a PAN); a replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true instead of charging twice. Emits an INVOICE_PAYMENT_INITIATE event and records the gateway result on the intent. Returns 201 with the intent, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer (no intent is created and the gateway is not called), and 422 with PAYMENT_DECLINED when the gateway declines. 
      * Initiate Card Payment on Invoice
      */
     async initiatePaymentRaw(requestParameters: InitiatePaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InitiatePaymentResponse>> {
@@ -186,6 +188,13 @@ export class PaymentApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'invoiceId',
                 'Required parameter "invoiceId" was null or undefined when calling initiatePayment().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling initiatePayment().'
             );
         }
 
@@ -201,6 +210,10 @@ export class PaymentApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -222,7 +235,7 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Initiates a card payment against an invoice through the payment gateway, creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive), idempotencyKey and paymentToken (tokenised card reference, never a PAN); a replayed idempotencyKey with an identical payload returns the existing intent instead of charging twice. Emits an INVOICE_PAYMENT_INITIATE event and records the gateway result on the intent. Returns 201 with the intent, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload, 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer (no intent is created and the gateway is not called), and 422 with PAYMENT_DECLINED when the gateway declines. 
+     * Initiates a card payment against an invoice through the payment gateway, creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: the Idempotency-Key header (a UUID), paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive) and paymentToken (tokenised card reference, never a PAN); a replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true instead of charging twice. Emits an INVOICE_PAYMENT_INITIATE event and records the gateway result on the intent. Returns 201 with the intent, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer (no intent is created and the gateway is not called), and 422 with PAYMENT_DECLINED when the gateway declines. 
      * Initiate Card Payment on Invoice
      */
     async initiatePayment(requestParameters: InitiatePaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {
@@ -274,7 +287,7 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a cash tender taken at the register against an invoice as a CAPTURED payment intent without calling the payment gateway, keeping the invoice amount and the cash that changed hands apart (settledAmount, cashRoundingAmount, cashIncrement). Use this tool when the register has already rounded the cash to the currency\'s smallest coin; do not use initiatePayment, which takes card tender through the gateway, and do not round here, because pos-order owns the cash increment and the HALF_UP rounding at the register. Preconditions: the invoice must exist and must name a customer (partyId); currencyCode must be the functional currency pos-invoice records in; the caller needs the invoice:payment:process authority scoped to the invoice\'s location (ADR-0061) and invoice:payment:limit_override when the amount exceeds 500.00. Required inputs: idempotencyKey, amount (the invoice amount applied), settledAmount (the cash taken), cashRoundingAmount (settledAmount minus amount, 0 when no increment applies), currencyCode and, when the currency rounds, cashIncrement; sessionId, terminalId and cashierId are optional receipt context. The rounding triple is checked, not trusted: settledAmount must be amount rounded HALF_UP to a multiple of cashIncrement, the difference may not exceed half an increment, and without a cashIncrement the three must agree exactly. Emits an INVOICE_PAYMENT_CASH_RECORD event and publishes payment.payment.settled with the three additive fields so pos-accounting can post the rounding. Returns 201 with the intent, 403 when the authority is missing or the location is outside the caller\'s reach, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload or is being recorded concurrently, 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer and 422 with CASH_ROUNDING_INVALID when the triple or the currency does not hold together. 
+     * Records a cash tender taken at the register against an invoice as a CAPTURED payment intent without calling the payment gateway, keeping the invoice amount and the cash that changed hands apart (settledAmount, cashRoundingAmount, cashIncrement). Use this tool when the register has already rounded the cash to the currency\'s smallest coin; do not use initiatePayment, which takes card tender through the gateway, and do not round here, because pos-order owns the cash increment and the HALF_UP rounding at the register. Preconditions: the invoice must exist and must name a customer (partyId); currencyCode must be the functional currency pos-invoice records in; the caller needs the invoice:payment:process authority scoped to the invoice\'s location (ADR-0061) and invoice:payment:limit_override when the amount exceeds 500.00. Required inputs: the Idempotency-Key header (a UUID), amount (the invoice amount applied), settledAmount (the cash taken), cashRoundingAmount (settledAmount minus amount, 0 when no increment applies), currencyCode and, when the currency rounds, cashIncrement; sessionId, terminalId and cashierId are optional receipt context. The rounding triple is checked, not trusted: settledAmount must be amount rounded HALF_UP to a multiple of cashIncrement, the difference may not exceed half an increment, and without a cashIncrement the three must agree exactly. Emits an INVOICE_PAYMENT_CASH_RECORD event and publishes payment.payment.settled with the three additive fields so pos-accounting can post the rounding. A replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true and records no second tender. Returns 201 with the intent, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when the authority is missing or the location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer and 422 with CASH_ROUNDING_INVALID when the triple or the currency does not hold together. 
      * Record Cash Payment on Invoice
      */
     async recordCashPaymentRaw(requestParameters: RecordCashPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InitiatePaymentResponse>> {
@@ -282,6 +295,13 @@ export class PaymentApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'invoiceId',
                 'Required parameter "invoiceId" was null or undefined when calling recordCashPayment().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling recordCashPayment().'
             );
         }
 
@@ -297,6 +317,10 @@ export class PaymentApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -318,7 +342,7 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a cash tender taken at the register against an invoice as a CAPTURED payment intent without calling the payment gateway, keeping the invoice amount and the cash that changed hands apart (settledAmount, cashRoundingAmount, cashIncrement). Use this tool when the register has already rounded the cash to the currency\'s smallest coin; do not use initiatePayment, which takes card tender through the gateway, and do not round here, because pos-order owns the cash increment and the HALF_UP rounding at the register. Preconditions: the invoice must exist and must name a customer (partyId); currencyCode must be the functional currency pos-invoice records in; the caller needs the invoice:payment:process authority scoped to the invoice\'s location (ADR-0061) and invoice:payment:limit_override when the amount exceeds 500.00. Required inputs: idempotencyKey, amount (the invoice amount applied), settledAmount (the cash taken), cashRoundingAmount (settledAmount minus amount, 0 when no increment applies), currencyCode and, when the currency rounds, cashIncrement; sessionId, terminalId and cashierId are optional receipt context. The rounding triple is checked, not trusted: settledAmount must be amount rounded HALF_UP to a multiple of cashIncrement, the difference may not exceed half an increment, and without a cashIncrement the three must agree exactly. Emits an INVOICE_PAYMENT_CASH_RECORD event and publishes payment.payment.settled with the three additive fields so pos-accounting can post the rounding. Returns 201 with the intent, 403 when the authority is missing or the location is outside the caller\'s reach, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload or is being recorded concurrently, 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer and 422 with CASH_ROUNDING_INVALID when the triple or the currency does not hold together. 
+     * Records a cash tender taken at the register against an invoice as a CAPTURED payment intent without calling the payment gateway, keeping the invoice amount and the cash that changed hands apart (settledAmount, cashRoundingAmount, cashIncrement). Use this tool when the register has already rounded the cash to the currency\'s smallest coin; do not use initiatePayment, which takes card tender through the gateway, and do not round here, because pos-order owns the cash increment and the HALF_UP rounding at the register. Preconditions: the invoice must exist and must name a customer (partyId); currencyCode must be the functional currency pos-invoice records in; the caller needs the invoice:payment:process authority scoped to the invoice\'s location (ADR-0061) and invoice:payment:limit_override when the amount exceeds 500.00. Required inputs: the Idempotency-Key header (a UUID), amount (the invoice amount applied), settledAmount (the cash taken), cashRoundingAmount (settledAmount minus amount, 0 when no increment applies), currencyCode and, when the currency rounds, cashIncrement; sessionId, terminalId and cashierId are optional receipt context. The rounding triple is checked, not trusted: settledAmount must be amount rounded HALF_UP to a multiple of cashIncrement, the difference may not exceed half an increment, and without a cashIncrement the three must agree exactly. Emits an INVOICE_PAYMENT_CASH_RECORD event and publishes payment.payment.settled with the three additive fields so pos-accounting can post the rounding. A replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true and records no second tender. Returns 201 with the intent, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when the authority is missing or the location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer and 422 with CASH_ROUNDING_INVALID when the triple or the currency does not hold together. 
      * Record Cash Payment on Invoice
      */
     async recordCashPayment(requestParameters: RecordCashPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {

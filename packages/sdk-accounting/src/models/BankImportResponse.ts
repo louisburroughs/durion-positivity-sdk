@@ -237,18 +237,6 @@ export interface BankImportResponse {
      */
     rejectedCount: number;
     /**
-     * True when this response replays an earlier create with the same requestId
-     * @type {boolean}
-     * @memberof BankImportResponse
-     */
-    replayed: boolean;
-    /**
-     * The client's requestId
-     * @type {string}
-     * @memberof BankImportResponse
-     */
-    requestId: string;
-    /**
      * When the raw file becomes eligible for the retention purge
      * @type {Date}
      * @memberof BankImportResponse
@@ -360,8 +348,6 @@ export function instanceOfBankImportResponse(value: object): boolean {
     if (!('outOfWindowCount' in value)) return false;
     if (!('possibleDuplicateCount' in value)) return false;
     if (!('rejectedCount' in value)) return false;
-    if (!('replayed' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('rowCount' in value)) return false;
     if (!('skippedCount' in value)) return false;
     if (!('statement' in value)) return false;
@@ -413,8 +399,6 @@ export function BankImportResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'preview': json['preview'] == null ? undefined : BankImportPreviewFromJSON(json['preview']),
         'reconciliationId': json['reconciliationId'] == null ? undefined : json['reconciliationId'],
         'rejectedCount': json['rejectedCount'],
-        'replayed': json['replayed'],
-        'requestId': json['requestId'],
         'retentionUntil': json['retentionUntil'] == null ? undefined : (new Date(json['retentionUntil'])),
         'rowCount': json['rowCount'],
         'saveMappingAsDefault': json['saveMappingAsDefault'] == null ? undefined : json['saveMappingAsDefault'],
@@ -470,8 +454,6 @@ export function BankImportResponseToJSON(value?: BankImportResponse | null): any
         'preview': BankImportPreviewToJSON(value['preview']),
         'reconciliationId': value['reconciliationId'],
         'rejectedCount': value['rejectedCount'],
-        'replayed': value['replayed'],
-        'requestId': value['requestId'],
         'retentionUntil': value['retentionUntil'] == null ? undefined : ((value['retentionUntil']).toISOString().substring(0,10)),
         'rowCount': value['rowCount'],
         'saveMappingAsDefault': value['saveMappingAsDefault'],

@@ -61,12 +61,6 @@ export interface RegisterFloatChangeRequest {
      * @memberof RegisterFloatChangeRequest
      */
     overrideJustification?: string;
-    /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof RegisterFloatChangeRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -78,7 +72,6 @@ export function instanceOfRegisterFloatChangeRequest(value: object): boolean {
     if (!('currencyCode' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('locationId' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -99,7 +92,6 @@ export function RegisterFloatChangeRequestFromJSONTyped(json: any, ignoreDiscrim
         'justification': json['justification'],
         'locationId': json['locationId'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -116,7 +108,6 @@ export function RegisterFloatChangeRequestToJSON(value?: RegisterFloatChangeRequ
         'justification': value['justification'],
         'locationId': value['locationId'],
         'overrideJustification': value['overrideJustification'],
-        'requestId': value['requestId'],
     };
 }
 

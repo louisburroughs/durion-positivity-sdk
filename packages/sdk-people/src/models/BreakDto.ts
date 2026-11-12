@@ -26,6 +26,12 @@ export interface BreakDto {
      */
     endedAt?: Date;
     /**
+     * Why the break was taken; present when the caller supplied one, and always for type OTHER
+     * @type {string}
+     * @memberof BreakDto
+     */
+    note?: string;
+    /**
      * Work session the break belongs to
      * @type {string}
      * @memberof BreakDto
@@ -37,7 +43,24 @@ export interface BreakDto {
      * @memberof BreakDto
      */
     startedAt: Date;
+    /**
+     * Kind of break: MEAL, REST or OTHER
+     * @type {string}
+     * @memberof BreakDto
+     */
+    type?: BreakDtoTypeEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum BreakDtoTypeEnum {
+    Meal = 'MEAL',
+    Rest = 'REST',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the BreakDto interface.
@@ -59,8 +82,10 @@ export function BreakDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return {
         
         'endedAt': json['endedAt'] == null ? undefined : (new Date(json['endedAt'])),
+        'note': json['note'] == null ? undefined : json['note'],
         'sessionId': json['sessionId'],
         'startedAt': (new Date(json['startedAt'])),
+        'type': json['type'] == null ? undefined : json['type'],
     };
 }
 
@@ -71,8 +96,10 @@ export function BreakDtoToJSON(value?: BreakDto | null): any {
     return {
         
         'endedAt': value['endedAt'] == null ? undefined : ((value['endedAt']).toISOString()),
+        'note': value['note'],
         'sessionId': value['sessionId'],
         'startedAt': ((value['startedAt']).toISOString()),
+        'type': value['type'],
     };
 }
 

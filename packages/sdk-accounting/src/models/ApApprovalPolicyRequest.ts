@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * The AP approval policy settings to change, with the justification and the request id
+ * The AP approval policy settings to change, with the justification; the request's key travels in the Idempotency-Key header
  * @export
  * @interface ApApprovalPolicyRequest
  */
@@ -61,12 +61,6 @@ export interface ApApprovalPolicyRequest {
      * @memberof ApApprovalPolicyRequest
      */
     justification: string;
-    /**
-     * Generated once per user intent by the client (§8.2): a replay with a request id already recorded writes nothing and returns the current policy
-     * @type {string}
-     * @memberof ApApprovalPolicyRequest
-     */
-    requestId: string;
 }
 
 /**
@@ -74,7 +68,6 @@ export interface ApApprovalPolicyRequest {
  */
 export function instanceOfApApprovalPolicyRequest(value: object): boolean {
     if (!('justification' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -95,7 +88,6 @@ export function ApApprovalPolicyRequestFromJSONTyped(json: any, ignoreDiscrimina
         'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
         'defaultTerms': json['defaultTerms'] == null ? undefined : json['defaultTerms'],
         'justification': json['justification'],
-        'requestId': json['requestId'],
     };
 }
 
@@ -112,7 +104,6 @@ export function ApApprovalPolicyRequestToJSON(value?: ApApprovalPolicyRequest | 
         'currencyCode': value['currencyCode'],
         'defaultTerms': value['defaultTerms'],
         'justification': value['justification'],
-        'requestId': value['requestId'],
     };
 }
 

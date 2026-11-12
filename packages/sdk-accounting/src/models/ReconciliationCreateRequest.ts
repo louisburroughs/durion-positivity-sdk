@@ -38,12 +38,6 @@ export interface ReconciliationCreateRequest {
      */
     openingBalance?: number;
     /**
-     * Caller-generated UUIDv7; a replay with the same payload returns the original
-     * @type {string}
-     * @memberof ReconciliationCreateRequest
-     */
-    requestId: string;
-    /**
      * The COMMITTED bank statement to reconcile (required in phase 1)
      * @type {string}
      * @memberof ReconciliationCreateRequest
@@ -68,7 +62,6 @@ export interface ReconciliationCreateRequest {
  */
 export function instanceOfReconciliationCreateRequest(value: object): boolean {
     if (!('glAccountId' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -85,7 +78,6 @@ export function ReconciliationCreateRequestFromJSONTyped(json: any, ignoreDiscri
         'closingBalance': json['closingBalance'] == null ? undefined : json['closingBalance'],
         'glAccountId': json['glAccountId'],
         'openingBalance': json['openingBalance'] == null ? undefined : json['openingBalance'],
-        'requestId': json['requestId'],
         'statementId': json['statementId'] == null ? undefined : json['statementId'],
         'windowEndDate': json['windowEndDate'] == null ? undefined : (new Date(json['windowEndDate'])),
         'windowStartDate': json['windowStartDate'] == null ? undefined : (new Date(json['windowStartDate'])),
@@ -101,7 +93,6 @@ export function ReconciliationCreateRequestToJSON(value?: ReconciliationCreateRe
         'closingBalance': value['closingBalance'],
         'glAccountId': value['glAccountId'],
         'openingBalance': value['openingBalance'],
-        'requestId': value['requestId'],
         'statementId': value['statementId'],
         'windowEndDate': value['windowEndDate'] == null ? undefined : ((value['windowEndDate']).toISOString().substring(0,10)),
         'windowStartDate': value['windowStartDate'] == null ? undefined : ((value['windowStartDate']).toISOString().substring(0,10)),

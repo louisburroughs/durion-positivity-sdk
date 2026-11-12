@@ -58,6 +58,7 @@ export interface CommitBankImportRequest {
 }
 
 export interface CreateBankImportRequest {
+    idempotencyKey: string;
     bankImportCreateRequest: BankImportCreateRequest;
 }
 
@@ -151,10 +152,17 @@ export class BankImportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Uploads a bank statement file (CSV) with its statement header for a reconcilable BANK_CASH account and stages it for review: every row is parsed under the column mapping and sign convention, bad rows are rejected one by one, and a preview shows opening + activity against closing. Nothing is committed until the import is committed. Use this tool to bring a downloaded bank statement into reconciliation; do not use it for a statement keyed by hand, use createBankStatement instead. Preconditions: the header must continue the account\'s previous committed statement unless a gapAcknowledgement of at least 10 characters is given (required for the account\'s first statement, refused on a contiguous one); the same file must not already be committed for the account. Required inputs: glAccountId, a UUIDv7 requestId, formatCode CSV, the file and statement {startDate, endDate, openingBalance, closingBalance}. Emits an ACCOUNTING_BANK_IMPORT_CREATE event; a replay of the same requestId and payload returns the original import with replayed=true. Returns 201 with status VALIDATED, or UPLOADED with mappingRequired when the columns need a mapping; 422 when the file is unreadable (STATEMENT_IMPORT_FAILED), the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement or the contiguity rule fails; 409 for a file already committed (naming the earlier importId and statementId), a window already committed or a reused requestId; 400 when the request is malformed or the acknowledgement is shorter than 10 characters. 
+     * Uploads a bank statement file (CSV) with its statement header for a reconcilable BANK_CASH account and stages it for review: every row is parsed under the column mapping and sign convention, bad rows are rejected one by one, and a preview shows opening + activity against closing. Nothing is committed until the import is committed. Use this tool to bring a downloaded bank statement into reconciliation; do not use it for a statement keyed by hand, use createBankStatement instead. Preconditions: the header must continue the account\'s previous committed statement unless a gapAcknowledgement of at least 10 characters is given (required for the account\'s first statement, refused on a contiguous one); the same file must not already be committed for the account. Required inputs: the Idempotency-Key header (a UUID generated once per upload), glAccountId, formatCode CSV, the file and statement {startDate, endDate, openingBalance, closingBalance}. Emits an ACCOUNTING_BANK_IMPORT_CREATE event once, on the request that stages the import; a replay of the same key, payload and caller returns the original import with Idempotency-Replayed: true, and the same key with another payload or caller is 409 IDEMPOTENCY_CONFLICT. Returns 201 with status VALIDATED, or UPLOADED with mappingRequired when the columns need a mapping; 422 when the file is unreadable (STATEMENT_IMPORT_FAILED), the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement or the contiguity rule fails; 409 for a file already committed (naming the earlier importId and statementId), a window already committed or a reused Idempotency-Key (IDEMPOTENCY_CONFLICT); 400 when the request is malformed, the Idempotency-Key is missing or not a UUID, or the acknowledgement is shorter than 10 characters. 
      * Upload Bank Statement File
      */
     async createBankImportRaw(requestParameters: CreateBankImportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankImportResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling createBankImport().'
+            );
+        }
+
         if (requestParameters['bankImportCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'bankImportCreateRequest',
@@ -167,6 +175,10 @@ export class BankImportsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -188,7 +200,7 @@ export class BankImportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Uploads a bank statement file (CSV) with its statement header for a reconcilable BANK_CASH account and stages it for review: every row is parsed under the column mapping and sign convention, bad rows are rejected one by one, and a preview shows opening + activity against closing. Nothing is committed until the import is committed. Use this tool to bring a downloaded bank statement into reconciliation; do not use it for a statement keyed by hand, use createBankStatement instead. Preconditions: the header must continue the account\'s previous committed statement unless a gapAcknowledgement of at least 10 characters is given (required for the account\'s first statement, refused on a contiguous one); the same file must not already be committed for the account. Required inputs: glAccountId, a UUIDv7 requestId, formatCode CSV, the file and statement {startDate, endDate, openingBalance, closingBalance}. Emits an ACCOUNTING_BANK_IMPORT_CREATE event; a replay of the same requestId and payload returns the original import with replayed=true. Returns 201 with status VALIDATED, or UPLOADED with mappingRequired when the columns need a mapping; 422 when the file is unreadable (STATEMENT_IMPORT_FAILED), the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement or the contiguity rule fails; 409 for a file already committed (naming the earlier importId and statementId), a window already committed or a reused requestId; 400 when the request is malformed or the acknowledgement is shorter than 10 characters. 
+     * Uploads a bank statement file (CSV) with its statement header for a reconcilable BANK_CASH account and stages it for review: every row is parsed under the column mapping and sign convention, bad rows are rejected one by one, and a preview shows opening + activity against closing. Nothing is committed until the import is committed. Use this tool to bring a downloaded bank statement into reconciliation; do not use it for a statement keyed by hand, use createBankStatement instead. Preconditions: the header must continue the account\'s previous committed statement unless a gapAcknowledgement of at least 10 characters is given (required for the account\'s first statement, refused on a contiguous one); the same file must not already be committed for the account. Required inputs: the Idempotency-Key header (a UUID generated once per upload), glAccountId, formatCode CSV, the file and statement {startDate, endDate, openingBalance, closingBalance}. Emits an ACCOUNTING_BANK_IMPORT_CREATE event once, on the request that stages the import; a replay of the same key, payload and caller returns the original import with Idempotency-Replayed: true, and the same key with another payload or caller is 409 IDEMPOTENCY_CONFLICT. Returns 201 with status VALIDATED, or UPLOADED with mappingRequired when the columns need a mapping; 422 when the file is unreadable (STATEMENT_IMPORT_FAILED), the account is not reconcilable, the currency is not the account\'s, the window overlaps a committed statement or the contiguity rule fails; 409 for a file already committed (naming the earlier importId and statementId), a window already committed or a reused Idempotency-Key (IDEMPOTENCY_CONFLICT); 400 when the request is malformed, the Idempotency-Key is missing or not a UUID, or the acknowledgement is shorter than 10 characters. 
      * Upload Bank Statement File
      */
     async createBankImport(requestParameters: CreateBankImportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankImportResponse> {

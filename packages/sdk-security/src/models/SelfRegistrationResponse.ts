@@ -33,12 +33,6 @@ export interface SelfRegistrationResponse {
      */
     crmMatchSummary?: CrmMatchSummaryDto;
     /**
-     * Idempotency key echoed back when the caller supplied one
-     * @type {string}
-     * @memberof SelfRegistrationResponse
-     */
-    idempotencyKey?: string;
-    /**
      * False for Phase 1 because follow-up login is required
      * @type {boolean}
      * @memberof SelfRegistrationResponse
@@ -100,7 +94,6 @@ export function SelfRegistrationResponseFromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'crmMatchSummary': json['crmMatchSummary'] == null ? undefined : CrmMatchSummaryDtoFromJSON(json['crmMatchSummary']),
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'issuedTokens': json['issuedTokens'],
         'linkStatus': json['linkStatus'],
         'matchedExistingPerson': json['matchedExistingPerson'],
@@ -117,7 +110,6 @@ export function SelfRegistrationResponseToJSON(value?: SelfRegistrationResponse 
     return {
         
         'crmMatchSummary': CrmMatchSummaryDtoToJSON(value['crmMatchSummary']),
-        'idempotencyKey': value['idempotencyKey'],
         'issuedTokens': value['issuedTokens'],
         'linkStatus': value['linkStatus'],
         'matchedExistingPerson': value['matchedExistingPerson'],

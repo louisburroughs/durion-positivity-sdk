@@ -32,12 +32,6 @@ export interface DepositReversalRequest {
      */
     reason: string;
     /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof DepositReversalRequest
-     */
-    requestId: string;
-    /**
      * The reversal entry's date; when omitted, the deposit's date if its period is open, else today
      * @type {Date}
      * @memberof DepositReversalRequest
@@ -50,7 +44,6 @@ export interface DepositReversalRequest {
  */
 export function instanceOfDepositReversalRequest(value: object): boolean {
     if (!('reason' in value)) return false;
-    if (!('requestId' in value)) return false;
     return true;
 }
 
@@ -66,7 +59,6 @@ export function DepositReversalRequestFromJSONTyped(json: any, ignoreDiscriminat
         
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
         'reason': json['reason'],
-        'requestId': json['requestId'],
         'reversalDate': json['reversalDate'] == null ? undefined : (new Date(json['reversalDate'])),
     };
 }
@@ -79,7 +71,6 @@ export function DepositReversalRequestToJSON(value?: DepositReversalRequest | nu
         
         'overrideJustification': value['overrideJustification'],
         'reason': value['reason'],
-        'requestId': value['requestId'],
         'reversalDate': value['reversalDate'] == null ? undefined : ((value['reversalDate']).toISOString().substring(0,10)),
     };
 }

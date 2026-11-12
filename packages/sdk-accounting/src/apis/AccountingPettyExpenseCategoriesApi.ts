@@ -47,26 +47,31 @@ import {
 } from '../models/index';
 
 export interface CreatePettyExpenseCategoryRequest {
+    idempotencyKey: string;
     pettyExpenseCategoryCreateRequest: PettyExpenseCategoryCreateRequest;
 }
 
 export interface DeactivatePettyExpenseCategoryRequest {
     code: string;
+    idempotencyKey: string;
     pettyExpenseCategoryDeactivateRequest: PettyExpenseCategoryDeactivateRequest;
 }
 
 export interface RemapPettyExpenseCategoryRequest {
     code: string;
+    idempotencyKey: string;
     pettyExpenseCategoryRemapRequest: PettyExpenseCategoryRemapRequest;
 }
 
 export interface SetPettyExpenseCategoryTaxRecoveryRequest {
     code: string;
+    idempotencyKey: string;
     pettyExpenseCategoryTaxRecoveryRequest: PettyExpenseCategoryTaxRecoveryRequest;
 }
 
 export interface UpdatePettyExpenseCategoryRequest {
     code: string;
+    idempotencyKey: string;
     pettyExpenseCategoryUpdateRequest: PettyExpenseCategoryUpdateRequest;
 }
 
@@ -76,10 +81,17 @@ export interface UpdatePettyExpenseCategoryRequest {
 export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
 
     /**
-     * Adds a petty-expense category: its REGISTER_CASH_MOVEMENT mapping key PETTY_EXPENSE_<code> and a GL mapping to the chosen expense account, effective today in the tenant\'s accounting time zone. Use this tool when cashiers need a new category of drawer spending; do not use createMappingKey or createGLMapping, which refuse petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:create and accounting:gl-mapping:create; the code is new (409 PETTY_EXPENSE_CATEGORY_EXISTS) and is not OTHER (422 PETTY_EXPENSE_CATEGORY_NOT_ALLOWED: there is no \"Other\"); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE). Required inputs: code (permanent, [A-Z0-9_]{1,40}), label, glAccountId, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT); examples is optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_CREATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 201 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Adds a petty-expense category: its REGISTER_CASH_MOVEMENT mapping key PETTY_EXPENSE_<code> and a GL mapping to the chosen expense account, effective today in the tenant\'s accounting time zone. Use this tool when cashiers need a new category of drawer spending; do not use createMappingKey or createGLMapping, which refuse petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:create and accounting:gl-mapping:create; the code is new (409 PETTY_EXPENSE_CATEGORY_EXISTS) and is not OTHER (422 PETTY_EXPENSE_CATEGORY_NOT_ALLOWED: there is no \"Other\"); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE). Required inputs: code (permanent, [A-Z0-9_]{1,40}), label, glAccountId, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT); examples is optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_CREATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 201 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Create Petty-Expense Category
      */
     async createPettyExpenseCategoryRaw(requestParameters: CreatePettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PettyExpenseCategoryResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling createPettyExpenseCategory().'
+            );
+        }
+
         if (requestParameters['pettyExpenseCategoryCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'pettyExpenseCategoryCreateRequest',
@@ -92,6 +104,10 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -113,7 +129,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a petty-expense category: its REGISTER_CASH_MOVEMENT mapping key PETTY_EXPENSE_<code> and a GL mapping to the chosen expense account, effective today in the tenant\'s accounting time zone. Use this tool when cashiers need a new category of drawer spending; do not use createMappingKey or createGLMapping, which refuse petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:create and accounting:gl-mapping:create; the code is new (409 PETTY_EXPENSE_CATEGORY_EXISTS) and is not OTHER (422 PETTY_EXPENSE_CATEGORY_NOT_ALLOWED: there is no \"Other\"); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE). Required inputs: code (permanent, [A-Z0-9_]{1,40}), label, glAccountId, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT); examples is optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_CREATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 201 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Adds a petty-expense category: its REGISTER_CASH_MOVEMENT mapping key PETTY_EXPENSE_<code> and a GL mapping to the chosen expense account, effective today in the tenant\'s accounting time zone. Use this tool when cashiers need a new category of drawer spending; do not use createMappingKey or createGLMapping, which refuse petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:create and accounting:gl-mapping:create; the code is new (409 PETTY_EXPENSE_CATEGORY_EXISTS) and is not OTHER (422 PETTY_EXPENSE_CATEGORY_NOT_ALLOWED: there is no \"Other\"); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE). Required inputs: code (permanent, [A-Z0-9_]{1,40}), label, glAccountId, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT); examples is optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_CREATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 201 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Create Petty-Expense Category
      */
     async createPettyExpenseCategory(requestParameters: CreatePettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PettyExpenseCategoryResponse> {
@@ -122,7 +138,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates a petty-expense category so cashiers can no longer pick it. Its mapping is kept, so movements recorded before deactivation still post at close (never retroactive). There is no delete and no reactivation. Use this tool to retire a category; do not use deactivateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:deactivate; the category exists (404) and is active (409 PETTY_EXPENSE_CATEGORY_INACTIVE). Required inputs: code (path), justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_DEACTIVATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Deactivates a petty-expense category so cashiers can no longer pick it. Its mapping is kept, so movements recorded before deactivation still post at close (never retroactive). There is no delete and no reactivation. Use this tool to retire a category; do not use deactivateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:deactivate; the category exists (404) and is active (409 PETTY_EXPENSE_CATEGORY_INACTIVE). Required inputs: code (path), justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_DEACTIVATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Deactivate Petty-Expense Category
      */
     async deactivatePettyExpenseCategoryRaw(requestParameters: DeactivatePettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PettyExpenseCategoryResponse>> {
@@ -130,6 +146,13 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'code',
                 'Required parameter "code" was null or undefined when calling deactivatePettyExpenseCategory().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling deactivatePettyExpenseCategory().'
             );
         }
 
@@ -145,6 +168,10 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -166,7 +193,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates a petty-expense category so cashiers can no longer pick it. Its mapping is kept, so movements recorded before deactivation still post at close (never retroactive). There is no delete and no reactivation. Use this tool to retire a category; do not use deactivateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:deactivate; the category exists (404) and is active (409 PETTY_EXPENSE_CATEGORY_INACTIVE). Required inputs: code (path), justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_DEACTIVATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Deactivates a petty-expense category so cashiers can no longer pick it. Its mapping is kept, so movements recorded before deactivation still post at close (never retroactive). There is no delete and no reactivation. Use this tool to retire a category; do not use deactivateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED). Preconditions: caller holds accounting:mapping-key:deactivate; the category exists (404) and is active (409 PETTY_EXPENSE_CATEGORY_INACTIVE). Required inputs: code (path), justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_DEACTIVATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Deactivate Petty-Expense Category
      */
     async deactivatePettyExpenseCategory(requestParameters: DeactivatePettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PettyExpenseCategoryResponse> {
@@ -211,7 +238,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves a petty-expense category to another expense account from a date: the current mapping ends the day before effectiveFrom and the new one starts on it, so a posting dated earlier still reaches the old account. Use this tool when a category should post somewhere else from now on; do not use createGLMapping, which cannot bind a mapping to a category and key. Preconditions: caller holds accounting:gl-mapping:create; the category exists (404); no mapping of the category starts on or after effectiveFrom (400 PETTY_EXPENSE_MAPPING_OVERLAP, the non-overlap rule); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE); effectiveFrom is today or later in the tenant\'s accounting calendar, never retroactive (422 PETTY_EXPENSE_ACCOUNT_CHANGE_BACKDATED). Required inputs: code (path), glAccountId, effectiveFrom, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_REMAP event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Moves a petty-expense category to another expense account from a date: the current mapping ends the day before effectiveFrom and the new one starts on it, so a posting dated earlier still reaches the old account. Use this tool when a category should post somewhere else from now on; do not use createGLMapping, which cannot bind a mapping to a category and key. Preconditions: caller holds accounting:gl-mapping:create; the category exists (404); no mapping of the category starts on or after effectiveFrom (400 PETTY_EXPENSE_MAPPING_OVERLAP, the non-overlap rule); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE); effectiveFrom is today or later in the tenant\'s accounting calendar, never retroactive (422 PETTY_EXPENSE_ACCOUNT_CHANGE_BACKDATED). Required inputs: code (path), glAccountId, effectiveFrom, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_REMAP event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Change Petty-Expense Category Account
      */
     async remapPettyExpenseCategoryRaw(requestParameters: RemapPettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PettyExpenseCategoryResponse>> {
@@ -219,6 +246,13 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'code',
                 'Required parameter "code" was null or undefined when calling remapPettyExpenseCategory().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling remapPettyExpenseCategory().'
             );
         }
 
@@ -234,6 +268,10 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -255,7 +293,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Moves a petty-expense category to another expense account from a date: the current mapping ends the day before effectiveFrom and the new one starts on it, so a posting dated earlier still reaches the old account. Use this tool when a category should post somewhere else from now on; do not use createGLMapping, which cannot bind a mapping to a category and key. Preconditions: caller holds accounting:gl-mapping:create; the category exists (404); no mapping of the category starts on or after effectiveFrom (400 PETTY_EXPENSE_MAPPING_OVERLAP, the non-overlap rule); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE); effectiveFrom is today or later in the tenant\'s accounting calendar, never retroactive (422 PETTY_EXPENSE_ACCOUNT_CHANGE_BACKDATED). Required inputs: code (path), glAccountId, effectiveFrom, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_REMAP event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Moves a petty-expense category to another expense account from a date: the current mapping ends the day before effectiveFrom and the new one starts on it, so a posting dated earlier still reaches the old account. Use this tool when a category should post somewhere else from now on; do not use createGLMapping, which cannot bind a mapping to a category and key. Preconditions: caller holds accounting:gl-mapping:create; the category exists (404); no mapping of the category starts on or after effectiveFrom (400 PETTY_EXPENSE_MAPPING_OVERLAP, the non-overlap rule); glAccountId is an active EXPENSE account (422 PETTY_EXPENSE_ACCOUNT_NOT_ELIGIBLE); effectiveFrom is today or later in the tenant\'s accounting calendar, never retroactive (422 PETTY_EXPENSE_ACCOUNT_CHANGE_BACKDATED). Required inputs: code (path), glAccountId, effectiveFrom, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_REMAP event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Change Petty-Expense Category Account
      */
     async remapPettyExpenseCategory(requestParameters: RemapPettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PettyExpenseCategoryResponse> {
@@ -264,7 +302,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets whether the tax stated on a petty-expense category\'s receipts is recovered, and which share, from now on; a movement already recorded keeps the share in force when it was recorded. Use this tool when the accountant decides how much of a category\'s stated tax may be claimed; do not use updatePettyExpenseCategory, which changes only the label and examples. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); recovery under at least one regime is on today (422 INPUT_TAX_RECOVERY_NOT_ENABLED); version is the one last read, 0 for a category never set (409 OPTIMISTIC_LOCK); the tax service answers whether a regime\'s recovery is on (503 SERVICE_UNAVAILABLE with Retry-After when it cannot). Required inputs: code (path), taxRecoverable, recoverablePercent in (0, 100] when recoverable and absent otherwise, version, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_CATEGORY_TAX_RECOVERY_UPDATE event, writes a history row naming the caller and role, queues accounting.petty-expense-category.changed with the new values, and returns 200 with the setting. 
+     * Sets whether the tax stated on a petty-expense category\'s receipts is recovered, and which share, from now on; a movement already recorded keeps the share in force when it was recorded. Use this tool when the accountant decides how much of a category\'s stated tax may be claimed; do not use updatePettyExpenseCategory, which changes only the label and examples. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); recovery under at least one regime is on today (422 INPUT_TAX_RECOVERY_NOT_ENABLED); version is the one last read, 0 for a category never set (409 OPTIMISTIC_LOCK); the tax service answers whether a regime\'s recovery is on (503 SERVICE_UNAVAILABLE with Retry-After when it cannot). Required inputs: code (path), taxRecoverable, recoverablePercent in (0, 100] when recoverable and absent otherwise, version, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_CATEGORY_TAX_RECOVERY_UPDATE event, writes a history row naming the caller and role, queues accounting.petty-expense-category.changed with the new values, and returns 200 with the setting. 
      * Set Petty-Expense Category Tax Recovery
      */
     async setPettyExpenseCategoryTaxRecoveryRaw(requestParameters: SetPettyExpenseCategoryTaxRecoveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PettyExpenseCategoryTaxRecoveryResponse>> {
@@ -272,6 +310,13 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'code',
                 'Required parameter "code" was null or undefined when calling setPettyExpenseCategoryTaxRecovery().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling setPettyExpenseCategoryTaxRecovery().'
             );
         }
 
@@ -287,6 +332,10 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -308,7 +357,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets whether the tax stated on a petty-expense category\'s receipts is recovered, and which share, from now on; a movement already recorded keeps the share in force when it was recorded. Use this tool when the accountant decides how much of a category\'s stated tax may be claimed; do not use updatePettyExpenseCategory, which changes only the label and examples. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); recovery under at least one regime is on today (422 INPUT_TAX_RECOVERY_NOT_ENABLED); version is the one last read, 0 for a category never set (409 OPTIMISTIC_LOCK); the tax service answers whether a regime\'s recovery is on (503 SERVICE_UNAVAILABLE with Retry-After when it cannot). Required inputs: code (path), taxRecoverable, recoverablePercent in (0, 100] when recoverable and absent otherwise, version, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_CATEGORY_TAX_RECOVERY_UPDATE event, writes a history row naming the caller and role, queues accounting.petty-expense-category.changed with the new values, and returns 200 with the setting. 
+     * Sets whether the tax stated on a petty-expense category\'s receipts is recovered, and which share, from now on; a movement already recorded keeps the share in force when it was recorded. Use this tool when the accountant decides how much of a category\'s stated tax may be claimed; do not use updatePettyExpenseCategory, which changes only the label and examples. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); recovery under at least one regime is on today (422 INPUT_TAX_RECOVERY_NOT_ENABLED); version is the one last read, 0 for a category never set (409 OPTIMISTIC_LOCK); the tax service answers whether a regime\'s recovery is on (503 SERVICE_UNAVAILABLE with Retry-After when it cannot). Required inputs: code (path), taxRecoverable, recoverablePercent in (0, 100] when recoverable and absent otherwise, version, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT). Emits an ACCOUNTING_PETTY_CATEGORY_TAX_RECOVERY_UPDATE event, writes a history row naming the caller and role, queues accounting.petty-expense-category.changed with the new values, and returns 200 with the setting. 
      * Set Petty-Expense Category Tax Recovery
      */
     async setPettyExpenseCategoryTaxRecovery(requestParameters: SetPettyExpenseCategoryTaxRecoveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PettyExpenseCategoryTaxRecoveryResponse> {
@@ -317,7 +366,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Changes a petty-expense category\'s label and examples; the code never changes, and the mapping key\'s description follows the label. Use this tool to make a category clearer to cashiers; do not use updateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED) and would rename the key. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); a version, when sent, is the current one (409 VERSION_CONFLICT). Required inputs: code (path), label, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT); examples and version are optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_UPDATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Changes a petty-expense category\'s label and examples; the code never changes, and the mapping key\'s description follows the label. Use this tool to make a category clearer to cashiers; do not use updateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED) and would rename the key. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); a version, when sent, is the current one (409 VERSION_CONFLICT). Required inputs: code (path), label, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT); examples and version are optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_UPDATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Relabel Petty-Expense Category
      */
     async updatePettyExpenseCategoryRaw(requestParameters: UpdatePettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PettyExpenseCategoryResponse>> {
@@ -325,6 +374,13 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'code',
                 'Required parameter "code" was null or undefined when calling updatePettyExpenseCategory().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling updatePettyExpenseCategory().'
             );
         }
 
@@ -340,6 +396,10 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -361,7 +421,7 @@ export class AccountingPettyExpenseCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Changes a petty-expense category\'s label and examples; the code never changes, and the mapping key\'s description follows the label. Use this tool to make a category clearer to cashiers; do not use updateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED) and would rename the key. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); a version, when sent, is the current one (409 VERSION_CONFLICT). Required inputs: code (path), label, justification (at least 10 characters) and requestId (a replay returns the first result with 200; the same requestId with another body is 409 IDEMPOTENCY_CONFLICT); examples and version are optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_UPDATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replayed requestId included). 
+     * Changes a petty-expense category\'s label and examples; the code never changes, and the mapping key\'s description follows the label. Use this tool to make a category clearer to cashiers; do not use updateMappingKey, which refuses petty-expense keys (422 PETTY_EXPENSE_CATEGORY_MANAGED) and would rename the key. Preconditions: caller holds accounting:mapping-key:edit; the category exists (404); a version, when sent, is the current one (409 VERSION_CONFLICT). Required inputs: code (path), label, justification (at least 10 characters) and the Idempotency-Key header (a replay returns the first result with Idempotency-Replayed: true; the same key with another request or caller is 409 IDEMPOTENCY_CONFLICT); examples and version are optional. Emits an ACCOUNTING_PETTY_EXPENSE_CATEGORY_UPDATE event, writes a history row naming the caller, queues accounting.petty-expense-category.changed, and returns 200 with the category, each history row\'s actorName resolved now (absent when not known, a replay included). 
      * Relabel Petty-Expense Category
      */
     async updatePettyExpenseCategory(requestParameters: UpdatePettyExpenseCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PettyExpenseCategoryResponse> {

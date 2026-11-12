@@ -135,12 +135,6 @@ export interface BankStatementResponse {
      */
     reconciliations?: Array<BankStatementReconciliationLink>;
     /**
-     * True when this response replays an earlier request with the same requestId
-     * @type {boolean}
-     * @memberof BankStatementResponse
-     */
-    replayed?: boolean;
-    /**
      * Where the statement came from
      * @type {string}
      * @memberof BankStatementResponse
@@ -238,7 +232,6 @@ export function BankStatementResponseFromJSONTyped(json: any, ignoreDiscriminato
         'openingBalance': json['openingBalance'] == null ? undefined : json['openingBalance'],
         'possibleDuplicateCount': json['possibleDuplicateCount'] == null ? undefined : json['possibleDuplicateCount'],
         'reconciliations': json['reconciliations'] == null ? undefined : ((json['reconciliations'] as Array<any>).map(BankStatementReconciliationLinkFromJSON)),
-        'replayed': json['replayed'] == null ? undefined : json['replayed'],
         'sourceKind': json['sourceKind'] == null ? undefined : json['sourceKind'],
         'sourceRef': json['sourceRef'] == null ? undefined : json['sourceRef'],
         'startDate': json['startDate'] == null ? undefined : (new Date(json['startDate'])),
@@ -273,7 +266,6 @@ export function BankStatementResponseToJSON(value?: BankStatementResponse | null
         'openingBalance': value['openingBalance'],
         'possibleDuplicateCount': value['possibleDuplicateCount'],
         'reconciliations': value['reconciliations'] == null ? undefined : ((value['reconciliations'] as Array<any>).map(BankStatementReconciliationLinkToJSON)),
-        'replayed': value['replayed'],
         'sourceKind': value['sourceKind'],
         'sourceRef': value['sourceRef'],
         'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString().substring(0,10)),

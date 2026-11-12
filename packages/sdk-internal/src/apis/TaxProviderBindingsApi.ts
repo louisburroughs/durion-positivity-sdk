@@ -29,6 +29,7 @@ import {
 } from '../models/index';
 
 export interface SetTaxProviderBindingRequest {
+    idempotencyKey: string;
     taxProviderBindingRequest: TaxProviderBindingRequest;
 }
 
@@ -38,10 +39,17 @@ export interface SetTaxProviderBindingRequest {
 export class TaxProviderBindingsApi extends runtime.BaseAPI {
 
     /**
-     * Sets the plug-in that prices one tenant\'s documents in one country from a date, replacing the binding that begins on the same day and recording the change in pos-tax\'s binding history. Use this tool only as the pos-tenant front door; do not use it from a screen or another service, which call PUT /v1/platform/tenants/{tenantId}/tax-provider-bindings instead. Preconditions: the call carries pos-tenant\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise); providerId is a registered plug-in that serves countryCode (US_SELF for US, AVALARA for any country, or <country>_SELF of a profiled country) (422 TAX_PROVIDER_NOT_REGISTERED otherwise). Required inputs: countryCode, providerId, effectiveFrom and requestId; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. Emits a TAX_PROVIDER_BINDING_SET event, writes a history row naming the forwarded actor, and returns 201, or 200 with the first result when the same request is replayed with its requestId. Returns 409 TAX_PROVIDER_BINDING_OVERLAP when another binding of the same country is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the requestId was used for another request. 
+     * Sets the plug-in that prices one tenant\'s documents in one country from a date, replacing the binding that begins on the same day and recording the change in pos-tax\'s binding history. Use this tool only as the pos-tenant front door; do not use it from a screen or another service, which call PUT /v1/platform/tenants/{tenantId}/tax-provider-bindings instead. Preconditions: the call carries pos-tenant\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise), and the Idempotency-Key header (UUID; missing or malformed is 400 VALIDATION_ERROR); providerId is a registered plug-in that serves countryCode (US_SELF for US, AVALARA for any country, or <country>_SELF of a profiled country) (422 TAX_PROVIDER_NOT_REGISTERED otherwise). Required inputs: countryCode, providerId and effectiveFrom; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The key travels in the Idempotency-Key header, never in the body. Emits a TAX_PROVIDER_BINDING_SET event, writes a history row naming the forwarded actor, and returns 201. A replay with the same key and request returns the stored 201 and body with Idempotency-Replayed: true, and writes no second history row or event. Returns 409 TAX_PROVIDER_BINDING_OVERLAP when another binding of the same country is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the key was used for another request or by another actor. 
      * Set a tenant\'s tax-provider binding
      */
     async setTaxProviderBindingRaw(requestParameters: SetTaxProviderBindingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxProviderBindingResponse>> {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling setTaxProviderBinding().'
+            );
+        }
+
         if (requestParameters['taxProviderBindingRequest'] == null) {
             throw new runtime.RequiredError(
                 'taxProviderBindingRequest',
@@ -54,6 +62,10 @@ export class TaxProviderBindingsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["X-Pos-Tax-Front-Door-Secret"] = await this.configuration.apiKey("X-Pos-Tax-Front-Door-Secret"); // tenantFrontDoorSecret authentication
@@ -71,7 +83,7 @@ export class TaxProviderBindingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets the plug-in that prices one tenant\'s documents in one country from a date, replacing the binding that begins on the same day and recording the change in pos-tax\'s binding history. Use this tool only as the pos-tenant front door; do not use it from a screen or another service, which call PUT /v1/platform/tenants/{tenantId}/tax-provider-bindings instead. Preconditions: the call carries pos-tenant\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise); providerId is a registered plug-in that serves countryCode (US_SELF for US, AVALARA for any country, or <country>_SELF of a profiled country) (422 TAX_PROVIDER_NOT_REGISTERED otherwise). Required inputs: countryCode, providerId, effectiveFrom and requestId; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. Emits a TAX_PROVIDER_BINDING_SET event, writes a history row naming the forwarded actor, and returns 201, or 200 with the first result when the same request is replayed with its requestId. Returns 409 TAX_PROVIDER_BINDING_OVERLAP when another binding of the same country is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the requestId was used for another request. 
+     * Sets the plug-in that prices one tenant\'s documents in one country from a date, replacing the binding that begins on the same day and recording the change in pos-tax\'s binding history. Use this tool only as the pos-tenant front door; do not use it from a screen or another service, which call PUT /v1/platform/tenants/{tenantId}/tax-provider-bindings instead. Preconditions: the call carries pos-tenant\'s front-door secret and the forwarded X-User-Id and X-Tenant-Id (401 otherwise), and the Idempotency-Key header (UUID; missing or malformed is 400 VALIDATION_ERROR); providerId is a registered plug-in that serves countryCode (US_SELF for US, AVALARA for any country, or <country>_SELF of a profiled country) (422 TAX_PROVIDER_NOT_REGISTERED otherwise). Required inputs: countryCode, providerId and effectiveFrom; providerProfile and effectiveTo are optional, and effectiveTo is inclusive. The key travels in the Idempotency-Key header, never in the body. Emits a TAX_PROVIDER_BINDING_SET event, writes a history row naming the forwarded actor, and returns 201. A replay with the same key and request returns the stored 201 and body with Idempotency-Replayed: true, and writes no second history row or event. Returns 409 TAX_PROVIDER_BINDING_OVERLAP when another binding of the same country is in effect on any date this one covers, and 409 IDEMPOTENCY_CONFLICT when the key was used for another request or by another actor. 
      * Set a tenant\'s tax-provider binding
      */
     async setTaxProviderBinding(requestParameters: SetTaxProviderBindingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxProviderBindingResponse> {

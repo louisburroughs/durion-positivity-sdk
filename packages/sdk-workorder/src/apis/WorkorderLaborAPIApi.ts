@@ -18,6 +18,7 @@ import type {
   AdjustLaborRequest,
   ApiError,
   StartLaborRequest,
+  StopLaborRequest,
   WorkorderLaborAdjustmentResponse,
   WorkorderLaborEntryResponse,
 } from '../models/index';
@@ -28,6 +29,8 @@ import {
     ApiErrorToJSON,
     StartLaborRequestFromJSON,
     StartLaborRequestToJSON,
+    StopLaborRequestFromJSON,
+    StopLaborRequestToJSON,
     WorkorderLaborAdjustmentResponseFromJSON,
     WorkorderLaborAdjustmentResponseToJSON,
     WorkorderLaborEntryResponseFromJSON,
@@ -61,6 +64,7 @@ export interface StopLaborSessionRequest {
     workorderId: string;
     entryId: string;
     idempotencyKey: string;
+    stopLaborRequest?: StopLaborRequest;
 }
 
 /**
@@ -233,7 +237,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts a labor entry tracking a technician\'s time against one workorder service line, stamping the start time and zero hours worked. Use this tool when a technician begins billable labor on a specific service; do not use startWorkexecWorkSession, which is the payroll timekeeping clock rather than per-service labor tracking. Preconditions: the workorder must be in ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, the service must belong to that workorder, and the service must have no labor session still open. Required inputs: workorderId and serviceId (UUIDs) as path parameters, technicianId (UUID) in the body and the required Idempotency-Key header (a UUID); notes are optional, and a replay of the same request returns the original 201 answer with Idempotency-Replayed: true. Emits a WORKORDER_LABOR_START event. Returns 201 with the new entry (the same 201 on an idempotent replay), 404 when the workorder or service cannot be found, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, and 400 when a session is already active, the status disallows labor, or the Idempotency-Key is missing or not a UUID. 
+     * Starts a labor entry tracking a technician\'s time against one workorder service line, stamping the start time and zero hours worked. Use this tool when a technician begins billable labor on a specific service; do not use startWorkexecWorkSession, which is the payroll timekeeping clock rather than per-service labor tracking. Preconditions: the workorder must be in ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, the service must belong to that workorder, and the service must have no labor session still open. Required inputs: workorderId and serviceId (UUIDs) as path parameters, technicianId (UUID) in the body and the required Idempotency-Key header (a UUID); notes are optional, and a replay of the same request returns the original 201 answer with Idempotency-Replayed: true. occurredAt is the optional business time the session started, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, and the entry is stored at that time with source OFFLINE_REPLAY when it differs from receipt by more than 2 minutes. A replay whose workorder was completed, cancelled, invoiced, put on hold or reassigned meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKORDER_LABOR_START event. Returns 201 with the new entry (the same 201 on an idempotent replay), 404 when the workorder or service cannot be found, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, and 400 when a session is already active, the status disallows labor, or the Idempotency-Key is missing or not a UUID. 
      * Start Labor Session on Service
      */
     async startLaborSessionRaw(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
@@ -295,7 +299,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts a labor entry tracking a technician\'s time against one workorder service line, stamping the start time and zero hours worked. Use this tool when a technician begins billable labor on a specific service; do not use startWorkexecWorkSession, which is the payroll timekeeping clock rather than per-service labor tracking. Preconditions: the workorder must be in ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, the service must belong to that workorder, and the service must have no labor session still open. Required inputs: workorderId and serviceId (UUIDs) as path parameters, technicianId (UUID) in the body and the required Idempotency-Key header (a UUID); notes are optional, and a replay of the same request returns the original 201 answer with Idempotency-Replayed: true. Emits a WORKORDER_LABOR_START event. Returns 201 with the new entry (the same 201 on an idempotent replay), 404 when the workorder or service cannot be found, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, and 400 when a session is already active, the status disallows labor, or the Idempotency-Key is missing or not a UUID. 
+     * Starts a labor entry tracking a technician\'s time against one workorder service line, stamping the start time and zero hours worked. Use this tool when a technician begins billable labor on a specific service; do not use startWorkexecWorkSession, which is the payroll timekeeping clock rather than per-service labor tracking. Preconditions: the workorder must be in ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, the service must belong to that workorder, and the service must have no labor session still open. Required inputs: workorderId and serviceId (UUIDs) as path parameters, technicianId (UUID) in the body and the required Idempotency-Key header (a UUID); notes are optional, and a replay of the same request returns the original 201 answer with Idempotency-Replayed: true. occurredAt is the optional business time the session started, for work replayed from the technician app\'s offline queue: it must be no more than 72 hours old and no more than 2 minutes in the future, and the entry is stored at that time with source OFFLINE_REPLAY when it differs from receipt by more than 2 minutes. A replay whose workorder was completed, cancelled, invoiced, put on hold or reassigned meanwhile answers 409 WORKORDER_STATE_CHANGED. Emits a WORKORDER_LABOR_START event. Returns 201 with the new entry (the same 201 on an idempotent replay), 404 when the workorder or service cannot be found, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, and 400 when a session is already active, the status disallows labor, or the Idempotency-Key is missing or not a UUID. 
      * Start Labor Session on Service
      */
     async startLaborSession(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
@@ -304,7 +308,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stops an open labor entry, stamping the end time and computing hours worked from the elapsed session time. Use this tool when a technician finishes labor on a service; do not use adjustLaborHours, which corrects the hours on an already-stopped entry. Preconditions: the labor entry must exist and still be open — an entry with an end time cannot be stopped again. Required inputs: workorderId and entryId (UUIDs) as path parameters and the required Idempotency-Key header (a UUID); there is no request body, and a replay returns the already-stopped entry with Idempotency-Replayed: true. Emits a WORKORDER_LABOR_STOP event. Returns 404 when no labor entry exists for the id, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, and 400 when the session is already stopped or the Idempotency-Key is missing or not a UUID. 
+     * Stops an open labor entry, stamping the end time and computing hours worked from the elapsed session time. Use this tool when a technician finishes labor on a service; do not use adjustLaborHours, which corrects the hours on an already-stopped entry. Preconditions: the labor entry must exist and still be open — an entry with an end time cannot be stopped again. Required inputs: workorderId and entryId (UUIDs) as path parameters and the required Idempotency-Key header (a UUID); the optional body may carry occurredAt, the business time the session ended for work replayed from the technician app\'s offline queue, and a replay returns the already-stopped entry with Idempotency-Replayed: true. Emits a WORKORDER_LABOR_STOP event. Returns 404 when no labor entry exists for the id, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 409 LABOR_SEQUENCE_INVALID when occurredAt precedes the entry\'s start, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, and 400 when the session is already stopped or the Idempotency-Key is missing or not a UUID. 
      * Stop Active Labor Session
      */
     async stopLaborSessionRaw(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
@@ -333,6 +337,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
         if (requestParameters['idempotencyKey'] != null) {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
@@ -350,13 +356,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: StopLaborRequestToJSON(requestParameters['stopLaborRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderLaborEntryResponseFromJSON(jsonValue));
     }
 
     /**
-     * Stops an open labor entry, stamping the end time and computing hours worked from the elapsed session time. Use this tool when a technician finishes labor on a service; do not use adjustLaborHours, which corrects the hours on an already-stopped entry. Preconditions: the labor entry must exist and still be open — an entry with an end time cannot be stopped again. Required inputs: workorderId and entryId (UUIDs) as path parameters and the required Idempotency-Key header (a UUID); there is no request body, and a replay returns the already-stopped entry with Idempotency-Replayed: true. Emits a WORKORDER_LABOR_STOP event. Returns 404 when no labor entry exists for the id, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, and 400 when the session is already stopped or the Idempotency-Key is missing or not a UUID. 
+     * Stops an open labor entry, stamping the end time and computing hours worked from the elapsed session time. Use this tool when a technician finishes labor on a service; do not use adjustLaborHours, which corrects the hours on an already-stopped entry. Preconditions: the labor entry must exist and still be open — an entry with an end time cannot be stopped again. Required inputs: workorderId and entryId (UUIDs) as path parameters and the required Idempotency-Key header (a UUID); the optional body may carry occurredAt, the business time the session ended for work replayed from the technician app\'s offline queue, and a replay returns the already-stopped entry with Idempotency-Replayed: true. Emits a WORKORDER_LABOR_STOP event. Returns 404 when no labor entry exists for the id, 409 IDEMPOTENCY_CONFLICT when the key was used for a different request or by a different actor, 409 LABOR_SEQUENCE_INVALID when occurredAt precedes the entry\'s start, 409 WORKORDER_STATE_CHANGED when a replay\'s workorder changed meanwhile, 422 OCCURRED_AT_OUT_OF_RANGE when occurredAt is outside the replay window, and 400 when the session is already stopped or the Idempotency-Key is missing or not a UUID. 
      * Stop Active Labor Session
      */
     async stopLaborSession(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {

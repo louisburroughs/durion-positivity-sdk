@@ -62,12 +62,6 @@ export interface ReconciliationAdjustmentRequest {
      */
     overrideJustification?: string;
     /**
-     * Caller-generated UUIDv7; a replay returns the original with replayed true
-     * @type {string}
-     * @memberof ReconciliationAdjustmentRequest
-     */
-    requestId: string;
-    /**
      * OTHER only: the ACCEPTED match whose residual this settles
      * @type {string}
      * @memberof ReconciliationAdjustmentRequest
@@ -104,7 +98,6 @@ export enum ReconciliationAdjustmentRequestTypeEnum {
  * Check if a given object implements the ReconciliationAdjustmentRequest interface.
  */
 export function instanceOfReconciliationAdjustmentRequest(value: object): boolean {
-    if (!('requestId' in value)) return false;
     if (!('type' in value)) return false;
     return true;
 }
@@ -126,7 +119,6 @@ export function ReconciliationAdjustmentRequestFromJSONTyped(json: any, ignoreDi
         'description': json['description'] == null ? undefined : json['description'],
         'justification': json['justification'] == null ? undefined : json['justification'],
         'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
-        'requestId': json['requestId'],
         'settlesMatchId': json['settlesMatchId'] == null ? undefined : json['settlesMatchId'],
         'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
         'type': json['type'],
@@ -146,7 +138,6 @@ export function ReconciliationAdjustmentRequestToJSON(value?: ReconciliationAdju
         'description': value['description'],
         'justification': value['justification'],
         'overrideJustification': value['overrideJustification'],
-        'requestId': value['requestId'],
         'settlesMatchId': value['settlesMatchId'],
         'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString().substring(0,10)),
         'type': value['type'],

@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface UpdateEstimateItemRequest {
     /**
+     * Check-in concern this line answers. Omit to leave the line's grouping unchanged; send an id that is not a concern of this estimate's check-in to be rejected with 400.
+     * @type {string}
+     * @memberof UpdateEstimateItemRequest
+     */
+    concernId?: string;
+    /**
      * Updated description
      * @type {string}
      * @memberof UpdateEstimateItemRequest
@@ -68,6 +74,7 @@ export function UpdateEstimateItemRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'concernId': json['concernId'] == null ? undefined : json['concernId'],
         'description': json['description'] == null ? undefined : json['description'],
         'quantity': json['quantity'] == null ? undefined : json['quantity'],
         'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
@@ -82,6 +89,7 @@ export function UpdateEstimateItemRequestToJSON(value?: UpdateEstimateItemReques
     }
     return {
         
+        'concernId': value['concernId'],
         'description': value['description'],
         'quantity': value['quantity'],
         'taxCode': value['taxCode'],

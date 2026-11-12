@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ChangeRequestItemResponse } from './ChangeRequestItemResponse';
+import {
+    ChangeRequestItemResponseFromJSON,
+    ChangeRequestItemResponseFromJSONTyped,
+    ChangeRequestItemResponseToJSON,
+} from './ChangeRequestItemResponse';
+
 /**
  * Response DTO for change requests
  * @export
@@ -38,11 +45,41 @@ export interface ChangeRequestResponse {
      */
     approvedBy?: string;
     /**
+     * When the decision was recorded. Null until the request is decided
+     * @type {Date}
+     * @memberof ChangeRequestResponse
+     */
+    decidedAt?: Date;
+    /**
+     * User ID who decided. Null until the request is decided
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    decidedBy?: string;
+    /**
+     * Display name of who decided (First Last, name only). Null until decided, when the decider has no linked person, or when the person is not replicated
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    decidedByName?: string;
+    /**
+     * The decision reached: APPROVED, DECLINED or APPROVED_WITH_EXCEPTION. Null while the request awaits review, and on a cancelled request
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    decision?: string;
+    /**
      * Date and time the change was declined
      * @type {Date}
      * @memberof ChangeRequestResponse
      */
     declinedAt?: Date;
+    /**
+     * User ID who declined the change
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    declinedBy?: string;
     /**
      * Description of the change request
      * @type {string}
@@ -74,6 +111,18 @@ export interface ChangeRequestResponse {
      */
     isEmergencyException?: boolean;
     /**
+     * Part items: the parts the technician suggested
+     * @type {Array<ChangeRequestItemResponse>}
+     * @memberof ChangeRequestResponse
+     */
+    parts?: Array<ChangeRequestItemResponse>;
+    /**
+     * Photo image ids attached to the request, in the order they were sent
+     * @type {Array<string>}
+     * @memberof ChangeRequestResponse
+     */
+    photoImageIds?: Array<string>;
+    /**
      * Date and time the change was requested
      * @type {Date}
      * @memberof ChangeRequestResponse
@@ -86,11 +135,23 @@ export interface ChangeRequestResponse {
      */
     requestedByUserId?: string;
     /**
+     * Service items: the labor the technician suggested
+     * @type {Array<ChangeRequestItemResponse>}
+     * @memberof ChangeRequestResponse
+     */
+    services?: Array<ChangeRequestItemResponse>;
+    /**
      * Change request status
      * @type {string}
      * @memberof ChangeRequestResponse
      */
     status?: string;
+    /**
+     * How soon the technician judges the work is needed: CAN_WAIT, SOON or UNSAFE. Null on a request raised without one
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    urgency?: string;
     /**
      * Workorder ID
      * @type {string}
@@ -119,15 +180,24 @@ export function ChangeRequestResponseFromJSONTyped(json: any, ignoreDiscriminato
         'approvalNote': json['approvalNote'] == null ? undefined : json['approvalNote'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'decidedAt': json['decidedAt'] == null ? undefined : (new Date(json['decidedAt'])),
+        'decidedBy': json['decidedBy'] == null ? undefined : json['decidedBy'],
+        'decidedByName': json['decidedByName'] == null ? undefined : json['decidedByName'],
+        'decision': json['decision'] == null ? undefined : json['decision'],
         'declinedAt': json['declinedAt'] == null ? undefined : (new Date(json['declinedAt'])),
+        'declinedBy': json['declinedBy'] == null ? undefined : json['declinedBy'],
         'description': json['description'] == null ? undefined : json['description'],
         'exceptionReason': json['exceptionReason'] == null ? undefined : json['exceptionReason'],
         'id': json['id'] == null ? undefined : json['id'],
         'isApprovalGated': json['isApprovalGated'] == null ? undefined : json['isApprovalGated'],
         'isEmergencyException': json['isEmergencyException'] == null ? undefined : json['isEmergencyException'],
+        'parts': json['parts'] == null ? undefined : ((json['parts'] as Array<any>).map(ChangeRequestItemResponseFromJSON)),
+        'photoImageIds': json['photoImageIds'] == null ? undefined : json['photoImageIds'],
         'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
         'requestedByUserId': json['requestedByUserId'] == null ? undefined : json['requestedByUserId'],
+        'services': json['services'] == null ? undefined : ((json['services'] as Array<any>).map(ChangeRequestItemResponseFromJSON)),
         'status': json['status'] == null ? undefined : json['status'],
+        'urgency': json['urgency'] == null ? undefined : json['urgency'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
@@ -141,15 +211,24 @@ export function ChangeRequestResponseToJSON(value?: ChangeRequestResponse | null
         'approvalNote': value['approvalNote'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedBy': value['approvedBy'],
+        'decidedAt': value['decidedAt'] == null ? undefined : ((value['decidedAt']).toISOString()),
+        'decidedBy': value['decidedBy'],
+        'decidedByName': value['decidedByName'],
+        'decision': value['decision'],
         'declinedAt': value['declinedAt'] == null ? undefined : ((value['declinedAt']).toISOString()),
+        'declinedBy': value['declinedBy'],
         'description': value['description'],
         'exceptionReason': value['exceptionReason'],
         'id': value['id'],
         'isApprovalGated': value['isApprovalGated'],
         'isEmergencyException': value['isEmergencyException'],
+        'parts': value['parts'] == null ? undefined : ((value['parts'] as Array<any>).map(ChangeRequestItemResponseToJSON)),
+        'photoImageIds': value['photoImageIds'],
         'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
         'requestedByUserId': value['requestedByUserId'],
+        'services': value['services'] == null ? undefined : ((value['services'] as Array<any>).map(ChangeRequestItemResponseToJSON)),
         'status': value['status'],
+        'urgency': value['urgency'],
         'workorderId': value['workorderId'],
     };
 }

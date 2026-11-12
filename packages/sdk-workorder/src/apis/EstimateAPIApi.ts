@@ -19,12 +19,14 @@ import type {
   ApiError,
   ApproveEstimateRequest,
   CreateEstimateRequest,
+  EstimateCheckInRequest,
   EstimateItemResponse,
   EstimateResponse,
   EstimateSnapshotResponse,
   EstimateSummaryResponse,
+  PromoteEstimateRequest,
+  PromoteEstimateResponse,
   UpdateEstimateItemRequest,
-  WorkorderResponse,
 } from '../models/index';
 import {
     AddEstimateItemRequestFromJSON,
@@ -35,6 +37,8 @@ import {
     ApproveEstimateRequestToJSON,
     CreateEstimateRequestFromJSON,
     CreateEstimateRequestToJSON,
+    EstimateCheckInRequestFromJSON,
+    EstimateCheckInRequestToJSON,
     EstimateItemResponseFromJSON,
     EstimateItemResponseToJSON,
     EstimateResponseFromJSON,
@@ -43,10 +47,12 @@ import {
     EstimateSnapshotResponseToJSON,
     EstimateSummaryResponseFromJSON,
     EstimateSummaryResponseToJSON,
+    PromoteEstimateRequestFromJSON,
+    PromoteEstimateRequestToJSON,
+    PromoteEstimateResponseFromJSON,
+    PromoteEstimateResponseToJSON,
     UpdateEstimateItemRequestFromJSON,
     UpdateEstimateItemRequestToJSON,
-    WorkorderResponseFromJSON,
-    WorkorderResponseToJSON,
 } from '../models/index';
 
 export interface AddEstimateItemOperationRequest {
@@ -116,9 +122,15 @@ export interface PatchEstimateStatusRequest {
     body: object;
 }
 
-export interface PromoteEstimateRequest {
+export interface PromoteEstimateOperationRequest {
     estimateId: string;
     idempotencyKey?: string;
+    promoteEstimateRequest?: PromoteEstimateRequest;
+}
+
+export interface PutEstimateCheckInRequest {
+    estimateId: string;
+    estimateCheckInRequest: EstimateCheckInRequest;
 }
 
 export interface ReopenEstimateRequest {
@@ -194,7 +206,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves a PENDING_APPROVAL estimate, transitioning it to APPROVED with the captured signature, signer, notes, optional purchase order, and optional selective line-item approvals. Use this tool when the customer accepts the submitted estimate; do not use approveWorkorder, which authorizes a workorder rather than an estimate — submitEstimateForApproval must have run first, and promoteEstimate is the follow-up that turns the approval into a workorder. Preconditions: the estimate must exist in PENDING_APPROVAL status and belong to the customerId in the request; commercial accounts with PO enforcement must supply a purchaseOrderNumber. Required inputs: estimateId (UUID) as a path parameter and customerId (UUID) in the body; signatureData, signerName, notes, purchaseOrderNumber, and lineItemApprovals are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_ESTIMATE_APPROVE event. Returns 404 when the estimate does not exist, 400 when the customerId in the request does not match the estimate\'s own customer, 409 when the status is not PENDING_APPROVAL, and 422 when a required purchase order is missing. 
+     * Approves a PENDING_APPROVAL estimate, transitioning it to APPROVED with the approval method, captured signature, signer, notes, optional purchase order, and optional selective line-item approvals. The method and the actor who recorded the approval are stored on the estimate and returned in the response. Use this tool when the customer accepts the submitted estimate; do not use approveWorkorder, which authorizes a workorder rather than an estimate — submitEstimateForApproval must have run first, and promoteEstimate is the follow-up that turns the approval into a workorder. Preconditions: the estimate must exist in PENDING_APPROVAL status and belong to the customerId in the request; commercial accounts with PO enforcement must supply a purchaseOrderNumber. A caller who does not hold workorder:location_settings:manage over the estimate\'s location is bound by that location\'s technician settings: they may record only SIGNATURE, or VERBAL_CONFIRMATION where the location allows it, and a verbal approval there must be permitted. Required inputs: estimateId (UUID) as a path parameter, customerId (UUID) and approvalMethod in the body; SIGNATURE requires signatureData and signerName; VERBAL_CONFIRMATION requires signerName and notes (non-blank, at most 500 characters) and must omit signatureData; signatureMimeType defaults to image/png. Emits a WORKORDER_ESTIMATE_APPROVE event. Returns 400 when the body does not satisfy the approval method\'s field rules or the customerId does not match the estimate\'s own customer, 404 when the estimate does not exist, 409 when the status is not PENDING_APPROVAL, 422 when a required purchase order is missing, and 403 VERBAL_APPROVAL_NOT_ALLOWED or APPROVAL_METHOD_NOT_ALLOWED when the location\'s technician settings refuse the caller. 
      * Approve Estimate With Customer Signature
      */
     async approveEstimateRaw(requestParameters: ApproveEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
@@ -238,7 +250,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves a PENDING_APPROVAL estimate, transitioning it to APPROVED with the captured signature, signer, notes, optional purchase order, and optional selective line-item approvals. Use this tool when the customer accepts the submitted estimate; do not use approveWorkorder, which authorizes a workorder rather than an estimate — submitEstimateForApproval must have run first, and promoteEstimate is the follow-up that turns the approval into a workorder. Preconditions: the estimate must exist in PENDING_APPROVAL status and belong to the customerId in the request; commercial accounts with PO enforcement must supply a purchaseOrderNumber. Required inputs: estimateId (UUID) as a path parameter and customerId (UUID) in the body; signatureData, signerName, notes, purchaseOrderNumber, and lineItemApprovals are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_ESTIMATE_APPROVE event. Returns 404 when the estimate does not exist, 400 when the customerId in the request does not match the estimate\'s own customer, 409 when the status is not PENDING_APPROVAL, and 422 when a required purchase order is missing. 
+     * Approves a PENDING_APPROVAL estimate, transitioning it to APPROVED with the approval method, captured signature, signer, notes, optional purchase order, and optional selective line-item approvals. The method and the actor who recorded the approval are stored on the estimate and returned in the response. Use this tool when the customer accepts the submitted estimate; do not use approveWorkorder, which authorizes a workorder rather than an estimate — submitEstimateForApproval must have run first, and promoteEstimate is the follow-up that turns the approval into a workorder. Preconditions: the estimate must exist in PENDING_APPROVAL status and belong to the customerId in the request; commercial accounts with PO enforcement must supply a purchaseOrderNumber. A caller who does not hold workorder:location_settings:manage over the estimate\'s location is bound by that location\'s technician settings: they may record only SIGNATURE, or VERBAL_CONFIRMATION where the location allows it, and a verbal approval there must be permitted. Required inputs: estimateId (UUID) as a path parameter, customerId (UUID) and approvalMethod in the body; SIGNATURE requires signatureData and signerName; VERBAL_CONFIRMATION requires signerName and notes (non-blank, at most 500 characters) and must omit signatureData; signatureMimeType defaults to image/png. Emits a WORKORDER_ESTIMATE_APPROVE event. Returns 400 when the body does not satisfy the approval method\'s field rules or the customerId does not match the estimate\'s own customer, 404 when the estimate does not exist, 409 when the status is not PENDING_APPROVAL, 422 when a required purchase order is missing, and 403 VERBAL_APPROVAL_NOT_ALLOWED or APPROVAL_METHOD_NOT_ALLOWED when the location\'s technician settings refuse the caller. 
      * Approve Estimate With Customer Signature
      */
     async approveEstimate(requestParameters: ApproveEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
@@ -293,7 +305,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Creates an estimate in DRAFT status for a customer and vehicle, generating a unique estimate number and applying defaults for location and currency when omitted. Use this tool for a from-scratch estimate; do not use createEstimateFromAppointment, which seeds the estimate from a scheduled appointment and is idempotent on the appointment id. Preconditions: none beyond the caller holding workorder:estimate:create; when financial fields are supplied, subtotal plus taxAmount must equal total and none may be negative. Required inputs: customerId and vehicleId (UUIDs), crmPartyId, crmVehicleId, and crmContactIds; locationId, currencyUomId, and the financial fields are optional, and an Idempotency-Key header replays the originally created estimate. Emits a WORKORDER_ESTIMATE_CREATE event. Returns 201 with the estimate, 400 with code VALIDATION_ERROR when required fields are missing or negative, 409 with code CONFLICT when totals are inconsistent or an integrity constraint fails, and 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the estimate number — re-send the same request. 
      * Create a New Draft Estimate
      */
-    async createEstimateRaw(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async createEstimateRaw(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
         if (requestParameters['createEstimateRequest'] == null) {
             throw new runtime.RequiredError(
                 'createEstimateRequest',
@@ -327,14 +339,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             body: CreateEstimateRequestToJSON(requestParameters['createEstimateRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => EstimateResponseFromJSON(jsonValue));
     }
 
     /**
      * Creates an estimate in DRAFT status for a customer and vehicle, generating a unique estimate number and applying defaults for location and currency when omitted. Use this tool for a from-scratch estimate; do not use createEstimateFromAppointment, which seeds the estimate from a scheduled appointment and is idempotent on the appointment id. Preconditions: none beyond the caller holding workorder:estimate:create; when financial fields are supplied, subtotal plus taxAmount must equal total and none may be negative. Required inputs: customerId and vehicleId (UUIDs), crmPartyId, crmVehicleId, and crmContactIds; locationId, currencyUomId, and the financial fields are optional, and an Idempotency-Key header replays the originally created estimate. Emits a WORKORDER_ESTIMATE_CREATE event. Returns 201 with the estimate, 400 with code VALIDATION_ERROR when required fields are missing or negative, 409 with code CONFLICT when totals are inconsistent or an integrity constraint fails, and 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the estimate number — re-send the same request. 
      * Create a New Draft Estimate
      */
-    async createEstimate(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+    async createEstimate(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
         const response = await this.createEstimateRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -822,7 +834,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Applies a workflow transition to an estimate by target status: DECLINED delegates to the decline flow without a reason, and DRAFT delegates to the reopen flow — no other target is accepted. Use this tool only for generic UI status toggles; prefer declineEstimate, which records a decline reason, and reopenEstimate rather than this generic patch. Preconditions: the estimate must exist and the delegated transition\'s own rules apply — decline requires DRAFT, PENDING_APPROVAL, or APPROVED status, and reopen requires DECLINED within the expiry window. Required inputs: estimateId (UUID) as a path parameter and a JSON body whose status field is DECLINED or DRAFT. Emits a WORKORDER_ESTIMATE_PATCH event. Returns 400 with VALIDATION_ERROR when status is missing or not a known value, 404 when the estimate does not exist, and 409 with CONFLICT when the target is unsupported or the transition is not allowed from the current state. 
      * Patch Estimate Status
      */
-    async patchEstimateStatusRaw(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async patchEstimateStatusRaw(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
@@ -859,23 +871,23 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             body: requestParameters['body'] as any,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => EstimateResponseFromJSON(jsonValue));
     }
 
     /**
      * Applies a workflow transition to an estimate by target status: DECLINED delegates to the decline flow without a reason, and DRAFT delegates to the reopen flow — no other target is accepted. Use this tool only for generic UI status toggles; prefer declineEstimate, which records a decline reason, and reopenEstimate rather than this generic patch. Preconditions: the estimate must exist and the delegated transition\'s own rules apply — decline requires DRAFT, PENDING_APPROVAL, or APPROVED status, and reopen requires DECLINED within the expiry window. Required inputs: estimateId (UUID) as a path parameter and a JSON body whose status field is DECLINED or DRAFT. Emits a WORKORDER_ESTIMATE_PATCH event. Returns 400 with VALIDATION_ERROR when status is missing or not a known value, 404 when the estimate does not exist, and 409 with CONFLICT when the target is unsupported or the transition is not allowed from the current state. 
      * Patch Estimate Status
      */
-    async patchEstimateStatus(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+    async patchEstimateStatus(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
         const response = await this.patchEstimateStatusRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when a promotion precondition or the customer\'s requirements verdict refuses it, 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the workorder number, and 503 when the requirements verdict has not replicated yet. Those last two are the only answers worth retrying. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
+     * Promotes an APPROVED estimate into a new workorder that inherits the estimate\'s customer, location, and CRM references: DRAFT and unassigned without a body, or, with a claim in the body, APPROVED on the customer\'s estimate approval with the calling technician assigned and the workorder placed on the bay, mobile unit or HOLD the claim names, in one transaction. Use this tool after approveEstimate succeeds; do not use createWorkorder, which skips the promotion validations, and do not use it to claim a workorder that already exists, which is claimWorkorder. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted (a prior promotion is answered with the existing workorder and no claim is attempted); a claim also requires workorder:workorder:claim with the estimate\'s location within its reach (ADR-0061) and a login with a linked person, and its position and technician follow claimWorkorder\'s rules. Required inputs: estimateId (UUID) as a path parameter; an optional body with a claim (resourceType BAY, MOBILE_UNIT or HOLD, resourceId for BAY and MOBILE_UNIT, optional slotStart and slotEnd); an optional Idempotency-Key header that collapses retries onto the first answer and covers the body. When the claimed slot is already taken the promotion still succeeds: the workorder is created APPROVED and unassigned, the answer carries claim.claimed false with claim.conflicts naming the holder, and it is placed afterwards with claimWorkorder, not by promoting again. Emits a WORKORDER_ESTIMATE_PROMOTE event, and a WORKORDER_CLAIM event when the claim placed the workorder; a replay emits none. Returns 200 with the workorder (and a claim object only when a claim was sent and this call created the workorder), 400 for an invalid claim, 403 FORBIDDEN, NO_LINKED_PERSON or LOCATION_SCOPE_DENIED when the caller may not claim, 404 when the estimate does not exist, 409 when a promotion precondition refuses it or the key was used for a different request, 422 when the claim\'s technician or position is refused, and 503 when the requirements verdict, the technician or the position has not replicated yet; only 409 DOCUMENT_NUMBER_CONFLICT, 409 RESOURCE_OCCUPIED (the slot was lost to a concurrent request) and the 503s are worth retrying, and every refusal creates nothing. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
      * Promote Approved Estimate to Workorder
      */
-    async promoteEstimateRaw(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
+    async promoteEstimateRaw(requestParameters: PromoteEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromoteEstimateResponse>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
@@ -886,6 +898,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
 
         if (requestParameters['idempotencyKey'] != null) {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
@@ -904,17 +918,71 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: PromoteEstimateRequestToJSON(requestParameters['promoteEstimateRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PromoteEstimateResponseFromJSON(jsonValue));
     }
 
     /**
-     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when a promotion precondition or the customer\'s requirements verdict refuses it, 409 with code DOCUMENT_NUMBER_CONFLICT and a Retry-After header when a concurrent create took the workorder number, and 503 when the requirements verdict has not replicated yet. Those last two are the only answers worth retrying. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
+     * Promotes an APPROVED estimate into a new workorder that inherits the estimate\'s customer, location, and CRM references: DRAFT and unassigned without a body, or, with a claim in the body, APPROVED on the customer\'s estimate approval with the calling technician assigned and the workorder placed on the bay, mobile unit or HOLD the claim names, in one transaction. Use this tool after approveEstimate succeeds; do not use createWorkorder, which skips the promotion validations, and do not use it to claim a workorder that already exists, which is claimWorkorder. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted (a prior promotion is answered with the existing workorder and no claim is attempted); a claim also requires workorder:workorder:claim with the estimate\'s location within its reach (ADR-0061) and a login with a linked person, and its position and technician follow claimWorkorder\'s rules. Required inputs: estimateId (UUID) as a path parameter; an optional body with a claim (resourceType BAY, MOBILE_UNIT or HOLD, resourceId for BAY and MOBILE_UNIT, optional slotStart and slotEnd); an optional Idempotency-Key header that collapses retries onto the first answer and covers the body. When the claimed slot is already taken the promotion still succeeds: the workorder is created APPROVED and unassigned, the answer carries claim.claimed false with claim.conflicts naming the holder, and it is placed afterwards with claimWorkorder, not by promoting again. Emits a WORKORDER_ESTIMATE_PROMOTE event, and a WORKORDER_CLAIM event when the claim placed the workorder; a replay emits none. Returns 200 with the workorder (and a claim object only when a claim was sent and this call created the workorder), 400 for an invalid claim, 403 FORBIDDEN, NO_LINKED_PERSON or LOCATION_SCOPE_DENIED when the caller may not claim, 404 when the estimate does not exist, 409 when a promotion precondition refuses it or the key was used for a different request, 422 when the claim\'s technician or position is refused, and 503 when the requirements verdict, the technician or the position has not replicated yet; only 409 DOCUMENT_NUMBER_CONFLICT, 409 RESOURCE_OCCUPIED (the slot was lost to a concurrent request) and the 503s are worth retrying, and every refusal creates nothing. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
      * Promote Approved Estimate to Workorder
      */
-    async promoteEstimate(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {
+    async promoteEstimate(requestParameters: PromoteEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromoteEstimateResponse> {
         const response = await this.promoteEstimateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Records the vehicle intake on an estimate as an idempotent full replace: odometer reading and unit, up to ten customer concerns, up to twelve walkaround photo image ids, and whether the customer is waiting; checkedInAt and checkedInBy keep their first values. Use this tool to save or correct the intake on a DRAFT estimate, including after a reopen; do not use it to group a line on a concern, use addEstimateItem or updateEstimateItem with concernId instead. Preconditions: the estimate exists, is DRAFT, has no workorder, and names a vehicle. Required inputs: estimateId in the path and odometerValue, odometerUnit and customerWaiting in the body; an unknown photo image id is accepted, a concern id foreign to this check-in is rejected. Emits WORKORDER_ESTIMATE_CHECK_IN and, when the reading or unit changes, a vehicle.odometer.record-requested command through the outbox; odometerLowerThanLast is advisory. Returns 200 with the estimate and its checkIn, 400 on validation failures or a missing caller user id, 403 without workorder:estimate:check_in, 404 for an unknown estimate, 409 when the estimate is past DRAFT or has a workorder, and 422 when it names no vehicle. 
+     * Record Vehicle Check-In on an Estimate
+     */
+    async putEstimateCheckInRaw(requestParameters: PutEstimateCheckInRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError(
+                'estimateId',
+                'Required parameter "estimateId" was null or undefined when calling putEstimateCheckIn().'
+            );
+        }
+
+        if (requestParameters['estimateCheckInRequest'] == null) {
+            throw new runtime.RequiredError(
+                'estimateCheckInRequest',
+                'Required parameter "estimateCheckInRequest" was null or undefined when calling putEstimateCheckIn().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:check_in"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/check-in`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: EstimateCheckInRequestToJSON(requestParameters['estimateCheckInRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EstimateResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records the vehicle intake on an estimate as an idempotent full replace: odometer reading and unit, up to ten customer concerns, up to twelve walkaround photo image ids, and whether the customer is waiting; checkedInAt and checkedInBy keep their first values. Use this tool to save or correct the intake on a DRAFT estimate, including after a reopen; do not use it to group a line on a concern, use addEstimateItem or updateEstimateItem with concernId instead. Preconditions: the estimate exists, is DRAFT, has no workorder, and names a vehicle. Required inputs: estimateId in the path and odometerValue, odometerUnit and customerWaiting in the body; an unknown photo image id is accepted, a concern id foreign to this check-in is rejected. Emits WORKORDER_ESTIMATE_CHECK_IN and, when the reading or unit changes, a vehicle.odometer.record-requested command through the outbox; odometerLowerThanLast is advisory. Returns 200 with the estimate and its checkIn, 400 on validation failures or a missing caller user id, 403 without workorder:estimate:check_in, 404 for an unknown estimate, 409 when the estimate is past DRAFT or has a workorder, and 422 when it names no vehicle. 
+     * Record Vehicle Check-In on an Estimate
+     */
+    async putEstimateCheckIn(requestParameters: PutEstimateCheckInRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
+        const response = await this.putEstimateCheckInRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

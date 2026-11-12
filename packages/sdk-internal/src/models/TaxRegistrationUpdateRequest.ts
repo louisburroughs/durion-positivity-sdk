@@ -44,12 +44,6 @@ export interface TaxRegistrationUpdateRequest {
      */
     registrationNumber: string;
     /**
-     * Caller-generated UUIDv7 naming this request; a replay returns the first result
-     * @type {string}
-     * @memberof TaxRegistrationUpdateRequest
-     */
-    requestId: string;
-    /**
      * The version the caller read; another one is 409 OPTIMISTIC_LOCK
      * @type {number}
      * @memberof TaxRegistrationUpdateRequest
@@ -64,7 +58,6 @@ export function instanceOfTaxRegistrationUpdateRequest(value: object): boolean {
     if (!('effectiveFrom' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('registrationNumber' in value)) return false;
-    if (!('requestId' in value)) return false;
     if (!('version' in value)) return false;
     return true;
 }
@@ -83,7 +76,6 @@ export function TaxRegistrationUpdateRequestFromJSONTyped(json: any, ignoreDiscr
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'justification': json['justification'],
         'registrationNumber': json['registrationNumber'],
-        'requestId': json['requestId'],
         'version': json['version'],
     };
 }
@@ -98,7 +90,6 @@ export function TaxRegistrationUpdateRequestToJSON(value?: TaxRegistrationUpdate
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'justification': value['justification'],
         'registrationNumber': value['registrationNumber'],
-        'requestId': value['requestId'],
         'version': value['version'],
     };
 }
