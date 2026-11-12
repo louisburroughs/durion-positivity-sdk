@@ -208,6 +208,7 @@ async function closePosition(
       if (!service.id || !COMPLETABLE_ITEMS.has(String(service.status))) continue;
       await call(`completeServiceItem ${service.id}`, () =>
         crew.manager.workorder.workOrderAPIApi.completeServiceItem({
+          idempotencyKey: crypto.randomUUID(),
           workorderId,
           serviceLineId: service.id as string,
         }),

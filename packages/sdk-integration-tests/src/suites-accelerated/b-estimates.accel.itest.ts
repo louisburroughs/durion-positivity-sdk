@@ -17,7 +17,7 @@
  * calendar concern belongs in both.
  */
 import { SeederRandom } from '@durion-sdk/seeder';
-import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
+import { AddEstimateItemRequestItemTypeEnum, ApproveEstimateRequestApprovalMethodEnum } from '@durion-sdk/workorder';
 import {
   addLaborLine,
   addPartLine,
@@ -200,6 +200,7 @@ describe('Suite B — estimates', () => {
         advisor.workorder.estimateAPIApi.approveEstimate({
           estimateId,
           approveEstimateRequest: {
+            approvalMethod: ApproveEstimateRequestApprovalMethodEnum.Signature,
             customerId: customer.partyId,
             signatureData: ctx.random.base64(32),
             signerName: customer.fullName,
@@ -238,6 +239,7 @@ describe('Suite B — estimates', () => {
         advisor.workorder.estimateAPIApi.approveEstimate({
           estimateId,
           approveEstimateRequest: {
+            approvalMethod: ApproveEstimateRequestApprovalMethodEnum.Signature,
             customerId: customer.partyId,
             signatureData: ctx.random.base64(16),
             signerName: customer.fullName,
@@ -323,6 +325,7 @@ describe('Suite B — estimates', () => {
         tech.workorder.estimateAPIApi.approveEstimate({
           estimateId,
           approveEstimateRequest: {
+            approvalMethod: ApproveEstimateRequestApprovalMethodEnum.Signature,
             customerId: party.partyId,
             signatureData: ctx.random.base64(16),
             signerName: party.fullName,
