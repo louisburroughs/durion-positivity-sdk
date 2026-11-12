@@ -162,6 +162,66 @@ describe('scenario library', () => {
     expect(goal).toMatch(/the bank will not show it for a day or two/);
   });
 
+  describe('timekeeping', () => {
+    const byId = (id: string) => SCENARIOS.find((scenario) => scenario.id === id);
+    const at = (id: string): string => byId(id)?.at ?? '';
+
+    it('has the whole crew clock in, take lunch and clock out at every site, in that order, every day', () => {
+      for (const id of ['crew-clock-in', 'lunch-out', 'lunch-back', 'crew-clock-out']) {
+        expect([id, byId(id)?.cadence, byId(id)?.perSite]).toEqual([id, 'daily', true]);
+      }
+      expect([at('crew-clock-in'), at('lunch-out'), at('lunch-back'), at('crew-clock-out'), at('close-shop')]).toEqual(
+        [at('crew-clock-in'), at('lunch-out'), at('lunch-back'), at('crew-clock-out'), at('close-shop')].sort(),
+      );
+      expect(byId('crew-clock-in')?.goal).toMatch(/advisors, technicians, parts and office staff alike/);
+      expect(byId('lunch-out')?.operations).toContain('people.WorkSessionsAPIApi.startWorkSessionBreak');
+      expect(byId('lunch-back')?.operations).toContain('people.WorkSessionsAPIApi.stopWorkSessionBreak');
+    });
+
+    it('hands the time in: a session is stopped and then submitted', () => {
+      const out = byId('crew-clock-out');
+      expect(out?.operations).toEqual(
+        expect.arrayContaining(['people.WorkSessionsAPIApi.stopWorkSession', 'people.WorkSessionsAPIApi.submitWorkSession']),
+      );
+      expect(out?.goal).toMatch(/submit the ended session for approval/);
+    });
+
+    it('plants the ordinary problems on fixed days, and has the manager find and fix them the next morning', () => {
+      expect(byId('crew-clock-out')?.goal).toMatch(/on Wednesdays, the technician whose name comes last alphabetically/);
+      expect(byId('lunch-out')?.goal).toMatch(/on Tuesdays and Fridays/);
+      const review = byId('timekeeping-review');
+      expect(review).toMatchObject({ cadence: 'daily', perSite: true });
+      // The review runs after clock-in, which is told to leave a stale session for it.
+      expect(at('crew-clock-in') < at('timekeeping-review')).toBe(true);
+      expect(byId('crew-clock-in')?.goal).toMatch(/do not touch it, the morning time review deals with it/);
+      expect(review?.operations).toEqual(
+        expect.arrayContaining([
+          'people.PeopleExceptionsApi.createTimeEntryException',
+          'people.PeopleExceptionsApi.acknowledgeTimeEntryException',
+          'people.PeopleExceptionsApi.resolveTimeEntryException',
+          'people.PeopleExceptionsApi.waiveTimeEntryException',
+          'people.PeopleTimeEntriesApi.createTimeEntryAdjustment',
+          'people.PeopleTimeEntriesApi.approveTimeEntryAdjustment',
+        ]),
+      );
+    });
+
+    it('approves each site\'s week on Monday, then signs the period off for the whole business', () => {
+      const approval = byId('weekly-timekeeping-approval');
+      const signoff = byId('weekly-pay-period-signoff');
+      expect(approval).toMatchObject({ cadence: 'weekly', weekday: 1, perSite: true });
+      expect(approval?.operations).toEqual(
+        expect.arrayContaining(['people.TimeEntryApprovalAPIApi.approveTimeEntriesBatch', 'people.TimeEntryApprovalAPIApi.rejectTimeEntriesBatch']),
+      );
+      expect(signoff).toMatchObject({ cadence: 'weekly', weekday: 1, perSite: false, persona: 'controller' });
+      expect(at('weekly-timekeeping-approval') < at('weekly-pay-period-signoff')).toBe(true);
+      expect(signoff?.operations).toEqual(
+        expect.arrayContaining(['people.TimekeepingApprovalAPIApi.approveTimePeriod', 'people.PeopleReportsAPIApi.listApprovedTimeForExport']),
+      );
+      expect(signoff?.goal).toMatch(/Never mark a period payroll-closed/);
+    });
+  });
+
   it('pins a destructive operation only where that is the point of the scenario', () => {
     const destructive = SCENARIOS.flatMap((scenario) =>
       scenario.operations.filter((id) => catalog.byId.get(id)?.risk === 'destructive').map((id) => `${scenario.id}: ${id}`),

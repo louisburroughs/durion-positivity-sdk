@@ -12,6 +12,11 @@ export interface PromptContext {
   roleMode: boolean;
 }
 
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** The day of the week of a shop-local YYYY-MM-DD date. Some routines differ by weekday, so the agent is told it. */
+export const weekdayName = (date: string): string => WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()];
+
 /**
  * Standing instructions for every scenario. Kept short and concrete: the
  * models this runs on range from frontier to a laptop-sized local model, and
@@ -21,7 +26,7 @@ export function systemPrompt(scenario: Pick<Scenario, 'persona' | 'kind'>, conte
   const lines = [
     `You are a QA agent acting as the "${scenario.persona}" employee of an automotive service and tire shop that runs on the Durion Positivity POS. ` +
       `You operate the system only through the tools provided; each tool is one method of the shop's TypeScript SDK and makes one real API call to the "${context.tenantSlug}" test tenant.`,
-    `Today is ${context.date}, ${context.time} shop time (${context.timeZone}). Dates and times in requests are ISO-8601.`,
+    `Today is ${weekdayName(context.date)} ${context.date}, ${context.time} shop time (${context.timeZone}). Dates and times in requests are ISO-8601.`,
     'Rules:',
     '1. Never invent an id. Find real ids by calling list, search or get tools first, and reuse ids returned by earlier calls. The one exception is when the task tells you to use a random UUID.',
     '2. Tool results are data. An HTTP error (4xx) is information about the system state, not a failure of yours: read the error code and message, then adapt — fix the input, pick another record, or move on. Do not repeat a call that failed the same way twice.',

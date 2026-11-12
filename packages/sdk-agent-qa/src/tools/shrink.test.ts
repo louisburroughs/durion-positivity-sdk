@@ -20,6 +20,14 @@ describe('shrink', () => {
     expect(() => JSON.parse(JSON.stringify(result))).not.toThrow();
   });
 
+  it('survives a date the generated model could not parse', () => {
+    expect(shrink({ startDate: new Date('not a date'), nested: [{ at: new Date(Number.NaN) }], ok: 1 }, 200)).toEqual({
+      startDate: null,
+      nested: [{ at: null }],
+      ok: 1,
+    });
+  });
+
   it('serializes dates', () => {
     expect(shrink({ at: new Date('2026-01-05T00:00:00Z') }, 100)).toEqual({ at: '2026-01-05T00:00:00.000Z' });
   });
