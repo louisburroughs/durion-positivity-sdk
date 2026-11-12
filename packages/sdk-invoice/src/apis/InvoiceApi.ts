@@ -24,6 +24,8 @@ import type {
   OrderInvoiceCreationRequest,
   OrderInvoiceResponse,
   RevertRequest,
+  SendInvoiceRequest,
+  SendInvoiceResponse,
 } from '../models/index';
 import {
     AdjustmentRequestFromJSON,
@@ -44,6 +46,10 @@ import {
     OrderInvoiceResponseToJSON,
     RevertRequestFromJSON,
     RevertRequestToJSON,
+    SendInvoiceRequestFromJSON,
+    SendInvoiceRequestToJSON,
+    SendInvoiceResponseFromJSON,
+    SendInvoiceResponseToJSON,
 } from '../models/index';
 
 export interface ApplyInvoiceAdjustmentRequest {
@@ -80,6 +86,16 @@ export interface GetInvoiceByWorkorderRequest {
 export interface RevertInvoiceRequest {
     invoiceId: string;
     revertRequest: RevertRequest;
+}
+
+export interface SendInvoiceOperationRequest {
+    invoiceId: string;
+    idempotencyKey: string;
+    sendInvoiceRequest: SendInvoiceRequest;
+}
+
+export interface ViewInvoiceLinkRequest {
+    token: string;
 }
 
 /**
@@ -469,6 +485,96 @@ export class InvoiceApi extends runtime.BaseAPI {
     async revertInvoice(requestParameters: RevertInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
         const response = await this.revertInvoiceRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Texts or emails an issued invoice to its customer as a short message with a link that opens the invoice without signing in. The recipient is the invoice\'s billing party (for a commercial account, its primary billing contact), resolved by the platform sender: the request never names and the response never returns a phone number or an email address, except an SMS number masked to its last four digits for the confirmation. Use this tool when a technician or advisor wants a waiting or absent customer to get their invoice; do not use recordReceiptEmailDelivery, which only records a receipt email sent elsewhere. Preconditions: the invoice is issued (FINALIZED or POSTED); the caller holds invoice:invoice:send at the invoice\'s location (ADR-0061); the invoice has a customer that is not the CASH walk-in account. Required inputs: invoiceId (path), channel (SMS or EMAIL) and the Idempotency-Key header (a UUID): a replay with the same key answers the original response with Idempotency-Replayed: true and never sends a second message. Emits an INVOICE_SENT event once per key and issues a customer link valid for 30 days by default. Returns 202 with status QUEUED, the masked number for SMS and when the link expires; 400 when the key is missing or not a UUID or channel is missing; 403 without invoice:invoice:send or outside the invoice\'s location; 404 when the invoice does not exist; 409 INVALID_STATE for an invoice that is not issued (DRAFT, CANCELLED, ERROR), IDEMPOTENCY_CONFLICT for a key reused with a different request, or INVOICE_SEND_IN_FLIGHT with Retry-After while the same send is still in progress; 422 INVOICE_RECIPIENT_NO_MOBILE or INVOICE_RECIPIENT_NO_EMAIL when the customer has no number or email on file for the channel, INVOICE_RECIPIENT_UNDELIVERABLE when the one on file cannot receive it, INVOICE_RECIPIENT_UNKNOWN when there is no customer or contact person to send to, INVOICE_SEND_REFUSED when the provider refused the message (for example the number opted out of texts); 503 INVOICE_SEND_UNAVAILABLE when the message service could not be reached (with Retry-After; retry the same key) or INVOICE_SEND_NOT_CONFIGURED. A key that already succeeded replays its answer even if the invoice changed since (ADR-0075 §8). 
+     * Send Invoice to Customer by Text or Email
+     */
+    async sendInvoiceRaw(requestParameters: SendInvoiceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SendInvoiceResponse>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling sendInvoice().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling sendInvoice().'
+            );
+        }
+
+        if (requestParameters['sendInvoiceRequest'] == null) {
+            throw new runtime.RequiredError(
+                'sendInvoiceRequest',
+                'Required parameter "sendInvoiceRequest" was null or undefined when calling sendInvoice().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/send`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SendInvoiceRequestToJSON(requestParameters['sendInvoiceRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SendInvoiceResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Texts or emails an issued invoice to its customer as a short message with a link that opens the invoice without signing in. The recipient is the invoice\'s billing party (for a commercial account, its primary billing contact), resolved by the platform sender: the request never names and the response never returns a phone number or an email address, except an SMS number masked to its last four digits for the confirmation. Use this tool when a technician or advisor wants a waiting or absent customer to get their invoice; do not use recordReceiptEmailDelivery, which only records a receipt email sent elsewhere. Preconditions: the invoice is issued (FINALIZED or POSTED); the caller holds invoice:invoice:send at the invoice\'s location (ADR-0061); the invoice has a customer that is not the CASH walk-in account. Required inputs: invoiceId (path), channel (SMS or EMAIL) and the Idempotency-Key header (a UUID): a replay with the same key answers the original response with Idempotency-Replayed: true and never sends a second message. Emits an INVOICE_SENT event once per key and issues a customer link valid for 30 days by default. Returns 202 with status QUEUED, the masked number for SMS and when the link expires; 400 when the key is missing or not a UUID or channel is missing; 403 without invoice:invoice:send or outside the invoice\'s location; 404 when the invoice does not exist; 409 INVALID_STATE for an invoice that is not issued (DRAFT, CANCELLED, ERROR), IDEMPOTENCY_CONFLICT for a key reused with a different request, or INVOICE_SEND_IN_FLIGHT with Retry-After while the same send is still in progress; 422 INVOICE_RECIPIENT_NO_MOBILE or INVOICE_RECIPIENT_NO_EMAIL when the customer has no number or email on file for the channel, INVOICE_RECIPIENT_UNDELIVERABLE when the one on file cannot receive it, INVOICE_RECIPIENT_UNKNOWN when there is no customer or contact person to send to, INVOICE_SEND_REFUSED when the provider refused the message (for example the number opted out of texts); 503 INVOICE_SEND_UNAVAILABLE when the message service could not be reached (with Retry-After; retry the same key) or INVOICE_SEND_NOT_CONFIGURED. A key that already succeeded replays its answer even if the invoice changed since (ADR-0075 §8). 
+     * Send Invoice to Customer by Text or Email
+     */
+    async sendInvoice(requestParameters: SendInvoiceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SendInvoiceResponse> {
+        const response = await this.sendInvoiceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Renders the issued invoice a customer link points to as an inline PDF, without signing in. Use this tool only to follow a link sent by sendInvoice; do not use downloadInvoiceArtifact, which needs a short-lived download token minted by a signed-in user. Preconditions: the token was issued by sendInvoice, has not expired (30 days by default) or been revoked, and its invoice is still issued (FINALIZED or POSTED). Required inputs: token as a path parameter; there is no request body and no Authorization header. Emits an INVOICE_LINK_VIEW event; no state changes. Returns 200 with the PDF, 404 INVOICE_LINK_NOT_FOUND when the token is unknown or malformed, and 410 INVOICE_LINK_EXPIRED when the link expired, was revoked, or its invoice was cancelled. 
+     * Open an Invoice Through a Customer Link
+     */
+    async viewInvoiceLinkRaw(requestParameters: ViewInvoiceLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['token'] == null) {
+            throw new runtime.RequiredError(
+                'token',
+                'Required parameter "token" was null or undefined when calling viewInvoiceLink().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/invoice-links/{token}`.replace(`{${"token"}}`, encodeURIComponent(String(requestParameters['token']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Renders the issued invoice a customer link points to as an inline PDF, without signing in. Use this tool only to follow a link sent by sendInvoice; do not use downloadInvoiceArtifact, which needs a short-lived download token minted by a signed-in user. Preconditions: the token was issued by sendInvoice, has not expired (30 days by default) or been revoked, and its invoice is still issued (FINALIZED or POSTED). Required inputs: token as a path parameter; there is no request body and no Authorization header. Emits an INVOICE_LINK_VIEW event; no state changes. Returns 200 with the PDF, 404 INVOICE_LINK_NOT_FOUND when the token is unknown or malformed, and 410 INVOICE_LINK_EXPIRED when the link expired, was revoked, or its invoice was cancelled. 
+     * Open an Invoice Through a Customer Link
+     */
+    async viewInvoiceLink(requestParameters: ViewInvoiceLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.viewInvoiceLinkRaw(requestParameters, initOverrides);
     }
 
 }

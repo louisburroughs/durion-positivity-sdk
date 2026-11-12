@@ -18,6 +18,8 @@ import type {
   ApiError,
   CustomerSummaryResponse,
   PartyLookupResult,
+  PartySummaryLookupRequest,
+  PartySummaryLookupResult,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -26,6 +28,10 @@ import {
     CustomerSummaryResponseToJSON,
     PartyLookupResultFromJSON,
     PartyLookupResultToJSON,
+    PartySummaryLookupRequestFromJSON,
+    PartySummaryLookupRequestToJSON,
+    PartySummaryLookupResultFromJSON,
+    PartySummaryLookupResultToJSON,
 } from '../models/index';
 
 export interface GetCustomerSummaryRequest {
@@ -36,6 +42,10 @@ export interface LookupPartiesRequest {
     q: string;
     limit?: number;
     includeHouseAccounts?: boolean;
+}
+
+export interface SummaryLookupPartiesRequest {
+    partySummaryLookupRequest: PartySummaryLookupRequest;
 }
 
 /**
@@ -138,6 +148,52 @@ export class CRMCustomerLookupApi extends runtime.BaseAPI {
      */
     async lookupParties(requestParameters: LookupPartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PartyLookupResult>> {
         const response = await this.lookupPartiesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Finds the customers a technician may see: the typed text matched against names and vehicle plates, or against a whole phone number or e-mail address, best match first. Use this tool instead of lookupParties whenever the caller may hold a customer\'s name but not their phone number or e-mail address (DECISION-INVENTORY-017): the response carries the party id, the name, what matched, the last four phone digits and the vehicle count, and never a contact value. Preconditions: the caller needs crm:party_summary:search authority. A phone or e-mail matches exactly only, after the same normalisation the duplicate check uses, so a fragment of either finds nothing; names and plates match as lookupParties matches them (plate by prefix from three characters); merged-away, deactivated and house-account parties never appear. Required inputs: q as a JSON body field (at least 2 characters after trimming), and limit (default 8) clamped into 1 to 25. A POST, so a typed contact never lands in a URL; the response is marked Cache-Control: no-store. Emits a CRM_PARTY_SUMMARY_LOOKUP event; no state changes occur, and q is never logged. Returns 200 with an empty array when nothing matches, 400 VALIDATION_FAILED when q is missing or shorter than 2 characters once trimmed (a request-body Bean Validation failure, with the offending field in fieldErrors), and 403 when the caller lacks the authority. 
+     * Find a Customer Without Reading a Contact
+     */
+    async summaryLookupPartiesRaw(requestParameters: SummaryLookupPartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PartySummaryLookupResult>>> {
+        if (requestParameters['partySummaryLookupRequest'] == null) {
+            throw new runtime.RequiredError(
+                'partySummaryLookupRequest',
+                'Required parameter "partySummaryLookupRequest" was null or undefined when calling summaryLookupParties().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party_summary:search"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/parties/summary-lookup`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PartySummaryLookupRequestToJSON(requestParameters['partySummaryLookupRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PartySummaryLookupResultFromJSON));
+    }
+
+    /**
+     * Finds the customers a technician may see: the typed text matched against names and vehicle plates, or against a whole phone number or e-mail address, best match first. Use this tool instead of lookupParties whenever the caller may hold a customer\'s name but not their phone number or e-mail address (DECISION-INVENTORY-017): the response carries the party id, the name, what matched, the last four phone digits and the vehicle count, and never a contact value. Preconditions: the caller needs crm:party_summary:search authority. A phone or e-mail matches exactly only, after the same normalisation the duplicate check uses, so a fragment of either finds nothing; names and plates match as lookupParties matches them (plate by prefix from three characters); merged-away, deactivated and house-account parties never appear. Required inputs: q as a JSON body field (at least 2 characters after trimming), and limit (default 8) clamped into 1 to 25. A POST, so a typed contact never lands in a URL; the response is marked Cache-Control: no-store. Emits a CRM_PARTY_SUMMARY_LOOKUP event; no state changes occur, and q is never logged. Returns 200 with an empty array when nothing matches, 400 VALIDATION_FAILED when q is missing or shorter than 2 characters once trimmed (a request-body Bean Validation failure, with the offending field in fieldErrors), and 403 when the caller lacks the authority. 
+     * Find a Customer Without Reading a Contact
+     */
+    async summaryLookupParties(requestParameters: SummaryLookupPartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PartySummaryLookupResult>> {
+        const response = await this.summaryLookupPartiesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
