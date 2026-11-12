@@ -93,6 +93,8 @@ export * from './PartyMatch';
 export * from './PartyNameRef';
 export * from './PartyNameResolveRequest';
 export * from './PartySummary';
+export * from './PartySummaryLookupRequest';
+export * from './PartySummaryLookupResult';
 export * from './PartyTagAssignmentResponse';
 export * from './PartyTagResponse';
 export * from './Period';
