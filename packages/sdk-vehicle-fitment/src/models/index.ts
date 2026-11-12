@@ -19,3 +19,6 @@ export * from './PolicyBlocker';
 export * from './SuggestedAlternative';
 export * from './UpdateHintRequest';
 export * from './VehicleTypeResponse';
+export * from './VinDecodeEngine';
+export * from './VinDecodeRequest';
+export * from './VinDecodeResponse';
