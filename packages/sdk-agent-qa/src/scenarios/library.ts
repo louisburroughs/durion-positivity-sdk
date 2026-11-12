@@ -250,6 +250,165 @@ const daily: ScenarioInput[] = [
     expect: [{ kind: 'http', statuses: [404], min: 3 }],
   },
   {
+    id: 'crew-clock-in',
+    perSite: true,
+    title: 'The crew clocks in',
+    cadence: 'daily',
+    at: '07:50',
+    persona: 'manager',
+    kind: 'operations',
+    goal:
+      'The crew is arriving for the day. Read who works at this location (the people available here, with their roles): ' +
+      'advisors, technicians, parts and office staff alike. For each person, read their current clock state. Someone ' +
+      'already clocked in from today is fine — leave them. Someone whose session has been open since a previous day ' +
+      'forgot to clock out: do not touch it, the morning time review deals with it; note them in your summary. Everyone ' +
+      'else clocks in: start a work session for them. If starting a session for someone is refused, say what was ' +
+      'answered and carry on with the rest. Finish by reading the people available here again and report how many are ' +
+      'clocked in and who is not.',
+    operations: [
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+      'people.WorkSessionsAPIApi.getCurrentWorkSession',
+      'people.WorkSessionsAPIApi.startWorkSession',
+      'shop-manager.TechnicianAPIApi.listLocationTechnicians',
+      'people.EmployeeAPIApi.searchEmployees',
+    ],
+    expect: [
+      { kind: 'call', operation: 'people.PeopleAvailabilityAPIApi.listPeopleAvailability' },
+      { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
+      { kind: 'calls', min: 3 },
+    ],
+    limits: { maxSteps: 60, maxCalls: 70 },
+  },
+  {
+    id: 'timekeeping-review',
+    perSite: true,
+    title: "Review yesterday's time and fix what is wrong",
+    cadence: 'daily',
+    at: '09:10',
+    persona: 'manager',
+    kind: 'operations',
+    goal:
+      "Go through this location's timekeeping before the day gets busy. " +
+      'First, missed clock-outs: read who works here and each person\'s clock state. Anyone whose work session has been ' +
+      'open since a previous day forgot to clock out. For each: stop the session now, find the time entry it produced ' +
+      '(the time entries for this location, by employee and work date), and record a time entry exception for the ' +
+      'employee with code MISSED_CLOCK_OUT against that entry. The entry now ends this morning, which is wrong, so ' +
+      'propose a time entry adjustment on it: the same start, and an end at 17:30 on the day it started, with reason ' +
+      'code MISSED_CLOCK_OUT and a note. Approve the adjustment, then resolve the exception with a note saying what was ' +
+      'corrected. Then clock the person in for today. ' +
+      'Second, the exceptions already open for the people who work here: read them. Acknowledge any still merely open. ' +
+      'One for a missed or short break on a day the person plainly worked through lunch is waived, with that as the ' +
+      'reason; one whose time entry has since been corrected is resolved; anything else stays acknowledged and goes in ' +
+      'your findings. ' +
+      "Third, yesterday's entries: list this location's time entries for yesterday. An entry with no break at all on a " +
+      'shift of more than six hours gets an exception with code MISSED_BREAK and severity WARNING, unless one is already ' +
+      'recorded. Finish with the attendance discrepancy report for this location for yesterday, and report anyone whose ' +
+      'clocked time and job time are far apart.',
+    operations: [
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+      'people.WorkSessionsAPIApi.getCurrentWorkSession',
+      'people.WorkSessionsAPIApi.stopWorkSession',
+      'people.WorkSessionsAPIApi.startWorkSession',
+      'people.TimeEntryApprovalAPIApi.listTimeEntries',
+      'people.TimeEntryApprovalAPIApi.getTimeEntry',
+      'people.PeopleExceptionsApi.listTimeEntryExceptions',
+      'people.PeopleExceptionsApi.createTimeEntryException',
+      'people.PeopleExceptionsApi.acknowledgeTimeEntryException',
+      'people.PeopleExceptionsApi.resolveTimeEntryException',
+      'people.PeopleExceptionsApi.waiveTimeEntryException',
+      'people.PeopleTimeEntriesApi.createTimeEntryAdjustment',
+      'people.PeopleTimeEntriesApi.approveTimeEntryAdjustment',
+      'people.PeopleTimeEntriesApi.listTimeEntryAdjustments',
+      'people.PeopleReportsAPIApi.getAttendanceDiscrepancyReport',
+    ],
+    expect: [
+      { kind: 'call', operation: 'people.PeopleAvailabilityAPIApi.listPeopleAvailability' },
+      { kind: 'call', operation: 'people.TimeEntryApprovalAPIApi.listTimeEntries' },
+      { kind: 'call', operation: 'people.PeopleExceptionsApi.listTimeEntryExceptions' },
+    ],
+    limits: { maxSteps: 70, maxCalls: 80 },
+  },
+  {
+    id: 'lunch-out',
+    perSite: true,
+    title: 'The crew goes to lunch',
+    cadence: 'daily',
+    at: '12:00',
+    persona: 'manager',
+    kind: 'operations',
+    goal:
+      'It is lunchtime at this location. Read who works here and each person\'s clock state. Everyone who is clocked in ' +
+      'and not already on a break starts a break on their work session — with one exception: on Tuesdays and Fridays ' +
+      'the person whose name comes first alphabetically is too busy and works through lunch, so leave them clocked in ' +
+      'without a break and name them in your summary. If starting a break for someone is refused, say what was answered ' +
+      'and carry on. Report how many went on break.',
+    operations: [
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+      'people.WorkSessionsAPIApi.getCurrentWorkSession',
+      'people.WorkSessionsAPIApi.startWorkSessionBreak',
+    ],
+    expect: [
+      { kind: 'call', operation: 'people.PeopleAvailabilityAPIApi.listPeopleAvailability' },
+      { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
+    ],
+    limits: { maxSteps: 50, maxCalls: 60 },
+  },
+  {
+    id: 'lunch-back',
+    perSite: true,
+    title: 'The crew comes back from lunch',
+    cadence: 'daily',
+    at: '12:40',
+    persona: 'manager',
+    kind: 'operations',
+    goal:
+      'Lunch is over at this location. Read who works here and each person\'s clock state. Everyone who is on a break ' +
+      'comes back: stop the break on their work session. Leave alone anyone who is not on a break. Report how many came ' +
+      'back and whether anyone is still shown as on break.',
+    operations: [
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+      'people.WorkSessionsAPIApi.getCurrentWorkSession',
+      'people.WorkSessionsAPIApi.stopWorkSessionBreak',
+    ],
+    expect: [
+      { kind: 'call', operation: 'people.PeopleAvailabilityAPIApi.listPeopleAvailability' },
+      { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
+    ],
+    limits: { maxSteps: 50, maxCalls: 60 },
+  },
+  {
+    id: 'crew-clock-out',
+    perSite: true,
+    title: 'The crew clocks out and hands in its time',
+    cadence: 'daily',
+    at: '17:35',
+    persona: 'manager',
+    kind: 'operations',
+    goal:
+      'The day is over at this location. Read who works here and each person\'s clock state. Everyone who is clocked in ' +
+      'clocks out — except, on Wednesdays, the technician whose name comes last alphabetically, who walks out without ' +
+      'clocking out: leave that one session open and name the person in your summary (tomorrow\'s time review will find ' +
+      'it). Clocking out is two steps for each person: stop their work session, which also ends a break left open; then ' +
+      'submit the ended session for approval, giving the break minutes actually taken, the billable minutes (the time ' +
+      'between start and stop less the breaks, from the session you just stopped), and now as the submission time. Do ' +
+      'not clock yourself out: you close the shop afterwards. If a stop or a submission is refused, say what was ' +
+      'answered and carry on. Finish by listing today\'s time entries for this location and report how many are ' +
+      'submitted or pending approval and who is still clocked in.',
+    operations: [
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+      'people.WorkSessionsAPIApi.getCurrentWorkSession',
+      'people.WorkSessionsAPIApi.stopWorkSession',
+      'people.WorkSessionsAPIApi.submitWorkSession',
+      'people.TimeEntryApprovalAPIApi.listTimeEntries',
+    ],
+    expect: [
+      { kind: 'call', operation: 'people.PeopleAvailabilityAPIApi.listPeopleAvailability' },
+      { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
+      { kind: 'calls', min: 3 },
+    ],
+    limits: { maxSteps: 70, maxCalls: 80 },
+  },
+  {
     id: 'close-shop',
     perSite: true,
     title: 'Close out the day',
@@ -261,8 +420,7 @@ const daily: ScenarioInput[] = [
       'It is closing time. Find the register session that is open on the front-counter terminal at this location. Read its X report and its cash ' +
       'movements. If the session is open and has no orders awaiting payment, begin the close with a counted cash figure that ' +
       'matches the X report\'s expected cash, then confirm the close and read the Z report. Check which closed sessions are ' +
-      'still undeposited. Then send the crew home: look at the people available at the site, and for each technician who ' +
-      'is still clocked in, stop their work session; finally stop your own if one is open.',
+      'still undeposited. The crew has already clocked out; finally stop your own work session if one is open.',
     operations: [
       'location.LocationAPIApi.listLocations',
       'order.RegisterSessionsApi.getCurrentRegisterSession',
@@ -273,7 +431,6 @@ const daily: ScenarioInput[] = [
       'order.RegisterSessionsApi.confirmSessionClose',
       'order.RegisterSessionsApi.getSessionZReport',
       'accounting.BankDepositsApi.listUndepositedSessions',
-      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
       'people.WorkSessionsAPIApi.getCurrentWorkSession',
       'people.WorkSessionsAPIApi.stopWorkSession',
     ],
@@ -463,32 +620,80 @@ const weekly: ScenarioInput[] = [
   {
     id: 'weekly-timekeeping-approval',
     perSite: true,
-    title: 'Weekly timesheet approval',
+    title: "Approve last week's timesheets",
     cadence: 'weekly',
-    weekday: 4,
-    at: '14:00',
+    weekday: 1,
+    at: '08:50',
     persona: 'manager',
     kind: 'operations',
     goal:
-      'Approve the week\'s time. List the time periods and the people awaiting timekeeping approval, review time entries and ' +
-      'any time entry exceptions for the current period, and read the attendance discrepancy report. If there are submitted ' +
-      'time entries with no open exception, approve a small batch of them. Also review staffing assignments for this location.',
+      "Approve last week's time for this location, Monday to Sunday, so payroll can close the period. List the location's " +
+      'time entries that are submitted or pending approval, and the exceptions open for the people who work here. Go ' +
+      'person by person. An entry is approved when it looks like a day\'s work: a start and an end on the same day, a ' +
+      'sensible length, and no open exception against it — approve those in one batch. An entry with an open BLOCKING ' +
+      'exception, or one that is plainly wrong (no end, or far longer than a shift) and has no approved adjustment, is ' +
+      'rejected with the reason, so the employee\'s manager corrects it. An entry with an approved adjustment is ' +
+      'approved. Then read the attendance discrepancy report for the location for last week and the staffing ' +
+      'assignments here. Report how many entries were approved, how many rejected and why, and who has none at all for ' +
+      'a day the shop was open.',
     operations: [
-      'people.TimekeepingApprovalAPIApi.listTimePeriods',
-      'people.TimekeepingApprovalAPIApi.listTimekeepingApprovalPeople',
-      'people.TimekeepingApprovalAPIApi.listTimekeepingEntries',
       'people.TimeEntryApprovalAPIApi.listTimeEntries',
+      'people.TimeEntryApprovalAPIApi.getTimeEntry',
       'people.TimeEntryApprovalAPIApi.approveTimeEntriesBatch',
+      'people.TimeEntryApprovalAPIApi.rejectTimeEntriesBatch',
       'people.PeopleExceptionsApi.listTimeEntryExceptions',
+      'people.PeopleTimeEntriesApi.listTimeEntryAdjustments',
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
       'people.PeopleReportsAPIApi.getAttendanceDiscrepancyReport',
       'people.PeopleStaffingAssignmentsApi.listStaffingAssignments',
+    ],
+    expect: [
+      { kind: 'call', operation: 'people.TimeEntryApprovalAPIApi.listTimeEntries' },
+      { kind: 'call', operation: 'people.PeopleExceptionsApi.listTimeEntryExceptions' },
+      { kind: 'calls', min: 4 },
+    ],
+    limits: { maxSteps: 60, maxCalls: 70 },
+  },
+  {
+    id: 'weekly-pay-period-signoff',
+    title: 'Sign off the pay period and hand the hours to payroll',
+    cadence: 'weekly',
+    weekday: 1,
+    at: '11:30',
+    persona: 'controller',
+    kind: 'operations',
+    goal:
+      "Sign off last week's time for the whole business, after the shops have approved their own. List the pay periods. " +
+      'The platform opens and closes periods on its own schedule; do not create or close routine periods yourself. Find ' +
+      'the period that covers last week. Only if there is none at all, create one for last Monday to Sunday as a ' +
+      'correction, and say so in your findings. ' +
+      'For that period, go through the people who have time: read each person\'s approval state for the period. Someone ' +
+      'with entries still pending whose shop has not decided them: read the entries, and if they are ordinary, approve ' +
+      'the person\'s period; if something is wrong, reject the person\'s period with the reason. Someone with rejected ' +
+      'entries stays rejected: list them. Do this for at most fifteen people. ' +
+      'Then the hand-off: read the approved time for the period across all the shop locations — this is what payroll ' +
+      'takes. Report the total hours, the number of people, and anyone at work last week with no approved time. ' +
+      'Last, the period itself: if it ended more than three days ago and is still OPEN, the scheduled rollover has not ' +
+      'run — close it to submissions as a manual correction and report that. Never mark a period payroll-closed: that is ' +
+      'payroll\'s step, and it cannot be undone.',
+    operations: [
+      'people.TimekeepingApprovalAPIApi.listTimePeriods',
+      'people.TimePeriodManagementAPIApi.createTimePeriod',
+      'people.TimePeriodManagementAPIApi.transitionTimePeriod',
+      'people.TimekeepingApprovalAPIApi.listTimekeepingApprovalPeople',
+      'people.TimekeepingApprovalAPIApi.getTimePeriodApproval',
+      'people.TimekeepingApprovalAPIApi.listTimekeepingEntries',
+      'people.TimekeepingApprovalAPIApi.approveTimePeriod',
+      'people.TimekeepingApprovalAPIApi.rejectTimePeriod',
+      'people.PeopleReportsAPIApi.listApprovedTimeForExport',
       'location.LocationAPIApi.listLocations',
     ],
     expect: [
       { kind: 'call', operation: 'people.TimekeepingApprovalAPIApi.listTimePeriods' },
-      { kind: 'call', operation: 'people.TimeEntryApprovalAPIApi.listTimeEntries' },
-      { kind: 'calls', min: 4 },
+      { kind: 'call', operation: 'people.TimekeepingApprovalAPIApi.listTimekeepingApprovalPeople' },
+      { kind: 'call', operation: 'people.PeopleReportsAPIApi.listApprovedTimeForExport' },
     ],
+    limits: { maxSteps: 70, maxCalls: 80 },
   },
   {
     id: 'weekly-bank-statement',

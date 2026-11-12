@@ -60,6 +60,12 @@ export const DEFAULT_VENDOR_PAYMENTS: VendorPaymentLimits = { enabled: true, max
 
 const VENDOR_PAYMENT = 'accounting.APPaymentsApi.executeApPayment';
 
+/** Operations that can set a pay period's lifecycle status. */
+const PAY_PERIOD_STATUS: ReadonlySet<string> = new Set([
+  'people.TimePeriodManagementAPIApi.transitionTimePeriod',
+  'people.TimePeriodManagementAPIApi.createTimePeriod',
+]);
+
 export interface FinishReport {
   verdict: 'completed' | 'blocked' | 'failed';
   summary: string;
@@ -251,6 +257,17 @@ export class ToolRuntime {
         };
       }
       input = parsed.data as Record<string, unknown>;
+    }
+
+    // Closing a pay period for payroll cannot be undone, so it is not left to a prompt either.
+    if (PAY_PERIOD_STATUS.has(operation.id) && !this.options.policy.allowDestructive) {
+      const body = Object.values(input).find((value) => typeof value === 'object' && value !== null) as Record<string, unknown> | undefined;
+      if (body?.['status'] === 'PAYROLL_CLOSED') {
+        return {
+          outcome: 'refused',
+          reason: 'marking a pay period PAYROLL_CLOSED cannot be undone and is payroll\'s step; the harness does not do it',
+        };
+      }
     }
 
     if (operation.id === VENDOR_PAYMENT) {

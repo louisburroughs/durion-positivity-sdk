@@ -285,3 +285,30 @@ describe('vendor payment limits', () => {
     expect(context.backend.requests).toEqual([]);
   });
 });
+
+describe('pay period guard', () => {
+  const transition = (status: string, validate?: boolean) => ({
+    operationId: 'people.TimePeriodManagementAPIApi.transitionTimePeriod',
+    input: { timePeriodId: 'tp-1', transitionTimePeriodRequest: { status } },
+    validate,
+  });
+
+  it('lets a period be closed to submissions and reopened, but never payroll-closed', async () => {
+    const context = setup({ allowUnvalidated: true });
+    expect(await sdkCall(context, transition('SUBMISSION_CLOSED'))).toMatchObject({ outcome: 'success' });
+    expect(await sdkCall(context, transition('OPEN'))).toMatchObject({ outcome: 'success' });
+    expect(await sdkCall(context, transition('PAYROLL_CLOSED'))).toMatchObject({ outcome: 'refused', reason: expect.stringMatching(/cannot be undone/) });
+    expect(await sdkCall(context, transition('PAYROLL_CLOSED', false))).toMatchObject({ outcome: 'refused' });
+    expect(context.backend.requests).toHaveLength(2);
+  });
+
+  it('does not let a period be created already payroll-closed', async () => {
+    const context = setup();
+    const created = await sdkCall(context, {
+      operationId: 'people.TimePeriodManagementAPIApi.createTimePeriod',
+      input: { createTimePeriodRequest: { startDate: '2026-03-02', endDate: '2026-03-08', status: 'PAYROLL_CLOSED' } },
+    });
+    expect(created).toMatchObject({ outcome: 'refused' });
+    expect(context.backend.requests).toEqual([]);
+  });
+});

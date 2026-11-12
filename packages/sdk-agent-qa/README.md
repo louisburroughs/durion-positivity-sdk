@@ -106,7 +106,7 @@ minute every morning.
 
 A tenant's shops work at the same time, so tasks do too: each pass starts up to `QA_MAX_PER_TICK` (3) of the tasks
 that are due and runs `QA_CONCURRENCY` (3) of them side by side, with at least `QA_MIN_GAP_MINUTES` (2) between
-passes, so a backlog drains steadily rather than as a burst. With three sites a default day is roughly 60
+passes, so a backlog drains steadily rather than as a burst. With three sites a default day is roughly 75
 agent runs between opening and closing. Set `QA_CONCURRENCY=1` for a single local model that cannot serve several
 conversations at once, and lower the visit counts to match what it can get through in a day.
 
@@ -170,8 +170,9 @@ Every site gets:
 
 - **its own customers** — a roster of visits sized to the shop (4 to 8 on a weekday by default; a site with more
   bays gets a busier day; about 60% on a Saturday);
-- **its own routines** — opening, the stock order, the stock delivery and closing run once per site, as do the
-  weekly purchasing review, cycle count and timesheet approval, and the monthly inventory review;
+- **its own routines** — opening, the crew's clock-in, lunch and clock-out, the time review, the stock order,
+  the stock delivery and closing run once per site, as do the weekly purchasing review, cycle count and timesheet
+  approval, and the monthly inventory review;
 
 while the work that belongs to the tenant as a whole — receivables, payables, the bank, the books, access reviews —
 runs once.
@@ -256,15 +257,15 @@ finished by the nightly close-out — see *Running alongside the populate runs* 
 
 ## Staff routines and error drills
 
-`scenarios/library.ts` holds 29 fixed scenarios for the work that does not walk in through the door. Each is a
+`scenarios/library.ts` holds 35 fixed scenarios for the work that does not walk in through the door. Each is a
 goal written the way an employee would describe the task, the operations it normally takes, and the facts that
 must appear in the call ledger. A scenario marked `perSite` runs once at every shop, each instance told where it
 is; the rest run once for the tenant.
 
 | Cadence | At every site | Once for the tenant |
 | --- | --- | --- |
-| Daily | open the shop · order replenishment stock · receive the stock delivery · close out the day | collections from commercial accounts · vendor bills · 404 drill · coverage sweep |
-| Weekly | purchasing review · cycle count · timesheet approval | bank statement · bank reconciliation · access review · customer follow-ups · warranty claims · authorization drill · vendor payment run · bank deposit · catalog and pricing |
+| Daily | open the shop · crew clocks in · time review · order replenishment stock · lunch out · lunch back · receive the stock delivery · crew clocks out · close out the day | collections from commercial accounts · vendor bills · 404 drill · coverage sweep |
+| Weekly | purchasing review · cycle count · timesheet approval | pay-period sign-off · bank statement · bank reconciliation · access review · customer follow-ups · warranty claims · authorization drill · vendor payment run · bank deposit · catalog and pricing |
 | Monthly | inventory review | period close · financial statements · bank reconciliation review · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
 
 **Receiving happens two ways every day, at every site.** *Replenishment*: each morning the parts clerk reviews
@@ -274,6 +275,32 @@ partial receipts occur), then putaway tasks generated, claimed and completed. Th
 approved order not yet received, so an order raised late is received the next day. *For a job*: the special-order
 visits above, received against the workorder rather than into stock. The replenishment routine is told to leave
 job orders alone.
+
+**Timekeeping, for everyone.** The backend keeps two clocks: the payroll clock (when a person is at work) and the
+job clock (time on a workorder, which the visits' work stages record). The payroll clock is run by five routines at
+every site every day, for the whole crew — advisors, technicians, parts and office staff:
+
+| Routine | When | What it does |
+| --- | --- | --- |
+| Crew clocks in | 7:50 | Starts a work session for everyone who works at the location and is not already in. A session still open from a previous day is left for the time review. |
+| Time review | 9:10 | The manager fixes yesterday: a missed clock-out is stopped, given a `MISSED_CLOCK_OUT` exception, corrected with an adjustment back to closing time, the adjustment approved and the exception resolved. Open exceptions are acknowledged, then resolved or waived. A long shift with no break gets a `MISSED_BREAK` exception. |
+| Lunch out / lunch back | 12:00 / 12:40 | Everyone clocked in starts a break, and ends it forty minutes later. |
+| Crew clocks out | 5:35 | Stops each work session and **submits** it for approval with its break and billable minutes. |
+
+So that there is something to review, the ordinary problems are planted on fixed days: on **Wednesdays** one
+technician at each site leaves without clocking out, and on **Tuesdays and Fridays** one person works through
+lunch. The next morning's time review finds them without being told who.
+
+Then the week is closed, on Mondays:
+
+| Routine | When | What it does |
+| --- | --- | --- |
+| Timesheet approval | 8:50, every site | The manager approves last week's ordinary entries in a batch, and rejects, with the reason, any with a blocking exception or plainly wrong and uncorrected. |
+| Pay-period sign-off | 11:30, once | The controller finds the pay period covering last week (the platform opens and closes periods itself; the routine creates one only if none exists), approves or rejects each person's period, and reads the approved time payroll takes. A period still open three days after it ended is closed to submissions and reported. |
+
+The SDK stops at approved time ready for export: it has no operations for pay rates, paychecks or posting wages,
+so there is no payroll run here. And a period is never marked payroll-closed — that step cannot be undone, and the
+harness refuses it in code whatever a brief or a model says.
 
 **The books keep moving.** What the shops do each day turns into payables and receivables, and three tenant-wide
 routines work them down so neither only grows:
@@ -443,7 +470,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 218 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 227 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 

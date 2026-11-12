@@ -13,7 +13,10 @@ type Json = unknown;
 
 function prune(value: Json, maxItems: number, maxString: number, depth: number): Json {
   if (value instanceof Date) {
-    return value.toISOString();
+    // A generated model turns a missing or malformed date into an Invalid Date, and
+    // toISOString throws on one. The call has already been made by now; losing its
+    // result to a formatting error would hide the response from the model.
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
   }
   if (typeof value === 'string') {
     return value.length > maxString ? `${value.slice(0, maxString)}…(+${value.length - maxString} chars)` : value;
