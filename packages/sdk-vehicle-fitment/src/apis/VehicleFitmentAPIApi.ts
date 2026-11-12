@@ -15,12 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   MakeResponse,
   ManufacturerResponse,
   ModelResponse,
   VehicleTypeResponse,
+  VinDecodeRequest,
+  VinDecodeResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     MakeResponseFromJSON,
     MakeResponseToJSON,
     ManufacturerResponseFromJSON,
@@ -29,7 +34,15 @@ import {
     ModelResponseToJSON,
     VehicleTypeResponseFromJSON,
     VehicleTypeResponseToJSON,
+    VinDecodeRequestFromJSON,
+    VinDecodeRequestToJSON,
+    VinDecodeResponseFromJSON,
+    VinDecodeResponseToJSON,
 } from '../models/index';
+
+export interface DecodeVinRequest {
+    vinDecodeRequest: VinDecodeRequest;
+}
 
 export interface ListMakesByManufacturerRequest {
     manufacturerId: string;
@@ -47,6 +60,52 @@ export interface ListVehicleTypesByMakeRequest {
  * 
  */
 export class VehicleFitmentAPIApi extends runtime.BaseAPI {
+
+    /**
+     * Decodes a vehicle identification number to model year, make, model and, when known, trim, body class, drive type, engine and GVWR class, through the configured provider (NHTSA vPIC today). Use this tool when adding a vehicle that is not on file, so the technician checks the details against the car instead of typing them; do not use it to find a vehicle already in the registry. Preconditions: the VIN is normalised (whitespace, separators and lower case removed) and must then be 17 letters and digits without I, O or Q, and a VIN starting 1-5 must pass its check digit; neither failure reaches the provider, and pre-1981 VINs go to manual entry. Required inputs: vin in the request body, never in the URL. Emits a VEHICLE_VIN_DECODE event without the VIN, and caches a decode by VIN for 30 days (24 hours when partial) while never caching an error. Returns 200 with the decode, partial=true with warnings when the provider reported problems, and values that stay advisory until the technician confirms them. Fails with 400 for a malformed VIN, 403 without the permission, 422 VIN_CHECK_DIGIT_INVALID or VIN_NOT_DECODABLE, and 503 VIN_DECODE_UNAVAILABLE with Retry-After; after the last two, let the technician type year, make and model. 
+     * Decode a VIN
+     */
+    async decodeVinRaw(requestParameters: DecodeVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VinDecodeResponse>> {
+        if (requestParameters['vinDecodeRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vinDecodeRequest',
+                'Required parameter "vinDecodeRequest" was null or undefined when calling decodeVin().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/vin/decode`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VinDecodeRequestToJSON(requestParameters['vinDecodeRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VinDecodeResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Decodes a vehicle identification number to model year, make, model and, when known, trim, body class, drive type, engine and GVWR class, through the configured provider (NHTSA vPIC today). Use this tool when adding a vehicle that is not on file, so the technician checks the details against the car instead of typing them; do not use it to find a vehicle already in the registry. Preconditions: the VIN is normalised (whitespace, separators and lower case removed) and must then be 17 letters and digits without I, O or Q, and a VIN starting 1-5 must pass its check digit; neither failure reaches the provider, and pre-1981 VINs go to manual entry. Required inputs: vin in the request body, never in the URL. Emits a VEHICLE_VIN_DECODE event without the VIN, and caches a decode by VIN for 30 days (24 hours when partial) while never caching an error. Returns 200 with the decode, partial=true with warnings when the provider reported problems, and values that stay advisory until the technician confirms them. Fails with 400 for a malformed VIN, 403 without the permission, 422 VIN_CHECK_DIGIT_INVALID or VIN_NOT_DECODABLE, and 503 VIN_DECODE_UNAVAILABLE with Retry-After; after the last two, let the technician type year, make and model. 
+     * Decode a VIN
+     */
+    async decodeVin(requestParameters: DecodeVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VinDecodeResponse> {
+        const response = await this.decodeVinRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Returns all vehicle makes linked to one manufacturer (a make shared by several manufacturers is listed under each, with the same id), served from a local cache of the NHTSA vPIC registry. Use this tool after picking a manufacturer from listManufacturers; do not use listModelsByMake, which descends one level further and needs a makeId taken from this response. Preconditions: the manufacturer must already exist in the local cache under the supplied id; ids are the UUIDs returned by listManufacturers, not raw NHTSA numeric ids. Required inputs: manufacturerId (UUID) as a path parameter. No events are emitted; a cache refresh may rewrite the local make rows for the manufacturer, but nothing else changes. Returns 200 with the make list, and 500 when the manufacturer id cannot be resolved or the NHTSA refresh fails, because the not-found case is not currently mapped to 404. 
