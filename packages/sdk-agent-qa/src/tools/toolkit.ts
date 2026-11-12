@@ -39,7 +39,26 @@ export interface SafetyPolicy {
   allowDestructive: boolean;
   /** Operation ids matching any of these are never called. */
   deny: RegExp[];
+  /**
+   * Paying a vendor moves money through the payment gateway, so it has limits
+   * the harness enforces itself rather than leaving to a prompt. Defaults to
+   * {@link DEFAULT_VENDOR_PAYMENTS} when not given.
+   */
+  vendorPayments?: VendorPaymentLimits;
 }
+
+export interface VendorPaymentLimits {
+  /** False refuses every vendor payment. */
+  enabled: boolean;
+  /** Largest gross amount of one payment, in the functional currency. */
+  maxAmount: number;
+  /** Most payments one scenario run may execute. */
+  maxPerRun: number;
+}
+
+export const DEFAULT_VENDOR_PAYMENTS: VendorPaymentLimits = { enabled: true, maxAmount: 5000, maxPerRun: 5 };
+
+const VENDOR_PAYMENT = 'accounting.APPaymentsApi.executeApPayment';
 
 export interface FinishReport {
   verdict: 'completed' | 'blocked' | 'failed';
@@ -111,6 +130,7 @@ export function toolNameFor(operation: Operation): string {
 
 export class ToolRuntime {
   private calls = 0;
+  private vendorPaymentsMade = 0;
   private finished: FinishReport | undefined;
   private readonly validators = new Map<string, z.ZodType>();
   private readonly now: () => Date;
@@ -153,6 +173,36 @@ export class ToolRuntime {
     }
     if (operation.risk === 'destructive' && !(policy.allowDestructive && pinned.includes(operation.id))) {
       return `${operation.id} is destructive; it runs only when a scenario pins it and the run allows destructive calls`;
+    }
+    if (operation.id === VENDOR_PAYMENT) {
+      const limits = policy.vendorPayments ?? DEFAULT_VENDOR_PAYMENTS;
+      if (!limits.enabled) {
+        return 'vendor payments are turned off for this harness (QA_PAY_VENDORS=false)';
+      }
+      // Money leaves only from the routine whose job it is, never from a sweep or a search-and-call.
+      if (!pinned.includes(operation.id)) {
+        return 'a vendor payment is executed only by the payment run, not from this task';
+      }
+    }
+    return undefined;
+  }
+
+  /** Why this particular vendor payment is refused, or undefined when it is within the limits. */
+  private vendorPaymentRefusal(input: Record<string, unknown>): string | undefined {
+    const limits = this.options.policy.vendorPayments ?? DEFAULT_VENDOR_PAYMENTS;
+    const request = (input['executeAPPaymentRequest'] ?? {}) as Record<string, unknown>;
+    const gross = Number(request['grossAmount']);
+    if (this.vendorPaymentsMade >= limits.maxPerRun) {
+      return `this run has already made ${limits.maxPerRun} vendor payments, which is its limit`;
+    }
+    if (!Number.isFinite(gross) || gross <= 0) {
+      return 'a vendor payment needs a positive grossAmount';
+    }
+    if (gross > limits.maxAmount) {
+      return `a single vendor payment may not exceed ${limits.maxAmount.toFixed(2)}; this one is ${gross.toFixed(2)}. Pay part of the bill, or leave it for a person`;
+    }
+    if (request['overrideJustification'] !== undefined) {
+      return 'overriding a payment control is a person\'s decision; send the payment without overrideJustification';
     }
     return undefined;
   }
@@ -199,6 +249,15 @@ export class ToolRuntime {
         };
       }
       input = parsed.data as Record<string, unknown>;
+    }
+
+    if (operation.id === VENDOR_PAYMENT) {
+      // Checked on the validated input, and whether or not validation was asked for.
+      const refused = this.vendorPaymentRefusal(input);
+      if (refused) {
+        return { outcome: 'refused', reason: refused };
+      }
+      this.vendorPaymentsMade += 1;
     }
 
     this.calls += 1;

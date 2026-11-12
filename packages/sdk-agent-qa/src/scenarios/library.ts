@@ -109,7 +109,8 @@ const daily: ScenarioInput[] = [
       'purchase order with more than one line the last line arrives one unit short. (Inventory can take a minute to learn ' +
       'of a purchase order approved moments ago; if told the reference is not known yet, wait and repeat.) Then put it ' +
       'away: generate putaway tasks for the receipt, claim one, and complete it. Finish by reading the purchase order to ' +
-      'see how it now stands, and the stock on hand for one of the products received.',
+      'see how it now stands, and the stock on hand for one of the products received. In your summary give the purchase ' +
+      'order id, the goods receipt id, and the quantities and unit costs received: accounting bills from them.',
     operations: [
       'order.PurchaseOrdersApi.listPurchaseOrders',
       'order.PurchaseOrdersApi.getPurchaseOrder',
@@ -133,35 +134,96 @@ const daily: ScenarioInput[] = [
     limits: { maxSteps: 50, maxCalls: 55 },
   },
   {
-    id: 'invoice-and-payment',
-    title: 'Invoice finished work and take payment',
+    id: 'collections',
+    title: 'Collect from commercial accounts and apply their payments',
     cadence: 'daily',
     at: '14:30',
+    persona: 'controller',
+    kind: 'operations',
+    goal:
+      "Work today's receivables. Commercial accounts are billed on terms and pay later, by check or bank transfer, not at " +
+      'the counter. Find who owes: the aged receivables report, and the open invoices of the commercial customers on it ' +
+      '(a customer\'s open invoices are listed oldest first with the balance still due). ' +
+      'Today, up to four of those customers pay — choose the ones whose oldest open invoice is at least two days old, ' +
+      'oldest first. For each, record the payment the way the business receives it: submit an INVOICE_PAYMENT accounting ' +
+      'event for the invoice (read the event contract first for the exact payload; use a new payment id, the invoice id, ' +
+      'the amount, the currency, a paid-at time of now, and a payment method of CHECK or ACH with a reference such as a ' +
+      'check number). Vary it the way customers do: most pay their oldest invoice in full; if a customer has two or more ' +
+      'open invoices, have one customer pay two of them; and have one customer short-pay — an amount a little under the ' +
+      'balance. ' +
+      'Then see that the money landed. Accounting applies a payment event to its invoice by itself after a short delay: ' +
+      'wait, then read the automatic applications since the start of today and the payments still unapplied. Apply by ' +
+      'hand any of today\'s payments left unapplied, to that customer\'s open invoices. Finish by reading one paying ' +
+      'customer\'s open invoices again to confirm the balance went down, and report as a finding any payment that neither ' +
+      'applied nor shows as unapplied. Do not touch invoices of individual (walk-in) customers: they pay at the counter.',
+    operations: [
+      'accounting.FinancialReportingApi.generateAgedReceivables',
+      'accounting.PaymentApplicationsApi.listCustomerOpenInvoices',
+      'customer.CRMAccountsApi.searchParties',
+      'customer.CRMAccountsApi.getParty',
+      'invoice.InvoiceSearchApi.searchInvoices',
+      'invoice.InvoiceApi.getInvoice',
+      'accounting.AccountingEventsApi.getEventContract',
+      'accounting.AccountingEventsApi.submitAccountingEvent',
+      'accounting.AccountingEventsApi.getAccountingEvent',
+      'accounting.PaymentApplicationsApi.listAutomaticPaymentApplications',
+      'accounting.PaymentApplicationsApi.listUnappliedPayments',
+      'accounting.PaymentApplicationsApi.applyPayment',
+      'accounting.InvoicePaymentsApi.getInvoiceStatus',
+      'accounting.AccountingAnalyticsApi.getCollectionsAnalytics',
+    ],
+    expect: [
+      { kind: 'call', operation: 'accounting.FinancialReportingApi.generateAgedReceivables' },
+      { kind: 'call', operation: 'accounting.PaymentApplicationsApi.listUnappliedPayments' },
+      { kind: 'calls', min: 5 },
+    ],
+    limits: { maxSteps: 60, maxCalls: 70 },
+  },
+  {
+    id: 'vendor-bills',
+    title: "Enter and match the vendors' bills for what was received",
+    cadence: 'daily',
+    at: '15:20',
     persona: 'acct',
     kind: 'operations',
     goal:
-      'Bill for finished work. Search recent invoices, pick one that is finalized but not fully paid (if any), read it and its ' +
-      'payments, and record a cash payment for the balance, then generate a receipt. If every invoice is already paid, read one ' +
-      'paid invoice with its payments and receipt artifacts instead. Also list unapplied payments and the open invoices of one ' +
-      'customer in accounting.',
+      'Process the vendor bills for the deliveries the shops received. Start with the Bills to pay stage counts and the ' +
+      'bills in the CHECK stage: a bill waiting on its receipt match is a delivery that was received and not yet billed by ' +
+      'the vendor. If there are none, look for purchase orders received today or yesterday (list purchase orders and read ' +
+      'the received ones); for each that has no bill, create the bill from its goods-received event — the vendor, the ' +
+      'purchase order and the received lines with their quantities and unit costs. ' +
+      "Then the vendors' invoices arrive. For up to five bills waiting on a match, oldest first, submit the vendor's " +
+      'invoice for matching: same purchase order, same lines and quantities as received, an invoice number of your own, ' +
+      "today's date, and a due date 30 days out. Make all but one of them agree with the receipt exactly; on one, bill a " +
+      'unit price about 3% higher than the purchase order, as vendors do. Read each bill afterwards to see where the ' +
+      'match put it. A bill left in MATCH_EXCEPTION: read why, then resolve it — accept a small price difference, send a ' +
+      'large one back as CORRECT. A bill with no due date: set it. ' +
+      'Finally get what is waiting approved. Read the AP approval policy. A bill in AWAITING_APPROVAL is approved by ' +
+      'someone other than the person who submitted it: make the approval calls with sdk_call and persona "controller" ' +
+      '(if the harness refuses that persona, approve as yourself and report what the policy answered). Approve up to five. ' +
+      'Finish with the stage counts again, and report any bill that would not move.',
     operations: [
-      'invoice.InvoiceSearchApi.searchInvoices',
-      'invoice.InvoiceApi.getInvoice',
-      'invoice.InvoiceApi.getInvoiceByWorkorder',
-      'invoice.PaymentApi.listInvoicePayments',
-      'invoice.PaymentApi.recordCashPayment',
-      'invoice.ReceiptApi.generateReceipt',
-      'invoice.InvoiceArtifactControllerApi.listInvoiceArtifacts',
-      'invoice.BillingRulesApi.getBillingRules',
-      'accounting.PaymentApplicationsApi.listUnappliedPayments',
-      'accounting.PaymentApplicationsApi.listCustomerOpenInvoices',
-      'accounting.InvoicePaymentsApi.getInvoiceStatus',
+      'accounting.VendorBillAPIApi.getVendorBillStageCounts',
+      'accounting.VendorBillAPIApi.listVendorBillsByStage',
+      'accounting.VendorBillAPIApi.getVendorBillById',
+      'accounting.VendorBillAPIApi.createVendorBillFromGoodsReceived',
+      'accounting.VendorBillAPIApi.matchVendorInvoice',
+      'accounting.VendorBillAPIApi.listVendorBillMatchCandidates',
+      'accounting.VendorBillAPIApi.selectVendorBillMatchCandidate',
+      'accounting.VendorBillAPIApi.resolveVendorBillMatchException',
+      'accounting.VendorBillAPIApi.setVendorBillDueDate',
+      'accounting.VendorBillAPIApi.approveVendorBill',
+      'accounting.APApprovalPolicyApi.getApApprovalPolicy',
+      'order.PurchaseOrdersApi.listPurchaseOrders',
+      'order.PurchaseOrdersApi.getPurchaseOrder',
+      'accounting.VendorDirectoryAPIApi.searchVendors',
     ],
     expect: [
-      { kind: 'call', operation: 'invoice.InvoiceSearchApi.searchInvoices' },
-      { kind: 'call', operation: 'invoice.InvoiceApi.getInvoice' },
-      { kind: 'calls', min: 4 },
+      { kind: 'call', operation: 'accounting.VendorBillAPIApi.getVendorBillStageCounts' },
+      { kind: 'call', operation: 'accounting.VendorBillAPIApi.listVendorBillsByStage' },
+      { kind: 'calls', min: 5 },
     ],
+    limits: { maxSteps: 70, maxCalls: 80 },
   },
   {
     id: 'error-not-found',
@@ -428,34 +490,50 @@ const weekly: ScenarioInput[] = [
   },
   {
     id: 'weekly-ap-run',
-    title: 'Weekly payables run',
+    title: 'Weekly vendor payment run',
     cadence: 'weekly',
     weekday: 5,
     at: '11:00',
     persona: 'acct',
     kind: 'operations',
     goal:
-      'Prepare the weekly payables run. Read the vendor bill stage counts and the bills in each open stage, the AP approval ' +
-      'policy, the bills ready to pay and the accounts you can pay from, payments in flight, and the cash position and ' +
-      'outlook. If a vendor bill is waiting for approval and is matched, approve it. Do not execute a payment.',
+      'Run the weekly vendor payments. First see where things stand: the cash position and outlook, the AP approval ' +
+      'policy, the accounts a payment may come from, the payments still in flight, and the approved bills ready to pay ' +
+      '(they are listed by due date, oldest first, each saying whether the vendor is on hold). ' +
+      'Then pay. Choose the bills that are overdue or fall due within the next seven days; if none are that close, take ' +
+      'the oldest approved bills. Group them by vendor and pay up to five vendors, one payment each, from one of the ' +
+      'pay-from accounts, allocating the payment across that vendor\'s chosen bills. Give every payment a payment ' +
+      'reference of your own (it is the idempotency key: check the reference is unused before executing, and never ' +
+      'execute the same vendor twice). Limits for this run: no single payment above 5,000.00 in the functional currency, ' +
+      'no more than five payments, never a vendor on AP hold, and never more than the cash position can cover after the ' +
+      'safety cushion. Pay most vendors in full; pay one vendor only part of a bill, as a business short of cash would. ' +
+      'If the policy does not let the person who approved a bill pay it and a payment is refused for that reason, report ' +
+      'it and move on. ' +
+      'Afterwards read each payment back for its allocations and its ledger posting status, the in-flight list again, ' +
+      'and the stage counts of Bills to pay. Report any payment whose posting was refused, and anything executed that ' +
+      'does not show against its bills.',
     operations: [
-      'accounting.VendorBillAPIApi.getVendorBillStageCounts',
-      'accounting.VendorBillAPIApi.listVendorBills',
-      'accounting.VendorBillAPIApi.getVendorBillById',
-      'accounting.VendorBillAPIApi.approveVendorBill',
-      'accounting.APApprovalPolicyApi.getApApprovalPolicy',
-      'accounting.APPaymentsApi.listApBills',
-      'accounting.APPaymentsApi.listApPayFromAccounts',
-      'accounting.APPaymentsApi.listApPaymentsInFlight',
       'accounting.CashPositionApi.getCashPosition',
       'accounting.CashPositionApi.getCashOutlook',
-      'accounting.BillIntakeApi.listBillIntake',
+      'accounting.AccountingConfigurationApi.getCashSafetyCushion',
+      'accounting.APApprovalPolicyApi.getApApprovalPolicy',
+      'accounting.APPaymentsApi.listApPayFromAccounts',
+      'accounting.APPaymentsApi.listApPaymentsInFlight',
+      'accounting.APPaymentsApi.listApBills',
+      'accounting.VendorBillAPIApi.getVendorBillById',
+      'accounting.APPaymentsApi.getApPaymentByRef',
+      'accounting.APPaymentsApi.executeApPayment',
+      'accounting.APPaymentsApi.getApPayment',
+      'accounting.VendorBillAPIApi.getVendorBillStageCounts',
+      'accounting.FinancialReportingApi.generateAgedPayables',
     ],
     expect: [
-      { kind: 'call', operation: 'accounting.VendorBillAPIApi.getVendorBillStageCounts' },
       { kind: 'call', operation: 'accounting.APPaymentsApi.listApBills' },
+      { kind: 'call', operation: 'accounting.APPaymentsApi.listApPayFromAccounts' },
       { kind: 'call', operation: 'accounting.CashPositionApi.getCashPosition' },
+      { kind: 'calls', min: 5 },
     ],
+    limits: { maxSteps: 60, maxCalls: 70 },
   },
   {
     id: 'weekly-bank-deposit',

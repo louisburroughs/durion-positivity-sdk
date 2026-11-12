@@ -63,7 +63,8 @@ describe('scenario library', () => {
   it('runs at every site the routines every shop does for itself, and once the ones that belong to the tenant', () => {
     const perSite = SCENARIOS.filter((scenario) => scenario.perSite).map((scenario) => scenario.id);
     expect(perSite).toEqual(expect.arrayContaining(['open-shop', 'stock-order', 'receive-delivery', 'close-shop', 'weekly-cycle-count']));
-    for (const id of ['invoice-and-payment', 'weekly-ap-run', 'monthly-period-close', 'monthly-financial-statements']) {
+    for (const id of ['collections', 'vendor-bills', 'weekly-ap-run', 'monthly-period-close', 'monthly-financial-statements']) {
+      expect(SCENARIOS.some((scenario) => scenario.id === id)).toBe(true);
       expect([id, perSite.includes(id)]).toEqual([id, false]);
     }
     for (const scenario of SCENARIOS.filter((entry) => entry.perSite)) {
@@ -91,6 +92,34 @@ describe('scenario library', () => {
     );
     // Ordered in the morning, delivered after lunch.
     expect((order?.at ?? '') < (receive?.at ?? '')).toBe(true);
+  });
+
+  it('keeps the books moving: bills entered and approved daily, vendors paid weekly, commercial accounts collected daily', () => {
+    const byId = (id: string) => SCENARIOS.find((scenario) => scenario.id === id);
+    expect(byId('vendor-bills')).toMatchObject({ cadence: 'daily', perSite: false });
+    expect(byId('vendor-bills')?.operations).toEqual(
+      expect.arrayContaining([
+        'accounting.VendorBillAPIApi.createVendorBillFromGoodsReceived',
+        'accounting.VendorBillAPIApi.matchVendorInvoice',
+        'accounting.VendorBillAPIApi.resolveVendorBillMatchException',
+        'accounting.VendorBillAPIApi.approveVendorBill',
+      ]),
+    );
+    expect(byId('collections')).toMatchObject({ cadence: 'daily', perSite: false, persona: 'controller' });
+    expect(byId('collections')?.operations).toEqual(
+      expect.arrayContaining([
+        'accounting.AccountingEventsApi.submitAccountingEvent',
+        'accounting.PaymentApplicationsApi.listCustomerOpenInvoices',
+        'accounting.PaymentApplicationsApi.applyPayment',
+      ]),
+    );
+    expect(byId('weekly-ap-run')?.operations).toContain('accounting.APPaymentsApi.executeApPayment');
+    // The vendor payment is pinned in exactly one place: the payment run.
+    expect(SCENARIOS.filter((scenario) => scenario.operations.includes('accounting.APPaymentsApi.executeApPayment')).map((scenario) => scenario.id)).toEqual([
+      'weekly-ap-run',
+    ]);
+    // Bills are entered after the afternoon delivery they are for.
+    expect((byId('receive-delivery')?.at ?? '') < (byId('vendor-bills')?.at ?? '')).toBe(true);
   });
 
   it('pins a destructive operation only where that is the point of the scenario', () => {

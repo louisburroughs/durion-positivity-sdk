@@ -256,15 +256,15 @@ finished by the nightly close-out — see *Running alongside the populate runs* 
 
 ## Staff routines and error drills
 
-`scenarios/library.ts` holds 26 fixed scenarios for the work that does not walk in through the door. Each is a
+`scenarios/library.ts` holds 27 fixed scenarios for the work that does not walk in through the door. Each is a
 goal written the way an employee would describe the task, the operations it normally takes, and the facts that
 must appear in the call ledger. A scenario marked `perSite` runs once at every shop, each instance told where it
 is; the rest run once for the tenant.
 
 | Cadence | At every site | Once for the tenant |
 | --- | --- | --- |
-| Daily | open the shop · order replenishment stock · receive the stock delivery · close out the day | invoices and receivables · 404 drill · coverage sweep |
-| Weekly | purchasing review · cycle count · timesheet approval | access review · customer follow-ups · warranty claims · authorization drill · payables run · bank deposit · catalog and pricing |
+| Daily | open the shop · order replenishment stock · receive the stock delivery · close out the day | collections from commercial accounts · vendor bills · 404 drill · coverage sweep |
+| Weekly | purchasing review · cycle count · timesheet approval | access review · customer follow-ups · warranty claims · authorization drill · vendor payment run · bank deposit · catalog and pricing |
 | Monthly | inventory review | period close · financial statements · bank reconciliation · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
 
 **Receiving happens two ways every day, at every site.** *Replenishment*: each morning the parts clerk reviews
@@ -274,6 +274,17 @@ partial receipts occur), then putaway tasks generated, claimed and completed. Th
 approved order not yet received, so an order raised late is received the next day. *For a job*: the special-order
 visits above, received against the workorder rather than into stock. The replenishment routine is told to leave
 job orders alone.
+
+**The books keep moving.** What the shops do each day turns into payables and receivables, and three tenant-wide
+routines work them down so neither only grows:
+
+| Routine | When | What it does |
+| --- | --- | --- |
+| Vendor bills | daily, after the deliveries | Takes the bills waiting on a receipt match (creating one from the goods-received event if a received order has none), submits each vendor's invoice for the three-way match — all agreeing with the receipt except one billed about 3% over — resolves any match exception, sets missing due dates, and has the waiting bills approved by a second person (the controller). |
+| Vendor payment run | Fridays | Reads the cash position and its safety cushion, the pay-from accounts and the approved bills by due date; pays up to five vendors, one payment each with its own reference, allocated across that vendor's bills; pays one vendor only in part; then reads each payment back for its allocations and ledger posting. |
+| Collections | daily | Commercial accounts pay later, by check or transfer. From the aged receivables, up to four customers whose oldest open invoice is at least two days old pay: most in full, one covering two invoices, one short. Each payment is recorded as an `INVOICE_PAYMENT` accounting event; the routine then confirms accounting applied it, and applies by hand anything left unapplied. |
+
+Individuals still pay at the counter at checkout; the collections routine leaves their invoices alone.
 
 **Error conditions** are scenarios of kind `error`: lookups that must answer 404, a technician reaching for
 finance (403 — needs per-persona logins, and is skipped rather than failed without them), and the validation,
@@ -356,6 +367,12 @@ The harness writes to a shared tenant, so every operation has a risk class, assi
 | `write` | create a customer, approve an estimate, record a payment, give a bay back | When `QA_MODE=mutating` (default) |
 | `destructive` | deletes, account lockouts, bulk ingest, the tenant registry, tenant signup and password-reset mail, campaign dispatch, closing an accounting period | Only when a scenario pins it **and** `QA_ALLOW_DESTRUCTIVE=true` |
 
+**Paying a vendor moves money through the payment gateway**, so it has limits the harness enforces in code, not
+in a prompt: a payment is executed only by the payment run (never by the sweep or a search-and-call), no single
+payment may exceed `QA_AP_PAYMENT_MAX` (5,000 in the functional currency), no run may make more than
+`QA_AP_PAYMENTS_PER_RUN` (5), and a payment carrying a control override is refused. `QA_PAY_VENDORS=false` turns
+vendor payments off entirely. Check which gateway alpha is connected to before the first Friday.
+
 Out of the box nothing destructive runs: the month-end scenario reads close readiness and is refused the close
 itself until `QA_ALLOW_DESTRUCTIVE=true`. `QA_DENY` takes regexes over operation ids for anything else that should
 never be called, and `QA_MODE=read-only` refuses every write.
@@ -404,7 +421,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 192 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 199 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 

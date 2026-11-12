@@ -227,3 +227,61 @@ describe('safety policy', () => {
     expect(context.backend.requests).toEqual([]);
   });
 });
+
+describe('vendor payment limits', () => {
+  const PAY = 'accounting.APPaymentsApi.executeApPayment';
+  const payment = (grossAmount: number, extra: Record<string, unknown> = {}) => ({
+    operationId: PAY,
+    input: { executeAPPaymentRequest: { vendorId: 'ven-1', currency: 'USD', grossAmount, paymentMethod: 'ACH', paymentRef: `ref-${grossAmount}`, ...extra } },
+  });
+  const method = (): string => {
+    const operation = catalog.byId.get(PAY)!;
+    const request = operation.input.properties['executeAPPaymentRequest'];
+    const field = request.kind === 'object' ? request.properties['paymentMethod'] : undefined;
+    return field?.kind === 'enum' ? field.values[0] : 'ACH';
+  };
+  const pay = (context: ReturnType<typeof setup>, grossAmount: number, extra: Record<string, unknown> = {}) =>
+    sdkCall(context, payment(grossAmount, { paymentMethod: method(), ...extra }));
+
+  it('pays a vendor only from the task whose job it is', async () => {
+    const elsewhere = setup();
+    expect(await pay(elsewhere, 100)).toMatchObject({ outcome: 'refused', reason: expect.stringMatching(/only by the payment run/) });
+    expect(elsewhere.backend.requests).toEqual([]);
+
+    const run = setup({ pinned: [PAY] });
+    expect(await pay(run, 100)).toMatchObject({ outcome: 'success' });
+    expect(run.backend.requests).toHaveLength(1);
+  });
+
+  it('refuses a payment above the limit, without sending it', async () => {
+    const context = setup({ pinned: [PAY], policy: { vendorPayments: { enabled: true, maxAmount: 1000, maxPerRun: 5 } } });
+    expect(await pay(context, 1000.01)).toMatchObject({ outcome: 'refused', reason: expect.stringMatching(/may not exceed 1000\.00/) });
+    expect(await pay(context, 1000)).toMatchObject({ outcome: 'success' });
+    expect(context.backend.requests).toHaveLength(1);
+  });
+
+  it('stops after the number of payments a run is allowed', async () => {
+    const context = setup({ pinned: [PAY], maxCalls: 50, policy: { vendorPayments: { enabled: true, maxAmount: 5000, maxPerRun: 2 } } });
+    expect(await pay(context, 10)).toMatchObject({ outcome: 'success' });
+    expect(await pay(context, 20)).toMatchObject({ outcome: 'success' });
+    expect(await pay(context, 30)).toMatchObject({ outcome: 'refused', reason: expect.stringMatching(/already made 2 vendor payments/) });
+    expect(context.backend.requests).toHaveLength(2);
+  });
+
+  it('holds the limits even when the model skips validation, and never passes an override through', async () => {
+    const context = setup({ pinned: [PAY], allowUnvalidated: true });
+    expect(await sdkCall(context, { ...payment(999999), validate: false })).toMatchObject({ outcome: 'refused' });
+    expect(await sdkCall(context, { ...payment(-5), validate: false })).toMatchObject({ outcome: 'refused', reason: expect.stringMatching(/positive grossAmount/) });
+    expect(await pay(context, 100, { overrideJustification: 'the model says so' })).toMatchObject({
+      outcome: 'refused',
+      reason: expect.stringMatching(/a person's decision/),
+    });
+    expect(context.backend.requests).toEqual([]);
+  });
+
+  it('can be turned off altogether', async () => {
+    const context = setup({ pinned: [PAY], policy: { vendorPayments: { enabled: false, maxAmount: 5000, maxPerRun: 5 } } });
+    expect(await pay(context, 10)).toMatchObject({ outcome: 'refused', reason: expect.stringMatching(/turned off/) });
+    expect(context.backend.requests).toEqual([]);
+  });
+});

@@ -10,7 +10,7 @@ describe('loadQaConfig', () => {
       timezone: 'America/New_York',
       runDays: [1, 2, 3, 4, 5, 6],
       coverageLevel: 'package',
-      policy: { mode: 'mutating', allowDestructive: false, deny: [] },
+      policy: { mode: 'mutating', allowDestructive: false, deny: [], vendorPayments: { enabled: true, maxAmount: 5000, maxPerRun: 5 } },
       sweepWrites: false,
       maxPerTick: 3,
       concurrency: 3,
@@ -46,6 +46,11 @@ describe('loadQaConfig', () => {
     expect(config.runDays).toEqual([1, 3, 5]);
     expect(config.stateDir).toBe('/var/qa');
     expect(config.limits.maxSteps).toBe(12);
+  });
+
+  it('lets vendor payments be limited or turned off', () => {
+    const config = loadQaConfig({ QA_PAY_VENDORS: 'false', QA_AP_PAYMENT_MAX: '750.50', QA_AP_PAYMENTS_PER_RUN: '2' }, GATEWAY);
+    expect(config.policy.vendorPayments).toEqual({ enabled: false, maxAmount: 750.5, maxPerRun: 2 });
   });
 
   it('reports every problem at once', () => {
