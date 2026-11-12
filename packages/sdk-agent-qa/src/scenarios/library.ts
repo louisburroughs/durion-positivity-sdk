@@ -147,8 +147,10 @@ const daily: ScenarioInput[] = [
       'Today, up to four of those customers pay — choose the ones whose oldest open invoice is at least two days old, ' +
       'oldest first. For each, record the payment the way the business receives it: submit an INVOICE_PAYMENT accounting ' +
       'event for the invoice (read the event contract first for the exact payload; use a new payment id, the invoice id, ' +
-      'the amount, the currency, a paid-at time of now, and a payment method of CHECK or ACH with a reference such as a ' +
-      'check number). Vary it the way customers do: most pay their oldest invoice in full; if a customer has two or more ' +
+      'the amount, the currency, a paid-at time of now, and a payment method of CHECK or ACH). A payment is received at ' +
+      'a shop — the one that issued the invoice: give that location as the organization, and record what was handed ' +
+      'over, a check number for a check or the transfer number for a bank transfer, as the reference. It is on the books ' +
+      'today; the bank will not show it for a day or two. Vary it the way customers do: most pay their oldest invoice in full; if a customer has two or more ' +
       'open invoices, have one customer pay two of them; and have one customer short-pay — an amount a little under the ' +
       'balance. ' +
       'Then see that the money landed. Accounting applies a payment event to its invoice by itself after a short delay: ' +
@@ -489,6 +491,111 @@ const weekly: ScenarioInput[] = [
     ],
   },
   {
+    id: 'weekly-bank-statement',
+    title: "Enter last week's bank statement",
+    cadence: 'weekly',
+    weekday: 1,
+    at: '08:30',
+    persona: 'acct',
+    kind: 'operations',
+    tools: ['bank_statement', 'request_id'],
+    goal:
+      "Last week's bank statement has arrived. For each bank account the business reconciles (list the bank accounts), " +
+      'do the following; if there are several, do the first two. ' +
+      'The period is last week, Monday to Sunday — unless the account already has statements, in which case it runs from ' +
+      'the day after the latest one ends to last Sunday (skip the account if that is already covered). ' +
+      'First time for an account, when it has no statement yet and no opening balance on the books: put the opening ' +
+      'balance on the books — a statement balance of {{bankOpeningBalance}} in the account\'s currency, as of the day ' +
+      'before the period starts, with no outstanding items and a justification saying it is the balance at the start of ' +
+      'this run. That figure is then this statement\'s opening balance. Otherwise the opening balance is the latest ' +
+      "statement's closing balance. " +
+      'Then gather what the books say moved through the account: every entry on that bank account dated from five days ' +
+      'before the period starts to its end — from the general ledger for the account or its journal entries. Classify ' +
+      'each: a deposit of register cash, a customer check, a customer bank transfer, a vendor payment, or other; keep its ' +
+      'date, signed amount (money in positive) and its reference (deposit reference, check number, transfer number, ' +
+      'payment reference). Leave out the opening-balance entry itself. ' +
+      'Give those to the bank_statement tool with the period and opening balance. It returns the statement as the bank ' +
+      'sent it. It will not match the books line for line — that is what reconciliation is for — so enter it exactly as ' +
+      'returned, the way it says to: keyed by hand (create the bank statement from the header and lines) or as a file ' +
+      '(upload the CSV it gives you with its mapping, read the import\'s preview and rows, then commit it). Use the ' +
+      'request ids it gives you. A first statement for an account needs a gap acknowledgement saying it is the first. ' +
+      'Finish by reading the committed statement back, and report its closing balance and how many items the bank had ' +
+      'not yet cleared.',
+    operations: [
+      'accounting.BankAccountsApi.listBankAccounts',
+      'accounting.BankAccountsApi.establishBankOpeningBalance',
+      'accounting.BankStatementsApi.listBankStatements',
+      'accounting.BankStatementsApi.getBankStatement',
+      'accounting.BankStatementsApi.createBankStatement',
+      'accounting.BankImportsApi.createBankImport',
+      'accounting.BankImportsApi.getBankImport',
+      'accounting.BankImportsApi.listBankImportRows',
+      'accounting.BankImportsApi.setBankImportMapping',
+      'accounting.BankImportsApi.commitBankImport',
+      'accounting.FinancialReportingApi.generateGeneralLedger',
+      'accounting.JournalEntriesApi.listJournalEntries',
+      'accounting.JournalEntriesApi.getJournalEntry',
+      'accounting.GLAccountsApi.getGLAccountBalance',
+    ],
+    expect: [
+      { kind: 'call', operation: 'accounting.BankAccountsApi.listBankAccounts' },
+      { kind: 'call', operation: 'accounting.BankStatementsApi.listBankStatements' },
+      { kind: 'calls', min: 5 },
+    ],
+    limits: { maxSteps: 70, maxCalls: 80 },
+  },
+  {
+    id: 'weekly-bank-reconciliation',
+    title: "Reconcile last week's bank statement",
+    cadence: 'weekly',
+    weekday: 1,
+    at: '10:30',
+    persona: 'acct',
+    kind: 'operations',
+    tools: ['request_id'],
+    goal:
+      'Reconcile the bank statement entered this morning. List the bank accounts and their statements; for each account ' +
+      'whose latest committed statement has no finalized reconciliation, work it (the first two accounts, if several). ' +
+      'Open the reconciliation for the statement if one is not already in progress, and read it and its review to see what ' +
+      'is unexplained on each side. Run the auto-match, then go through what it proposed: accept a pairing where amount, ' +
+      'date and reference agree; reject one that does not (find the operation with sdk_search). For bank lines still unexplained, look at the candidates and ' +
+      'pair by hand where there is a clear one (a check by its number, a transfer or payment by its reference). ' +
+      'What is left is the real work. A bank charge or interest line that the books do not have: record it as an ' +
+      'adjustment of the matching type. An entry on the books the bank has not shown — a check or transfer received ' +
+      'late in the week, a vendor payment still on its way: register it as an outstanding item, it will clear next week. ' +
+      'An outstanding item from an earlier reconciliation that has now appeared on this statement: match it. A deposit ' +
+      'the bank shows at a different amount from the books: do not force it — leave it unmatched and report both amounts ' +
+      'as a finding for someone to take up with the bank. ' +
+      'When nothing more can honestly be explained, read the reconciliation report. If it balances, submit it, and have ' +
+      'it approved by someone else: make the finalize call with sdk_call and persona "controller" (if the harness refuses ' +
+      'that persona, or the difference is not zero, leave it submitted or in progress and say why). Report the ending ' +
+      'balances, what was adjusted, what is outstanding, and anything unexplained.',
+    operations: [
+      'accounting.BankAccountsApi.listBankAccounts',
+      'accounting.BankStatementsApi.listBankStatements',
+      'accounting.BankReconciliationApi.listReconciliations',
+      'accounting.BankReconciliationApi.createReconciliation',
+      'accounting.BankReconciliationApi.getReconciliation',
+      'accounting.BankReconciliationApi.getReconciliationReview',
+      'accounting.BankReconciliationApi.autoMatchReconciliation',
+      'accounting.BankReconciliationApi.acceptReconciliationMatch',
+      'accounting.BankReconciliationApi.listReconciliationCandidates',
+      'accounting.BankReconciliationApi.createReconciliationMatch',
+      'accounting.BankReconciliationApi.listReconciliationAdjustmentTypes',
+      'accounting.BankReconciliationApi.addReconciliationAdjustment',
+      'accounting.BankReconciliationApi.registerReconciliationOutstandingItem',
+      'accounting.BankReconciliationApi.getReconciliationReport',
+      'accounting.BankReconciliationApi.submitReconciliation',
+      'accounting.BankReconciliationApi.finalizeReconciliation',
+    ],
+    expect: [
+      { kind: 'call', operation: 'accounting.BankStatementsApi.listBankStatements' },
+      { kind: 'call', operation: 'accounting.BankReconciliationApi.listReconciliations' },
+      { kind: 'calls', min: 5 },
+    ],
+    limits: { maxSteps: 80, maxCalls: 90 },
+  },
+  {
     id: 'weekly-ap-run',
     title: 'Weekly vendor payment run',
     cadence: 'weekly',
@@ -664,35 +771,41 @@ const monthly: ScenarioInput[] = [
   },
   {
     id: 'monthly-bank-reconciliation',
-    title: 'Monthly bank reconciliation',
+    title: 'Month-end bank reconciliation review',
     cadence: 'monthly',
     dayOfMonth: 3,
     at: '10:00',
-    persona: 'acct',
+    persona: 'controller',
     kind: 'operations',
     goal:
-      'Reconcile the bank for last month. List bank accounts, statements, imports and transactions. If a statement exists for ' +
-      'an account with no finalized reconciliation, start a reconciliation for it, run the auto-match, and read the ' +
-      'reconciliation and its report; do not finalize. Otherwise read an existing reconciliation and its audit. Finish with ' +
-      'the settlement lines awaiting a match and the tax registrations on file.',
+      'Review last month\'s bank reconciliations before the books are closed. The statements are entered and reconciled ' +
+      'weekly; this is the controller checking that the month is covered. For each bank account: read how far its ' +
+      'statements and its reconciled frontier reach, and list its statements and reconciliations for last month. Report ' +
+      'any week of the month with no statement, any statement with no finalized reconciliation, and any reconciliation ' +
+      'still in progress or only submitted. Read the report and the audit of the reconciliation that covers month end: ' +
+      'say what was adjusted (bank charges, interest), and how many items are still outstanding and how old the oldest ' +
+      'is — an item outstanding for more than two weeks is a finding. Read the bank transactions still unexplained. ' +
+      'Finally read the bank reconciliation policy and the settlement lines awaiting a match. Change nothing: a week ' +
+      'that was missed is for the bookkeeper to catch up, not for the reviewer.',
     operations: [
       'accounting.BankAccountsApi.listBankAccounts',
       'accounting.BankStatementsApi.listBankStatements',
-      'accounting.BankImportsApi.listBankImports',
-      'accounting.BankTransactionsApi.listBankTransactions',
-      'accounting.BankReconciliationApi.createReconciliation',
-      'accounting.BankReconciliationApi.autoMatchReconciliation',
+      'accounting.BankStatementsApi.getBankStatement',
+      'accounting.BankReconciliationApi.listReconciliations',
       'accounting.BankReconciliationApi.getReconciliation',
       'accounting.BankReconciliationApi.getReconciliationReport',
       'accounting.BankReconciliationApi.getReconciliationAudit',
+      'accounting.BankReconciliationApi.getReconciliationReview',
+      'accounting.BankTransactionsApi.listBankTransactions',
+      'accounting.AccountingPeriodsApi.getBankReconciliationPolicy',
       'accounting.SettlementReconciliationApi.listSettlementLines',
-      'accounting.AccountingTaxRegistrationsApi.listTaxRegistrations',
     ],
     expect: [
       { kind: 'call', operation: 'accounting.BankAccountsApi.listBankAccounts' },
       { kind: 'call', operation: 'accounting.BankStatementsApi.listBankStatements' },
-      { kind: 'calls', min: 5 },
+      { kind: 'call', operation: 'accounting.BankReconciliationApi.listReconciliations' },
     ],
+    limits: { maxSteps: 45, maxCalls: 50 },
   },
   {
     id: 'monthly-inventory-valuation',

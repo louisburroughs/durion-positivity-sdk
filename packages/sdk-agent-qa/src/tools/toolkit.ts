@@ -89,6 +89,8 @@ export interface ToolRuntimeOptions {
    * the customer decided). When given, the model gets a `remember` tool.
    */
   memory?: Record<string, string>;
+  /** Task-specific helpers that are not SDK operations (the mock bank, request ids). */
+  extraTools?: QaTool[];
   /** Called after every answered call, with the full response body. */
   onCall?(operation: Operation, outcome: CallOutcome): void;
   /** Pause used by the `wait` tool. */
@@ -476,6 +478,7 @@ export class ToolRuntime {
       ...this.pinnedTools(),
       ...this.catalogTools(),
       ...this.utilityTools(),
+      ...(this.options.extraTools ?? []),
       {
         name: 'finish',
         description: 'End the scenario and report what happened. Call exactly once, when the goal is met or cannot be.',

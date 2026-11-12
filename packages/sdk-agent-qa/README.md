@@ -256,7 +256,7 @@ finished by the nightly close-out — see *Running alongside the populate runs* 
 
 ## Staff routines and error drills
 
-`scenarios/library.ts` holds 27 fixed scenarios for the work that does not walk in through the door. Each is a
+`scenarios/library.ts` holds 29 fixed scenarios for the work that does not walk in through the door. Each is a
 goal written the way an employee would describe the task, the operations it normally takes, and the facts that
 must appear in the call ledger. A scenario marked `perSite` runs once at every shop, each instance told where it
 is; the rest run once for the tenant.
@@ -264,8 +264,8 @@ is; the rest run once for the tenant.
 | Cadence | At every site | Once for the tenant |
 | --- | --- | --- |
 | Daily | open the shop · order replenishment stock · receive the stock delivery · close out the day | collections from commercial accounts · vendor bills · 404 drill · coverage sweep |
-| Weekly | purchasing review · cycle count · timesheet approval | access review · customer follow-ups · warranty claims · authorization drill · vendor payment run · bank deposit · catalog and pricing |
-| Monthly | inventory review | period close · financial statements · bank reconciliation · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
+| Weekly | purchasing review · cycle count · timesheet approval | bank statement · bank reconciliation · access review · customer follow-ups · warranty claims · authorization drill · vendor payment run · bank deposit · catalog and pricing |
+| Monthly | inventory review | period close · financial statements · bank reconciliation review · supplier review · people admin · platform and integrations · management analytics · error-contract drill · agreements, fleet and vehicles |
 
 **Receiving happens two ways every day, at every site.** *Replenishment*: each morning the parts clerk reviews
 what is at or below its stocking level and raises a purchase order, which a manager approves; after lunch the
@@ -284,7 +284,29 @@ routines work them down so neither only grows:
 | Vendor payment run | Fridays | Reads the cash position and its safety cushion, the pay-from accounts and the approved bills by due date; pays up to five vendors, one payment each with its own reference, allocated across that vendor's bills; pays one vendor only in part; then reads each payment back for its allocations and ledger posting. |
 | Collections | daily | Commercial accounts pay later, by check or transfer. From the aged receivables, up to four customers whose oldest open invoice is at least two days old pay: most in full, one covering two invoices, one short. Each payment is recorded as an `INVOICE_PAYMENT` accounting event; the routine then confirms accounting applied it, and applies by hand anything left unapplied. |
 
-Individuals still pay at the counter at checkout; the collections routine leaves their invoices alone.
+Individuals still pay at the counter at checkout; the collections routine leaves their invoices alone. A
+commercial payment is recorded at the shop that issued the invoice, with the check number or transfer number that
+was handed over; it is on the books that day and at the bank a day or two later.
+
+**The bank.** Alpha has books but no bank, and a reconciliation needs the bank's side. `tools/mockBank.ts` plays
+it, in code rather than in a prompt, because a bank is exact: every item clears on a rule, and opening balance
+plus activity equals closing balance to the cent.
+
+| Routine | When | What it does |
+| --- | --- | --- |
+| Bank statement | Mondays, 8:30 | For each bank account: on first use, puts an opening balance on the books (`QA_BANK_OPENING_BALANCE`, 50,000). Reads what the ledger says moved through the account, hands it to the bank, and enters the statement that comes back exactly as given — one week keyed by hand, the next as an uploaded CSV, so both intake paths are used. |
+| Bank reconciliation | Mondays, 10:30 | Opens the reconciliation, runs the auto-match and reviews what it proposed, pairs the rest by check or transfer number, records bank charges and interest as adjustments, registers what the bank has not shown yet as outstanding, and submits it for a second person to approve. |
+| Month-end review | the 3rd | The controller checks that every week of last month has a statement and a finalized reconciliation, and reports outstanding items more than two weeks old. Reads only. |
+
+The statement differs from the books in the ordinary ways, which is what gives the reconciliation something to do:
+
+- **Timing.** The bank shows register cash and incoming transfers one business day after the books, customer
+  checks two, and vendor payments two. Anything not cleared by the end of the period is left off and appears on the
+  next statement — each item lands on exactly one.
+- **The bank's own lines.** A service charge and a little interest on the last business day of each month.
+- **An occasional error.** About half the weeks, the bank counts one cash deposit a few dollars differently from
+  the slip. The bookkeeper is not told which; the reconciliation is told to leave it unmatched and report it.
+
 
 **Error conditions** are scenarios of kind `error`: lookups that must answer 404, a technician reaching for
 finance (403 — needs per-persona logins, and is skipped rather than failed without them), and the validation,
@@ -421,7 +443,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 199 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 218 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 

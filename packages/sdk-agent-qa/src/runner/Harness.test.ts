@@ -620,3 +620,42 @@ describe('a job that waits overnight for its part', () => {
     expect(stagesOf(state).filter((id) => id.includes('-d0310-'))).toEqual([]);
   });
 });
+
+describe('the bookkeeper and the bank', () => {
+  const BOOKS = defineScenarios([
+    {
+      id: 'statement',
+      title: 'Enter the bank statement',
+      cadence: 'daily',
+      at: '08:30',
+      persona: 'acct',
+      kind: 'operations',
+      tools: ['bank_statement', 'request_id'],
+      goal: 'Opening balance is {{bankOpeningBalance}}.',
+      operations: [],
+      expect: [],
+    },
+    { id: 'other', title: 'Something else', cadence: 'daily', at: '08:31', persona: 'acct', kind: 'operations', goal: 'No bank here.', operations: [], expect: [] },
+  ]);
+
+  it('gives the statement task the bank and the configured opening balance, and nobody else', async () => {
+    const model = new ScriptedModel([
+      [call('bank_statement', { account: '1010', periodStart: '2026-03-02', periodEnd: '2026-03-08', openingBalance: 75000, items: [{ date: '2026-03-03', amount: 420.5, kind: 'CASH_DEPOSIT', reference: 'DEP-1' }] })],
+      [call('finish', { verdict: 'completed', summary: 'entered' })],
+      [call('finish', { verdict: 'completed', summary: 'nothing' })],
+    ]);
+    const state = world({ model, scenarios: BOOKS, env: { QA_BANK_OPENING_BALANCE: '75000', QA_MAX_PER_TICK: '1' } });
+    state.setTime('2026-03-10 09:00');
+    await state.harness.tick();
+    await state.harness.tick();
+
+    const [statement, , other] = model.requests;
+    expect((statement.messages[0] as { content: string }).content).toContain('Opening balance is 75000.00.');
+    expect(statement.tools.map((tool) => tool.name)).toEqual(expect.arrayContaining(['bank_statement', 'request_id']));
+    expect(other.tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(['bank_statement']));
+
+    // The bank answered the bookkeeper with a statement that ties.
+    const answer = (model.requests[1].messages.at(-1) as { results: Array<{ output: { statement: { closingBalance: number } } }> }).results[0].output;
+    expect(answer.statement.closingBalance).toBe(75420.5);
+  });
+});

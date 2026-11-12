@@ -50,6 +50,12 @@ export const scenarioSchema = z.strictObject({
    * once per site, each instance told which location it is at.
    */
   perSite: z.boolean().default(false),
+  /**
+   * Helpers beyond the SDK that the task needs: `bank_statement` is the mock
+   * bank (tools/mockBank.ts); `request_id` mints the time-ordered ids some
+   * accounting requests require.
+   */
+  tools: z.array(z.enum(['bank_statement', 'request_id'])).default([]),
   /** Skipped (not failed) when every persona shares the admin login, where a 403 can never happen. */
   requiresRoleMode: z.boolean().default(false),
   goal: z.string(),

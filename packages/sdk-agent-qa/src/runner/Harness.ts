@@ -154,7 +154,11 @@ export class Harness {
    * known, per-site routines are simply not there yet.
    */
   private scenariosFor(day: DayPlanStore | undefined): Scenario[] {
-    return this.scenarios.flatMap((scenario) => {
+    // Settings a routine's brief quotes are filled in here, so the library stays plain text.
+    const fill = (goal: string): string =>
+      goal.replace(/\{\{bankOpeningBalance\}\}/g, this.options.config.bankOpeningBalance.toFixed(2));
+    return this.scenarios.flatMap((entry) => {
+      const scenario = { ...entry, goal: fill(entry.goal) };
       if (!scenario.perSite) {
         return [scenario];
       }

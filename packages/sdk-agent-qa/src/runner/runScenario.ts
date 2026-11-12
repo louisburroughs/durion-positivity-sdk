@@ -11,6 +11,7 @@ import type { CallLedger, CallRecord } from '../ledger/CallLedger';
 import { judge, type ExpectationResult, type Verdict } from '../scenarios/oracle';
 import type { Scenario } from '../scenarios/types';
 import type { CallOutcome, SdkInvoker } from '../sdk/SdkInvoker';
+import { mockBankTool, requestIdTool } from '../tools/mockBank';
 import { ToolRuntime, type FinishReport, type SafetyPolicy } from '../tools/toolkit';
 import { systemPrompt, taskPrompt, type PromptContext } from './prompt';
 
@@ -120,6 +121,7 @@ export async function runScenario(scenario: Scenario, deps: ScenarioDeps): Promi
     allowUnvalidated: scenario.kind === 'error',
     maxCalls: scenario.limits.maxCalls ?? deps.limits.maxCalls,
     memory: deps.memory,
+    extraTools: scenario.tools.map((name) => (name === 'bank_statement' ? mockBankTool() : requestIdTool())),
     onCall: deps.onCall,
     sleep: deps.sleep,
     now,

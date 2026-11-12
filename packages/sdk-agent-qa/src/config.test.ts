@@ -13,6 +13,7 @@ describe('loadQaConfig', () => {
       policy: { mode: 'mutating', allowDestructive: false, deny: [], vendorPayments: { enabled: true, maxAmount: 5000, maxPerRun: 5 } },
       sweepWrites: false,
       maxPerTick: 3,
+      bankOpeningBalance: 50000,
       concurrency: 3,
       minGapMinutes: 2,
       day: { visitsMin: 4, visitsMax: 8, tenantMax: 60, newCustomerRatio: 0.3, commercialRatio: 0.3, newVehicleRatio: 0.2, stockPartsRatio: 0.45, specialOrderRatio: 0.2, openTime: '08:00', closeTime: '17:30', seed: 0 },

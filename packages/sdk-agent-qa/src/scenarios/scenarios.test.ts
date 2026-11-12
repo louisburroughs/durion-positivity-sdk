@@ -122,6 +122,46 @@ describe('scenario library', () => {
     expect((byId('receive-delivery')?.at ?? '') < (byId('vendor-bills')?.at ?? '')).toBe(true);
   });
 
+  it('gets a bank statement every week and reconciles it, with the month-end review left to read', () => {
+    const byId = (id: string) => SCENARIOS.find((scenario) => scenario.id === id);
+    const statement = byId('weekly-bank-statement');
+    const reconcile = byId('weekly-bank-reconciliation');
+    expect(statement).toMatchObject({ cadence: 'weekly', weekday: 1, perSite: false, tools: ['bank_statement', 'request_id'] });
+    expect(statement?.operations).toEqual(
+      expect.arrayContaining([
+        'accounting.BankAccountsApi.establishBankOpeningBalance',
+        'accounting.BankStatementsApi.createBankStatement',
+        'accounting.BankImportsApi.createBankImport',
+        'accounting.BankImportsApi.commitBankImport',
+      ]),
+    );
+    expect(statement?.goal).toContain('{{bankOpeningBalance}}');
+    expect(reconcile).toMatchObject({ cadence: 'weekly', weekday: 1, tools: ['request_id'] });
+    expect(reconcile?.operations).toEqual(
+      expect.arrayContaining([
+        'accounting.BankReconciliationApi.autoMatchReconciliation',
+        'accounting.BankReconciliationApi.addReconciliationAdjustment',
+        'accounting.BankReconciliationApi.registerReconciliationOutstandingItem',
+        'accounting.BankReconciliationApi.submitReconciliation',
+      ]),
+    );
+    // The statement is entered before it is reconciled.
+    expect((statement?.at ?? '') < (reconcile?.at ?? '')).toBe(true);
+    // Only the bookkeeper's task is given the bank; nobody else can ask it for a statement.
+    expect(SCENARIOS.filter((scenario) => scenario.tools.includes('bank_statement')).map((scenario) => scenario.id)).toEqual(['weekly-bank-statement']);
+    // The month-end task reviews and changes nothing.
+    const review = byId('monthly-bank-reconciliation');
+    expect(review?.operations.every((id) => catalog.byId.get(id)?.risk === 'read')).toBe(true);
+  });
+
+  it('records a customer payment where and how it was received', () => {
+    const goal = SCENARIOS.find((scenario) => scenario.id === 'collections')?.goal ?? '';
+    expect(goal).toMatch(/received at a shop/);
+    expect(goal).toMatch(/check number/);
+    expect(goal).toMatch(/transfer number/);
+    expect(goal).toMatch(/the bank will not show it for a day or two/);
+  });
+
   it('pins a destructive operation only where that is the point of the scenario', () => {
     const destructive = SCENARIOS.flatMap((scenario) =>
       scenario.operations.filter((id) => catalog.byId.get(id)?.risk === 'destructive').map((id) => `${scenario.id}: ${id}`),
