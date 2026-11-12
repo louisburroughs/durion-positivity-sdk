@@ -35,6 +35,7 @@ export class ShiftSimulator {
   private async closeStaleSession(personId: string): Promise<void> {
     try {
       await this.peopleClient.workSessionsAPIApi.stopWorkSession({
+        idempotencyKey: crypto.randomUUID(),
         workSessionRequest: { personId },
       });
       console.log(`[Shift] Closed stale session for ${personId}.`);
@@ -108,6 +109,7 @@ export class ShiftSimulator {
 
       try {
         const response = await this.peopleClient.workSessionsAPIApi.startWorkSession({
+          idempotencyKey: crypto.randomUUID(),
           workSessionRequest: { personId },
         });
         this.activePersonIds.push(personId);
@@ -141,6 +143,7 @@ export class ShiftSimulator {
     for (const personId of this.activePersonIds) {
       try {
         await this.peopleClient.workSessionsAPIApi.stopWorkSession({
+          idempotencyKey: crypto.randomUUID(),
           workSessionRequest: { personId },
         });
         const employeeName = this.refs.employeeNameById.get(personId) ?? personId;
