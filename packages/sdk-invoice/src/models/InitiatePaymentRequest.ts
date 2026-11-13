@@ -26,19 +26,34 @@ export interface InitiatePaymentRequest {
      */
     amount: number;
     /**
+     * Card channel: COUNTER_READER, TAP_TO_PAY or HOSTED_PAGE
+     * @type {string}
+     * @memberof InitiatePaymentRequest
+     */
+    channel: InitiatePaymentRequestChannelEnum;
+    /**
      * Payment flow: SALE_CAPTURE (default one-step) or AUTH_ONLY (two-step)
      * @type {string}
      * @memberof InitiatePaymentRequest
      */
     paymentFlow: InitiatePaymentRequestPaymentFlowEnum;
     /**
-     * Tokenised card reference (no PAN)
+     * Counter reader, when the channel is a reader
      * @type {string}
      * @memberof InitiatePaymentRequest
      */
-    paymentToken: string;
+    readerId?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum InitiatePaymentRequestChannelEnum {
+    CounterReader = 'COUNTER_READER',
+    TapToPay = 'TAP_TO_PAY',
+    HostedPage = 'HOSTED_PAGE'
+}
 /**
 * @export
 * @enum {string}
@@ -54,8 +69,8 @@ export enum InitiatePaymentRequestPaymentFlowEnum {
  */
 export function instanceOfInitiatePaymentRequest(value: object): boolean {
     if (!('amount' in value)) return false;
+    if (!('channel' in value)) return false;
     if (!('paymentFlow' in value)) return false;
-    if (!('paymentToken' in value)) return false;
     return true;
 }
 
@@ -70,8 +85,9 @@ export function InitiatePaymentRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'amount': json['amount'],
+        'channel': json['channel'],
         'paymentFlow': json['paymentFlow'],
-        'paymentToken': json['paymentToken'],
+        'readerId': json['readerId'] == null ? undefined : json['readerId'],
     };
 }
 
@@ -82,8 +98,9 @@ export function InitiatePaymentRequestToJSON(value?: InitiatePaymentRequest | nu
     return {
         
         'amount': value['amount'],
+        'channel': value['channel'],
         'paymentFlow': value['paymentFlow'],
-        'paymentToken': value['paymentToken'],
+        'readerId': value['readerId'],
     };
 }
 

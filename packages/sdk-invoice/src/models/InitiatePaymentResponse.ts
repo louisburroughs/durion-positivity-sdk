@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ClientHandoffResponse } from './ClientHandoffResponse';
+import {
+    ClientHandoffResponseFromJSON,
+    ClientHandoffResponseFromJSONTyped,
+    ClientHandoffResponseToJSON,
+} from './ClientHandoffResponse';
+
 /**
  * Payment intent result
  * @export
@@ -43,6 +50,12 @@ export interface InitiatePaymentResponse {
      * @memberof InitiatePaymentResponse
      */
     cashRoundingAmount?: number;
+    /**
+     * 
+     * @type {ClientHandoffResponse}
+     * @memberof InitiatePaymentResponse
+     */
+    clientHandoff?: ClientHandoffResponse;
     /**
      * Gateway provider identifier (e.g., stripe)
      * @type {string}
@@ -132,6 +145,7 @@ export function InitiatePaymentResponseFromJSONTyped(json: any, ignoreDiscrimina
         'capturedAmount': json['capturedAmount'] == null ? undefined : json['capturedAmount'],
         'cashIncrement': json['cashIncrement'] == null ? undefined : json['cashIncrement'],
         'cashRoundingAmount': json['cashRoundingAmount'] == null ? undefined : json['cashRoundingAmount'],
+        'clientHandoff': json['clientHandoff'] == null ? undefined : ClientHandoffResponseFromJSON(json['clientHandoff']),
         'gatewayProvider': json['gatewayProvider'] == null ? undefined : json['gatewayProvider'],
         'gatewayResponse': json['gatewayResponse'] == null ? undefined : json['gatewayResponse'],
         'methodType': json['methodType'] == null ? undefined : json['methodType'],
@@ -152,6 +166,7 @@ export function InitiatePaymentResponseToJSON(value?: InitiatePaymentResponse | 
         'capturedAmount': value['capturedAmount'],
         'cashIncrement': value['cashIncrement'],
         'cashRoundingAmount': value['cashRoundingAmount'],
+        'clientHandoff': ClientHandoffResponseToJSON(value['clientHandoff']),
         'gatewayProvider': value['gatewayProvider'],
         'gatewayResponse': value['gatewayResponse'],
         'methodType': value['methodType'],
