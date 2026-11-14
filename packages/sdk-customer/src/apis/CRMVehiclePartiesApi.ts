@@ -18,6 +18,7 @@ import type {
   ApiError,
   ContactCheckRequest,
   ContactCheckResponse,
+  VehicleDriverLinkResponse,
   VehiclePartySummaryDto,
 } from '../models/index';
 import {
@@ -27,6 +28,8 @@ import {
     ContactCheckRequestToJSON,
     ContactCheckResponseFromJSON,
     ContactCheckResponseToJSON,
+    VehicleDriverLinkResponseFromJSON,
+    VehicleDriverLinkResponseToJSON,
     VehiclePartySummaryDtoFromJSON,
     VehiclePartySummaryDtoToJSON,
 } from '../models/index';
@@ -38,6 +41,16 @@ export interface CheckVehicleContactRequest {
 
 export interface GetVehiclePartySummaryRequest {
     vehicleId: string;
+}
+
+export interface LinkVehicleDriverRequest {
+    vehicleId: string;
+    partyId: string;
+}
+
+export interface UnlinkVehicleDriverRequest {
+    vehicleId: string;
+    partyId: string;
 }
 
 /**
@@ -99,7 +112,7 @@ export class CRMVehiclePartiesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the parties linked to a vehicle — the owner and, for a commercial account, its drivers — in masked form: for a person a first name, a last initial, the last four digits of a phone and a masked e-mail; for a commercial account only its organization name. Use this tool to confirm with the customer, out loud, that this is the right vehicle\'s customer; use checkVehicleContact instead to test a phone or e-mail the customer gives. Preconditions: the caller needs crm:vehicle_contact:check; the vehicle must have replicated into ext_vehicle. The owner is the party whose id equals the vehicle\'s account id, drivers are persons with an effective DRIVER relationship from a commercial owner, merged, inactive and out-of-date parties are excluded, and there is no lessee. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. Emits a CRM_VEHICLE_PARTIES_SUMMARY event; no state changes occur. The response is never cached and never contains a full phone, e-mail or address. Returns 403 when the caller lacks the authority, 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet, and 200 with an empty list when the vehicle links no party. 
+     * Returns the parties linked to a vehicle — the owner and, for a commercial account, its drivers — in masked form: for a person a first name, a last initial, the last four digits of a phone and a masked e-mail; for a commercial account only its organization name. Use this tool to confirm with the customer, out loud, that this is the right vehicle\'s customer; use checkVehicleContact instead to test a phone or e-mail the customer gives. Preconditions: the caller needs crm:vehicle_contact:check; the vehicle must have replicated into ext_vehicle. The owner is the party whose id equals the vehicle\'s account id, and the drivers are the persons with an effective DRIVER relationship from a commercial owner plus the persons linked to this vehicle as its driver; merged, inactive and out-of-date parties are excluded, and there is no lessee. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. Emits a CRM_VEHICLE_PARTIES_SUMMARY event; no state changes occur. The response is never cached and never contains a full phone, e-mail or address. Returns 403 when the caller lacks the authority, 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet, and 200 with an empty list when the vehicle links no party. 
      * List a Vehicle\'s Linked Parties (Masked)
      */
     async getVehiclePartySummaryRaw(requestParameters: GetVehiclePartySummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VehiclePartySummaryDto>>> {
@@ -133,12 +146,111 @@ export class CRMVehiclePartiesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the parties linked to a vehicle — the owner and, for a commercial account, its drivers — in masked form: for a person a first name, a last initial, the last four digits of a phone and a masked e-mail; for a commercial account only its organization name. Use this tool to confirm with the customer, out loud, that this is the right vehicle\'s customer; use checkVehicleContact instead to test a phone or e-mail the customer gives. Preconditions: the caller needs crm:vehicle_contact:check; the vehicle must have replicated into ext_vehicle. The owner is the party whose id equals the vehicle\'s account id, drivers are persons with an effective DRIVER relationship from a commercial owner, merged, inactive and out-of-date parties are excluded, and there is no lessee. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. Emits a CRM_VEHICLE_PARTIES_SUMMARY event; no state changes occur. The response is never cached and never contains a full phone, e-mail or address. Returns 403 when the caller lacks the authority, 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet, and 200 with an empty list when the vehicle links no party. 
+     * Returns the parties linked to a vehicle — the owner and, for a commercial account, its drivers — in masked form: for a person a first name, a last initial, the last four digits of a phone and a masked e-mail; for a commercial account only its organization name. Use this tool to confirm with the customer, out loud, that this is the right vehicle\'s customer; use checkVehicleContact instead to test a phone or e-mail the customer gives. Preconditions: the caller needs crm:vehicle_contact:check; the vehicle must have replicated into ext_vehicle. The owner is the party whose id equals the vehicle\'s account id, and the drivers are the persons with an effective DRIVER relationship from a commercial owner plus the persons linked to this vehicle as its driver; merged, inactive and out-of-date parties are excluded, and there is no lessee. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. Emits a CRM_VEHICLE_PARTIES_SUMMARY event; no state changes occur. The response is never cached and never contains a full phone, e-mail or address. Returns 403 when the caller lacks the authority, 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet, and 200 with an empty list when the vehicle links no party. 
      * List a Vehicle\'s Linked Parties (Masked)
      */
     async getVehiclePartySummary(requestParameters: GetVehiclePartySummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VehiclePartySummaryDto>> {
         const response = await this.getVehiclePartySummaryRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Records that a person brought a vehicle in: an in-effect per-vehicle DRIVER link between the vehicle and the person party. It never changes the vehicle\'s owner and never writes to the vehicle registry. Use this tool when someone other than the owner brings the vehicle in; use unlinkVehicleDriver instead to take the link away again. Preconditions: the caller needs crm:vehicle_driver:create; the vehicle must have replicated into ext_vehicle; the party must be an active person party, not the tenant\'s house account and not the vehicle\'s owner; the vehicle must be active and have a usable owner. Required inputs: vehicleId and partyId (UUIDs) as path parameters; there is no request body and no Idempotency-Key. The call is naturally idempotent: a repeat answers the link already in effect with the same linkedAt, writes nothing and publishes no fact, while a new link publishes customer.vehicle-party.changed with linked=true. Emits a CRM_VEHICLE_DRIVER_LINK event, and the answer is never cached and carries no name, phone, e-mail or address. Returns 400 VALIDATION_ERROR when an id is not a UUID, 403 when the caller lacks the authority, 404 PARTY_NOT_FOUND, 409 HOUSE_ACCOUNT_IMMUTABLE, 422 VEHICLE_DRIVER_NOT_A_PERSON, VEHICLE_DRIVER_PARTY_INACTIVE, VEHICLE_NOT_LINKABLE or VEHICLE_DRIVER_IS_OWNER, and 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet. 
+     * Link a Person to a Vehicle as its Driver
+     */
+    async linkVehicleDriverRaw(requestParameters: LinkVehicleDriverRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleDriverLinkResponse>> {
+        if (requestParameters['vehicleId'] == null) {
+            throw new runtime.RequiredError(
+                'vehicleId',
+                'Required parameter "vehicleId" was null or undefined when calling linkVehicleDriver().'
+            );
+        }
+
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError(
+                'partyId',
+                'Required parameter "partyId" was null or undefined when calling linkVehicleDriver().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle_driver:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/vehicles/{vehicleId}/drivers/{partyId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))).replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleDriverLinkResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records that a person brought a vehicle in: an in-effect per-vehicle DRIVER link between the vehicle and the person party. It never changes the vehicle\'s owner and never writes to the vehicle registry. Use this tool when someone other than the owner brings the vehicle in; use unlinkVehicleDriver instead to take the link away again. Preconditions: the caller needs crm:vehicle_driver:create; the vehicle must have replicated into ext_vehicle; the party must be an active person party, not the tenant\'s house account and not the vehicle\'s owner; the vehicle must be active and have a usable owner. Required inputs: vehicleId and partyId (UUIDs) as path parameters; there is no request body and no Idempotency-Key. The call is naturally idempotent: a repeat answers the link already in effect with the same linkedAt, writes nothing and publishes no fact, while a new link publishes customer.vehicle-party.changed with linked=true. Emits a CRM_VEHICLE_DRIVER_LINK event, and the answer is never cached and carries no name, phone, e-mail or address. Returns 400 VALIDATION_ERROR when an id is not a UUID, 403 when the caller lacks the authority, 404 PARTY_NOT_FOUND, 409 HOUSE_ACCOUNT_IMMUTABLE, 422 VEHICLE_DRIVER_NOT_A_PERSON, VEHICLE_DRIVER_PARTY_INACTIVE, VEHICLE_NOT_LINKABLE or VEHICLE_DRIVER_IS_OWNER, and 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet. 
+     * Link a Person to a Vehicle as its Driver
+     */
+    async linkVehicleDriver(requestParameters: LinkVehicleDriverRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleDriverLinkResponse> {
+        const response = await this.linkVehicleDriverRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Ends the in-effect per-vehicle DRIVER link between the vehicle and the person party, keeping the row as history with its end date and the user who ended it. The vehicle\'s owner is never touched and the row is never deleted. Use this tool when the wrong person was recorded as a driver; use deactivatePartyRelationship instead for a driver an account applies to every one of its vehicles. Preconditions: the caller needs crm:vehicle_driver:delete; the vehicle must have replicated into ext_vehicle; the person must not be the tenant\'s house account, and the removal checks neither the party\'s nor the vehicle\'s current state, so a stale link can always be ended. Required inputs: vehicleId and partyId (UUIDs) as path parameters; there is no request body and no Idempotency-Key. Ending a link publishes customer.vehicle-party.changed with linked=false, while a repeated removal or one with nothing in effect writes nothing and publishes nothing. Emits a CRM_VEHICLE_DRIVER_UNLINK event. Returns 204 in every authorized case, except 400 VALIDATION_ERROR when an id is not a UUID, 403 when the caller lacks the authority, 409 HOUSE_ACCOUNT_IMMUTABLE, 422 VEHICLE_DRIVER_ACCOUNT_WIDE when the person is a driver only through the owning account, and 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet. 
+     * Remove a Vehicle\'s Driver Link
+     */
+    async unlinkVehicleDriverRaw(requestParameters: UnlinkVehicleDriverRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['vehicleId'] == null) {
+            throw new runtime.RequiredError(
+                'vehicleId',
+                'Required parameter "vehicleId" was null or undefined when calling unlinkVehicleDriver().'
+            );
+        }
+
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError(
+                'partyId',
+                'Required parameter "partyId" was null or undefined when calling unlinkVehicleDriver().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle_driver:delete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/vehicles/{vehicleId}/drivers/{partyId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))).replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Ends the in-effect per-vehicle DRIVER link between the vehicle and the person party, keeping the row as history with its end date and the user who ended it. The vehicle\'s owner is never touched and the row is never deleted. Use this tool when the wrong person was recorded as a driver; use deactivatePartyRelationship instead for a driver an account applies to every one of its vehicles. Preconditions: the caller needs crm:vehicle_driver:delete; the vehicle must have replicated into ext_vehicle; the person must not be the tenant\'s house account, and the removal checks neither the party\'s nor the vehicle\'s current state, so a stale link can always be ended. Required inputs: vehicleId and partyId (UUIDs) as path parameters; there is no request body and no Idempotency-Key. Ending a link publishes customer.vehicle-party.changed with linked=false, while a repeated removal or one with nothing in effect writes nothing and publishes nothing. Emits a CRM_VEHICLE_DRIVER_UNLINK event. Returns 204 in every authorized case, except 400 VALIDATION_ERROR when an id is not a UUID, 403 when the caller lacks the authority, 409 HOUSE_ACCOUNT_IMMUTABLE, 422 VEHICLE_DRIVER_ACCOUNT_WIDE when the person is a driver only through the owning account, and 503 VEHICLE_REPLICATION_PENDING with a Retry-After header when the vehicle has not replicated yet. 
+     * Remove a Vehicle\'s Driver Link
+     */
+    async unlinkVehicleDriver(requestParameters: UnlinkVehicleDriverRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.unlinkVehicleDriverRaw(requestParameters, initOverrides);
     }
 
 }
