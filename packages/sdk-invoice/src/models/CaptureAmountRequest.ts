@@ -25,12 +25,6 @@ export interface CaptureAmountRequest {
      * @memberof CaptureAmountRequest
      */
     amount: number;
-    /**
-     * Idempotency key ensuring the capture is processed at most once
-     * @type {string}
-     * @memberof CaptureAmountRequest
-     */
-    captureIdempotencyKey: string;
 }
 
 /**
@@ -38,7 +32,6 @@ export interface CaptureAmountRequest {
  */
 export function instanceOfCaptureAmountRequest(value: object): boolean {
     if (!('amount' in value)) return false;
-    if (!('captureIdempotencyKey' in value)) return false;
     return true;
 }
 
@@ -53,7 +46,6 @@ export function CaptureAmountRequestFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'amount': json['amount'],
-        'captureIdempotencyKey': json['captureIdempotencyKey'],
     };
 }
 
@@ -64,7 +56,6 @@ export function CaptureAmountRequestToJSON(value?: CaptureAmountRequest | null):
     return {
         
         'amount': value['amount'],
-        'captureIdempotencyKey': value['captureIdempotencyKey'],
     };
 }
 
