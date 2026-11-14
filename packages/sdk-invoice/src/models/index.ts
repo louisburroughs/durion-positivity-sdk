@@ -40,6 +40,7 @@ export * from './OrderInvoiceResponse';
 export * from './PageInvoiceSearchResult';
 export * from './PageableObject';
 export * from './PartyStandaloneRefundRequest';
+export * from './PaymentConnectionTokenResponse';
 export * from './PaymentIntentResponse';
 export * from './PolicyBlocker';
 export * from './PrintDeliveryRequest';
