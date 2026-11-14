@@ -8,6 +8,7 @@ export * from './InvoiceAnalyticsApi';
 export * from './InvoiceArtifactControllerApi';
 export * from './InvoiceArtifactDownloadControllerApi';
 export * from './InvoiceSearchApi';
+export * from './MerchantAccountsApi';
 export * from './PaymentApi';
 export * from './PaymentReversalApi';
 export * from './ReceiptApi';
