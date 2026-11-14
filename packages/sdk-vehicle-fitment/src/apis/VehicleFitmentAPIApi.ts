@@ -19,6 +19,8 @@ import type {
   MakeResponse,
   ManufacturerResponse,
   ModelResponse,
+  PlateResolveRequest,
+  PlateResolveResponse,
   VehicleTypeResponse,
   VinDecodeRequest,
   VinDecodeResponse,
@@ -32,6 +34,10 @@ import {
     ManufacturerResponseToJSON,
     ModelResponseFromJSON,
     ModelResponseToJSON,
+    PlateResolveRequestFromJSON,
+    PlateResolveRequestToJSON,
+    PlateResolveResponseFromJSON,
+    PlateResolveResponseToJSON,
     VehicleTypeResponseFromJSON,
     VehicleTypeResponseToJSON,
     VinDecodeRequestFromJSON,
@@ -54,6 +60,10 @@ export interface ListModelsByMakeRequest {
 
 export interface ListVehicleTypesByMakeRequest {
     makeId: string;
+}
+
+export interface ResolvePlateRequest {
+    plateResolveRequest: PlateResolveRequest;
 }
 
 /**
@@ -269,6 +279,52 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
      */
     async listVehicleTypesByMake(requestParameters: ListVehicleTypesByMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VehicleTypeResponse>> {
         const response = await this.listVehicleTypesByMakeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Resolves a licence plate and its jurisdiction to a vehicle identification number through the configured provider (CarAPI today). Use this tool only when the shop\'s registry search found nothing, on an explicit action after a registry miss; do not use it to find a vehicle already in the registry (search the registry instead) or to decode a VIN (use decodeVin instead). It creates and updates no vehicle. Preconditions: the plate is normalised (case and separators removed) and must then be 2 to 8 characters; the jurisdiction is ISO 3166-2 (US-NY, CA-BC, MX-JAL), a bare subdivision code is refused, and its country must be one the module may send a plate to, and neither failure reaches the provider. Required inputs: plate and jurisdiction in the request body, never in the URL. Emits a VEHICLE_PLATE_RESOLVE event without the plate, answers from a per-tenant cache, and meters the tenant\'s daily allowance of paid provider calls; a cached answer is free. Returns 200 with the VIN, the provider name and warnings (CHECK_DIGIT_MISMATCH when a VIN starting 1-5 fails its check digit); year, make and model are not returned and come from the VIN decode. Fails with 400 for a malformed plate or an unsupported jurisdiction, 403 without the permission, 422 PLATE_NOT_FOUND, 429 PLATE_RESOLUTION_CAP_REACHED with Retry-After to the next UTC midnight, and 503 PLATE_RESOLUTION_UNAVAILABLE with Retry-After and nextAction; after the last, let the technician type the vehicle in by hand. 
+     * Resolve a plate to a VIN
+     */
+    async resolvePlateRaw(requestParameters: ResolvePlateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PlateResolveResponse>> {
+        if (requestParameters['plateResolveRequest'] == null) {
+            throw new runtime.RequiredError(
+                'plateResolveRequest',
+                'Required parameter "plateResolveRequest" was null or undefined when calling resolvePlate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/plate/resolve`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PlateResolveRequestToJSON(requestParameters['plateResolveRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PlateResolveResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Resolves a licence plate and its jurisdiction to a vehicle identification number through the configured provider (CarAPI today). Use this tool only when the shop\'s registry search found nothing, on an explicit action after a registry miss; do not use it to find a vehicle already in the registry (search the registry instead) or to decode a VIN (use decodeVin instead). It creates and updates no vehicle. Preconditions: the plate is normalised (case and separators removed) and must then be 2 to 8 characters; the jurisdiction is ISO 3166-2 (US-NY, CA-BC, MX-JAL), a bare subdivision code is refused, and its country must be one the module may send a plate to, and neither failure reaches the provider. Required inputs: plate and jurisdiction in the request body, never in the URL. Emits a VEHICLE_PLATE_RESOLVE event without the plate, answers from a per-tenant cache, and meters the tenant\'s daily allowance of paid provider calls; a cached answer is free. Returns 200 with the VIN, the provider name and warnings (CHECK_DIGIT_MISMATCH when a VIN starting 1-5 fails its check digit); year, make and model are not returned and come from the VIN decode. Fails with 400 for a malformed plate or an unsupported jurisdiction, 403 without the permission, 422 PLATE_NOT_FOUND, 429 PLATE_RESOLUTION_CAP_REACHED with Retry-After to the next UTC midnight, and 503 PLATE_RESOLUTION_UNAVAILABLE with Retry-After and nextAction; after the last, let the technician type the vehicle in by hand. 
+     * Resolve a plate to a VIN
+     */
+    async resolvePlate(requestParameters: ResolvePlateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PlateResolveResponse> {
+        const response = await this.resolvePlateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

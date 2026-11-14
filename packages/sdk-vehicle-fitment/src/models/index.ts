@@ -15,6 +15,8 @@ export * from './HintResponse';
 export * from './MakeResponse';
 export * from './ManufacturerResponse';
 export * from './ModelResponse';
+export * from './PlateResolveRequest';
+export * from './PlateResolveResponse';
 export * from './PolicyBlocker';
 export * from './SuggestedAlternative';
 export * from './UpdateHintRequest';
