@@ -408,6 +408,48 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     expect(client['platformTenantApi']).toBeDefined();
   });
 
+  it('createPlatformSenderClient returns the device API only', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createPlatformSenderClient } = await import('@durion-sdk/platform-sender');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createPlatformSenderClient({ baseUrl: 'http://localhost:8080', token: () => 'tok' }) as Record<string, unknown>;
+    expect(client['platformSenderDevicesApi']).toBeDefined();
+    // #3454: the shared-secret send API must never be published to a client.
+    expect(Object.keys(client)).toEqual(['platformSenderDevicesApi']);
+  });
+
+  it('createPlatformSenderClient injects the transport headers and keeps the /platform-sender/v1 path', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    globalThis.fetch = fetchMock as typeof fetch;
+    try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const { createPlatformSenderClient } = await import('@durion-sdk/platform-sender');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      const client = createPlatformSenderClient({
+        baseUrl: 'http://localhost:8080',
+        token: () => 'bearer-tok',
+        apiVersion: '1',
+        correlationIdProvider: () => 'corr-id',
+        idempotencyKeyGenerator: () => 'idem-key',
+      }) as any;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      await client.platformSenderDevicesApi.deletePushDevice({ deviceId: '0191f2b4-0000-7000-8000-000000000001' });
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      // The gateway route has no StripPrefix: the base URL is the gateway root.
+      expect(url).toBe('http://localhost:8080/platform-sender/v1/devices/0191f2b4-0000-7000-8000-000000000001');
+      expect(init.method).toBe('DELETE');
+      const headers = new Headers(init.headers);
+      expect(headers.get('Authorization')).toBe('Bearer bearer-tok');
+      expect(headers.get('X-API-Version')).toBe('1');
+      expect(headers.get('X-Correlation-Id')).toBe('corr-id');
+      expect(headers.get('Idempotency-Key')).toBe('idem-key');
+    } finally {
+      jest.restoreAllMocks();
+    }
+  });
+
   it('createTenantClient injects the transport headers on every request', async () => {
     // pos-tenant's factory was scaffolded with its own copy of DurionSdkConfig
     // and of the header builder, so nothing tied it to @durion-sdk/transport

@@ -48,6 +48,7 @@ const PHASE_2_MODULES = [
   ['event-receiver', 'createEventReceiverClient'],
   ['vehicle-fitment', 'createVehicleFitmentClient'],
   ['vehicle-inventory', 'createVehicleInventoryClient'],
+  ['platform-sender', 'createPlatformSenderClient'],
 ] as const satisfies ReadonlyArray<readonly [string, string]>;
 
 /**
@@ -73,6 +74,7 @@ const PHASE_2_API_PROPS: Readonly<Record<string, readonly string[]>> = {
   'event-receiver': ['eventEmissionApi', 'eventTypesApi'],
   'vehicle-fitment': ['vehicleFitmentApi'],
   'vehicle-inventory': ['vehicleApi', 'vehicleRegistryApi'],
+  'platform-sender': ['platformSenderDevicesApi'],
 };
 
 function readJson(filePath: string): Record<string, unknown> {

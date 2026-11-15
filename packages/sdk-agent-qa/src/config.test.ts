@@ -31,6 +31,7 @@ describe('loadQaConfig', () => {
   it('treats services the gateway does not route as unreachable until given a direct URL', () => {
     expect(loadQaConfig({}, GATEWAY).baseUrlFor('internal')).toBeUndefined();
     expect(loadQaConfig({}, GATEWAY).baseUrlFor('documents')).toBeUndefined();
+    expect(loadQaConfig({}, GATEWAY).baseUrlFor('platform-sender')).toBeUndefined();
     const direct = loadQaConfig({ QA_SERVICE_URL_INTERNAL: 'http://localhost:8095/', QA_SERVICE_URL_PEOPLE_CONTACT: 'http://localhost:9001' }, GATEWAY);
     expect(direct.baseUrlFor('internal')).toBe('http://localhost:8095');
     expect(direct.baseUrlFor('people-contact')).toBe('http://localhost:9001');
