@@ -32,6 +32,18 @@ export interface PaymentIntentResponse {
      */
     capturedAmount?: number;
     /**
+     * Card brand reported by the processor; null for a non-card payment or a payment recorded before ADR-0077
+     * @type {string}
+     * @memberof PaymentIntentResponse
+     */
+    cardBrand?: string;
+    /**
+     * Last four digits of the card; null for a non-card payment or a payment recorded before ADR-0077
+     * @type {string}
+     * @memberof PaymentIntentResponse
+     */
+    cardLast4?: string;
+    /**
      * Cash tender only: the increment applied; absent when the currency has none
      * @type {number}
      * @memberof PaymentIntentResponse
@@ -178,6 +190,8 @@ export function PaymentIntentResponseFromJSONTyped(json: any, ignoreDiscriminato
         
         'authorizedAmount': json['authorizedAmount'] == null ? undefined : json['authorizedAmount'],
         'capturedAmount': json['capturedAmount'] == null ? undefined : json['capturedAmount'],
+        'cardBrand': json['cardBrand'] == null ? undefined : json['cardBrand'],
+        'cardLast4': json['cardLast4'] == null ? undefined : json['cardLast4'],
         'cashIncrement': json['cashIncrement'] == null ? undefined : json['cashIncrement'],
         'cashRoundingAmount': json['cashRoundingAmount'] == null ? undefined : json['cashRoundingAmount'],
         'createdAt': (new Date(json['createdAt'])),
@@ -204,6 +218,8 @@ export function PaymentIntentResponseToJSON(value?: PaymentIntentResponse | null
         
         'authorizedAmount': value['authorizedAmount'],
         'capturedAmount': value['capturedAmount'],
+        'cardBrand': value['cardBrand'],
+        'cardLast4': value['cardLast4'],
         'cashIncrement': value['cashIncrement'],
         'cashRoundingAmount': value['cashRoundingAmount'],
         'createdAt': ((value['createdAt']).toISOString()),

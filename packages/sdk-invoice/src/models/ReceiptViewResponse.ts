@@ -20,6 +20,18 @@ import { mapValues } from '../runtime';
  */
 export interface ReceiptViewResponse {
     /**
+     * Card brand reported by the processor; null for a non-card payment or a payment recorded before ADR-0077
+     * @type {string}
+     * @memberof ReceiptViewResponse
+     */
+    cardBrand?: string;
+    /**
+     * Last four digits of the card; null for a non-card payment or a payment recorded before ADR-0077
+     * @type {string}
+     * @memberof ReceiptViewResponse
+     */
+    cardLast4?: string;
+    /**
      * Cashier who generated the receipt
      * @type {string}
      * @memberof ReceiptViewResponse
@@ -92,7 +104,7 @@ export interface ReceiptViewResponse {
      */
     paymentIntentId: string;
     /**
-     * Payment gateway/processor that handled the transaction (e.g. "stripe"); pos-invoice does not store card brand, last 4 or authorization code
+     * Payment gateway/processor that handled the transaction (e.g. "stripe"); the authorization code is not stored
      * @type {string}
      * @memberof ReceiptViewResponse
      */
@@ -194,6 +206,8 @@ export function ReceiptViewResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'cardBrand': json['cardBrand'] == null ? undefined : json['cardBrand'],
+        'cardLast4': json['cardLast4'] == null ? undefined : json['cardLast4'],
         'cashierId': json['cashierId'],
         'createdAt': (new Date(json['createdAt'])),
         'deliveryEmailAddress': json['deliveryEmailAddress'] == null ? undefined : json['deliveryEmailAddress'],
@@ -223,6 +237,8 @@ export function ReceiptViewResponseToJSON(value?: ReceiptViewResponse | null): a
     }
     return {
         
+        'cardBrand': value['cardBrand'],
+        'cardLast4': value['cardLast4'],
         'cashierId': value['cashierId'],
         'createdAt': ((value['createdAt']).toISOString()),
         'deliveryEmailAddress': value['deliveryEmailAddress'],
