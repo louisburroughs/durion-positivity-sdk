@@ -38,7 +38,7 @@ export interface InitiatePaymentRequest {
      */
     paymentFlow: InitiatePaymentRequestPaymentFlowEnum;
     /**
-     * The counter reader id. Accepted but unused on every channel until #3447 defines the reader contract; it is not required by COUNTER_READER and may be omitted
+     * The counter reader the payment is sent to. Required by COUNTER_READER (ADR-0077 step 3, #3447) and refused on every other channel, because those channels collect the card themselves
      * @type {string}
      * @memberof InitiatePaymentRequest
      */
