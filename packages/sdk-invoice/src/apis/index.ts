@@ -10,6 +10,7 @@ export * from './InvoiceArtifactDownloadControllerApi';
 export * from './InvoiceSearchApi';
 export * from './MerchantAccountsApi';
 export * from './PaymentApi';
+export * from './PaymentReadersApi';
 export * from './PaymentReversalApi';
 export * from './ReceiptApi';
 export * from './StandaloneRefundApi';

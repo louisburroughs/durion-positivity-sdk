@@ -38,6 +38,12 @@ export interface RefundPaymentRequest {
      */
     notes?: string;
     /**
+     * The reader the customer's card is presented on. Required when the payment was taken with Interac, which the processor only refunds in person (OI-5, #3447), and ignored when it can be refunded through the processor's API
+     * @type {string}
+     * @memberof RefundPaymentRequest
+     */
+    readerId?: string;
+    /**
      * Reason the payment is being refunded
      * @type {string}
      * @memberof RefundPaymentRequest
@@ -84,6 +90,7 @@ export function RefundPaymentRequestFromJSONTyped(json: any, ignoreDiscriminator
         'amount': json['amount'],
         'externalReference': json['externalReference'] == null ? undefined : json['externalReference'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'readerId': json['readerId'] == null ? undefined : json['readerId'],
         'reason': json['reason'],
     };
 }
@@ -97,6 +104,7 @@ export function RefundPaymentRequestToJSON(value?: RefundPaymentRequest | null):
         'amount': value['amount'],
         'externalReference': value['externalReference'],
         'notes': value['notes'],
+        'readerId': value['readerId'],
         'reason': value['reason'],
     };
 }

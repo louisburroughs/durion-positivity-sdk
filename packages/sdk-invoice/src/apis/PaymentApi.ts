@@ -40,6 +40,12 @@ import {
     RecordCashPaymentRequestToJSON,
 } from '../models/index';
 
+export interface CancelPaymentRequest {
+    invoiceId: string;
+    paymentId: string;
+    idempotencyKey: string;
+}
+
 export interface CapturePaymentRequest {
     invoiceId: string;
     paymentId: string;
@@ -76,6 +82,67 @@ export interface RecordCashPaymentOperationRequest {
  * 
  */
 export class PaymentApi extends runtime.BaseAPI {
+
+    /**
+     * Cancels a card payment that is still waiting for the customer on a registered reader (COUNTER_READER): the reader\'s action is cleared, the session becomes CANCELED, the intent VOIDED and nothing is charged. Use this tool when the customer walks away or the reader is stuck; do not use voidPayment, which releases an AUTHORIZED hold with its own permission and window, and do not use refundPayment, which returns captured money. Preconditions: the intent belongs to the invoice and is PENDING with a counter-reader session - any other state is refused, because an AUTHORIZED hold is released through void; the caller needs invoice:payment:process at the invoice\'s location (ADR-0061). Required inputs: invoiceId and paymentId (UUID) as path parameters and the Idempotency-Key header (a UUID), forwarded to pos-payments so a retry executes once. If the customer took the card before the cancel arrived, the processor\'s real state wins: the answer carries CAPTURED or AUTHORIZED and nothing is cancelled. Emits an INVOICE_PAYMENT_CANCEL event; the intent moves to VOIDED, or to the processor\'s real state when the card won the race. Returns 200 with the intent, 400 when Idempotency-Key is missing or not a UUID, 403 when invoice:payment:process is missing or the invoice\'s location is outside the caller\'s reach, 404 when the payment does not exist under the invoice, 409 INVALID_PAYMENT_STATE when it is not a waiting counter-reader attempt, and 502 PAYMENT_PROCESSOR_UNAVAILABLE when the processor cannot be reached. 
+     * Cancel a Waiting Card Payment
+     */
+    async cancelPaymentRaw(requestParameters: CancelPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaymentIntentResponse>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling cancelPayment().'
+            );
+        }
+
+        if (requestParameters['paymentId'] == null) {
+            throw new runtime.RequiredError(
+                'paymentId',
+                'Required parameter "paymentId" was null or undefined when calling cancelPayment().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling cancelPayment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/payments/{paymentId}/cancel`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))).replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PaymentIntentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Cancels a card payment that is still waiting for the customer on a registered reader (COUNTER_READER): the reader\'s action is cleared, the session becomes CANCELED, the intent VOIDED and nothing is charged. Use this tool when the customer walks away or the reader is stuck; do not use voidPayment, which releases an AUTHORIZED hold with its own permission and window, and do not use refundPayment, which returns captured money. Preconditions: the intent belongs to the invoice and is PENDING with a counter-reader session - any other state is refused, because an AUTHORIZED hold is released through void; the caller needs invoice:payment:process at the invoice\'s location (ADR-0061). Required inputs: invoiceId and paymentId (UUID) as path parameters and the Idempotency-Key header (a UUID), forwarded to pos-payments so a retry executes once. If the customer took the card before the cancel arrived, the processor\'s real state wins: the answer carries CAPTURED or AUTHORIZED and nothing is cancelled. Emits an INVOICE_PAYMENT_CANCEL event; the intent moves to VOIDED, or to the processor\'s real state when the card won the race. Returns 200 with the intent, 400 when Idempotency-Key is missing or not a UUID, 403 when invoice:payment:process is missing or the invoice\'s location is outside the caller\'s reach, 404 when the payment does not exist under the invoice, 409 INVALID_PAYMENT_STATE when it is not a waiting counter-reader attempt, and 502 PAYMENT_PROCESSOR_UNAVAILABLE when the processor cannot be reached. 
+     * Cancel a Waiting Card Payment
+     */
+    async cancelPayment(requestParameters: CancelPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaymentIntentResponse> {
+        const response = await this.cancelPaymentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Captures all or part of a previously authorized AUTH_ONLY payment hold at the gateway; when the captured amount is below the authorized amount, the remainder of the hold is voided. Use this tool to settle an existing AUTHORIZED intent; do not use initiatePayment, which starts a new payment, and use voidPayment instead to release the hold without taking funds. Preconditions: the payment intent must belong to the invoice and be in AUTHORIZED status, and the invoice must name a customer (partyId); the caller needs the invoice:payment:capture authority (scoped to the invoice\'s location, ADR-0061). Required inputs: the Idempotency-Key header (a UUID), which is forwarded to pos-payments as the capture\'s key so a retried capture cannot settle twice there (ADR-0075 section 1 and section 11), and amount (positive, up to the authorized amount). This endpoint is not yet converged onto pos-invoice\'s own idempotency flow, so a retry after a successful capture answers its state error (409) rather than a replay. Emits an INVOICE_PAYMENT_CAPTURE event; the intent moves to CAPTURED on success or CAPTURE_FAILED on decline, and an ambiguous gateway response is resolved by a status inquiry before failing. Returns 200 with the captured intent, 400 when Idempotency-Key is missing or not a UUID (VALIDATION_ERROR naming the header) or amount is invalid, 403 when invoice:payment:capture is missing or the invoice\'s location is outside the caller\'s reach, 404 when the intent does not exist under the invoice, 409 INVALID_PAYMENT_STATE when the intent is not AUTHORIZED, 409 IDEMPOTENCY_CONFLICT when pos-payments reports the forwarded Idempotency-Key was already used with a different request or is still in progress, 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer (the hold stays AUTHORIZED and the gateway is not called), 422 with PAYMENT_AMOUNT_EXCEEDED when the amount is above the authorized amount (nothing is captured), and 422 with PAYMENT_DECLINED when the gateway declines the capture. 
@@ -242,7 +309,7 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Initiates a card payment against an invoice as a processor-neutral payment session (ADR-0077), creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). The channel collects the card: pos-invoice never receives a card number, so the request carries no card token, and the response\'s clientHandoff carries what the channel\'s device or hosted page needs. Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the tenant must have an active merchant account for the invoice\'s currency (else 422 PAYMENT_MERCHANT_NOT_CONFIGURED); the channel must be one the tenant\'s processor supports (else 422 PAYMENT_CAPABILITY_UNSUPPORTED naming it); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: the Idempotency-Key header (a UUID), paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive) and channel (COUNTER_READER, TAP_TO_PAY or HOSTED_PAGE); readerId is accepted but unused on every channel until #3447 defines the reader contract, so it is never required. A replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true instead of charging twice; a replay of a payment that is still PENDING carries a current clientHandoff read from pos-payments, so a phone that lost the create response can still collect, while a final or unreadable payment carries none; the handoff is never stored in the idempotency record. Emits an INVOICE_PAYMENT_INITIATE event and records the session\'s first state on the intent. Returns 201 with the intent and clientHandoff, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer, 422 with PAYMENT_MERCHANT_NOT_CONFIGURED or PAYMENT_CAPABILITY_UNSUPPORTED when the tenant or its processor cannot take this payment, 422 with PAYMENT_DECLINED when the processor declines, and 502 with PAYMENT_PROCESSOR_UNAVAILABLE when the processor cannot be reached. 
+     * Initiates a card payment against an invoice as a processor-neutral payment session (ADR-0077), creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). The channel collects the card: pos-invoice never receives a card number, so the request carries no card token, and the response\'s clientHandoff carries what the channel\'s device or hosted page needs. Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the tenant must have an active merchant account for the invoice\'s currency (else 422 PAYMENT_MERCHANT_NOT_CONFIGURED); the channel must be one the tenant\'s processor supports (else 422 PAYMENT_CAPABILITY_UNSUPPORTED naming it); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: the Idempotency-Key header (a UUID), paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive) and channel (COUNTER_READER, TAP_TO_PAY or HOSTED_PAGE); readerId is required when the channel is COUNTER_READER and refused on every other channel (400 VALIDATION_ERROR naming readerId), because those channels collect the card themselves. A replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true instead of charging twice; a replay of a payment that is still PENDING carries a current clientHandoff read from pos-payments, so a phone that lost the create response can still collect, while a final or unreadable payment carries none; the handoff is never stored in the idempotency record. Emits an INVOICE_PAYMENT_INITIATE event and records the session\'s first state on the intent. Returns 201 with the intent and clientHandoff, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer, 422 with PAYMENT_MERCHANT_NOT_CONFIGURED or PAYMENT_CAPABILITY_UNSUPPORTED when the tenant or its processor cannot take this payment, 422 with PAYMENT_DECLINED when the processor declines, and 502 with PAYMENT_PROCESSOR_UNAVAILABLE when the processor cannot be reached. 
      * Initiate Card Payment on Invoice
      */
     async initiatePaymentRaw(requestParameters: InitiatePaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InitiatePaymentResponse>> {
@@ -297,7 +364,7 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Initiates a card payment against an invoice as a processor-neutral payment session (ADR-0077), creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). The channel collects the card: pos-invoice never receives a card number, so the request carries no card token, and the response\'s clientHandoff carries what the channel\'s device or hosted page needs. Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the tenant must have an active merchant account for the invoice\'s currency (else 422 PAYMENT_MERCHANT_NOT_CONFIGURED); the channel must be one the tenant\'s processor supports (else 422 PAYMENT_CAPABILITY_UNSUPPORTED naming it); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: the Idempotency-Key header (a UUID), paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive) and channel (COUNTER_READER, TAP_TO_PAY or HOSTED_PAGE); readerId is accepted but unused on every channel until #3447 defines the reader contract, so it is never required. A replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true instead of charging twice; a replay of a payment that is still PENDING carries a current clientHandoff read from pos-payments, so a phone that lost the create response can still collect, while a final or unreadable payment carries none; the handoff is never stored in the idempotency record. Emits an INVOICE_PAYMENT_INITIATE event and records the session\'s first state on the intent. Returns 201 with the intent and clientHandoff, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer, 422 with PAYMENT_MERCHANT_NOT_CONFIGURED or PAYMENT_CAPABILITY_UNSUPPORTED when the tenant or its processor cannot take this payment, 422 with PAYMENT_DECLINED when the processor declines, and 502 with PAYMENT_PROCESSOR_UNAVAILABLE when the processor cannot be reached. 
+     * Initiates a card payment against an invoice as a processor-neutral payment session (ADR-0077), creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). The channel collects the card: pos-invoice never receives a card number, so the request carries no card token, and the response\'s clientHandoff carries what the channel\'s device or hosted page needs. Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist and must name a customer (partyId); the tenant must have an active merchant account for the invoice\'s currency (else 422 PAYMENT_MERCHANT_NOT_CONFIGURED); the channel must be one the tenant\'s processor supports (else 422 PAYMENT_CAPABILITY_UNSUPPORTED naming it); the caller needs the invoice:payment:process authority (scoped to the invoice\'s location, ADR-0061), and must also hold invoice:payment:limit_override when the amount exceeds 500.00 and invoice:payment:flow_select to choose AUTH_ONLY, each for that location. Required inputs: the Idempotency-Key header (a UUID), paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive) and channel (COUNTER_READER, TAP_TO_PAY or HOSTED_PAGE); readerId is required when the channel is COUNTER_READER and refused on every other channel (400 VALIDATION_ERROR naming readerId), because those channels collect the card themselves. A replay with the same key and an identical request returns the original status and body with Idempotency-Replayed: true instead of charging twice; a replay of a payment that is still PENDING carries a current clientHandoff read from pos-payments, so a phone that lost the create response can still collect, while a final or unreadable payment carries none; the handoff is never stored in the idempotency record. Emits an INVOICE_PAYMENT_INITIATE event and records the session\'s first state on the intent. Returns 201 with the intent and clientHandoff, 400 when Idempotency-Key is missing or not a UUID or another field is invalid, 403 when invoice:payment:process or a conditional authority the request needs is missing or the invoice\'s location is outside the caller\'s reach, 404 when the invoice does not exist, 409 IDEMPOTENCY_CONFLICT when the key was already used with a different request or caller (or is still in progress), 422 with INVOICE_PARTY_REQUIRED when the invoice has no customer, 422 with PAYMENT_MERCHANT_NOT_CONFIGURED or PAYMENT_CAPABILITY_UNSUPPORTED when the tenant or its processor cannot take this payment, 422 with PAYMENT_DECLINED when the processor declines, and 502 with PAYMENT_PROCESSOR_UNAVAILABLE when the processor cannot be reached. 
      * Initiate Card Payment on Invoice
      */
     async initiatePayment(requestParameters: InitiatePaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {
