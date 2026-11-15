@@ -7,7 +7,7 @@ import type { CallRecord } from '../ledger/CallLedger';
 import { CoverageStore, sweepQuota, type SweepOptions } from './CoverageStore';
 
 const catalog = buildCatalog();
-const reachable = (pkg: string): boolean => pkg !== 'internal' && pkg !== 'documents';
+const reachable = (pkg: string): boolean => !['internal', 'documents', 'platform-sender'].includes(pkg);
 
 const call = (operationId: string, overrides: Partial<CallRecord> = {}): CallRecord => ({
   at: '2026-03-10T15:00:00Z',
@@ -65,7 +65,7 @@ describe('CoverageStore', () => {
     store.record(call('order.SalesOrdersApi.getOrder'));
     store.record(call('order.RegisterSessionsApi.getSessionPolicy'));
     const summary = store.summary(catalog, 'package', reachable);
-    expect(summary.unitsTotal).toBe(catalog.packages.length - 2);
+    expect(summary.unitsTotal).toBe(catalog.packages.length - 3);
     expect(summary.unitsCalled).toBe(1);
     expect(summary.missing).not.toContain('order');
     expect(summary.missing).not.toContain('internal');

@@ -589,6 +589,7 @@ durion-positivity-sdk/
 │   ├── sdk-documents/            # @durion-sdk/documents
 │   ├── sdk-inquiry/              # @durion-sdk/inquiry
 │   ├── sdk-tenant/               # @durion-sdk/tenant — platform-tenant callers only (ADR-0062)
+│   ├── sdk-platform-sender/      # @durion-sdk/platform-sender — device registration API only (ADR-0076)
 │   ├── sdk-bulk-loader/          # @durion-sdk/bulk-loader
 │   └── sdk-internal/             # private — internal tax service only
 ├── src/                          # Shared test utilities and fixtures

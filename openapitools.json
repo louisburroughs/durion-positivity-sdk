@@ -419,6 +419,22 @@
           "gitUserId": "louisburroughs",
           "gitRepoId": "durion-positivity-sdk"
         }
+      },
+      "sdk-platform-sender": {
+        "generatorName": "typescript-fetch",
+        "output": "packages/sdk-platform-sender",
+        "inputSpec": "../durion-positivity-backend/pos-platform-sender/openapi-public.yaml",
+        "additionalProperties": {
+          "npmName": "@durion-sdk/platform-sender",
+          "npmVersion": "0.1.0-alpha",
+          "supportsES6": true,
+          "stringEnums": true,
+          "withSeparateModelsAndApi": true,
+          "modelPackage": "src/models",
+          "apiPackage": "src/apis",
+          "gitUserId": "louisburroughs",
+          "gitRepoId": "durion-positivity-sdk"
+        }
       }
     }
   }

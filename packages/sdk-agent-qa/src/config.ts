@@ -21,12 +21,17 @@ export const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
  * Gateway route prefix per SDK package (pos-api-gateway application.yml).
  * `null` marks a service the gateway deliberately does not route: pos-tax
  * (`internal`) is a library service, and `documents` has no public route.
+ * `platform-sender` is routed, but only its device registration API and with
+ * no StripPrefix (its paths already carry `/platform-sender/v1`), and it has no
+ * read for the coverage sweep to make: registering a push device for a QA
+ * persona and deleting it are its only operations. The harness leaves it out.
  * They are reachable only with an explicit QA_SERVICE_URL_<PKG>.
  */
 const GATEWAY_PREFIX: Record<string, string | null> = {
   security: 'security-service',
   internal: null,
   documents: null,
+  'platform-sender': null,
 };
 
 const bool = z

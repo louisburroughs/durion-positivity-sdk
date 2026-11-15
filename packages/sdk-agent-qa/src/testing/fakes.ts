@@ -35,7 +35,7 @@ export function fakeBackend(route: Route = () => undefined): FakeBackend {
 export const GATEWAY = 'http://gateway.test';
 
 /** An invoker over the real generated clients, talking to a fake backend. */
-export function invokerFor(backend: FakeBackend, unreachable: readonly string[] = ['internal', 'documents']): SdkInvoker {
+export function invokerFor(backend: FakeBackend, unreachable: readonly string[] = ['internal', 'documents', 'platform-sender']): SdkInvoker {
   return new SdkInvoker({
     baseUrlFor: (pkg) => (unreachable.includes(pkg) ? undefined : `${GATEWAY}/${pkg}`),
     tokenFor: async (persona) => `token-${persona}`,

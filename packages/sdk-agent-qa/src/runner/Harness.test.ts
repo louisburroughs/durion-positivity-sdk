@@ -95,7 +95,7 @@ function world(options: { model?: ModelPort; route?: Route; env?: Record<string,
     },
   };
   self.harness = new Harness({
-    config: { ...config, baseUrlFor: (pkg) => (pkg === 'internal' || pkg === 'documents' ? undefined : `http://gateway.test/${pkg}`) },
+    config: { ...config, baseUrlFor: (pkg) => (pkg === 'internal' || pkg === 'documents' || pkg === 'platform-sender' ? undefined : `http://gateway.test/${pkg}`) },
     catalog,
     invoker: invokerFor(backend),
     backend: port,
@@ -268,7 +268,7 @@ describe('monthly coverage', () => {
 
     const summary = state.harness.coverageSummary();
     expect(summary.missing).toEqual([]);
-    expect(summary.unitsCalled).toBe(catalog.packages.length - 2);
+    expect(summary.unitsCalled).toBe(catalog.packages.length - 3);
     const calls = fs.readFileSync(path.join(state.stateDir, 'runs', '2026-03-27', 'calls.jsonl'), 'utf8').trim().split('\n').map((line) => JSON.parse(line));
     expect(calls.every((entry) => entry.source === 'backstop' && entry.httpMethod === 'GET')).toBe(true);
     expect(agentRequests(state).every((request) => request.method === 'GET')).toBe(true);

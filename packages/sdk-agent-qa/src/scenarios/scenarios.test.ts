@@ -56,7 +56,7 @@ describe('scenario library', () => {
     const pinned = new Set(
       [...SCENARIOS.flatMap((scenario) => scenario.operations), ...visitOperations].map((id) => id.split('.')[0]),
     );
-    const routed = catalog.packages.filter((pkg) => pkg !== 'internal' && pkg !== 'documents');
+    const routed = catalog.packages.filter((pkg) => !['internal', 'documents', 'platform-sender'].includes(pkg));
     expect(routed.filter((pkg) => !pinned.has(pkg))).toEqual([]);
   });
 

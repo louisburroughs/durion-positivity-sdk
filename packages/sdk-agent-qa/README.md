@@ -401,9 +401,11 @@ Three things keep the promise, each a backstop for the one before:
 `method`-level coverage needs `QA_SWEEP_WRITES=true`, and will still exclude destructive operations (below);
 `npm run qa -- coverage` shows exactly what is left.
 
-Two packages are not routed by the gateway and are reported as unreachable rather than silently counted:
-`@durion-sdk/internal` (pos-tax, an internal-only service) and `@durion-sdk/documents`. Give them a direct URL
-with `QA_SERVICE_URL_INTERNAL` / `QA_SERVICE_URL_DOCUMENTS` to include them. `@durion-sdk/inquiry` has no
+Three packages are reported as unreachable rather than silently counted: `@durion-sdk/internal` (pos-tax, an
+internal-only service) and `@durion-sdk/documents` are not routed by the gateway, and
+`@durion-sdk/platform-sender` (the technician-app push device API) has no read to sweep and keeps its own
+`/platform-sender/v1` prefix behind a route with no StripPrefix. Give them a direct URL with
+`QA_SERVICE_URL_INTERNAL` / `QA_SERVICE_URL_DOCUMENTS` / `QA_SERVICE_URL_PLATFORM_SENDER` to include them. `@durion-sdk/inquiry` has no
 operations, and `@durion-sdk/transport` is exercised by every call.
 
 ## Safety
