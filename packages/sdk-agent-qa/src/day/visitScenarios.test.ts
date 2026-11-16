@@ -372,9 +372,16 @@ describe('the work brief', () => {
     );
   });
 
-  it('tells the agent the floor is full instead of sending it to look', () => {
+  it('makes a full floor a short task: approve, note the wait, finish, with only those calls offered', () => {
     const scenario = stageNamed(visit(), 'work', { workorderId: 'w-1', floorNote: 'every bay and mobile unit here is taken' });
-    expect(scenario.goal).toMatch(/Nothing is free to take this job right now: every bay and mobile unit here is taken/);
+    expect(scenario.goal).toMatch(/cannot go onto the floor yet: every bay and mobile unit here is taken/);
+    expect(scenario.goal).toMatch(/That is the whole task/);
+    expect(scenario.operations).toEqual([
+      'workorder.WorkorderDetailApi.getWorkorderDetail',
+      'workorder.WorkOrderAPIApi.approveWorkorder',
+      'workorder.WorkorderNoteAPIApi.addWorkorderNote',
+    ]);
+    expect(scenario.limits.maxSteps).toBe(10);
   });
 
   it('keeps the floor facts away from checkout', () => {

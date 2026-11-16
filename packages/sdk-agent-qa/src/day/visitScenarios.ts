@@ -247,11 +247,14 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
 }
 
 function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: StageContext): Scenario {
+  if (memory['floorNote']) {
+    return waitForFloor(visit, stage, memory);
+  }
   const staffed = Boolean(memory['technicianId'] && memory['positionId']);
   const operations = [
     'workorder.WorkorderDetailApi.getWorkorderDetail',
     'workorder.WorkOrderAPIApi.approveWorkorder',
-    ...(staffed || memory['floorNote']
+    ...(staffed
       ? []
       : ['workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard', 'people.PeopleAvailabilityAPIApi.listPeopleAvailability']),
     'people.WorkSessionsAPIApi.startWorkSession',
@@ -328,20 +331,44 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
 }
 
 /**
+ * The work stage when preparation found nothing free. A short task with only
+ * the calls it needs: given the whole job's brief as well, an agent recorded the
+ * wait and then spent the rest of its budget checking the floor again.
+ */
+function waitForFloor(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
+  return scenarioSchema.parse({
+    id: stage.id,
+    title: `${visit.id} — the job waits for the floor`,
+    cadence: 'daily',
+    at: stage.at,
+    persona: 'manager' satisfies Persona,
+    kind: 'operations',
+    goal: [
+      `You are the shop manager. ${siteBrief(visit)} This customer's job cannot go onto the floor yet: ${memory['floorNote']}.`,
+      'Open the workorder. If it still needs the shop\'s approval to proceed, approve it (signer is the customer; signature ' +
+        `data ${SIGNATURE_PNG}, image/png).`,
+      'Add a note to the workorder that the job is waiting for a bay and a technician, remember workStatus as "waiting for a ' +
+        'bay", and finish. That is the whole task: do not look for a bay or a technician yourself, and do not take one from another job.',
+    ].join('\n\n') + known(memory, FLOOR_FACTS),
+    operations: [
+      'workorder.WorkorderDetailApi.getWorkorderDetail',
+      'workorder.WorkOrderAPIApi.approveWorkorder',
+      'workorder.WorkorderNoteAPIApi.addWorkorderNote',
+    ],
+    expect: [{ kind: 'call', operation: 'workorder.WorkorderNoteAPIApi.addWorkorderNote' }],
+    limits: { maxSteps: 10, maxCalls: 10 },
+  });
+}
+
+/**
  * How the job is staffed and placed. With a technician and a position prepared
- * (prepare.ts), the brief names them and the call shapes; with nothing free it
- * says so; otherwise the agent reads the floor itself.
+ * (prepare.ts), the brief names them and the call shapes; otherwise the agent
+ * reads the floor itself.
  */
 function staffingBrief(visit: Visit, memory: VisitMemory): string {
   const clockIn =
     'If the technician is not clocked in yet today, clock them in first: startWorkSession with workSessionRequest ' +
     '{ personId: technicianId } (a refusal saying a session is already open is fine).';
-  if (memory['floorNote']) {
-    return (
-      `${siteBrief(visit)} Nothing is free to take this job right now: ${memory['floorNote']}. Add a note to the workorder that the ` +
-      'job is waiting for a bay, remember workStatus as "waiting for a bay", and finish; do not take a bay away from another job.'
-    );
-  }
   if (memory['technicianId'] && memory['positionId']) {
     return (
       `${siteBrief(visit)} The technician and the position for this job are given below (technicianId, technicianName, ` +
