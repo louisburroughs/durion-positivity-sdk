@@ -340,3 +340,33 @@ describe('pinned tool definitions', () => {
     expect(context.tool('workorder__EstimateAPIApi__approveEstimate').schema.safeParse({ ...input, extra: 1 }).success).toBe(false);
   });
 });
+
+describe('sdk_call input', () => {
+  const run = async (input: Record<string, unknown>) => {
+    const context = setup({ pinned: [] });
+    const tool = context.tool('sdk_call');
+    const parsed = tool.schema.safeParse(input);
+    expect(parsed.success).toBe(true);
+    const result = (await tool.execute(parsed.success ? parsed.data : input)) as Record<string, unknown>;
+    return { result, requests: context.backend.requests };
+  };
+  const LIST = 'inventory.InventoryStockApi.listStock';
+
+  it('takes the parameters as an object, as a JSON string, or beside operationId when a model leaves out input', async () => {
+    for (const input of [
+      { operationId: LIST, input: { scope: 'site-1' } },
+      { operationId: LIST, input: '{"scope":"site-1"}' },
+      { operationId: LIST, scope: 'site-1' },
+    ]) {
+      const { result, requests } = await run(input);
+      expect(result).toMatchObject({ outcome: 'success' });
+      expect(requests[0].path).toMatch(/scope=site-1/);
+    }
+  });
+
+  it('refuses input text that is not JSON, and sends nothing', async () => {
+    const { result, requests } = await run({ operationId: LIST, input: 'scope site-1' });
+    expect(result).toMatchObject({ outcome: 'invalid-input' });
+    expect(requests).toEqual([]);
+  });
+});

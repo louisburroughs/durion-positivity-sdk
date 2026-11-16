@@ -97,7 +97,7 @@ export interface LoopOptions {
 }
 
 export type LoopEvent =
-  | { type: 'model'; step: number; model: string; text: string; toolCalls: ModelToolCall[] }
+  | { type: 'model'; step: number; model: string; text: string; toolCalls: ModelToolCall[]; usage?: ModelTurn['usage'] }
   | { type: 'tool'; step: number; name: string; input: unknown; output: unknown }
   | { type: 'end'; status: LoopStatus; detail?: string };
 
@@ -187,7 +187,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     usage.inputTokens += turn.usage.inputTokens;
     usage.outputTokens += turn.usage.outputTokens;
     models.add(turn.model);
-    options.onEvent?.({ type: 'model', step: steps, model: turn.model, text: turn.text, toolCalls: turn.toolCalls });
+    options.onEvent?.({ type: 'model', step: steps, model: turn.model, text: turn.text, toolCalls: turn.toolCalls, usage: turn.usage });
     messages.push({ role: 'assistant', text: turn.text, toolCalls: turn.toolCalls });
 
     if (turn.toolCalls.length === 0) {

@@ -28,9 +28,6 @@ export interface LookupResult {
 /** One SDK call made by the harness: operation id, input, and optionally who makes it. */
 export type Lookup = (operationId: string, input: Record<string, unknown>, persona?: string) => Promise<LookupResult>;
 
-/** Shop labor rate per hour, in USD, for the labor lines the harness prices. */
-export const LABOR_RATE = 130;
-
 /** Facts only the stage that prepared them needs; later stages are not shown them. */
 export const PREPARED_FACTS: ReadonlySet<string> = new Set(['laborLines', 'partLine', 'partsNote', 'vehicleToRegister', 'billingTerms']);
 
@@ -156,7 +153,8 @@ async function chooseServices(visit: Visit, memory: VisitMemory, lookup: Lookup)
     if (service) {
       seen.add(String(service['id']));
       const hours = typeof service['defaultLaborHours'] === 'number' && service['defaultLaborHours'] > 0 ? service['defaultLaborHours'] : 1;
-      lines.push(`serviceId ${String(service['id'])}, description "${String(service['name'])}", quantity ${hours}, unitPrice ${LABOR_RATE}`);
+      // No unitPrice: the backend prices labor from the service's own rate.
+      lines.push(`serviceId ${String(service['id'])}, description "${String(service['name'])}", quantity ${hours}`);
     }
     if (lines.length >= 2) {
       break;

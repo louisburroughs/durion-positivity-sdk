@@ -155,7 +155,7 @@ facts:
 | --- | --- |
 | `partyId`, `customerName` | the roster's search (letter and ordinal), filtered to the right kind of customer; other letters if none |
 | `vehicleId`, `vehicleDescription` | the customer's vehicles; with none on file, `vehicleToRegister` from the seeded generator |
-| `laborLines` | catalog services for the complaint's keywords, priced at their default hours times `LABOR_RATE` |
+| `laborLines` | catalog services for the complaint's keywords, at their default hours (the backend prices labor) |
 | `partLine` | the site's stock (read as the parts lead) crossed with catalog search; price from the seeded generator |
 | `partsNote` | the site has nothing on the shelf: the stock job goes ahead as labor only |
 | `billingTerms` | a new business's terms, `NET_30` when offered |

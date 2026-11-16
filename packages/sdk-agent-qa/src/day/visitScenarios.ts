@@ -217,11 +217,12 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
       `What they tell you: "${visit.concern}"`,
       `${siteBrief(visit)} Write a draft estimate for this customer, vehicle and location (currency USD), and ` +
         (memory['laborLines']
-          ? 'add the labor lines given as laborLines below (itemType LABOR, values as given).'
+          ? 'add the labor lines given as laborLines below (itemType LABOR, values as given; the backend sets the labor price).'
           : 'add one to three lines that fit the concern: search the service catalog for matching services and add them as ' +
             'labor lines with a sensible price.') +
         `${partsLine} Calculate the totals and submit the estimate for approval.`,
       ESTIMATE_IDS,
+      'If the backend answers a line with a different price than you sent, keep its price: do not edit the line.',
       decision,
       REPLICATION,
       REMEMBER(

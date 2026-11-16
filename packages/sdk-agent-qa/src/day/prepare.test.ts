@@ -1,5 +1,5 @@
 import type { Visit } from './dayPlan';
-import { concernTerms, LABOR_RATE, prepareStage, type Lookup } from './prepare';
+import { concernTerms, prepareStage, type Lookup } from './prepare';
 
 const SITE = { id: 'site-1', code: 'MAIN', name: 'Main Street', slug: 'main' };
 
@@ -80,7 +80,7 @@ describe('prepareStage', () => {
     expect(memory['customerName']).toBe('Ray Ortiz');
     expect(memory['vehicleId']).toBe('v-1');
     expect(memory['vehicleDescription']).toBe('2019 Ford F-150');
-    expect(memory['laborLines']).toBe(`serviceId s-1, description "Brake Pad Replacement - Front", quantity 1.5, unitPrice ${LABOR_RATE}`);
+    expect(memory['laborLines']).toBe('serviceId s-1, description "Brake Pad Replacement - Front", quantity 1.5');
     expect(memory['partProductId']).toBe('prod-9');
     expect(memory['partLine']).toMatch(/^productId prod-9, description "Brake Pad Set", quantity 1, unitPrice \d+(\.\d+)?$/);
 

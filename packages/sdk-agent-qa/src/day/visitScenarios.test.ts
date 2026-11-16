@@ -296,7 +296,7 @@ describe('stageScenario with prepared facts', () => {
     customerName: 'Ray Ortiz',
     vehicleId: 'v-1',
     vehicleDescription: '2019 Ford F-150',
-    laborLines: 'serviceId s-1, description "Brake Pad Replacement - Front", quantity 1.5, unitPrice 130',
+    laborLines: 'serviceId s-1, description "Brake Pad Replacement - Front", quantity 1.5',
     partProductId: 'prod-9',
     partDescription: 'Brake Pad Set',
     partLine: 'productId prod-9, description "Brake Pad Set", quantity 1, unitPrice 42.5',

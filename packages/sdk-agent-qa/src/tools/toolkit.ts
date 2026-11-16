@@ -454,9 +454,14 @@ export class ToolRuntime {
           'Call any SDK operation by id. The input is validated against the operation schema before anything is sent; ' +
           'an "invalid-input" result means nothing was sent. HTTP errors are returned as results, not thrown. ' +
           'An Idempotency-Key is generated when the operation needs one and none is given.',
-        schema: z.strictObject({
+        // Loose, and `input` may be an object or a JSON string: some models drop an open-ended nested
+        // object from a tool call, and then put its fields beside operationId or send it as text.
+        schema: z.looseObject({
           operationId: z.string(),
-          input: z.record(z.string(), z.any()).default({}).describe('Request parameters, per sdk_describe'),
+          input: z
+            .union([z.record(z.string(), z.any()), z.string()])
+            .optional()
+            .describe('The operation\'s parameters as one object, per sdk_describe, e.g. {"estimateId": "...", "addEstimateItemRequest": {...}}'),
           persona: z.string().optional().describe(`Who makes the call. One of: ${this.options.personas.join(', ')}`),
           validate: z
             .boolean()
@@ -464,12 +469,25 @@ export class ToolRuntime {
             .describe('false sends the input as-is, skipping client-side validation, to provoke a server-side 400/422'),
         }),
         execute: async (input) => {
-          const args = input as { operationId: string; input: Record<string, unknown>; persona?: string; validate?: boolean };
-          const operation = lookup(args.operationId);
+          const { operationId, input: given, persona, validate, ...beside } = input as {
+            operationId: string;
+            input?: Record<string, unknown> | string;
+            persona?: string;
+            validate?: boolean;
+          } & Record<string, unknown>;
+          const operation = lookup(operationId);
           if (typeof operation === 'string') {
             return { outcome: 'refused', reason: operation };
           }
-          return this.callOperation(operation, args.input, { persona: args.persona, validate: args.validate });
+          let parameters: unknown = given ?? beside;
+          if (typeof parameters === 'string') {
+            try {
+              parameters = JSON.parse(parameters);
+            } catch {
+              return { outcome: 'invalid-input', issues: ['input: not a JSON object'], hint: 'Nothing was sent. Pass input as an object.' };
+            }
+          }
+          return this.callOperation(operation, parameters, { persona, validate });
         },
       },
     ];
