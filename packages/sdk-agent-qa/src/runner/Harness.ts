@@ -297,7 +297,7 @@ export class Harness {
               harvestFacts(operation, outcome, visitMemory);
             });
             try {
-              await prepareStage(stage.visit, stage.stage.name, visitMemory, lookup, { roleMode: backend.roleMode });
+              await prepareStage(stage.visit, stage.stage.name, visitMemory, lookup, { roleMode: backend.roleMode, now: this.now() });
             } catch (error) {
               // Preparation is a shortcut, not a precondition: whatever it missed, the agent is asked to do.
               this.log(`${id} preparation stopped: ${error instanceof Error ? error.message : String(error)}`);

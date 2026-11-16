@@ -17,6 +17,7 @@
  * fact unset, and the stage brief falls back to asking the agent to do it.
  */
 import { SeederRandom } from '@durion-sdk/seeder';
+import { buildRoster, type BoardView, type StaffingView } from '../../../sdk-integration-tests/src/runs/shopFloorRoster';
 import { daySeed, type StageName, type Visit } from './dayPlan';
 import type { VisitMemory } from './visitScenarios';
 
@@ -28,10 +29,16 @@ export interface LookupResult {
 /** One SDK call made by the harness: operation id, input, and optionally who makes it. */
 export type Lookup = (operationId: string, input: Record<string, unknown>, persona?: string) => Promise<LookupResult>;
 
-/** Facts only the stage that prepared them needs; later stages are not shown them. */
-export const PREPARED_FACTS: ReadonlySet<string> = new Set(['laborLines', 'partLine', 'partsNote', 'vehicleToRegister', 'billingTerms']);
+/** Facts prepared for the counter (intake, sale, phone call); later stages are not shown them. */
+export const COUNTER_FACTS: ReadonlySet<string> = new Set(['laborLines', 'partLine', 'partsNote', 'vehicleToRegister', 'billingTerms']);
 
-const PREPARED_STAGES: ReadonlySet<StageName> = new Set(['intake', 'sale', 'call']);
+/** Facts prepared for putting the job on the floor; only the work stage is shown them. */
+export const FLOOR_FACTS: ReadonlySet<string> = new Set(['positionType', 'positionId', 'positionName', 'floorNote']);
+
+/** Every fact only the stage that prepared it needs. */
+export const PREPARED_FACTS: ReadonlySet<string> = new Set([...COUNTER_FACTS, ...FLOOR_FACTS]);
+
+const PREPARED_STAGES: ReadonlySet<StageName> = new Set(['intake', 'sale', 'call', 'work']);
 
 /** Concern wording → catalog search terms, most specific first. */
 const TERMS: Array<[RegExp, string[]]> = [
@@ -219,6 +226,43 @@ async function choosePart(visit: Visit, memory: VisitMemory, lookup: Lookup, ran
 }
 
 /**
+ * A technician and a position for the job, from the dispatch board and the
+ * staffing roll, read the way the shop-floor load reads them (buildRoster): a
+ * bay before a mobile unit, an idle technician, and nothing when the board says
+ * it may be incomplete. With nothing free, the stage is told so instead of
+ * searching the floor for a place that is not there.
+ */
+async function staffJob(visit: Visit, memory: VisitMemory, lookup: Lookup, random: SeederRandom, roleMode: boolean, now: Date): Promise<void> {
+  const locationId = visit.site.id;
+  const board = await lookup('workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard', { locationId }, roleMode ? 'manager' : undefined);
+  const staffing = await lookup('people.PeopleAvailabilityAPIApi.listPeopleAvailability', { locationId }, roleMode ? 'admin' : undefined);
+  if (!board.ok || !staffing.ok || !Array.isArray(staffing.body)) {
+    return;
+  }
+  const people = staffing.body as Array<StaffingView & { firstName?: string; lastName?: string }>;
+  const outcome = buildRoster({ locationId, code: visit.site.code, name: visit.site.name }, board.body as BoardView, people, now);
+  if (outcome.kind === 'skipped') {
+    return;
+  }
+  const { freePositions, idleTechnicianIds } = outcome.roster;
+  if (freePositions.length === 0 || idleTechnicianIds.length === 0) {
+    memory['floorNote'] =
+      freePositions.length === 0 ? 'every bay and mobile unit here is taken' : 'every technician here is already on a job';
+    return;
+  }
+  const bays = freePositions.filter((position) => position.kind === 'BAY');
+  const choices = bays.length > 0 ? bays : freePositions;
+  const position = choices[random.int(0, choices.length - 1)];
+  const technicianId = idleTechnicianIds[random.int(0, idleTechnicianIds.length - 1)];
+  const person = people.find((entry) => entry.personId === technicianId);
+  memory['technicianId'] = technicianId;
+  memory['technicianName'] = [person?.firstName, person?.lastName].filter(Boolean).join(' ') || technicianId;
+  memory['positionType'] = position.kind;
+  memory['positionId'] = position.id;
+  memory['positionName'] = position.name;
+}
+
+/**
  * Establishes what a visit stage needs before the agent starts, writing it into
  * the visit memory. Facts already in memory are kept, so a retried stage does
  * not look them up again.
@@ -228,13 +272,20 @@ export async function prepareStage(
   stage: StageName,
   memory: VisitMemory,
   lookup: Lookup,
-  options: { roleMode: boolean },
+  options: { roleMode: boolean; now?: Date },
 ): Promise<void> {
   if (!PREPARED_STAGES.has(stage)) {
     return;
   }
   const random = new SeederRandom(daySeed(`${visit.id}|${stage}|prepare`, 0));
   const partsPersona = options.roleMode ? 'parts' : undefined;
+
+  if (stage === 'work') {
+    if (!memory['technicianId'] && !memory['floorNote'] && memory['workStatus'] !== 'completed') {
+      await staffJob(visit, memory, lookup, random, options.roleMode, options.now ?? new Date());
+    }
+    return;
+  }
 
   // An appointment arrival finds its customer through the appointment, which is the agent's to read.
   const byAppointment = stage === 'intake' && visit.arrival === 'appointment';

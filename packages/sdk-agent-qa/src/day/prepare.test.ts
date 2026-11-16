@@ -139,13 +139,13 @@ describe('prepareStage', () => {
     expect(memory['laborLines']).toBeDefined();
   });
 
-  it('keeps facts already established and prepares nothing for stages past the counter', async () => {
+  it('keeps facts already established and prepares nothing for checkout', async () => {
     const memory: Record<string, string> = { partyId: 'known', vehicleId: 'v-known', laborLines: 'given', partLine: 'given' };
     const { lookup, calls } = fakeLookup(SHOP);
     await prepareStage(visitOf(), 'intake', memory, lookup, { roleMode: true });
     expect(calls).toEqual([]);
 
-    await prepareStage(visitOf(), 'work', {}, lookup, { roleMode: true });
+    await prepareStage(visitOf(), 'checkout', {}, lookup, { roleMode: true });
     expect(calls).toEqual([]);
   });
 
@@ -189,5 +189,70 @@ describe('prepareStage', () => {
     });
     await prepareStage(visitOf(), 'intake', memory, lookup, { roleMode: true });
     expect(memory['partDescription']).toBe('Brake Pad Set');
+  });
+});
+
+describe('prepareStage for the work stage', () => {
+  const BOARD = {
+    bays: [
+      { bayId: 'bay-1', bayName: 'Bay 01', available: false, assignedWorkorderId: 'wo-other' },
+      { bayId: 'bay-2', bayName: 'Bay 02', available: true },
+    ],
+    mobileUnits: [{ unitId: 'mu-1', unitName: 'Van 1', available: true }],
+    mechanics: [{ personId: 'tech-busy', assignedWorkorderId: 'wo-other' }],
+  };
+  const STAFF = [
+    { personId: 'tech-busy', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE', firstName: 'Busy', lastName: 'Bee' },
+    { personId: 'tech-free', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE', firstName: 'Amber', lastName: 'Nguyen' },
+    { personId: 'disp-1', role: 'DISPATCHER', assignmentStatus: 'ACTIVE', firstName: 'Sandra', lastName: 'Cruz' },
+  ];
+  const floor = (board: unknown, staff: unknown) =>
+    fakeLookup({
+      'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard': () => board,
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability': () => staff,
+    });
+
+  it('picks an idle technician and a free bay before a mobile unit, reading the board as the manager', async () => {
+    const memory: Record<string, string> = { workorderId: 'wo-1' };
+    const { lookup, calls } = floor(BOARD, STAFF);
+    await prepareStage(visitOf(), 'work', memory, lookup, { roleMode: true, now: new Date('2026-03-10T15:00:00Z') });
+    expect(memory).toMatchObject({
+      technicianId: 'tech-free',
+      technicianName: 'Amber Nguyen',
+      positionType: 'BAY',
+      positionId: 'bay-2',
+      positionName: 'Bay 02',
+    });
+    expect(calls.map((entry) => [entry.operationId, entry.persona])).toEqual([
+      ['workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard', 'manager'],
+      ['people.PeopleAvailabilityAPIApi.listPeopleAvailability', 'admin'],
+    ]);
+  });
+
+  it('says the floor is full instead of naming a place, when nothing is free', async () => {
+    const memory: Record<string, string> = {};
+    const full = { ...BOARD, bays: [BOARD.bays[0]], mobileUnits: [] };
+    await prepareStage(visitOf(), 'work', memory, floor(full, STAFF).lookup, { roleMode: true });
+    expect(memory).toEqual({ floorNote: 'every bay and mobile unit here is taken' });
+
+    const crew: Record<string, string> = {};
+    await prepareStage(visitOf(), 'work', crew, floor(BOARD, [STAFF[0]]).lookup, { roleMode: true });
+    expect(crew).toEqual({ floorNote: 'every technician here is already on a job' });
+  });
+
+  it('leaves the floor to the agent when the board may be incomplete or cannot be read', async () => {
+    const warned: Record<string, string> = {};
+    await prepareStage(visitOf(), 'work', warned, floor({ ...BOARD, dataQualityWarning: true }, STAFF).lookup, { roleMode: true });
+    expect(warned).toEqual({});
+
+    const unread: Record<string, string> = {};
+    await prepareStage(visitOf(), 'work', unread, fakeLookup({}).lookup, { roleMode: true });
+    expect(unread).toEqual({});
+  });
+
+  it('does not staff a job again once it has a technician', async () => {
+    const { lookup, calls } = floor(BOARD, STAFF);
+    await prepareStage(visitOf(), 'work', { technicianId: 'tech-x' }, lookup, { roleMode: true });
+    expect(calls).toEqual([]);
   });
 });

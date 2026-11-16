@@ -357,3 +357,30 @@ describe('the intake brief', () => {
     expect(stageNamed(visit, 'intake').goal).toMatch(/customerId and crmPartyId are both the customer's partyId; .*crmContactIds may be an empty list/);
   });
 });
+
+describe('the work brief', () => {
+  const visit = () => find((entry) => entry.kind === 'service' && entry.parts === 'none');
+  const STAFFED = { workorderId: 'w-1', technicianId: 't-1', technicianName: 'Amber Nguyen', positionType: 'BAY', positionId: 'b-2', positionName: 'Bay 02' };
+
+  it('names the prepared technician and position with the call shapes, and drops the floor lookups', () => {
+    const scenario = stageNamed(visit(), 'work', { ...STAFFED });
+    expect(scenario.goal).toContain('- positionId: b-2');
+    expect(scenario.goal).toMatch(/assignServicePositionRequest \{ resourceType: positionType, resourceId: positionId/);
+    expect(scenario.operations).not.toContain('workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard');
+    expect(scenario.expect.map((entry) => (entry.kind === 'call' ? entry.operation : ''))).not.toContain(
+      'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard',
+    );
+  });
+
+  it('tells the agent the floor is full instead of sending it to look', () => {
+    const scenario = stageNamed(visit(), 'work', { workorderId: 'w-1', floorNote: 'every bay and mobile unit here is taken' });
+    expect(scenario.goal).toMatch(/Nothing is free to take this job right now: every bay and mobile unit here is taken/);
+  });
+
+  it('keeps the floor facts away from checkout', () => {
+    const scenario = stageNamed(visit(), 'checkout', { ...STAFFED });
+    expect(scenario.goal).not.toContain('positionId');
+    expect(scenario.goal).toContain('- technicianName: Amber Nguyen');
+  });
+});
+

@@ -12,7 +12,7 @@ import type { Operation } from '../catalog/types';
 import { scenarioSchema, type ExpectationInput, type Persona, type Scenario } from '../scenarios/types';
 import type { CallOutcome } from '../sdk/SdkInvoker';
 import type { Visit, VisitStage } from './dayPlan';
-import { PREPARED_FACTS } from './prepare';
+import { COUNTER_FACTS, FLOOR_FACTS, PREPARED_FACTS } from './prepare';
 
 export type VisitMemory = Record<string, string>;
 
@@ -34,7 +34,6 @@ const WHO = [
  */
 export const SIGNATURE_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
-/** The visit's facts, as the brief's closing list. Facts prepared for the counter are left out of later stages. */
 /**
  * How createEstimate's ids map to the visit's. Without it an agent spends
  * several turns working out that the party and vehicle ids go in twice and
@@ -61,8 +60,12 @@ function vehicleOperations(visit: Visit, memory: VisitMemory): string[] {
   return ['customer.CRMVehiclesApi.listVehiclesForCustomer', 'vehicle-inventory.VehicleRegistryAPIApi.createVehicle'];
 }
 
-function known(memory: VisitMemory, withPrepared = false): string {
-  const entries = Object.entries(memory).filter(([key]) => withPrepared || !PREPARED_FACTS.has(key));
+/**
+ * The visit's facts, as the brief's closing list. A prepared fact is shown only
+ * to the stage it was prepared for (`prepared`), not to every stage after it.
+ */
+function known(memory: VisitMemory, prepared: ReadonlySet<string> = new Set()): string {
+  const entries = Object.entries(memory).filter(([key]) => !PREPARED_FACTS.has(key) || prepared.has(key));
   if (entries.length === 0) {
     return '';
   }
@@ -235,7 +238,7 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
         'customerName, customerType, vehicleDescription' +
           (visit.parts === 'none' || memory['partLine'] ? '' : ', and partProductId and partDescription for the part line'),
       ),
-    ].join('\n\n') + known(memory, true),
+    ].join('\n\n') + known(memory, COUNTER_FACTS),
     operations,
     expect,
     limits: { maxSteps: 50, maxCalls: 55 },
@@ -243,11 +246,13 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
 }
 
 function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: StageContext): Scenario {
+  const staffed = Boolean(memory['technicianId'] && memory['positionId']);
   const operations = [
     'workorder.WorkorderDetailApi.getWorkorderDetail',
     'workorder.WorkOrderAPIApi.approveWorkorder',
-    'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard',
-    'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+    ...(staffed || memory['floorNote']
+      ? []
+      : ['workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard', 'people.PeopleAvailabilityAPIApi.listPeopleAvailability']),
     'people.WorkSessionsAPIApi.startWorkSession',
     'workorder.TechnicianAssignmentAPIApi.assignTechnician',
     'workorder.ServicePositionAPIApi.assignServicePosition',
@@ -301,26 +306,57 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
       `You are the shop manager, getting this customer's job done. The customer said: "${visit.concern}"`,
       'Open the workorder. If it still needs the shop\'s approval to proceed, approve it (signer is the customer; signature ' +
         `data ${SIGNATURE_PNG}, image/png).`,
-      `${siteBrief(visit)} Staff the job and place it: look at this location's dispatch board and the people available here, assign a ` +
-        'technician who is free, and assign the workorder to a free bay (or a mobile unit if no bay is free). If that ' +
-        'technician is not clocked in yet today, clock them in first (start a work session for their person id; a refusal ' +
-        'saying one is already open is fine). The shop is ' +
-        'busy — bays are often all taken. If nothing is free, add a note that the job is waiting for a bay, remember ' +
-        'workStatus as "waiting for a bay", and finish; do not take a bay away from another job.',
+      staffingBrief(visit, memory),
       `Once it has a technician and a position, start the workorder and open a labor session.${technician} Add a note ` +
         'describing what was found and done.',
       `${partsWork}${extra}Then finish the job: stop the labor session, complete each service and part line, and complete the workorder ` +
         'with completion notes. Completing it frees the bay.',
       REPLICATION,
-      REMEMBER('workStatus ("completed", or why not), and technicianName'),
-    ].join('\n\n') + known(memory),
+      REMEMBER(staffed ? 'workStatus ("completed", or why not)' : 'workStatus ("completed", or why not), and technicianName'),
+    ].join('\n\n') + known(memory, FLOOR_FACTS),
     operations,
+    // Reading the board is expected of the agent only when preparation has not read it already.
     expect: [
       { kind: 'call', operation: 'workorder.WorkorderDetailApi.getWorkorderDetail' },
-      { kind: 'call', operation: 'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard' },
+      ...(operations.includes('workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard')
+        ? [{ kind: 'call' as const, operation: 'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard' }]
+        : []),
     ],
     limits: { maxSteps: 60, maxCalls: 70 },
   });
+}
+
+/**
+ * How the job is staffed and placed. With a technician and a position prepared
+ * (prepare.ts), the brief names them and the call shapes; with nothing free it
+ * says so; otherwise the agent reads the floor itself.
+ */
+function staffingBrief(visit: Visit, memory: VisitMemory): string {
+  const clockIn =
+    'If the technician is not clocked in yet today, clock them in first: startWorkSession with workSessionRequest ' +
+    '{ personId: technicianId } (a refusal saying a session is already open is fine).';
+  if (memory['floorNote']) {
+    return (
+      `${siteBrief(visit)} Nothing is free to take this job right now: ${memory['floorNote']}. Add a note to the workorder that the ` +
+      'job is waiting for a bay, remember workStatus as "waiting for a bay", and finish; do not take a bay away from another job.'
+    );
+  }
+  if (memory['technicianId'] && memory['positionId']) {
+    return (
+      `${siteBrief(visit)} The technician and the position for this job are given below (technicianId, technicianName, ` +
+      `positionType, positionId, positionName). ${clockIn} Then assign the technician (assignTechnician with ` +
+      'assignTechnicianRequest { technicianId, notes }) and place the workorder (assignServicePosition with ' +
+      'assignServicePositionRequest { resourceType: positionType, resourceId: positionId, reason }). If either is refused ' +
+      'because the technician or the position was taken in the meantime, add a note that the job is waiting for a bay, ' +
+      'remember workStatus as "waiting for a bay", and finish.'
+    );
+  }
+  return (
+    `${siteBrief(visit)} Staff the job and place it: look at this location's dispatch board and the people available here, assign a ` +
+    'technician who is free, and assign the workorder to a free bay (or a mobile unit if no bay is free). ' +
+    `${clockIn} The shop is busy — bays are often all taken. If nothing is free, add a note that the job is waiting for a bay, ` +
+    'remember workStatus as "waiting for a bay", and finish; do not take a bay away from another job.'
+  );
 }
 
 /** Buying the part a job needs and the shop does not stock. */
@@ -491,7 +527,7 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
       'If no register session is open, say so in your findings and stop: opening the register is the manager\'s job.',
       REPLICATION,
       REMEMBER('customerName and orderTotal'),
-    ].join('\n\n') + known(memory, true),
+    ].join('\n\n') + known(memory, COUNTER_FACTS),
     operations,
     expect,
     limits: { maxSteps: 40, maxCalls: 45 },
@@ -533,7 +569,7 @@ function phoneCall(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenar
         'the customer.',
       REPLICATION,
       REMEMBER('customerName and appointmentTime'),
-    ].join('\n\n') + known(memory, true),
+    ].join('\n\n') + known(memory, COUNTER_FACTS),
     operations,
     expect,
     limits: { maxSteps: 40, maxCalls: 45 },
