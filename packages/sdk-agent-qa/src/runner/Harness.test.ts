@@ -65,7 +65,7 @@ interface World {
 
 /** `local` is shop time in March 2026 after the 8th (UTC-4). The 10th is a Tuesday. */
 /** The lookups the harness makes before a visit stage (day/prepare.ts). */
-const PREPARATION = /\/v1\/(crm\/accounts\/parties\/search|crm\/[^/]+\/vehicles|crm\/billing-terms|products\/services\/search|products\/search|inventory\/stock)(\?|$)/;
+const PREPARATION = /\/v1\/(crm\/accounts\/parties(\/search)?|crm\/[^/]+\/vehicles|crm\/billing-terms|products\/services\/search|products\/search|products\/[0-9a-f-]{36}|inventory\/stock)(\?|$)/;
 
 /**
  * Answers the preparation lookups with "nothing found", so each visit stage

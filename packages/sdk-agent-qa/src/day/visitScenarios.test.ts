@@ -315,7 +315,7 @@ describe('stageScenario with prepared facts', () => {
   it('hands the intake its customer, vehicle, labor and part, and drops the lookups it no longer needs', () => {
     const scenario = stageNamed(walkIn(), 'intake', { ...PREPARED });
     for (const lookup of [
-      'customer.CRMAccountsApi.searchParties',
+      'customer.CRMAccountsApi.browseParties',
       'customer.CRMVehiclesApi.listVehiclesForCustomer',
       'catalog.ProductsAPIApi.searchCatalogServices',
       'inventory.InventoryStockApi.listStock',
@@ -326,15 +326,15 @@ describe('stageScenario with prepared facts', () => {
     expect(scenario.goal).toContain(`- laborLines: ${PREPARED.laborLines}`);
     expect(scenario.goal).toContain(`- partLine: ${PREPARED.partLine}`);
     expect(scenario.goal).toContain(`signatureData ${SIGNATURE_PNG}`);
-    expect(scenario.goal).not.toMatch(/search customers whose name contains/);
+    expect(scenario.goal).not.toMatch(/browse customers/);
   });
 
   it('falls back to the agent doing the lookups when preparation found nothing', () => {
     const scenario = stageNamed(walkIn(), 'intake', {});
     expect(scenario.operations).toEqual(
-      expect.arrayContaining(['customer.CRMAccountsApi.searchParties', 'catalog.ProductsAPIApi.searchCatalogServices', 'inventory.InventoryStockApi.listStock']),
+      expect.arrayContaining(['customer.CRMAccountsApi.browseParties', 'catalog.ProductsAPIApi.searchCatalogServices', 'inventory.InventoryStockApi.listStock']),
     );
-    expect(scenario.goal).toMatch(/search customers whose name contains/);
+    expect(scenario.goal).toMatch(/browse customers/);
   });
 
   it('makes a stock job labor only when the site has nothing on the shelf', () => {
@@ -348,5 +348,12 @@ describe('stageScenario with prepared facts', () => {
     expect(scenario.goal).toContain('- workorderId: w-1');
     expect(scenario.goal).not.toContain('laborLines');
     expect(scenario.goal).not.toContain('partLine');
+  });
+});
+
+describe('the intake brief', () => {
+  it('says how the estimate ids map, so the agent does not go looking for contacts', () => {
+    const visit = find((entry) => entry.kind === 'service');
+    expect(stageNamed(visit, 'intake').goal).toMatch(/customerId and crmPartyId are both the customer's partyId; .*crmContactIds may be an empty list/);
   });
 });

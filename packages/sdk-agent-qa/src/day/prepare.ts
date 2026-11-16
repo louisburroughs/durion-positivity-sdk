@@ -88,13 +88,20 @@ const text = (value: unknown): string | undefined => (typeof value === 'string' 
 
 const COMMERCIAL_PARTY_TYPES = new Set(['COMMERCIAL', 'ORGANIZATION', 'BUSINESS']);
 
+/** A product id. Some sites' stock lines carry the product id where the SKU would be. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function findCustomer(visit: Visit, memory: VisitMemory, lookup: Lookup, random: SeederRandom): Promise<void> {
   const search = visit.customer.search;
   const fragments = [search?.fragment ?? 'a', ...'aeinorst'.split('').filter((letter) => letter !== search?.fragment)];
   const wantCommercial = visit.customer.type === 'commercial';
   for (const fragment of fragments) {
-    const { ok, body } = await lookup('customer.CRMAccountsApi.searchParties', {
-      searchPartiesRequest: { name: fragment, pageSize: 50 },
+    // browseParties, not searchParties: on alpha the search answers with businesses only.
+    const { ok, body } = await lookup('customer.CRMAccountsApi.browseParties', {
+      name: fragment,
+      partyType: wantCommercial ? 'COMMERCIAL' : 'PERSON',
+      status: 'ACTIVE',
+      size: 50,
     });
     if (!ok) {
       return;
@@ -176,21 +183,40 @@ async function choosePart(visit: Visit, memory: VisitMemory, lookup: Lookup, ran
       .map((line) => text(line['sku']))
       .filter((sku): sku is string => !!sku),
   );
+  const stocked = (product: Record<string, unknown>): boolean =>
+    onShelf.has(String(product['sku'])) || onShelf.has(String(product['productId']));
+  const take = (productId: string, name: string): void => {
+    memory['partProductId'] = productId;
+    memory['partDescription'] = name;
+    memory['partLine'] = `productId ${productId}, description "${name}", quantity 1, unitPrice ${random.price(15, 180)}`;
+  };
   if (onShelf.size === 0) {
     memory['partsNote'] = 'nothing is on hand at this location, so the job is labor only: add no part line';
     return;
   }
-  const searches = [...concernTerms(visit.concern), ...[...onShelf].slice(0, 2)];
-  for (const query of searches) {
+  for (const query of concernTerms(visit.concern)) {
     const { ok, body } = await lookup('catalog.ProductsAPIApi.searchCatalogProducts', { q: query, limit: 40 });
-    const product = ok ? asArray(body, 'data', 'items').find((entry) => onShelf.has(String(entry['sku'])) && text(entry['productId'])) : undefined;
+    const product = ok ? asArray(body, 'data', 'items').find((entry) => stocked(entry) && text(entry['productId'])) : undefined;
     if (product) {
-      const name = text(product['name']) ?? String(product['sku']);
-      memory['partProductId'] = String(product['productId']);
-      memory['partDescription'] = name;
-      memory['partLine'] = `productId ${String(product['productId'])}, description "${name}", quantity 1, unitPrice ${random.price(15, 180)}`;
+      take(String(product['productId']), text(product['name']) ?? String(product['sku']));
       return;
     }
+  }
+  // Nothing on the shelf fits the concern: the closest match is any stocked product.
+  const shelf = [...onShelf];
+  const pick = shelf[random.int(0, shelf.length - 1)];
+  if (UUID.test(pick)) {
+    const { ok, body } = await lookup('catalog.ProductsAPIApi.getProductById', { productId: pick });
+    if (ok) {
+      const product = asRecord(body);
+      take(pick, text(product['name']) ?? text(product['description']) ?? 'stocked part');
+    }
+    return;
+  }
+  const { ok, body } = await lookup('catalog.ProductsAPIApi.searchCatalogProducts', { q: pick, limit: 5 });
+  const product = ok ? asArray(body, 'data', 'items').find((entry) => entry['sku'] === pick && text(entry['productId'])) : undefined;
+  if (product) {
+    take(String(product['productId']), text(product['name']) ?? pick);
   }
 }
 

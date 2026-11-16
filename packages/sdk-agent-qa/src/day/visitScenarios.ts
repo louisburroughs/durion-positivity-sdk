@@ -21,8 +21,9 @@ export interface StageContext {
   roleMode: boolean;
 }
 
+/** Finding a customer on file. browseParties filters by kind; on alpha searchParties answers with businesses only. */
 const WHO = [
-  'customer.CRMAccountsApi.searchParties',
+  'customer.CRMAccountsApi.browseParties',
   'customer.CRMAccountsApi.getParty',
   'customer.CRMCustomerLookupApi.getCustomerSummary',
 ];
@@ -34,6 +35,16 @@ const WHO = [
 export const SIGNATURE_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
 /** The visit's facts, as the brief's closing list. Facts prepared for the counter are left out of later stages. */
+/**
+ * How createEstimate's ids map to the visit's. Without it an agent spends
+ * several turns working out that the party and vehicle ids go in twice and
+ * hunting for contacts (which the advisor may not read) to fill a list that
+ * may be empty.
+ */
+const ESTIMATE_IDS =
+  'For createEstimate: customerId and crmPartyId are both the customer\'s partyId; vehicleId and crmVehicleId are both ' +
+  'the vehicleId; crmContactIds may be an empty list; locationId is this location\'s id; currencyUomId is USD.';
+
 /** The customer lookups a stage is offered: none once the customer has been found or is to be created. */
 function whoFor(visit: Visit, memory: VisitMemory): string[] {
   return visit.customer.status === 'existing' && !memory['partyId'] ? WHO : [];
@@ -68,7 +79,7 @@ function customerBrief(visit: Visit, memory: VisitMemory): string {
   if (customer.status === 'existing') {
     const kind = customer.type === 'commercial' ? 'a commercial account (a business)' : 'an individual (a person)';
     return (
-      `The customer is ${kind} already on file. Find one: search customers whose name contains "${customer.search?.fragment}" ` +
+      `The customer is ${kind} already on file. Find one: browse customers (partyType ${customer.type === 'commercial' ? 'COMMERCIAL' : 'PERSON'}) whose name contains "${customer.search?.fragment}" ` +
       `and take result number ${customer.search?.ordinal} that is ${kind}; if the search has fewer results or none of that type, ` +
       'try other letters until you have one. Use a real existing customer — do not create one.'
     );
@@ -210,6 +221,7 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
           : 'add one to three lines that fit the concern: search the service catalog for matching services and add them as ' +
             'labor lines with a sensible price.') +
         `${partsLine} Calculate the totals and submit the estimate for approval.`,
+      ESTIMATE_IDS,
       decision,
       REPLICATION,
       REMEMBER(

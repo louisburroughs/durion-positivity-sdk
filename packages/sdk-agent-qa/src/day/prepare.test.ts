@@ -43,7 +43,7 @@ const PARTIES = {
 };
 
 const SHOP: Responses = {
-  'customer.CRMAccountsApi.searchParties': () => PARTIES,
+  'customer.CRMAccountsApi.browseParties': () => PARTIES,
   'customer.CRMVehiclesApi.listVehiclesForCustomer': () => [{ vehicleId: 'v-1', year: 2019, make: 'Ford', model: 'F-150' }],
   'catalog.ProductsAPIApi.searchCatalogServices': (input) =>
     input['q'] === 'brake' ? [{ id: 's-1', name: 'Brake Pad Replacement - Front', defaultLaborHours: 1.5 }] : [],
@@ -84,6 +84,9 @@ describe('prepareStage', () => {
     expect(memory['partProductId']).toBe('prod-9');
     expect(memory['partLine']).toMatch(/^productId prod-9, description "Brake Pad Set", quantity 1, unitPrice \d+(\.\d+)?$/);
 
+    expect(calls.find((entry) => entry.operationId === 'customer.CRMAccountsApi.browseParties')).toMatchObject({
+      input: { name: 'r', partyType: 'PERSON', status: 'ACTIVE' },
+    });
     // Stock is read as the parts lead, who may read it; the rest as the advisor.
     expect(calls.find((entry) => entry.operationId === 'inventory.InventoryStockApi.listStock')).toMatchObject({
       input: { scope: 'site-1' },
@@ -124,7 +127,7 @@ describe('prepareStage', () => {
       roleMode: true,
     });
     expect(memory['billingTerms']).toBe('NET_30');
-    expect(calls.some((entry) => entry.operationId === 'customer.CRMAccountsApi.searchParties')).toBe(false);
+    expect(calls.some((entry) => entry.operationId === 'customer.CRMAccountsApi.browseParties')).toBe(false);
   });
 
   it('leaves the customer of an appointment arrival to the agent, who finds them through the appointment', async () => {
@@ -132,7 +135,7 @@ describe('prepareStage', () => {
     const { lookup, calls } = fakeLookup(SHOP);
     await prepareStage(visitOf({ arrival: 'appointment' }), 'intake', memory, lookup, { roleMode: true });
     expect(memory['partyId']).toBeUndefined();
-    expect(calls.some((entry) => entry.operationId === 'customer.CRMAccountsApi.searchParties')).toBe(false);
+    expect(calls.some((entry) => entry.operationId === 'customer.CRMAccountsApi.browseParties')).toBe(false);
     expect(memory['laborLines']).toBeDefined();
   });
 
@@ -150,15 +153,41 @@ describe('prepareStage', () => {
     const memory: Record<string, string> = {};
     const { lookup, calls } = fakeLookup({
       ...SHOP,
-      'customer.CRMAccountsApi.searchParties': (input) =>
-        (input['searchPartiesRequest'] as { name: string }).name === 'r' ? { results: [] } : PARTIES,
+      'customer.CRMAccountsApi.browseParties': (input) => (input['name'] === 'r' ? { results: [] } : PARTIES),
     });
     await prepareStage(visitOf(), 'intake', memory, lookup, { roleMode: true });
-    expect(calls.filter((entry) => entry.operationId === 'customer.CRMAccountsApi.searchParties')).toHaveLength(2);
+    expect(calls.filter((entry) => entry.operationId === 'customer.CRMAccountsApi.browseParties')).toHaveLength(2);
     expect(memory['partyId']).toBe('p-2');
 
     const nothing: Record<string, string> = {};
     await prepareStage(visitOf(), 'intake', nothing, fakeLookup({}).lookup, { roleMode: true });
     expect(nothing).toEqual({});
+  });
+
+  it('reads a stock line keyed by product id, and takes any stocked part when none fits the concern', async () => {
+    const PRODUCT = '01a18cc7-273b-74b4-98ff-72f4507f0cbc';
+    const memory: Record<string, string> = {};
+    const { lookup } = fakeLookup({
+      ...SHOP,
+      'inventory.InventoryStockApi.listStock': () => ({ lines: [{ sku: PRODUCT, available: 95 }] }),
+      'catalog.ProductsAPIApi.searchCatalogProducts': () => ({ data: [{ productId: 'prod-x', sku: 'ELSEWHERE', name: 'Brake Rotor' }] }),
+      'catalog.ProductsAPIApi.getProductById': (input) => ({ id: input['productId'], name: 'Oil Filter 1' }),
+    });
+    await prepareStage(visitOf(), 'intake', memory, lookup, { roleMode: true });
+    expect(memory['partProductId']).toBe(PRODUCT);
+    expect(memory['partLine']).toMatch(new RegExp(`^productId ${PRODUCT}, description "Oil Filter 1", quantity 1, unitPrice`));
+  });
+
+  it('matches a catalog product to a stock line keyed by its product id', async () => {
+    const memory: Record<string, string> = {};
+    const { lookup } = fakeLookup({
+      ...SHOP,
+      'inventory.InventoryStockApi.listStock': () => ({ lines: [{ sku: '01a18cc7-0000-7000-8000-000000000009', available: 2 }] }),
+      'catalog.ProductsAPIApi.searchCatalogProducts': () => ({
+        data: [{ productId: '01a18cc7-0000-7000-8000-000000000009', sku: 'BRK-9', name: 'Brake Pad Set' }],
+      }),
+    });
+    await prepareStage(visitOf(), 'intake', memory, lookup, { roleMode: true });
+    expect(memory['partDescription']).toBe('Brake Pad Set');
   });
 });
