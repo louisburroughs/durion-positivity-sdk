@@ -12,6 +12,7 @@ import type { Operation } from '../catalog/types';
 import { scenarioSchema, type ExpectationInput, type Persona, type Scenario } from '../scenarios/types';
 import type { CallOutcome } from '../sdk/SdkInvoker';
 import type { Visit, VisitStage } from './dayPlan';
+import { counterTerminal } from './sites';
 import { COUNTER_FACTS, FLOOR_FACTS, PREPARED_FACTS } from './prepare';
 
 export type VisitMemory = Record<string, string>;
@@ -522,7 +523,8 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
       `You are at the parts counter. A customer says: "${visit.concern}"`,
       customerBrief(visit, memory),
       `${siteBrief(visit)} ${memory['partLine'] ? 'Sell them the product given as partLine below, which is on the shelf here (quantity as given).' : 'Find a product in stock that fits what they asked for (the closest match is fine).'} Start a cart ` +
-        'on the register session that is open at this location, add the product, attach the customer, and quote the cart. Check the order ' +
+        `on the register session open on this counter's terminal (getCurrentRegisterSession with terminalId ${counterTerminal(visit.site)}), ` +
+        'add the product, attach the customer, and quote the cart. Check the order ' +
         'out and take cash for the total, then read the order back to confirm it is paid.',
       'If no register session is open, say so in your findings and stop: opening the register is the manager\'s job.',
       REPLICATION,

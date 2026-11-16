@@ -384,3 +384,10 @@ describe('the work brief', () => {
   });
 });
 
+
+describe('the sale brief', () => {
+  it('names the counter terminal, since the backend has no list of terminals to search', () => {
+    const visit = find((entry) => entry.kind === 'counter-sale');
+    expect(stageNamed(visit, 'sale').goal).toContain(`terminalId ${SITE.code}-FRONT-COUNTER`);
+  });
+});

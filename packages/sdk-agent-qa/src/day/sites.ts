@@ -75,3 +75,11 @@ export async function surveySites(invoker: SdkInvoker, catalog: Catalog, persona
   }
   return sitesFromLocations(outcome.body);
 }
+
+/**
+ * The front-counter register's terminal id at a site. The backend keeps no
+ * terminal registry — a terminal id is whatever the session was opened with —
+ * so the harness fixes one per site and every routine that touches the register
+ * (open, sell, close) is told it, instead of searching for a list that does not exist.
+ */
+export const counterTerminal = (site: Pick<Site, 'code'>): string => `${site.code}-FRONT-COUNTER`;

@@ -11,7 +11,7 @@ import type { QaConfig } from '../config';
 import { describeVisit } from '../day/dayPlan';
 import { carriedVisits } from '../day/carryOver';
 import { DayPlanStore } from '../day/DayPlanStore';
-import { surveySites } from '../day/sites';
+import { counterTerminal, surveySites } from '../day/sites';
 import { prepareStage, type Lookup } from '../day/prepare';
 import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
 import { ToolRuntime } from '../tools/toolkit';
@@ -170,7 +170,7 @@ export class Harness {
         title: `${scenario.title} — ${site.name}`,
         goal:
           `You work at the ${site.name} shop (location id ${site.id}, code ${site.code}). Everything in this task is about ` +
-          `that location; do not pick another.\n\n${scenario.goal}`,
+          `that location; do not pick another. Its front-counter register is terminal ${counterTerminal(site)} (terminalId).\n\n${scenario.goal}`,
       }));
     });
   }
