@@ -55,6 +55,7 @@ describe('prepareRoutine: crew', () => {
     expect(lines[3]).toMatch(
       /^ {2}Zed Young — TECHNICIAN, personId p-2, ON_BREAK, since 2026-03-09 08:00 — a session left open from a previous day \(missed clock-out\), on break since 12:00, workSessionId ws-2$/,
     );
+    expect(lines[4]).toBe('In all: 1 CLOCKED_IN, 1 CLOCKED_OUT, 1 ON_BREAK; 2 with an open work session.');
     expect(facts).not.toContain('Gone Away');
     expect(calls[0]).toMatchObject({ input: { locationId: 'site-1', date: '2026-03-10' }, persona: 'admin' });
   });
@@ -142,6 +143,15 @@ describe('routine preparation in the library', () => {
 
   it('renders facts as the brief\'s closing list, and nothing when there are none', () => {
     expect(renderFacts([])).toBe('');
-    expect(renderFacts(['a', 'b'])).toBe('\n\nAlready established before you started (use these; do not read them again):\n- a\n- b');
+    expect(renderFacts(['a', 'b'])).toMatch(/^\n\nThe reading this task starts with has been done for you, just now\. .*\n- a\n- b$/);
+  });
+
+  it('says outright when nobody has an open session, so there is nothing to clock out', async () => {
+    const { lookup } = fakeLookup({
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability': () => [{ personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE' }],
+      'people.WorkSessionsAPIApi.getCurrentWorkSession': () => ({ personId: 'p-1', clockState: 'CLOCKED_OUT' }),
+    });
+    const [facts] = await prepareRoutine('crew', lookup, CONTEXT);
+    expect(facts).toMatch(/In all: 1 CLOCKED_OUT\. Nobody here has an open work session right now\.$/);
   });
 });

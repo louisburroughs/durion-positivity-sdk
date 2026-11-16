@@ -512,7 +512,7 @@ describe('a tenant with several sites', () => {
         persona: 'manager',
         kind: 'operations',
         goal: 'Clock the crew in.',
-        operations: ['people.WorkSessionsAPIApi.startWorkSession'],
+        operations: ['people.WorkSessionsAPIApi.getCurrentWorkSession', 'people.WorkSessionsAPIApi.startWorkSession'],
         expect: [],
       },
     ]);
@@ -523,10 +523,13 @@ describe('a tenant with several sites', () => {
 
     const briefs = model.requests.map((request) => (request.messages[0] as { content: string }).content);
     const main = briefs.find((brief) => brief.includes('location id loc-main')) ?? '';
-    expect(main).toContain('Already established before you started');
+    expect(main).toContain('The reading this task starts with has been done for you');
     expect(main).toContain('Amber Nguyen — TECHNICIAN, personId p-1, CLOCKED_OUT');
     expect(main).not.toContain('Ray Ortiz');
     expect(briefs.find((brief) => brief.includes('location id loc-north'))).toContain('Ray Ortiz');
+    const offered = model.requests[0].tools.map((tool) => tool.name);
+    expect(offered).not.toContain('people__WorkSessionsAPIApi__getCurrentWorkSession');
+    expect(offered).toContain('people__WorkSessionsAPIApi__startWorkSession');
   });
 
   it('works the sites at the same time, up to the configured concurrency', async () => {

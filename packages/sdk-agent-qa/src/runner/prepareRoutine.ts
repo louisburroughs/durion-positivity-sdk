@@ -30,11 +30,28 @@ export interface RoutineContext {
   timeZone: string;
 }
 
+/**
+ * Reads a preparation does, so the routine stops offering them once it has:
+ * offered the tool, an agent read the whole crew's sessions again on its first turn.
+ */
+export const PREPARED_READS: Record<RoutinePreparation, readonly string[]> = {
+  crew: [
+    'people.PeopleAvailabilityAPIApi.listPeopleAvailability',
+    'people.WorkSessionsAPIApi.getCurrentWorkSession',
+    'shop-manager.TechnicianAPIApi.listLocationTechnicians',
+    'people.EmployeeAPIApi.searchEmployees',
+  ],
+  'bank-accounts': ['accounting.BankAccountsApi.listBankAccounts'],
+  // The routine reads the stages again at its end, so they stay offered.
+  'vendor-bills': [],
+};
+
 /** The facts as the brief's closing section; empty when nothing was established. */
 export function renderFacts(facts: readonly string[]): string {
   return facts.length === 0
     ? ''
-    : `\n\nAlready established before you started (use these; do not read them again):\n${facts.map((fact) => `- ${fact}`).join('\n')}`;
+    : '\n\nThe reading this task starts with has been done for you, just now. Its results are below and are current: act ' +
+        `on them, and do not read them again or look for other ways to check them.\n${facts.map((fact) => `- ${fact}`).join('\n')}`;
 }
 
 const asRecord = (value: unknown): Record<string, unknown> =>
@@ -136,10 +153,12 @@ async function crew(lookup: Lookup, context: RoutineContext): Promise<string[]> 
     `The people who work at ${context.site.name}, in alphabetical order, with each one's clock state read just now ` +
       '(personId; workSessionId when a session is open):',
   ];
+  const states = new Map<string, number>();
   for (const person of people) {
     const state = await lookup('people.WorkSessionsAPIApi.getCurrentWorkSession', { personId: person.personId }, context.roleMode ? context.persona : undefined);
     const session = asRecord(state.body);
     const clock = state.ok ? text(session['clockState']) ?? 'unknown' : 'unknown (could not be read)';
+    states.set(clock, (states.get(clock) ?? 0) + 1);
     const since = iso(session['clockedInAt']);
     const breakSince = iso(session['breakStartedAt']);
     const parts = [`${person.name} — ${person.role}, personId ${person.personId}, ${clock}`];
@@ -162,6 +181,13 @@ async function crew(lookup: Lookup, context: RoutineContext): Promise<string[]> 
     }
     lines.push(`  ${parts.join(', ')}`);
   }
+  const open = (states.get('CLOCKED_IN') ?? 0) + (states.get('ON_BREAK') ?? 0);
+  const tally = [...states.entries()].map(([clock, count]) => `${count} ${clock}`).join(', ');
+  lines.push(
+    open === 0
+      ? `In all: ${tally}. Nobody here has an open work session right now.`
+      : `In all: ${tally}; ${open} with an open work session.`,
+  );
   return [lines.join('\n')];
 }
 

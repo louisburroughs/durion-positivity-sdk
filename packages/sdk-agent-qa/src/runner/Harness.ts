@@ -13,7 +13,7 @@ import { carriedVisits } from '../day/carryOver';
 import { DayPlanStore } from '../day/DayPlanStore';
 import { counterTerminal, surveySites, type Site } from '../day/sites';
 import { prepareStage, type Lookup } from '../day/prepare';
-import { prepareRoutine, renderFacts } from './prepareRoutine';
+import { PREPARED_READS, prepareRoutine, renderFacts } from './prepareRoutine';
 import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
 import { ToolRuntime } from '../tools/toolkit';
 import { CoverageStore, sweepQuota, type CoverageSummary } from '../sdk-coverage/CoverageStore';
@@ -327,7 +327,14 @@ export class Harness {
               date: clock.date,
               timeZone: config.timezone,
             });
-            scenario = { ...scenario, goal: scenario.goal + renderFacts(facts) };
+            if (facts.length > 0) {
+              const prepared = new Set(PREPARED_READS[preparation]);
+              scenario = {
+                ...scenario,
+                goal: scenario.goal + renderFacts(facts),
+                operations: scenario.operations.filter((operation) => !prepared.has(operation)),
+              };
+            }
           } catch (error) {
             // Preparation is a shortcut, not a precondition: the brief still says how to find all of it.
             this.log(`${id} preparation stopped: ${error instanceof Error ? error.message : String(error)}`);
