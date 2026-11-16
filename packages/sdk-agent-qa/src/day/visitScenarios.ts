@@ -127,8 +127,14 @@ function vehicleBrief(visit: Visit, memory: VisitMemory): string {
 const siteBrief = (visit: Visit): string =>
   `This is at the ${visit.site.name} shop (location id ${visit.site.id}, code ${visit.site.code}); everything in this task happens at that location.`;
 
+/**
+ * The handoff. Ids from the responses that create records are harvested on
+ * their own (harvestFacts), so the agent is asked only for what it alone knows,
+ * and in one call: a remember call per fact was half of an intake's turns.
+ */
 const REMEMBER = (keys: string): string =>
-  `Before you finish, save what the next colleague needs with the remember tool: ${keys}.`;
+  `Before you finish, save what the next colleague needs in one remember call (facts: {...}): ${keys}. ` +
+  'Ids returned when records are created are saved for you.';
 
 const REPLICATION =
   'A customer or vehicle created moments ago can take a few seconds to reach the other services: a 503 saying so, or a ' +
@@ -226,8 +232,8 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
       decision,
       REPLICATION,
       REMEMBER(
-        'partyId, customerName, customerType, vehicleId, vehicleDescription, estimateId, workorderId once the estimate is promoted' +
-          (visit.parts === 'none' ? '' : ', and partProductId and partDescription for the part line'),
+        'customerName, customerType, vehicleDescription' +
+          (visit.parts === 'none' || memory['partLine'] ? '' : ', and partProductId and partDescription for the part line'),
       ),
     ].join('\n\n') + known(memory, true),
     operations,
@@ -341,7 +347,7 @@ function orderPart(visit: Visit, stage: VisitStage, memory: VisitMemory, context
       REPLICATION,
       'The part will be delivered on the next working day; add a note to the workorder saying it is waiting for the part ' +
         'and giving the purchase order.',
-      REMEMBER('purchaseOrderId, vendorId, partLineId (the workorder\'s part line id), partQuantity, and partsStatus as "ordered"'),
+      REMEMBER('vendorId, partLineId (the workorder\'s part line id), partQuantity, and partsStatus as "ordered"'),
     ].join('\n\n') + known(memory),
     operations: [
       'workorder.WorkorderDetailApi.getWorkorderDetail',
@@ -383,7 +389,7 @@ function receivePart(visit: Visit, stage: VisitStage, memory: VisitMemory): Scen
         'post a goods receipt for the line into this location instead, so the part is at least in the building, and say in ' +
         'your findings what the cross-dock refusal was.',
       'Finish by reading the workorder to see whether it still shows the part as short.',
-      REMEMBER('partsStatus ("received", or what went wrong) and receivingSessionId'),
+      REMEMBER('partsStatus ("received", or what went wrong)'),
     ].join('\n\n') + known(memory),
     operations: [
       'order.PurchaseOrdersApi.getPurchaseOrder',
@@ -439,7 +445,7 @@ function checkout(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenari
       'If it is completed, generate its invoice. The first call records the request and may answer without an invoice id; ' +
         'wait a few seconds and call it again until it returns one (it is safe to repeat). Then finalize the invoice.',
       paying,
-      REMEMBER('invoiceId, invoiceTotal, and paymentOutcome'),
+      REMEMBER('invoiceTotal and paymentOutcome'),
     ].join('\n\n') + known(memory),
     operations,
     expect: [{ kind: 'call', operation: 'workorder.WorkorderDetailApi.getWorkorderDetail' }],
@@ -484,7 +490,7 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
         'out and take cash for the total, then read the order back to confirm it is paid.',
       'If no register session is open, say so in your findings and stop: opening the register is the manager\'s job.',
       REPLICATION,
-      REMEMBER('partyId, customerName, orderId, and orderTotal'),
+      REMEMBER('customerName and orderTotal'),
     ].join('\n\n') + known(memory, true),
     operations,
     expect,
@@ -526,7 +532,7 @@ function phoneCall(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenar
         'one that suits what they said, read the appointment back to confirm it, and record the call as an interaction on ' +
         'the customer.',
       REPLICATION,
-      REMEMBER('partyId, customerName, vehicleId, appointmentId, and appointmentTime'),
+      REMEMBER('customerName and appointmentTime'),
     ].join('\n\n') + known(memory, true),
     operations,
     expect,

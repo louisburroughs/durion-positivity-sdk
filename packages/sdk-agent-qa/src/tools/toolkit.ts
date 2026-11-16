@@ -108,6 +108,8 @@ export interface ToolRuntimeOptions {
 
 const MAX_TOOL_NAME = 64;
 
+const FACT_KEY = /^[A-Za-z][A-Za-z0-9]{0,39}$/;
+
 /** Characters of each field description kept in a pinned tool's schema. */
 const LEAN_FIELD_DESCRIPTION = 100;
 
@@ -513,15 +515,27 @@ export class ToolRuntime {
       tools.push({
         name: 'remember',
         description:
-          'Save a fact about this customer visit for the colleague who handles its next step, later today or the next working day (ids, names, what the customer decided). ' +
-          'Saving a key again replaces its value.',
-        schema: z.strictObject({
-          key: z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,39}$/, 'a short camelCase name, e.g. workorderId'),
-          value: z.string().min(1).max(300),
-        }),
+          'Save facts about this customer visit for the colleague who handles its next step, later today or the next working day ' +
+          '(names, what the customer decided). Save them all in one call, as facts: {"key": "value", ...}. Ids returned by the ' +
+          'calls that create records are saved for you. Saving a key again replaces its value.',
+        schema: z
+          .strictObject({
+            facts: z
+              .record(z.string().regex(FACT_KEY, 'a short camelCase name, e.g. customerName'), z.string().min(1).max(300))
+              .optional()
+              .describe('Every fact to save, by key'),
+            key: z.string().regex(FACT_KEY, 'a short camelCase name, e.g. customerName').optional().describe('One fact\'s key, when saving one'),
+            value: z.string().min(1).max(300).optional(),
+          })
+          .refine((input) => (input.facts && Object.keys(input.facts).length > 0) || (input.key && input.value), {
+            message: 'give facts: {"key": "value", ...}',
+          }),
         execute: async (input) => {
-          const { key, value } = input as { key: string; value: string };
-          memory[key] = value;
+          const { facts, key, value } = input as { facts?: Record<string, string>; key?: string; value?: string };
+          Object.assign(memory, facts ?? {});
+          if (key && value) {
+            memory[key] = value;
+          }
           return { remembered: Object.keys(memory) };
         },
       });

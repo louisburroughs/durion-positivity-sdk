@@ -77,6 +77,15 @@ describe('ToolRuntime tools', () => {
     expect(remember.schema.safeParse({ key: 'not a key!', value: 'x' }).success).toBe(false);
   });
 
+  it('saves several facts in one call, so a handoff costs one turn', async () => {
+    const memory: Record<string, string> = {};
+    const remember = setup({ memory }).tool('remember');
+    await remember.execute(remember.schema.parse({ facts: { customerName: 'Ray Ortiz', vehicleDescription: '2019 Ford F-150' } }));
+    expect(memory).toEqual({ customerName: 'Ray Ortiz', vehicleDescription: '2019 Ford F-150' });
+    expect(remember.schema.safeParse({}).success).toBe(false);
+    expect(remember.schema.safeParse({ facts: { 'bad key': 'x' } }).success).toBe(false);
+  });
+
   it('waits when asked, without really sleeping in tests', async () => {
     const slept: number[] = [];
     const context = setup({ sleep: async (ms) => void slept.push(ms) });
