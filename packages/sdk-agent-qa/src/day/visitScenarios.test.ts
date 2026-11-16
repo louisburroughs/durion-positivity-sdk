@@ -1,7 +1,7 @@
 import { buildCatalog } from '../catalog/buildCatalog';
 import { continueVisit } from './carryOver';
 import { buildDayPlan, type DayPlanOptions, type Visit } from './dayPlan';
-import { harvestFacts, missingPrerequisite, stageScenario } from './visitScenarios';
+import { harvestFacts, missingPrerequisite, SIGNATURE_PNG, stageScenario } from './visitScenarios';
 
 const catalog = buildCatalog();
 const OPTIONS: DayPlanOptions = {
@@ -287,5 +287,66 @@ describe('harvestFacts', () => {
     harvestFacts({ id: 'workorder.WorkOrderAPIApi.generateWorkorderInvoice' }, { kind: 'success', body: { status: 'REQUESTED' } }, memory);
     harvestFacts({ id: 'location.LocationAPIApi.listLocations' }, { kind: 'success', body: [{ id: 'l-1' }] }, memory);
     expect(memory).toEqual({});
+  });
+});
+
+describe('stageScenario with prepared facts', () => {
+  const PREPARED = {
+    partyId: 'p-1',
+    customerName: 'Ray Ortiz',
+    vehicleId: 'v-1',
+    vehicleDescription: '2019 Ford F-150',
+    laborLines: 'serviceId s-1, description "Brake Pad Replacement - Front", quantity 1.5, unitPrice 130',
+    partProductId: 'prod-9',
+    partDescription: 'Brake Pad Set',
+    partLine: 'productId prod-9, description "Brake Pad Set", quantity 1, unitPrice 42.5',
+  };
+  const walkIn = () =>
+    find(
+      (entry) =>
+        entry.kind === 'service' &&
+        entry.arrival === 'walk-in' &&
+        entry.customer.status === 'existing' &&
+        entry.vehicle.status === 'existing' &&
+        entry.parts === 'stock' &&
+        entry.disposition !== 'declines',
+    );
+
+  it('hands the intake its customer, vehicle, labor and part, and drops the lookups it no longer needs', () => {
+    const scenario = stageNamed(walkIn(), 'intake', { ...PREPARED });
+    for (const lookup of [
+      'customer.CRMAccountsApi.searchParties',
+      'customer.CRMVehiclesApi.listVehiclesForCustomer',
+      'catalog.ProductsAPIApi.searchCatalogServices',
+      'inventory.InventoryStockApi.listStock',
+    ]) {
+      expect(scenario.operations).not.toContain(lookup);
+    }
+    expect(scenario.goal).toContain('already found on file');
+    expect(scenario.goal).toContain(`- laborLines: ${PREPARED.laborLines}`);
+    expect(scenario.goal).toContain(`- partLine: ${PREPARED.partLine}`);
+    expect(scenario.goal).toContain(`signatureData ${SIGNATURE_PNG}`);
+    expect(scenario.goal).not.toMatch(/search customers whose name contains/);
+  });
+
+  it('falls back to the agent doing the lookups when preparation found nothing', () => {
+    const scenario = stageNamed(walkIn(), 'intake', {});
+    expect(scenario.operations).toEqual(
+      expect.arrayContaining(['customer.CRMAccountsApi.searchParties', 'catalog.ProductsAPIApi.searchCatalogServices', 'inventory.InventoryStockApi.listStock']),
+    );
+    expect(scenario.goal).toMatch(/search customers whose name contains/);
+  });
+
+  it('makes a stock job labor only when the site has nothing on the shelf', () => {
+    const scenario = stageNamed(walkIn(), 'intake', { partsNote: 'nothing is on hand at this location, so the job is labor only: add no part line' });
+    expect(scenario.goal).toMatch(/No part is needed after all/);
+    expect(scenario.operations).not.toContain('inventory.InventoryStockApi.listStock');
+  });
+
+  it('shows the counter facts to the counter only, not to the stages after it', () => {
+    const scenario = stageNamed(walkIn(), 'work', { ...PREPARED, workorderId: 'w-1' });
+    expect(scenario.goal).toContain('- workorderId: w-1');
+    expect(scenario.goal).not.toContain('laborLines');
+    expect(scenario.goal).not.toContain('partLine');
   });
 });

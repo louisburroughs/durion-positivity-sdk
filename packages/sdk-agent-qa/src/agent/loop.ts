@@ -87,6 +87,13 @@ export interface LoopOptions {
   /** Called after each event, for transcripts and live logging. */
   onEvent?(event: LoopEvent): void;
   now?: () => number;
+  /**
+   * Shrinks tool results once they are no longer recent. Every turn resends the
+   * whole conversation, so a result read ten turns ago is paid for ten more
+   * times; past the last `keepRecent` tool turns, each output is replaced by
+   * `shrink(output)` (the ids survive, the bulk does not). Off when omitted.
+   */
+  compact?: { keepRecent: number; shrink(output: unknown): unknown };
 }
 
 export type LoopEvent =
@@ -102,6 +109,18 @@ export interface LoopResult {
   usage: { inputTokens: number; outputTokens: number };
   /** Models that answered at least one turn. */
   models: string[];
+}
+
+/** Replaces the outputs of all but the last `keepRecent` tool turns with their shrunk form, once each. */
+function compactHistory(messages: LoopMessage[], compact: NonNullable<LoopOptions['compact']>, done: WeakSet<object>): void {
+  const toolTurns = messages.filter((message): message is Extract<LoopMessage, { role: 'tool' }> => message.role === 'tool');
+  for (const turn of toolTurns.slice(0, Math.max(0, toolTurns.length - compact.keepRecent))) {
+    if (done.has(turn)) {
+      continue;
+    }
+    turn.results = turn.results.map((result) => ({ ...result, output: compact.shrink(result.output) }));
+    done.add(turn);
+  }
 }
 
 const REPEAT_WARN = 3;
@@ -131,6 +150,7 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
   let toolCalls = 0;
   let nudges = 0;
   let steps = 0;
+  const compacted = new WeakSet<object>();
 
   const end = (status: LoopStatus, detail?: string): LoopResult => {
     options.onEvent?.({ type: 'end', status, detail });
@@ -146,6 +166,9 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
       return end('token-budget', `spent ${usage.inputTokens + usage.outputTokens} tokens`);
     }
 
+    if (options.compact) {
+      compactHistory(messages, options.compact, compacted);
+    }
     steps += 1;
     let turn: ModelTurn;
     try {

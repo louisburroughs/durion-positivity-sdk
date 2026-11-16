@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { buildCatalog } from '../catalog/buildCatalog';
 import { CoverageStore } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
@@ -310,5 +311,32 @@ describe('pay period guard', () => {
     });
     expect(created).toMatchObject({ outcome: 'refused' });
     expect(context.backend.requests).toEqual([]);
+  });
+});
+
+describe('pinned tool definitions', () => {
+  const APPROVE = 'workorder.EstimateAPIApi.approveEstimate';
+
+  it('carry the route and summary only, and leave the full description to sdk_describe', async () => {
+    const context = setup({ pinned: [APPROVE] });
+    const pinned = context.tool('workorder__EstimateAPIApi__approveEstimate');
+    expect(pinned.description).toMatch(/^\[POST \/v1\/workorders\/estimates\/\{estimateId\}\/approval\] .*sdk_describe\.$/);
+    expect(pinned.description.length).toBeLessThan(200);
+
+    const described = (await context.tool('sdk_describe').execute({ operationId: APPROVE })) as { description: string };
+    expect(described.description.length).toBeGreaterThan(pinned.description.length * 3);
+  });
+
+  it('cut field descriptions to their gist without changing what the schema accepts', () => {
+    const context = setup({ pinned: [APPROVE] });
+    const lean = z.toJSONSchema(context.tool('workorder__EstimateAPIApi__approveEstimate').schema, { unrepresentable: 'any' });
+    const descriptions = JSON.stringify(lean).match(/"description":"[^"]*"/g) ?? [];
+    expect(descriptions.length).toBeGreaterThan(0);
+    for (const description of descriptions) {
+      expect(description.length).toBeLessThanOrEqual('"description":""'.length + 100);
+    }
+    const input = { estimateId: 'e-1', approveEstimateRequest: { approvalMethod: 'SIGNATURE', customerId: 'c-1', signerName: 'Ann' } };
+    expect(context.tool('workorder__EstimateAPIApi__approveEstimate').schema.safeParse(input).success).toBe(true);
+    expect(context.tool('workorder__EstimateAPIApi__approveEstimate').schema.safeParse({ ...input, extra: 1 }).success).toBe(false);
   });
 });

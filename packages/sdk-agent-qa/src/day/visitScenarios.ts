@@ -12,6 +12,7 @@ import type { Operation } from '../catalog/types';
 import { scenarioSchema, type ExpectationInput, type Persona, type Scenario } from '../scenarios/types';
 import type { CallOutcome } from '../sdk/SdkInvoker';
 import type { Visit, VisitStage } from './dayPlan';
+import { PREPARED_FACTS } from './prepare';
 
 export type VisitMemory = Record<string, string>;
 
@@ -26,8 +27,31 @@ const WHO = [
   'customer.CRMCustomerLookupApi.getCustomerSummary',
 ];
 
-function known(memory: VisitMemory): string {
-  const entries = Object.entries(memory);
+/**
+ * A 1x1 transparent PNG: the customer's signature. Any image is accepted, and a
+ * model asked for "any short base64 string" spends turns inventing one.
+ */
+export const SIGNATURE_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
+/** The visit's facts, as the brief's closing list. Facts prepared for the counter are left out of later stages. */
+/** The customer lookups a stage is offered: none once the customer has been found or is to be created. */
+function whoFor(visit: Visit, memory: VisitMemory): string[] {
+  return visit.customer.status === 'existing' && !memory['partyId'] ? WHO : [];
+}
+
+/** The vehicle operations a stage is offered, given what is already known about the vehicle. */
+function vehicleOperations(visit: Visit, memory: VisitMemory): string[] {
+  if (memory['vehicleId']) {
+    return [];
+  }
+  if (visit.vehicle.status === 'new' || memory['vehicleToRegister']) {
+    return ['vehicle-inventory.VehicleRegistryAPIApi.createVehicle'];
+  }
+  return ['customer.CRMVehiclesApi.listVehiclesForCustomer', 'vehicle-inventory.VehicleRegistryAPIApi.createVehicle'];
+}
+
+function known(memory: VisitMemory, withPrepared = false): string {
+  const entries = Object.entries(memory).filter(([key]) => withPrepared || !PREPARED_FACTS.has(key));
   if (entries.length === 0) {
     return '';
   }
@@ -36,8 +60,11 @@ function known(memory: VisitMemory): string {
     .join('\n')}`;
 }
 
-function customerBrief(visit: Visit): string {
+function customerBrief(visit: Visit, memory: VisitMemory): string {
   const { customer } = visit;
+  if (customer.status === 'existing' && memory['partyId']) {
+    return 'The customer is already found on file: partyId and customerName are listed below. Do not search for them again.';
+  }
   if (customer.status === 'existing') {
     const kind = customer.type === 'commercial' ? 'a commercial account (a business)' : 'an individual (a person)';
     return (
@@ -57,17 +84,26 @@ function customerBrief(visit: Visit): string {
   return (
     `The customer is a business that is new to the shop: ${company?.legalName}. Their driver is ${company?.contactFirstName} ` +
     `${company?.contactLastName} (email ${company?.email}, phone ${company?.phone}). Create the business as a commercial account ` +
-    '(createCrmCommercialAccount), choosing one of the available billing terms.'
+    `(createCrmCommercialAccount), ${memory['billingTerms'] ? `with billing terms ${memory['billingTerms']}` : 'choosing one of the available billing terms'}.`
   );
 }
 
-function vehicleBrief(visit: Visit): string {
+function vehicleBrief(visit: Visit, memory: VisitMemory): string {
   if (visit.vehicle.status === 'new' && visit.vehicle.details) {
     const { year, make, model, vin, licensePlate } = visit.vehicle.details;
     return (
       `The vehicle is not on file: a ${year} ${make} ${model}, VIN ${vin}, plate ${licensePlate}. Register it to the customer with ` +
       'the vehicle registry (createVehicle, with the customer id as accountId) — that is where vehicle records live. ' +
       'If the VIN is rejected as invalid, correct it to a valid 17-character VIN and try again.'
+    );
+  }
+  if (memory['vehicleId']) {
+    return 'Their vehicle is already on file: vehicleId and vehicleDescription are listed below.';
+  }
+  if (memory['vehicleToRegister']) {
+    return (
+      'The customer has no vehicle on file. Register theirs with the vehicle registry (createVehicle, with the customer id as ' +
+      `accountId): ${memory['vehicleToRegister']}.`
     );
   }
   return (
@@ -90,10 +126,9 @@ const REPLICATION =
 function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
   const expect: ExpectationInput[] = [{ kind: 'call', operation: 'workorder.EstimateAPIApi.createEstimate' }];
   const operations = [
-    ...WHO,
-    'customer.CRMVehiclesApi.listVehiclesForCustomer',
-    'vehicle-inventory.VehicleRegistryAPIApi.createVehicle',
-    'catalog.ProductsAPIApi.searchCatalogServices',
+    ...whoFor(visit, memory),
+    ...vehicleOperations(visit, memory),
+    ...(memory['laborLines'] ? [] : ['catalog.ProductsAPIApi.searchCatalogServices']),
     'workorder.EstimateAPIApi.createEstimate',
     'workorder.EstimateAPIApi.addEstimateItem',
     'workorder.EstimateAPIApi.calculateEstimateTotals',
@@ -106,7 +141,7 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
         : 'customer.CRMPersonsApi.createCrmPerson';
     operations.push(create);
     expect.push({ kind: 'call', operation: create });
-    if (visit.customer.type === 'commercial') {
+    if (visit.customer.type === 'commercial' && !memory['billingTerms']) {
       operations.push('customer.CRMAccountsApi.listBillingTerms');
     }
   }
@@ -115,7 +150,11 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
   }
 
   let partsLine = '';
-  if (visit.parts === 'stock') {
+  if (visit.parts === 'stock' && memory['partLine']) {
+    partsLine = ' The job also needs a part from this location\'s shelf: add the part line given as partLine below (itemType PART, values as given).';
+  } else if (visit.parts === 'stock' && memory['partsNote']) {
+    partsLine = ` No part is needed after all: ${memory['partsNote']}.`;
+  } else if (visit.parts === 'stock') {
     operations.push('inventory.InventoryStockApi.listStock');
     partsLine =
       ' The job also needs a part the shop keeps on the shelf: look at the stock at this location, choose a product that ' +
@@ -149,8 +188,8 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
     operations.push('workorder.EstimateAPIApi.approveEstimate', 'workorder.EstimateAPIApi.promoteEstimate');
     expect.push({ kind: 'call', operation: 'workorder.EstimateAPIApi.promoteEstimate' });
     decision =
-      'Present the estimate. The customer approves it: record the approval with their name as the signer (the signature is ' +
-      'any short base64 string, MIME type image/png), then promote the estimate to a workorder.';
+      'Present the estimate. The customer approves it: record the approval with their name as the signer (approval method ' +
+      `SIGNATURE, signatureData ${SIGNATURE_PNG}, MIME type image/png), then promote the estimate to a workorder.`;
   }
 
   return scenarioSchema.parse({
@@ -162,19 +201,22 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
     kind: 'operations',
     goal: [
       `You are the service advisor. ${arrival}`,
-      customerBrief(visit),
-      vehicleBrief(visit),
+      customerBrief(visit, memory),
+      vehicleBrief(visit, memory),
       `What they tell you: "${visit.concern}"`,
-      `${siteBrief(visit)} Write a draft estimate for this customer, vehicle and location (currency USD), and add ` +
-        'one to three lines that fit the concern: search the service catalog for matching services and add them as labor lines ' +
-        `with a sensible price.${partsLine} Calculate the totals and submit the estimate for approval.`,
+      `${siteBrief(visit)} Write a draft estimate for this customer, vehicle and location (currency USD), and ` +
+        (memory['laborLines']
+          ? 'add the labor lines given as laborLines below (itemType LABOR, values as given).'
+          : 'add one to three lines that fit the concern: search the service catalog for matching services and add them as ' +
+            'labor lines with a sensible price.') +
+        `${partsLine} Calculate the totals and submit the estimate for approval.`,
       decision,
       REPLICATION,
       REMEMBER(
         'partyId, customerName, customerType, vehicleId, vehicleDescription, estimateId, workorderId once the estimate is promoted' +
           (visit.parts === 'none' ? '' : ', and partProductId and partDescription for the part line'),
       ),
-    ].join('\n\n') + known(memory),
+    ].join('\n\n') + known(memory, true),
     operations,
     expect,
     limits: { maxSteps: 50, maxCalls: 55 },
@@ -238,8 +280,8 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
     kind: 'operations',
     goal: [
       `You are the shop manager, getting this customer's job done. The customer said: "${visit.concern}"`,
-      'Open the workorder. If it still needs the shop\'s approval to proceed, approve it (signer is the customer; any short ' +
-        'base64 signature, image/png).',
+      'Open the workorder. If it still needs the shop\'s approval to proceed, approve it (signer is the customer; signature ' +
+        `data ${SIGNATURE_PNG}, image/png).`,
       `${siteBrief(visit)} Staff the job and place it: look at this location's dispatch board and the people available here, assign a ` +
         'technician who is free, and assign the workorder to a free bay (or a mobile unit if no bay is free). If that ' +
         'technician is not clocked in yet today, clock them in first (start a work session for their person id; a refusal ' +
@@ -394,9 +436,8 @@ function checkout(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenari
 
 function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
   const operations = [
-    ...WHO,
-    'inventory.InventoryStockApi.listStock',
-    'catalog.ProductsAPIApi.findProductByCode',
+    ...whoFor(visit, memory),
+    ...(memory['partLine'] ? [] : ['inventory.InventoryStockApi.listStock', 'catalog.ProductsAPIApi.searchCatalogProducts']),
     'order.RegisterSessionsApi.getCurrentRegisterSession',
     'order.SalesOrdersApi.createCart',
     'order.SalesOrdersApi.addCartItem',
@@ -424,14 +465,14 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
     kind: 'operations',
     goal: [
       `You are at the parts counter. A customer says: "${visit.concern}"`,
-      customerBrief(visit),
-      `${siteBrief(visit)} Find a product in stock that fits what they asked for (the closest match is fine). Start a cart ` +
+      customerBrief(visit, memory),
+      `${siteBrief(visit)} ${memory['partLine'] ? 'Sell them the product given as partLine below, which is on the shelf here (quantity as given).' : 'Find a product in stock that fits what they asked for (the closest match is fine).'} Start a cart ` +
         'on the register session that is open at this location, add the product, attach the customer, and quote the cart. Check the order ' +
         'out and take cash for the total, then read the order back to confirm it is paid.',
       'If no register session is open, say so in your findings and stop: opening the register is the manager\'s job.',
       REPLICATION,
       REMEMBER('partyId, customerName, orderId, and orderTotal'),
-    ].join('\n\n') + known(memory),
+    ].join('\n\n') + known(memory, true),
     operations,
     expect,
     limits: { maxSteps: 40, maxCalls: 45 },
@@ -440,9 +481,8 @@ function sale(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
 
 function phoneCall(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario {
   const operations = [
-    ...WHO,
-    'customer.CRMVehiclesApi.listVehiclesForCustomer',
-    'vehicle-inventory.VehicleRegistryAPIApi.createVehicle',
+    ...whoFor(visit, memory),
+    ...vehicleOperations(visit, memory),
     'shop-manager.ScheduleAPIApi.searchOpenings',
     'shop-manager.ScheduleAPIApi.viewSchedule',
     'shop-manager.AppointmentsAPIApi.createAppointment',
@@ -467,14 +507,14 @@ function phoneCall(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenar
     kind: 'operations',
     goal: [
       `You are the service advisor answering the phone. The caller: "${visit.concern}"`,
-      customerBrief(visit),
-      vehicleBrief(visit),
+      customerBrief(visit, memory),
+      vehicleBrief(visit, memory),
       `${siteBrief(visit)} Search for open appointment slots there over the next seven days. Book the caller into ` +
         'one that suits what they said, read the appointment back to confirm it, and record the call as an interaction on ' +
         'the customer.',
       REPLICATION,
       REMEMBER('partyId, customerName, vehicleId, appointmentId, and appointmentTime'),
-    ].join('\n\n') + known(memory),
+    ].join('\n\n') + known(memory, true),
     operations,
     expect,
     limits: { maxSteps: 40, maxCalls: 45 },

@@ -108,6 +108,9 @@ export interface ToolRuntimeOptions {
 
 const MAX_TOOL_NAME = 64;
 
+/** Characters of each field description kept in a pinned tool's schema. */
+const LEAN_FIELD_DESCRIPTION = 100;
+
 export const finishSchema = z.strictObject({
   verdict: z
     .enum(['completed', 'blocked', 'failed'])
@@ -141,6 +144,7 @@ export class ToolRuntime {
   private vendorPaymentsMade = 0;
   private finished: FinishReport | undefined;
   private readonly validators = new Map<string, z.ZodType>();
+  private readonly leanValidators = new Map<string, z.ZodType>();
   private readonly now: () => Date;
 
   constructor(private readonly options: ToolRuntimeOptions) {
@@ -160,6 +164,20 @@ export class ToolRuntime {
     if (!validator) {
       validator = zodFromIr(operation.input);
       this.validators.set(operation.id, validator);
+    }
+    return validator;
+  }
+
+  /**
+   * The same validator with field descriptions cut to their first sentence: the
+   * schema a pinned tool is offered with. It is resent on every model turn, so
+   * the full field text stays behind sdk_describe.
+   */
+  private leanValidatorFor(operation: Operation): z.ZodType {
+    let validator = this.leanValidators.get(operation.id);
+    if (!validator) {
+      validator = zodFromIr(operation.input, { maxDescription: LEAN_FIELD_DESCRIPTION });
+      this.leanValidators.set(operation.id, validator);
     }
     return validator;
   }
@@ -218,7 +236,7 @@ export class ToolRuntime {
   async callOperation(
     operation: Operation,
     rawInput: unknown,
-    call: { persona?: string; validate?: boolean; source?: 'agent' | 'backstop' } = {},
+    call: { persona?: string; validate?: boolean; source?: 'agent' | 'backstop' | 'harness' } = {},
   ): Promise<Record<string, unknown>> {
     const refusal = this.refusal(operation);
     if (refusal) {
@@ -322,10 +340,13 @@ export class ToolRuntime {
     };
   }
 
+  /**
+   * A pinned tool's description: route and summary only. Preconditions, events
+   * and error statuses run to kilobytes per operation and would be resent on
+   * every turn; sdk_describe returns them when the model needs them.
+   */
   private describe(operation: Operation): string {
-    const prefix = `[${operation.http} ${operation.path}] ${operation.summary}.`;
-    const text = `${prefix} ${operation.description}`;
-    return text.length > 1800 ? `${text.slice(0, 1799)}…` : text;
+    return `[${operation.http} ${operation.path}] ${operation.summary}. Full rules and errors: sdk_describe.`;
   }
 
   private pinnedTools(): QaTool[] {
@@ -344,7 +365,7 @@ export class ToolRuntime {
       tools.push({
         name,
         description: this.describe(operation),
-        schema: this.validatorFor(operation),
+        schema: this.leanValidatorFor(operation),
         execute: (input) => this.callOperation(operation, input),
       });
     }
