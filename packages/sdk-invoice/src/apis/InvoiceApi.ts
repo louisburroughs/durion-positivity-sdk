@@ -17,12 +17,14 @@ import * as runtime from '../runtime';
 import type {
   AdjustmentRequest,
   ApiError,
+  CreatePaymentLinkRequest,
   FinalizationRequest,
   InvoiceCreationRequest,
   InvoiceDetailsResponse,
   InvoiceGenerationResponse,
   OrderInvoiceCreationRequest,
   OrderInvoiceResponse,
+  PaymentLinkResponse,
   RevertRequest,
   SendInvoiceRequest,
   SendInvoiceResponse,
@@ -32,6 +34,8 @@ import {
     AdjustmentRequestToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    CreatePaymentLinkRequestFromJSON,
+    CreatePaymentLinkRequestToJSON,
     FinalizationRequestFromJSON,
     FinalizationRequestToJSON,
     InvoiceCreationRequestFromJSON,
@@ -44,6 +48,8 @@ import {
     OrderInvoiceCreationRequestToJSON,
     OrderInvoiceResponseFromJSON,
     OrderInvoiceResponseToJSON,
+    PaymentLinkResponseFromJSON,
+    PaymentLinkResponseToJSON,
     RevertRequestFromJSON,
     RevertRequestToJSON,
     SendInvoiceRequestFromJSON,
@@ -68,6 +74,12 @@ export interface CreateInvoiceRequest {
 
 export interface CreateInvoiceFromOrderRequest {
     orderInvoiceCreationRequest: OrderInvoiceCreationRequest;
+}
+
+export interface CreatePaymentLinkOperationRequest {
+    invoiceId: string;
+    idempotencyKey: string;
+    createPaymentLinkRequest: CreatePaymentLinkRequest;
 }
 
 export interface FinalizeInvoiceRequest {
@@ -292,6 +304,62 @@ export class InvoiceApi extends runtime.BaseAPI {
      */
     async createInvoiceFromOrder(requestParameters: CreateInvoiceFromOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderInvoiceResponse> {
         const response = await this.createInvoiceFromOrderRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Texts or emails the customer a link to pay an issued invoice on the card processor\'s own hosted page, so the customer can pay without the card being at hand or being on site and the card is typed only into the processor\'s page. The recipient is the invoice\'s billing party, resolved by the platform sender: the request never names and the response never returns a phone number, an email address or the link itself, which is the customer\'s (the response carries at most an SMS number masked to its last four digits). Use this tool when a customer is not at the counter and wants to pay remotely; use initiatePayment instead when the card is present and the page can be opened on the spot. Preconditions: the invoice is issued (FINALIZED or POSTED); the caller holds invoice:payment:process and invoice:invoice:send at the invoice\'s location (ADR-0061); the invoice has a customer that is not the CASH walk-in account; something is still due; the amount (absent means the whole balance due) is positive and no more than the balance due; and, above 500.00, the caller holds invoice:payment:limit_override (BILL-DEC-010). Required inputs: invoiceId (path), channel (SMS or EMAIL), the optional amount, and the Idempotency-Key header (a UUID): a replay with the same key answers the original response with Idempotency-Replayed: true and never sends a second message or creates a second link. Emits an INVOICE_PAYMENT_LINK_SEND event. A new link supersedes the invoice\'s open ones, and a link is cancelled after commit when another payment settles the invoice; a link lives at most 24 hours (pos.invoice.payment-link.ttl, default PT24H). Returns 202 with status QUEUED, the payment id, the masked number for SMS and when the link expires; 400 when the key is missing or not a UUID, channel is missing or the amount is not positive; 403 without invoice:payment:process or invoice:invoice:send, or outside the invoice\'s location; 404 when the invoice does not exist; 409 INVALID_STATE for an invoice that is not issued, INVOICE_ALREADY_PAID when nothing is due, or IDEMPOTENCY_CONFLICT for a reused key; 422 PAYMENT_AMOUNT_EXCEEDS_BALANCE above the balance due, INVOICE_RECIPIENT_UNKNOWN when there is no customer or contact person to send to, INVOICE_RECIPIENT_NO_MOBILE or INVOICE_RECIPIENT_NO_EMAIL when the customer has no number or email on file for the channel, INVOICE_RECIPIENT_UNDELIVERABLE when the one on file cannot receive it, or INVOICE_SEND_REFUSED when the provider refused the message (a refused send leaves no live link); 503 INVOICE_SEND_UNAVAILABLE when the message service could not be reached (with Retry-After; retry the same key) or INVOICE_SEND_NOT_CONFIGURED. 
+     * Send a pay link for an Invoice to its Customer
+     */
+    async createPaymentLinkRaw(requestParameters: CreatePaymentLinkOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaymentLinkResponse>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling createPaymentLink().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling createPaymentLink().'
+            );
+        }
+
+        if (requestParameters['createPaymentLinkRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createPaymentLinkRequest',
+                'Required parameter "createPaymentLinkRequest" was null or undefined when calling createPaymentLink().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/payment-links`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreatePaymentLinkRequestToJSON(requestParameters['createPaymentLinkRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PaymentLinkResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Texts or emails the customer a link to pay an issued invoice on the card processor\'s own hosted page, so the customer can pay without the card being at hand or being on site and the card is typed only into the processor\'s page. The recipient is the invoice\'s billing party, resolved by the platform sender: the request never names and the response never returns a phone number, an email address or the link itself, which is the customer\'s (the response carries at most an SMS number masked to its last four digits). Use this tool when a customer is not at the counter and wants to pay remotely; use initiatePayment instead when the card is present and the page can be opened on the spot. Preconditions: the invoice is issued (FINALIZED or POSTED); the caller holds invoice:payment:process and invoice:invoice:send at the invoice\'s location (ADR-0061); the invoice has a customer that is not the CASH walk-in account; something is still due; the amount (absent means the whole balance due) is positive and no more than the balance due; and, above 500.00, the caller holds invoice:payment:limit_override (BILL-DEC-010). Required inputs: invoiceId (path), channel (SMS or EMAIL), the optional amount, and the Idempotency-Key header (a UUID): a replay with the same key answers the original response with Idempotency-Replayed: true and never sends a second message or creates a second link. Emits an INVOICE_PAYMENT_LINK_SEND event. A new link supersedes the invoice\'s open ones, and a link is cancelled after commit when another payment settles the invoice; a link lives at most 24 hours (pos.invoice.payment-link.ttl, default PT24H). Returns 202 with status QUEUED, the payment id, the masked number for SMS and when the link expires; 400 when the key is missing or not a UUID, channel is missing or the amount is not positive; 403 without invoice:payment:process or invoice:invoice:send, or outside the invoice\'s location; 404 when the invoice does not exist; 409 INVALID_STATE for an invoice that is not issued, INVOICE_ALREADY_PAID when nothing is due, or IDEMPOTENCY_CONFLICT for a reused key; 422 PAYMENT_AMOUNT_EXCEEDS_BALANCE above the balance due, INVOICE_RECIPIENT_UNKNOWN when there is no customer or contact person to send to, INVOICE_RECIPIENT_NO_MOBILE or INVOICE_RECIPIENT_NO_EMAIL when the customer has no number or email on file for the channel, INVOICE_RECIPIENT_UNDELIVERABLE when the one on file cannot receive it, or INVOICE_SEND_REFUSED when the provider refused the message (a refused send leaves no live link); 503 INVOICE_SEND_UNAVAILABLE when the message service could not be reached (with Retry-After; retry the same key) or INVOICE_SEND_NOT_CONFIGURED. 
+     * Send a pay link for an Invoice to its Customer
+     */
+    async createPaymentLink(requestParameters: CreatePaymentLinkOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaymentLinkResponse> {
+        const response = await this.createPaymentLinkRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
