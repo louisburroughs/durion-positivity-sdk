@@ -7,6 +7,7 @@ import { ToolRuntime, type QaTool, type SafetyPolicy, type ToolRuntimeOptions } 
 
 const catalog = buildCatalog();
 const AT = new Date('2026-03-10T15:00:00Z');
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 function setup(overrides: Partial<Omit<ToolRuntimeOptions, 'policy'>> & { policy?: Partial<SafetyPolicy> } = {}): {
   runtime: ToolRuntime;
@@ -152,14 +153,24 @@ describe('ToolRuntime tools', () => {
     expect(context.ledger.all()).toEqual([]);
   });
 
-  it('supplies an Idempotency-Key when the operation needs one and none is given', async () => {
-    const context = setup();
+  it('generates every Idempotency-Key itself, and does not offer the model the field', async () => {
+    const context = setup({ pinned: ['order.RegisterSessionsApi.recordCashMovement'] });
     const input = { sessionId: 's-1', cashMovementRequest: { amount: 5, currencyCode: 'USD', reason: 'BANK_DROP' } };
     await sdkCall(context, { operationId: 'order.RegisterSessionsApi.recordCashMovement', input });
     await sdkCall(context, { operationId: 'order.RegisterSessionsApi.recordCashMovement', input: { ...input, idempotencyKey: 'mine' } });
-    const [generated, explicit] = context.backend.requests.map((request) => request.headers.get('Idempotency-Key'));
-    expect(generated).toMatch(/^[0-9a-f-]{36}$/);
-    expect(explicit).toBe('mine');
+    const keys = context.backend.requests.map((request) => request.headers.get('Idempotency-Key'));
+    expect(keys).toEqual([expect.stringMatching(UUID), expect.stringMatching(UUID)]);
+    expect(keys[0]).not.toBe(keys[1]);
+
+    const offered = JSON.stringify(z.toJSONSchema(context.tool('order__RegisterSessionsApi__recordCashMovement').schema, { unrepresentable: 'any' }));
+    expect(offered).not.toContain('idempotencyKey');
+  });
+
+  it('sends an unvalidated call\'s Idempotency-Key as written, for the drill that tests the header', async () => {
+    const context = setup({ allowUnvalidated: true });
+    const input = { sessionId: 's-1', idempotencyKey: '', cashMovementRequest: { amount: 5, currencyCode: 'USD', reason: 'BANK_DROP' } };
+    await sdkCall(context, { operationId: 'order.RegisterSessionsApi.recordCashMovement', input, validate: false });
+    expect(context.backend.requests[0]?.headers.get('Idempotency-Key') ?? '').toBe('');
   });
 
   it('allows unvalidated calls only in scenarios that are meant to provoke errors', async () => {
