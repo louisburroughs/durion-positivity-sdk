@@ -7,9 +7,11 @@ receives its deliveries and closes, with a language model carrying every custome
 shop floor to checkout. Around that it runs the tenant-wide back office (receivables, payables, the monthly
 close), deliberate error drills, and a sweep that makes sure every SDK gets called every month.
 
-The model does the work through tools, and each tool is one method of a generated client. Nothing about a visit is
-scripted beyond who walks in and what they want: finding the returning customer, choosing services that fit the
-complaint, working around a full shop and coping with whatever state the tenant is in are left to the agent.
+The model does the work through tools, and each tool is one method of a generated client. Lookups with a fixed
+rule — finding the returning customer the roster names, their vehicle, catalog services for the complaint, a part on
+the shelf at this site — are done in code before the agent starts (see *Preparing a stage*). The work itself is the
+agent's: writing and presenting the estimate, staffing and placing the job, invoicing, working around a full shop and
+coping with whatever state the tenant is in.
 
 It is built from standard parts and owns very little: the TypeScript compiler reads the generated clients, **Zod**
 validates every tool input, **Vercel's AI SDK** talks to the model, and one short loop sits between them.
@@ -134,12 +136,34 @@ what the model is shown (as JSON Schema) and what its tool call is validated aga
 A model cannot be handed 1,381 tools, so each scenario exposes two layers:
 
 - **Pinned tools** — the operations the scenario names, one tool each (`order__SalesOrdersApi__createCart`), with
-  that operation's own schema. A scenario pins at most sixteen.
+  that operation's own schema. Every tool definition is resent on every model turn, so a pinned tool carries only
+  its route and summary, and each field description only its first sentence; `sdk_describe` returns the full
+  preconditions, errors and field text when the model needs them.
 - **Catalog tools** — `sdk_search`, `sdk_describe` and `sdk_call` reach everything else on demand.
 
 `SdkInvoker` then calls the real generated API class, configured the way the packages' `createXxxClient`
 factories configure it, with headers from `@durion-sdk/transport`. So a run exercises the SDK's own path
 building, serialization, auth and idempotency handling — nothing is re-implemented beside it.
+
+## Preparing a stage
+
+Before a counter stage (intake, parts-counter sale, phone booking) the harness makes the lookups that need no
+judgement itself (`day/prepare.ts`) and writes what it finds into the visit's memory, which the brief lists as
+facts:
+
+| Fact | How it is found |
+| --- | --- |
+| `partyId`, `customerName` | the roster's search (letter and ordinal), filtered to the right kind of customer; other letters if none |
+| `vehicleId`, `vehicleDescription` | the customer's vehicles; with none on file, `vehicleToRegister` from the seeded generator |
+| `laborLines` | catalog services for the complaint's keywords, priced at their default hours times `LABOR_RATE` |
+| `partLine` | the site's stock (read as the parts lead) crossed with catalog search; price from the seeded generator |
+| `partsNote` | the site has nothing on the shelf: the stock job goes ahead as labor only |
+| `billingTerms` | a new business's terms, `NET_30` when offered |
+
+These are ordinary SDK calls, recorded in the ledger and the month's coverage under the stage's id with source
+`harness`, so a 5xx there fails the stage like any other. Once a fact is known the stage no longer offers the tools
+that look it up. Preparation is best effort: anything it cannot find is left to the agent, as before. An appointment
+arrival's customer is found through the appointment, so it stays the agent's. Approvals use a fixed signature image.
 
 ## The loop, and what makes it hold up
 
@@ -157,6 +181,9 @@ properties that matter are properties of the loop:
   retried on the next model, mid-conversation, and the run stays there.
 - **Responses are bounded.** Bodies are pruned to a budget as valid JSON (lists cut with their true length
   stated), so three list calls cannot fill a small model's context.
+- **Old results shrink.** Every turn resends the whole conversation, so a visit's tokens grow with the square of its
+  turns. Results older than the last two tool turns are pruned again to 600 characters: their ids survive, their
+  bulk does not.
 - **The model is a port.** The loop sees a `ModelPort`; `agent/aiSdkModel.ts` is the only file that imports `ai`.
   That is what lets the loop be unit-tested with a scripted model.
 
@@ -472,7 +499,7 @@ logs in to (OpenRouter among them) are what this harness uses directly.
 ## Tests
 
 ```bash
-npx jest packages/sdk-agent-qa      # 227 unit tests; no backend, no model
+npx jest packages/sdk-agent-qa      # 244 unit tests; no backend, no model
 npm run qa:smoke                    # the AI SDK adapter end to end, with mocks (after npm run build)
 ```
 
