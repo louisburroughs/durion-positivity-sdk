@@ -839,18 +839,29 @@ describe('Suite E — cycle counting', () => {
       );
     };
 
-    /** Raises and approves a manual adjustment request, returning its id. */
+    /** Raises a manual adjustment request and approves it if it waits for approval, returning its id. */
     const adjustAndApprove = async (sku: string, locationId: string, quantity: number): Promise<string> => {
       const request = await call('createAdjustmentRequest', () =>
         parts.inventory.stockMovementsApi.createAdjustmentRequest({
-          createAdjustmentRequestDto: { productSku: sku, locationId, quantity, reasonCode: 'ITEST_ADJUSTMENT' },
+          createAdjustmentRequestDto: {
+            productSku: sku,
+            locationId,
+            quantity,
+            // A manual adjustment takes a closed reason whose sign must match the
+            // quantity (backend #3184): found stock adds, theft or loss removes.
+            reasonCode: quantity > 0 ? 'FOUND_STOCK' : 'THEFT_OR_LOSS',
+          },
         }),
       );
-      await call('approveAdjustmentRequest', () =>
-        admin.inventory.stockMovementsApi.approveAdjustmentRequest({
-          adjustmentRequestId: request.adjustmentRequestId,
-        }),
-      );
+      // Below the tenant's MANUAL_ADJUSTMENT threshold the request posts at once and
+      // there is nothing left to approve; approving it would be refused as not PENDING.
+      if (request.pendingApproval) {
+        await call('approveAdjustmentRequest', () =>
+          admin.inventory.stockMovementsApi.approveAdjustmentRequest({
+            adjustmentRequestId: request.adjustmentRequestId,
+          }),
+        );
+      }
       return request.adjustmentRequestId;
     };
 
