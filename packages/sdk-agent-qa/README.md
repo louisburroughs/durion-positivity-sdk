@@ -196,7 +196,7 @@ Every site gets:
 
 - **its own customers** — a roster of visits sized to the shop (4 to 8 on a weekday by default; a site with more
   bays gets a busier day; about 60% on a Saturday);
-- **its own routines** — opening, the crew's clock-in, lunch and clock-out, the time review, the stock order,
+- **its own routines** — opening (the manager) and the register (the advisor), the crew's clock-in, lunch and clock-out, the time review, the stock order,
   the stock delivery and closing run once per site, as do the weekly purchasing review, cycle count and timesheet
   approval, and the monthly inventory review;
 
@@ -206,6 +206,7 @@ runs once.
 ```text
 07:44  open-shop-main        Open the shop for the day — Main Street
 07:49  open-shop-north       Open the shop for the day — Northside
+07:51  open-register-main    Open the front-counter register — Main Street
 08:14  main-v01-intake       Main Street — service: new individual (Kaylie Swaniawski), new vehicle, walk-in, approves, cash
 08:21  north-v01-intake      Northside — service: existing commercial, existing vehicle, appointment, approves, on-account
 09:33  main-v03-sale         Main Street — counter-sale: existing commercial

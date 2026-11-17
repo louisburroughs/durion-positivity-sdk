@@ -32,25 +32,44 @@ const daily: ScenarioInput[] = [
     at: '07:45',
     persona: 'manager',
     kind: 'operations',
+    // The register is the advisor's (open-register, close-shop): LOCATION_MANAGER holds no order:session:* grant.
     goal:
-      'It is opening time. Review the dispatch board and ' +
-      'the shop dashboard for this location, read the register session policy, and check whether the front-counter terminal already ' +
-      'has an open register session; if it has none, open one with a sensible opening float. Then make sure you are clocked in: ' +
-      'check your current work session and start one if none is open.',
+      'It is opening time. Review the dispatch board and the shop dashboard for this location. Then make sure you are ' +
+      'clocked in: check your current work session and start one if none is open.',
     operations: [
       'location.LocationAPIApi.listLocations',
       'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard',
       'shop-manager.ShopDashboardAPIApi.getShopDashboard',
-      'order.RegisterSessionsApi.getSessionPolicy',
-      'order.RegisterSessionsApi.getCurrentRegisterSession',
-      'order.RegisterSessionsApi.openRegisterSession',
       'people.WorkSessionsAPIApi.getCurrentWorkSession',
       'people.WorkSessionsAPIApi.startWorkSession',
     ],
     expect: [
       { kind: 'call', operation: 'location.LocationAPIApi.listLocations', outcome: 'success' },
       { kind: 'call', operation: 'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard' },
-      { kind: 'call', operation: 'order.RegisterSessionsApi.getSessionPolicy' },
+      { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
+    ],
+  },
+  {
+    id: 'open-register',
+    perSite: true,
+    title: 'Open the front-counter register',
+    cadence: 'daily',
+    at: '07:48',
+    persona: 'advisor',
+    kind: 'operations',
+    goal:
+      'You run the front counter. Check whether the front-counter terminal at this location already has an open ' +
+      'register session; if it has none, open one with a sensible opening float. Then make sure you are clocked in: ' +
+      'check your current work session and start one if none is open.',
+    operations: [
+      'location.LocationAPIApi.listLocations',
+      'order.RegisterSessionsApi.getCurrentRegisterSession',
+      'order.RegisterSessionsApi.openRegisterSession',
+      'people.WorkSessionsAPIApi.getCurrentWorkSession',
+      'people.WorkSessionsAPIApi.startWorkSession',
+    ],
+    expect: [
+      { kind: 'call', operation: 'order.RegisterSessionsApi.getCurrentRegisterSession' },
       { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
     ],
   },
@@ -397,7 +416,8 @@ const daily: ScenarioInput[] = [
       'it). Clocking out is two steps for each person: stop their work session, which also ends a break left open; then ' +
       'submit the ended session for approval, giving the break minutes actually taken, the billable minutes (the time ' +
       'between start and stop less the breaks, from the session you just stopped), and now as the submission time. Do ' +
-      'not clock yourself out: you close the shop afterwards. If a stop or a submission is refused, say what was ' +
+      'not clock out the service advisor: they close the register afterwards and clock themselves out. Clock yourself ' +
+      'out last, the same way. If a stop or a submission is refused, say what was ' +
       'answered and carry on. Finish by listing today\'s time entries for this location and report how many are ' +
       'submitted or pending approval and who is still clocked in.',
     operations: [
@@ -420,13 +440,14 @@ const daily: ScenarioInput[] = [
     title: 'Close out the day',
     cadence: 'daily',
     at: '17:45',
-    persona: 'manager',
+    // The advisor closes the register; undeposited sessions are the bookkeeper's (weekly-bank-deposit).
+    persona: 'advisor',
     kind: 'operations',
     goal:
       'It is closing time. Find the register session that is open on the front-counter terminal at this location. Read its X report and its cash ' +
       'movements. If the session is open and has no orders awaiting payment, begin the close with a counted cash figure that ' +
-      'matches the X report\'s expected cash, then confirm the close and read the Z report. Check which closed sessions are ' +
-      'still undeposited. The crew has already clocked out; finally stop your own work session if one is open.',
+      'matches the X report\'s expected cash, then confirm the close and read the Z report. The crew has already clocked ' +
+      'out; finally stop your own work session if one is open.',
     operations: [
       'location.LocationAPIApi.listLocations',
       'order.RegisterSessionsApi.getCurrentRegisterSession',
@@ -436,14 +457,12 @@ const daily: ScenarioInput[] = [
       'order.RegisterSessionsApi.beginSessionClose',
       'order.RegisterSessionsApi.confirmSessionClose',
       'order.RegisterSessionsApi.getSessionZReport',
-      'accounting.BankDepositsApi.listUndepositedSessions',
       'people.WorkSessionsAPIApi.getCurrentWorkSession',
       'people.WorkSessionsAPIApi.stopWorkSession',
     ],
     expect: [
       { kind: 'call', operation: 'order.RegisterSessionsApi.getCurrentRegisterSession' },
-      { kind: 'call', operation: 'accounting.BankDepositsApi.listUndepositedSessions' },
-      { kind: 'calls', min: 4 },
+      { kind: 'calls', min: 3 },
     ],
   },
 ];
@@ -855,6 +874,20 @@ const weekly: ScenarioInput[] = [
       { kind: 'calls', min: 5 },
     ],
     limits: { maxSteps: 60, maxCalls: 70 },
+  },
+  {
+    id: 'weekly-drawer-policy',
+    title: 'Weekly review of the cash drawer policy',
+    cadence: 'weekly',
+    weekday: 5,
+    at: '15:30',
+    persona: 'controller',
+    kind: 'operations',
+    goal:
+      'Before the week\'s cash goes to the bank, review the register session policy that governs every cash drawer: ' +
+      'the over/short tolerance and the approval rules. Read it and report its settings. Do not change it.',
+    operations: ['order.RegisterSessionsApi.getSessionPolicy'],
+    expect: [{ kind: 'call', operation: 'order.RegisterSessionsApi.getSessionPolicy', outcome: 'success' }],
   },
   {
     id: 'weekly-bank-deposit',
