@@ -132,8 +132,26 @@ else
 
   # describe-instances prints tab-separated ids; normalise to words.
   read -r -a FOUND <<< "$INSTANCE_ID"
+  # The tags are set by hand, so a replacement instance can come up without
+  # them. Fall back the way alpha-daily-shop-floor.yml does: the only managed
+  # node online in SSM is alpha.
+  if [[ ${#FOUND[@]} -eq 0 ]]; then
+    echo "No running instance tagged Project=durion, Environment=alpha; trying the online SSM managed nodes..."
+    ONLINE="$(aws ssm describe-instance-information \
+      --region "$REGION" \
+      --filters "Key=PingStatus,Values=Online" \
+      --query 'InstanceInformationList[].InstanceId' \
+      --output text 2>/dev/null)" || die \
+      "ssm:DescribeInstanceInformation failed. Set ALPHA_INSTANCE_ID to skip the lookup."
+    read -r -a FOUND <<< "$ONLINE"
+    case ${#FOUND[@]} in
+      1) echo "Only one online SSM managed node; using it. Re-tag it Project=durion, Environment=alpha to skip this fallback." ;;
+      0) die "No running instance tagged Project=durion, Environment=alpha in $REGION, and no online SSM managed node. Set ALPHA_INSTANCE_ID explicitly." ;;
+      *) die "No running instance tagged Project=durion, Environment=alpha in $REGION, and ${#FOUND[@]} online SSM managed nodes (${FOUND[*]}). Set ALPHA_INSTANCE_ID to pick one." ;;
+    esac
+  fi
+
   case ${#FOUND[@]} in
-    0) die "No running instance tagged Project=durion, Environment=alpha in $REGION. Set ALPHA_INSTANCE_ID explicitly." ;;
     1) INSTANCE_ID="${FOUND[0]}" ;;
     *) die "Tag lookup matched ${#FOUND[@]} running instances (${FOUND[*]}). Set ALPHA_INSTANCE_ID to pick one." ;;
   esac
