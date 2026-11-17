@@ -347,9 +347,17 @@ plus activity equals closing balance to the cent.
 
 | Routine | When | What it does |
 | --- | --- | --- |
-| Bank statement | Mondays, 8:30 | For each bank account: on first use, puts an opening balance on the books (`QA_BANK_OPENING_BALANCE`, 50,000). Reads what the ledger says moved through the account, hands it to the bank, and enters the statement that comes back exactly as given — one week keyed by hand, the next as an uploaded CSV, so both intake paths are used. |
+| Bank statement | Mondays, 8:30 | For each bank account: on first use, puts an opening balance on the books (`QA_BANK_OPENING_BALANCE`, 50,000). Reads what the ledger says moved through the account, hands it to the bank, and enters the statement that comes back exactly as given — one week keyed by hand, the next as an uploaded CSV, so both intake paths are used. A week where nothing cleared gets no statement (accounting refuses one with no lines); the next one picks the period up. |
 | Bank reconciliation | Mondays, 10:30 | Opens the reconciliation, runs the auto-match and reviews what it proposed, pairs the rest by check or transfer number, records bank charges and interest as adjustments, registers what the bank has not shown yet as outstanding, and submits it for a second person to approve. |
 | Month-end review | the 3rd | The controller checks that every week of last month has a statement and a finalized reconciliation, and reports outstanding items more than two weeks old. Reads only. |
+
+Both Monday routines start from reading done in code (`runner/prepareRoutine.ts`). For the statement, that is
+all of it: the period (from the day after the latest statement, or the opening balance, to last Sunday), the
+ledger lines on the account classified by what posted them, and the bank's statement itself, so the brief hands
+over the exact calls to make (the opening balance when there is none, then the statement or the file import) and
+the `bank_statement` tool is not offered. For the reconciliation, it is where each account stands: its latest
+committed statement and whether that has a reconciliation, finalized or open, with the call to open one. Left to
+the model, both routines spent their 400k-token budgets on this reading; prepared, the statement took 30k.
 
 The statement differs from the books in the ordinary ways, which is what gives the reconciliation something to do:
 

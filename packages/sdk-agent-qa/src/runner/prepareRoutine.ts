@@ -14,8 +14,9 @@
  * fails leaves its fact out, and the brief still says how to find it.
  */
 import type { Lookup } from '../day/prepare';
+import { buildBankStatement, entryMethodFor, statementFile, type BankItemKind, type LedgerItem } from '../tools/mockBank';
 
-export type RoutinePreparation = 'crew' | 'bank-accounts' | 'vendor-bills';
+export type RoutinePreparation = 'crew' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
 
 export interface RoutineContext {
   /** The site a per-site routine is at. */
@@ -28,6 +29,8 @@ export interface RoutineContext {
   date: string;
   /** Shop time zone, for reading when a session started. */
   timeZone: string;
+  /** The statement balance a bank account's first statement opens at (QA_BANK_OPENING_BALANCE). */
+  bankOpeningBalance?: number;
 }
 
 /**
@@ -42,8 +45,28 @@ export const PREPARED_READS: Record<RoutinePreparation, readonly string[]> = {
     'people.EmployeeAPIApi.searchEmployees',
   ],
   'bank-accounts': ['accounting.BankAccountsApi.listBankAccounts'],
+  // The statement is built in code from the ledger, so none of the reading that feeds it is left to do.
+  'bank-statement': [
+    'accounting.BankAccountsApi.listBankAccounts',
+    'accounting.BankStatementsApi.listBankStatements',
+    'accounting.FinancialReportingApi.generateGeneralLedger',
+    'accounting.JournalEntriesApi.listJournalEntries',
+    'accounting.JournalEntriesApi.getJournalEntry',
+    'accounting.GLAccountsApi.getGLAccountBalance',
+  ],
+  'bank-reconciliation': [
+    'accounting.BankAccountsApi.listBankAccounts',
+    'accounting.BankStatementsApi.listBankStatements',
+    'accounting.BankReconciliationApi.listReconciliations',
+    'accounting.BankReconciliationApi.listReconciliationAdjustmentTypes',
+  ],
   // The routine reads the stages again at its end, so they stay offered.
   'vendor-bills': [],
+};
+
+/** Tools a preparation makes redundant: the statement routine's bank is consulted in code. */
+export const PREPARED_TOOLS: Partial<Record<RoutinePreparation, readonly string[]>> = {
+  'bank-statement': ['bank_statement'],
 };
 
 /** The facts as the brief's closing section; empty when nothing was established. */
@@ -232,6 +255,358 @@ async function bankAccounts(lookup: Lookup, context: RoutineContext): Promise<st
   return facts;
 }
 
+const DAY_MS = 86_400_000;
+
+/** YYYY-MM-DD `days` after `day` (negative for before). */
+const addDays = (day: string, days: number): string => new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+
+/** The Sunday that ended last week: yesterday on a Monday, a week ago on a Sunday. */
+export function lastSunday(date: string): string {
+  const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+  return addDays(date, -(weekday === 0 ? 7 : weekday));
+}
+
+const day = (value: unknown): string | undefined => iso(value)?.slice(0, 10);
+
+const num = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) ? value : undefined);
+
+const roundCents = (amount: number): number => Math.round(amount * 100) / 100;
+
+const json = (value: unknown): string => JSON.stringify(value);
+
+/** A general-ledger line on a bank account, signed so money into the account is positive. */
+export interface BankLedgerLine {
+  date: string;
+  amount: number;
+  sourceEventType?: string;
+  description?: string;
+  entryNumber?: string;
+  /** Cumulative signed balance through this line. */
+  runningBalance?: number;
+}
+
+/** The lines of a general-ledger report, oldest first. */
+export function bankLedgerLines(report: unknown): BankLedgerLine[] {
+  return listOf(report, 'accounts')
+    .flatMap((section) => listOf(section['lines']))
+    .map((line) => ({
+      date: day(line['transactionDate']) ?? '',
+      amount: roundCents((num(line['debitAmount']) ?? 0) - (num(line['creditAmount']) ?? 0)),
+      sourceEventType: text(line['sourceEventType']),
+      description: text(line['description']),
+      entryNumber: text(line['entryNumber']),
+      runningBalance: num(line['runningBalance']),
+    }))
+    .filter((line) => line.date !== '');
+}
+
+const OPENING_BALANCE = 'OPENING_BALANCE';
+
+/**
+ * How the bank treats a ledger line, which decides when it clears. Read from what
+ * posted it: a deposit, a customer's check or transfer, a payment to a vendor.
+ */
+export function bankItemKind(line: Pick<BankLedgerLine, 'amount' | 'sourceEventType' | 'description'>): BankItemKind {
+  const what = `${line.sourceEventType ?? ''} ${line.description ?? ''}`.toUpperCase();
+  if (line.amount > 0 && /DEPOSIT/.test(what)) {
+    return 'CASH_DEPOSIT';
+  }
+  if (line.amount < 0) {
+    return /AP_|VENDOR|PAYABLE|BILL|PAYMENT|CHECK/.test(what) ? 'VENDOR_PAYMENT' : 'OTHER';
+  }
+  if (/CHECK|CHEQUE/.test(what)) {
+    return 'CUSTOMER_CHECK';
+  }
+  return /PAYMENT|RECEIPT|TRANSFER|ACH|WIRE|REMIT/.test(what) ? 'CUSTOMER_TRANSFER' : 'OTHER';
+}
+
+interface BankAccountRef {
+  glAccountId: string;
+  code: string;
+  label: string;
+}
+
+/** The first two bank accounts, read as the routine's persona or the controller. */
+async function bankAccountRefs(
+  lookup: Lookup,
+  context: RoutineContext,
+): Promise<{ accounts: BankAccountRef[]; reader?: string; note?: string } | undefined> {
+  const read = await readAs(lookup, 'accounting.BankAccountsApi.listBankAccounts', {}, context, ['controller']);
+  if (!read.ok) {
+    return undefined;
+  }
+  const accounts = listOf(read.body, 'accounts', 'content')
+    .map((account) => {
+      const glAccountId = text(account['glAccountId']);
+      const code = text(account['accountCode']) ?? '?';
+      return glAccountId
+        ? { glAccountId, code, label: `${text(account['accountName']) ?? 'bank account'} (code ${code}, glAccountId ${glAccountId})` }
+        : undefined;
+    })
+    .filter((account): account is BankAccountRef => account !== undefined)
+    .slice(0, 2);
+  return { accounts, reader: read.persona, note: readerNote('the bank accounts, statements and reconciliations', read, context) };
+}
+
+const asPersona = (reader: string | undefined): string => (reader ? ` with sdk_call as persona "${reader}"` : '');
+
+/** The account's committed statements, latest end first; undefined when they could not be read. */
+async function committedStatements(lookup: Lookup, glAccountId: string, reader: string | undefined): Promise<Record<string, unknown>[] | undefined> {
+  const read = await lookup('accounting.BankStatementsApi.listBankStatements', { glAccountId, page: 0, size: 50 }, reader);
+  if (!read.ok) {
+    return undefined;
+  }
+  return listOf(read.body, 'statements', 'content')
+    .filter((statement) => statement['status'] === undefined || statement['status'] === 'COMMITTED')
+    .sort((a, b) => (day(b['endDate']) ?? '').localeCompare(day(a['endDate']) ?? ''));
+}
+
+/**
+ * Last week's bank statement, built in code. The period continues from the latest
+ * statement (or, the first time, from the account's opening balance, or last week),
+ * the ledger's lines on the account are classified by what posted them, and the
+ * bank (tools/mockBank.ts) returns the statement it would have sent. The agent is
+ * left the bookkeeper's part: put a first opening balance on the books, enter the
+ * statement as given, read it back.
+ */
+async function bankStatement(lookup: Lookup, context: RoutineContext): Promise<string[]> {
+  const found = await bankAccountRefs(lookup, context);
+  if (!found) {
+    return [];
+  }
+  const facts: string[] = found.note ? [found.note] : [];
+  if (found.accounts.length === 0) {
+    return [...facts, 'There is no bank account to enter a statement for.'];
+  }
+  const { reader } = found;
+  const periodEnd = lastSunday(context.date);
+  const policy = await lookup('accounting.AccountingPeriodsApi.getBankReconciliationPolicy', {}, reader);
+  const currency = (policy.ok ? text(asRecord(policy.body)['currency']) : undefined) ?? 'USD';
+
+  for (const account of found.accounts) {
+    const statements = await committedStatements(lookup, account.glAccountId, reader);
+    if (!statements) {
+      facts.push(`${account.label}: its statements could not be read; work this account from the steps above.`);
+      continue;
+    }
+    const latest = statements[0];
+    let periodStart: string;
+    let openingBalance: number | undefined;
+    let openingToEstablish: { asOfDate: string; statementBalance: number } | undefined;
+    let ledger: BankLedgerLine[] | undefined;
+
+    if (latest && day(latest['endDate'])) {
+      periodStart = addDays(day(latest['endDate']) as string, 1);
+      openingBalance = num(latest['closingBalance']);
+    } else {
+      // No statement yet: continue from the opening balance if the books have one.
+      const history = await lookup(
+        'accounting.FinancialReportingApi.generateGeneralLedger',
+        { accountId: account.glAccountId, startDate: '2000-01-01', endDate: periodEnd },
+        reader,
+      );
+      if (!history.ok) {
+        facts.push(`${account.label}: no statement yet, and its ledger could not be read; work this account from the steps above.`);
+        continue;
+      }
+      ledger = bankLedgerLines(history.body);
+      const opened = ledger.filter((line) => line.sourceEventType === OPENING_BALANCE).pop();
+      if (opened) {
+        periodStart = addDays(opened.date, 1);
+        // The opening balance has no outstanding items, so the book balance it left is the bank's.
+        openingBalance = [...ledger].filter((line) => line.date <= opened.date).pop()?.runningBalance;
+      } else if (context.bankOpeningBalance !== undefined) {
+        periodStart = addDays(periodEnd, -6);
+        openingBalance = context.bankOpeningBalance;
+        openingToEstablish = { asOfDate: addDays(periodStart, -1), statementBalance: context.bankOpeningBalance };
+      } else {
+        facts.push(`${account.label}: no statement and no opening balance yet; work this account from the steps above.`);
+        continue;
+      }
+    }
+    if (openingBalance === undefined) {
+      facts.push(`${account.label}: the balance the next statement opens at could not be worked out; work this account from the steps above.`);
+      continue;
+    }
+    if (periodStart > periodEnd) {
+      facts.push(`${account.label}: statements already cover last week (through ${addDays(periodStart, -1)}). Nothing to enter; skip it.`);
+      continue;
+    }
+
+    const windowStart = addDays(periodStart, -5);
+    if (!ledger) {
+      const read = await lookup(
+        'accounting.FinancialReportingApi.generateGeneralLedger',
+        { accountId: account.glAccountId, startDate: windowStart, endDate: periodEnd },
+        reader,
+      );
+      if (!read.ok) {
+        facts.push(`${account.label}: its ledger could not be read; work this account from the steps above.`);
+        continue;
+      }
+      ledger = bankLedgerLines(read.body);
+    }
+    const items: LedgerItem[] = ledger
+      .filter((line) => line.sourceEventType !== OPENING_BALANCE && line.date >= windowStart && line.date <= periodEnd)
+      .map((line) => ({
+        date: line.date,
+        amount: line.amount,
+        kind: bankItemKind(line),
+        reference: line.entryNumber,
+        description: line.description,
+      }));
+    const statement = buildBankStatement({ account: account.code, periodStart, periodEnd, openingBalance, items });
+
+    const lines: string[] = [];
+    const first = statements.length === 0;
+    const gapAcknowledgement = first
+      ? `First statement for account ${account.code}: there is no earlier statement for this one to continue.`
+      : undefined;
+    if (openingToEstablish) {
+      lines.push(
+        `${account.label} has no opening balance on the books. Put it on first: call ` +
+          `accounting.BankAccountsApi.establishBankOpeningBalance${asPersona(reader)} with exactly this input: ` +
+          json({
+            glAccountId: account.glAccountId,
+            bankOpeningBalanceRequest: {
+              asOfDate: openingToEstablish.asOfDate,
+              currencyCode: currency,
+              statementBalance: openingToEstablish.statementBalance,
+              outstandingItems: [],
+              justification: `Statement balance of ${openingToEstablish.statementBalance.toFixed(2)} is the bank balance at the start of this run.`,
+            },
+          }),
+      );
+    }
+    const header = {
+      startDate: periodStart,
+      endDate: periodEnd,
+      openingBalance: statement.statement.openingBalance,
+      closingBalance: statement.statement.closingBalance,
+    };
+    if (statement.transactions.length === 0) {
+      lines.push(
+        `${account.label}: nothing cleared the bank from ${periodStart} to ${periodEnd}, so the bank sent no statement ` +
+          '(accounting refuses one with no lines). Enter none; the next statement will start where the last one ended.',
+      );
+    } else if (entryMethodFor(periodEnd) === 'keyed-by-hand') {
+      lines.push(
+        `The bank's statement for ${account.label}, ${periodStart} to ${periodEnd}, opening ${header.openingBalance.toFixed(2)}, ` +
+          `closing ${header.closingBalance.toFixed(2)}, ${statement.transactions.length} line(s). Key it in by hand: call ` +
+          `accounting.BankStatementsApi.createBankStatement${asPersona(reader)} with exactly this input: ` +
+          json({
+            bankStatementCreateRequest: {
+              glAccountId: account.glAccountId,
+              currency,
+              ...(gapAcknowledgement ? { gapAcknowledgement } : {}),
+              statement: header,
+              transactions: statement.transactions,
+            },
+          }),
+      );
+    } else {
+      const { fileName, contentType, formatCode, signConvention, columnMapping, content } = statementFile(statement);
+      lines.push(
+        `The bank's statement for ${account.label}, ${periodStart} to ${periodEnd}, opening ${header.openingBalance.toFixed(2)}, ` +
+          `closing ${header.closingBalance.toFixed(2)}, ${statement.transactions.length} line(s), comes as a file. Upload it: call ` +
+          `accounting.BankImportsApi.createBankImport${asPersona(reader)} with exactly this input: ` +
+          json({
+            bankImportCreateRequest: {
+              glAccountId: account.glAccountId,
+              currency,
+              ...(gapAcknowledgement ? { gapAcknowledgement } : {}),
+              formatCode,
+              fileName,
+              contentType,
+              signConvention,
+              columnMapping,
+              content,
+              statement: header,
+            },
+          }) +
+          ' Then read the import (getBankImport) and its rows (listBankImportRows), and commit it (commitBankImport).',
+      );
+    }
+    if (statement.transactions.length > 0) {
+      lines.push('Enter it exactly as given: do not change an amount to make it agree with the books. Then read the statement back.');
+      const pending = statement.notYetCleared.map((item) => `${item.reference ?? item.kind} ${item.amount.toFixed(2)} (clears ${item.clearsOn})`);
+      lines.push(
+        pending.length === 0
+          ? 'Every ledger item in the period cleared; the bank has nothing outstanding.'
+          : `Not yet cleared by the bank (${pending.length}): ${pending.join('; ')}.`,
+      );
+    }
+    facts.push(lines.join(' '));
+  }
+  return facts;
+}
+
+/**
+ * Where each bank account's reconciliation stands: its latest committed statement,
+ * and whether that statement has a reconciliation, finalized or still open.
+ */
+async function bankReconciliation(lookup: Lookup, context: RoutineContext): Promise<string[]> {
+  const found = await bankAccountRefs(lookup, context);
+  if (!found) {
+    return [];
+  }
+  const facts: string[] = found.note ? [found.note] : [];
+  if (found.accounts.length === 0) {
+    return [...facts, 'There is no bank account to reconcile.'];
+  }
+  const { reader } = found;
+  for (const account of found.accounts) {
+    const statements = await committedStatements(lookup, account.glAccountId, reader);
+    if (!statements) {
+      facts.push(`${account.label}: its statements could not be read; work this account from the steps above.`);
+      continue;
+    }
+    const latest = statements[0];
+    if (!latest) {
+      facts.push(`${account.label} has no committed statement: there is nothing to reconcile. Skip it.`);
+      continue;
+    }
+    const statementId = text(latest['statementId']);
+    const period = `${day(latest['startDate']) ?? '?'} to ${day(latest['endDate']) ?? '?'}`;
+    const about =
+      `${account.label}: the latest committed statement is statementId ${statementId ?? '?'}, ${period}, opening ` +
+      `${String(num(latest['openingBalance']) ?? '?')}, closing ${String(num(latest['closingBalance']) ?? '?')}, ` +
+      `${String(num(latest['bankTransactionCount']) ?? '?')} line(s).`;
+    const reconciliations = await lookup(
+      'accounting.BankReconciliationApi.listReconciliations',
+      { glAccountId: account.glAccountId, page: 0, size: 50 },
+      reader,
+    );
+    const forStatement = reconciliations.ok
+      ? listOf(reconciliations.body, 'reconciliations', 'content').filter((rec) => text(rec['statementId']) === statementId)
+      : listOf(latest['reconciliations']);
+    const finalized = forStatement.find((rec) => rec['status'] === 'FINALIZED');
+    const open = forStatement.find((rec) => rec['status'] === 'IN_PROGRESS' || rec['status'] === 'SUBMITTED');
+    if (finalized) {
+      facts.push(`${about} Its reconciliation ${String(finalized['reconciliationId'])} is FINALIZED: nothing to do. Skip it.`);
+    } else if (open) {
+      const counts = ['countUnexplainedBank', 'countUnexplainedLedger', 'difference', 'version']
+        .filter((key) => open[key] !== undefined)
+        .map((key) => `${key} ${String(open[key])}`)
+        .join(', ');
+      facts.push(
+        `${about} Its reconciliation ${String(open['reconciliationId'])} is ${String(open['status'])}${counts ? ` (${counts})` : ''}: ` +
+          'carry on with that one; do not open another.',
+      );
+    } else {
+      facts.push(
+        `${about} It has no reconciliation yet. Open one: call accounting.BankReconciliationApi.createReconciliation` +
+          `${asPersona(reader)} with exactly this input: ${json({ reconciliationCreateRequest: { glAccountId: account.glAccountId, statementId } })}`,
+      );
+    }
+  }
+  facts.push(
+    'Adjustment types for lines only the bank has: BANK_FEE for a service charge, INTEREST_EARNED for interest paid, ' +
+      'NSF_FEE for a returned-item fee, TRANSFER or OTHER for anything else.',
+  );
+  return facts;
+}
+
 /** Accounts payable's stage counts, the bills waiting on a receipt match, and purchase orders received lately. */
 async function vendorBills(lookup: Lookup, context: RoutineContext): Promise<string[]> {
   const facts: string[] = [];
@@ -300,6 +675,10 @@ export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, c
       return crew(lookup, context);
     case 'bank-accounts':
       return bankAccounts(lookup, context);
+    case 'bank-statement':
+      return bankStatement(lookup, context);
+    case 'bank-reconciliation':
+      return bankReconciliation(lookup, context);
     case 'vendor-bills':
     default:
       return vendorBills(lookup, context);

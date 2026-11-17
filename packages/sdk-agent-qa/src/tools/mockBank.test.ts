@@ -176,8 +176,23 @@ describe('the tools', () => {
   it('alternates between entering by file and by hand from one week to the next', async () => {
     const tool = mockBankTool();
     const how = async (start: string, end: string): Promise<string> =>
-      ((await tool.execute({ account: 'a', periodStart: start, periodEnd: end, openingBalance: 0, items: [] })) as { enterIt: string }).enterIt;
+      (
+        (await tool.execute({
+          account: 'a',
+          periodStart: start,
+          periodEnd: end,
+          openingBalance: 0,
+          items: [item(start, 120, 'OTHER')],
+        })) as { enterIt: string }
+      ).enterIt;
     expect(await how('2026-03-09', '2026-03-15')).not.toBe(await how('2026-03-16', '2026-03-22'));
+  });
+
+  it('says there is nothing to enter for a period where nothing cleared, since accounting refuses an empty statement', async () => {
+    const result = (await mockBankTool().execute({ ...WEEK, items: [] })) as { enterIt: string; transactions: unknown[]; file?: unknown };
+    expect(result.enterIt).toBe('nothing-to-enter');
+    expect(result.transactions).toEqual([]);
+    expect(result.file).toBeUndefined();
   });
 
   it('rejects a malformed request before the bank sees it', () => {

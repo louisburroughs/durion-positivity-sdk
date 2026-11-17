@@ -13,7 +13,7 @@ import { carriedVisits } from '../day/carryOver';
 import { DayPlanStore } from '../day/DayPlanStore';
 import { counterTerminal, surveySites, type Site } from '../day/sites';
 import { prepareStage, type Lookup } from '../day/prepare';
-import { PREPARED_READS, prepareRoutine, renderFacts } from './prepareRoutine';
+import { PREPARED_READS, PREPARED_TOOLS, prepareRoutine, renderFacts } from './prepareRoutine';
 import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
 import { ToolRuntime } from '../tools/toolkit';
 import { CoverageStore, sweepQuota, type CoverageSummary } from '../sdk-coverage/CoverageStore';
@@ -326,13 +326,16 @@ export class Harness {
               roleMode: backend.roleMode,
               date: clock.date,
               timeZone: config.timezone,
+              bankOpeningBalance: config.bankOpeningBalance,
             });
             if (facts.length > 0) {
               const prepared = new Set(PREPARED_READS[preparation]);
+              const preparedTools = new Set(PREPARED_TOOLS[preparation] ?? []);
               scenario = {
                 ...scenario,
                 goal: scenario.goal + renderFacts(facts),
                 operations: scenario.operations.filter((operation) => !prepared.has(operation)),
+                tools: scenario.tools.filter((tool) => !preparedTools.has(tool)),
               };
             }
           } catch (error) {
