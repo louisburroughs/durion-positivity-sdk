@@ -179,8 +179,29 @@ try {
     }
 
     $found = @(($raw -split '\s+') | Where-Object { $_ })
+
+    # The tags are set by hand, so a replacement instance can come up without
+    # them. Fall back the way alpha-daily-shop-floor.yml does: the only managed
+    # node online in SSM is alpha.
+    if ($found.Count -eq 0) {
+      Write-Host "No running instance tagged Project=durion, Environment=alpha; trying the online SSM managed nodes..."
+      $online = & aws ssm describe-instance-information `
+        --region $Region `
+        --filters "Key=PingStatus,Values=Online" `
+        --query 'InstanceInformationList[].InstanceId' `
+        --output text 2>$null
+      if ($LASTEXITCODE -ne 0) {
+        Fail "ssm:DescribeInstanceInformation failed. Pass -InstanceId to skip the lookup."
+      }
+      $found = @(($online -split '\s+') | Where-Object { $_ })
+      switch ($found.Count) {
+        1       { Write-Host "Only one online SSM managed node; using it. Re-tag it Project=durion, Environment=alpha to skip this fallback." }
+        0       { Fail "No running instance tagged Project=durion, Environment=alpha in $Region, and no online SSM managed node. Pass -InstanceId explicitly." }
+        default { Fail ("No running instance tagged Project=durion, Environment=alpha in $Region, and {0} online SSM managed nodes ({1}). Pass -InstanceId to pick one." -f $found.Count, ($found -join ', ')) }
+      }
+    }
+
     switch ($found.Count) {
-      0       { Fail "No running instance tagged Project=durion, Environment=alpha in $Region. Pass -InstanceId explicitly." }
       1       { $InstanceId = $found[0] }
       default { Fail ("Tag lookup matched {0} running instances ({1}). Pass -InstanceId to pick one." -f $found.Count, ($found -join ', ')) }
     }
