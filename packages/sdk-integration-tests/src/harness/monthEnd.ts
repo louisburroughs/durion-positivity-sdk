@@ -12,6 +12,18 @@
  * every posting the next run makes into it. So global setup reopens the closed periods
  * inside this run's timeline first — with a justification naming the run — and the run
  * closes them again as it finishes each one. The audit trail keeps both halves.
+ *
+ * The run has no bank. Under the backend's default bank reconciliation close policy
+ * (REQUIRED_WITH_EXCEPTION, which applies whenever the tenant has no setting) a month
+ * with no committed, reconciled statement refuses to close — 422
+ * PERIOD_BANK_RECONCILIATION_INCOMPLETE, which left every month of the 2026-11-17 run
+ * open. So each close carries a bank reconciliation exception, as a controller would
+ * for a month whose bank work is not done: the period closes, readiness is snapshotted
+ * into a PERIOD_CLOSE_BANKREC_EXCEPTION audit row, and the policy itself stays the
+ * backend's default instead of a tenant setting that a reset loses. The exception is
+ * ignored under ADVISORY and refused under REQUIRED. It needs accounting:period:close
+ * and accounting:period:override, which the CONTROLLER role holds; without the second
+ * the close answers 403 PERIOD_CLOSE_EXCEPTION_NOT_PERMITTED, and the run stops on it.
  */
 import { formatError, httpStatusOf } from './http';
 
@@ -24,7 +36,10 @@ import { formatError, httpStatusOf } from './http';
 interface AccountingPeriods {
   accountingPeriodsApi: {
     listAccountingPeriods(): Promise<Array<{ periodCode?: string; status?: string }>>;
-    closeAccountingPeriod(request: { periodCode: string }): Promise<unknown>;
+    closeAccountingPeriod(request: {
+      periodCode: string;
+      periodCloseRequest?: { bankReconciliationException?: { justification: string } };
+    }): Promise<unknown>;
     reopenAccountingPeriod(request: {
       periodCode: string;
       accountingPeriodReopenRequest: { justification: string };
@@ -64,9 +79,17 @@ export function monthsToClose(virtualStart: Date, today: Date, closed: readonly 
     .filter((code) => !closed.includes(code));
 }
 
+/**
+ * Why the run closes a month without bank reconciliation readiness. The backend wants
+ * at least 10 characters and keeps it in the exception's audit row.
+ */
+export const bankRecExceptionJustification = (runId: string, code: string): string =>
+  `Accelerated run ${runId} closes ${code} with no bank: there are no statements to reconcile`;
+
 export interface PeriodPort {
   list(): Promise<Array<{ periodCode?: string; status?: string }>>;
-  close(periodCode: string): Promise<void>;
+  /** Closes a month, with a bank reconciliation exception carrying `bankRecException`. */
+  close(periodCode: string, bankRecException: string): Promise<void>;
   reopen(periodCode: string, justification: string): Promise<void>;
 }
 
@@ -74,8 +97,11 @@ export function createPeriodPort(accounting: AccountingPeriods): PeriodPort {
   const api = accounting.accountingPeriodsApi;
   return {
     list: () => api.listAccountingPeriods(),
-    close: async (code) => {
-      await api.closeAccountingPeriod({ periodCode: code });
+    close: async (code, bankRecException) => {
+      await api.closeAccountingPeriod({
+        periodCode: code,
+        periodCloseRequest: { bankReconciliationException: { justification: bankRecException } },
+      });
     },
     reopen: async (code, justification) => {
       await api.reopenAccountingPeriod({ periodCode: code, accountingPeriodReopenRequest: { justification } });
@@ -121,9 +147,9 @@ export type CloseOutcome = { code: string; result: 'closed' | 'already-closed' }
  * thrown: no HTTP response at all, or a 401/403, is the harness or the tenant's
  * wiring, not month end, and the run should stop on it rather than post on.
  */
-export async function closeMonth(port: PeriodPort, code: string): Promise<CloseOutcome> {
+export async function closeMonth(port: PeriodPort, code: string, runId: string): Promise<CloseOutcome> {
   try {
-    await port.close(code);
+    await port.close(code, bankRecExceptionJustification(runId, code));
     return { code, result: 'closed' };
   } catch (error) {
     const status = httpStatusOf(error);
