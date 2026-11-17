@@ -22,11 +22,31 @@ const blobShape = z.strictObject({
   filename: z.string().optional(),
 });
 
-function described<T extends z.ZodType>(schema: T, description: string | undefined): T {
-  return description ? (schema.describe(description) as T) : schema;
+export interface ZodFromIrOptions {
+  /**
+   * Longest field description kept, in characters. A tool definition is resent
+   * on every model turn, so the schema handed to the model keeps a field's gist
+   * and leaves the full text to sdk_describe. Unlimited by default.
+   */
+  maxDescription?: number;
 }
 
-export function zodFromIr(ir: SchemaIR): z.ZodType {
+/** The first sentence of a description, cut to `max` characters. */
+export function clip(text: string, max: number): string {
+  if (text.length <= max) {
+    return text;
+  }
+  const sentence = /^(.+?[.;])\s/.exec(text)?.[1] ?? text;
+  return sentence.length <= max ? sentence : `${sentence.slice(0, Math.max(1, max - 1))}…`;
+}
+
+export function zodFromIr(ir: SchemaIR, options: ZodFromIrOptions = {}): z.ZodType {
+  const max = options.maxDescription;
+  const described = <T extends z.ZodType>(schema: T, description: string | undefined): T => {
+    const text = description && max !== undefined ? clip(description, max) : description;
+    return text ? (schema.describe(text) as T) : schema;
+  };
+  const child = (node: SchemaIR): z.ZodType => zodFromIr(node, options);
   switch (ir.kind) {
     case 'string':
       return described(z.string(), ir.description);
@@ -39,19 +59,19 @@ export function zodFromIr(ir: SchemaIR): z.ZodType {
     case 'enum':
       return described(z.enum(ir.values as [string, ...string[]]), ir.description);
     case 'array':
-      return described(z.array(zodFromIr(ir.items)), ir.description);
+      return described(z.array(child(ir.items)), ir.description);
     case 'record':
-      return described(z.record(z.string(), zodFromIr(ir.values)), ir.description);
+      return described(z.record(z.string(), child(ir.values)), ir.description);
     case 'union':
-      return described(z.union(ir.anyOf.map(zodFromIr) as [z.ZodType, z.ZodType, ...z.ZodType[]]), ir.description);
+      return described(z.union(ir.anyOf.map(child) as [z.ZodType, z.ZodType, ...z.ZodType[]]), ir.description);
     case 'nullable':
-      return described(zodFromIr(ir.inner).nullable(), ir.description);
+      return described(child(ir.inner).nullable(), ir.description);
     case 'blob':
       return described(blobShape, ir.description ?? 'File upload');
     case 'object': {
       const shape: Record<string, z.ZodType> = {};
       for (const [name, property] of Object.entries(ir.properties)) {
-        const schema = zodFromIr(property);
+        const schema = child(property);
         shape[name] = ir.required.includes(name) ? schema : schema.optional();
       }
       // Strict: a misspelled field is reported back to the model instead of

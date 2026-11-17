@@ -134,3 +134,47 @@ describe('runLoop', () => {
     await expect(result).resolves.toMatchObject({ status: 'timeout' });
   });
 });
+
+describe('runLoop history compaction', () => {
+  const echoes = (count: number): Script => [
+    ...Array.from({ length: count }, (_, index) => [call('echo', { text: `turn-${index}-${'x'.repeat(200)}` })]),
+    [call('finish', { summary: 'done' })],
+  ];
+
+  it('shrinks tool results older than the most recent ones, and leaves the recent ones whole', async () => {
+    const model = new ScriptedModel(echoes(4));
+    await runLoop({
+      model,
+      system: 'system',
+      prompt: 'task',
+      tools: tools().tools,
+      finishTool: 'finish',
+      limits: LIMITS,
+      compact: { keepRecent: 2, shrink: () => ({ compacted: true }) },
+    });
+    const final = model.requests[model.requests.length - 1].messages.filter((message) => message.role === 'tool');
+    expect(final).toHaveLength(4);
+    const outputs = final.map((message) => (message.role === 'tool' ? message.results[0].output : undefined));
+    expect(outputs.slice(0, 2)).toEqual([{ compacted: true }, { compacted: true }]);
+    expect(outputs.slice(2)).toEqual([{ said: expect.stringMatching(/^turn-2-/) }, { said: expect.stringMatching(/^turn-3-/) }]);
+  });
+
+  it('shrinks each result once, and not at all without the option', async () => {
+    const shrink = jest.fn(() => ({ compacted: true }));
+    await runLoop({
+      model: new ScriptedModel(echoes(5)),
+      system: 'system',
+      prompt: 'task',
+      tools: tools().tools,
+      finishTool: 'finish',
+      limits: LIMITS,
+      compact: { keepRecent: 2, shrink },
+    });
+    expect(shrink).toHaveBeenCalledTimes(3);
+
+    const plain = new ScriptedModel(echoes(4));
+    await runLoop({ model: plain, system: 'system', prompt: 'task', tools: tools().tools, finishTool: 'finish', limits: LIMITS });
+    const last = plain.requests[plain.requests.length - 1].messages.filter((message) => message.role === 'tool');
+    expect(last.every((message) => message.role === 'tool' && typeof (message.results[0].output as { said?: string }).said === 'string')).toBe(true);
+  });
+});

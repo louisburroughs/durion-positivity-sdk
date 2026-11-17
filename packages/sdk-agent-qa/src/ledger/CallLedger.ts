@@ -26,8 +26,8 @@ export interface CallRecord {
   durationMs: number;
   /** True when the call was sent without client-side validation, to provoke an error. */
   unvalidated?: boolean;
-  /** Who made the call: the model, or the deterministic coverage backstop. */
-  source: 'agent' | 'backstop';
+  /** Who made the call: the model, the deterministic coverage backstop, or the harness preparing a visit stage. */
+  source: 'agent' | 'backstop' | 'harness';
 }
 
 export class CallLedger {

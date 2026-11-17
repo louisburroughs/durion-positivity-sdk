@@ -64,9 +64,22 @@ interface World {
 }
 
 /** `local` is shop time in March 2026 after the 8th (UTC-4). The 10th is a Tuesday. */
+/** The lookups the harness makes before a visit stage (day/prepare.ts). */
+const PREPARATION = /\/v1\/(crm\/accounts\/parties(\/search)?|crm\/[^/]+\/vehicles|crm\/billing-terms|products\/services\/search|products\/search|products\/[0-9a-f-]{36}|inventory\/stock)(\?|$)/;
+
+/**
+ * Answers the preparation lookups with "nothing found", so each visit stage
+ * falls back to the agent doing them, as these tests script it to. The
+ * preparation itself is covered in day/prepare.test.ts.
+ */
+const nothingToPrepare =
+  (route: Route): Route =>
+  (request) =>
+    PREPARATION.test(request.path) ? { status: 404, body: { code: 'NOT_FOUND', message: 'nothing here' } } : route(request);
+
 function world(options: { model?: ModelPort; route?: Route; env?: Record<string, string>; scenarios?: typeof SCENARIOS; preflight?: () => Promise<void> } = {}): World {
   const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-qa-harness-'));
-  const backend = fakeBackend(options.route ?? ((request) => (request.method === 'GET' ? { status: 200, body: [] } : undefined)));
+  const backend = fakeBackend(nothingToPrepare(options.route ?? ((request) => (request.method === 'GET' ? { status: 200, body: [] } : undefined))));
   const config = loadQaConfig({ QA_STATE_DIR: stateDir, QA_JITTER_MINUTES: '0', QA_MIN_GAP_MINUTES: '0', QA_SWEEP_MAX: '0', QA_VISITS_PER_SITE_MAX: '0', QA_MAX_PER_TICK: '1', ...options.env }, 'http://gateway.test');
   let now = new Date('2026-03-10T10:00:00-04:00');
   const self: World = {
@@ -108,9 +121,12 @@ function world(options: { model?: ModelPort; route?: Route; env?: Record<string,
 }
 
 /** What tasks sent — everything but the morning's survey of the tenant's sites, which the harness makes as admin. */
+/** Requests the agent made: not the site survey, and not the harness preparing a stage. */
 const agentRequests = (state: World): FakeBackend['requests'] =>
   state.backend.requests.filter(
-    (request) => !(request.path === '/location/v1/locations' && request.headers.get('Authorization') === 'Bearer token-admin'),
+    (request) =>
+      !(request.path === '/location/v1/locations' && request.headers.get('Authorization') === 'Bearer token-admin') &&
+      !PREPARATION.test(request.path),
   );
 
 const dayFiles = (state: World, date = '2026-03-10'): string[] => fs.readdirSync(path.join(state.stateDir, 'runs', date)).sort();

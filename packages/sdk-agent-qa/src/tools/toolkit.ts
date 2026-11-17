@@ -19,7 +19,7 @@
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import type { CoverageStore } from '../sdk-coverage/CoverageStore';
-import type { Catalog, Operation, Risk } from '../catalog/types';
+import type { Catalog, Operation, Risk, SchemaIR } from '../catalog/types';
 import { formatIssues, zodFromIr } from '../catalog/zodFromIr';
 import type { CallLedger } from '../ledger/CallLedger';
 import type { CallOutcome, SdkInvoker } from '../sdk/SdkInvoker';
@@ -108,6 +108,11 @@ export interface ToolRuntimeOptions {
 
 const MAX_TOOL_NAME = 64;
 
+const FACT_KEY = /^[A-Za-z][A-Za-z0-9]{0,39}$/;
+
+/** Characters of each field description kept in a pinned tool's schema. */
+const LEAN_FIELD_DESCRIPTION = 100;
+
 export const finishSchema = z.strictObject({
   verdict: z
     .enum(['completed', 'blocked', 'failed'])
@@ -125,6 +130,16 @@ export const finishSchema = z.strictObject({
     .describe('Anything a QA engineer should look at: unexpected statuses, wrong data, confusing errors.'),
 });
 
+/** An operation's input as the model is offered it: without the Idempotency-Key, which the runtime supplies. */
+function modelInput(operation: Operation): SchemaIR {
+  const ir = operation.input;
+  if (!operation.takesIdempotencyKey || ir.kind !== 'object') {
+    return ir;
+  }
+  const properties = Object.fromEntries(Object.entries(ir.properties).filter(([name]) => name !== 'idempotencyKey'));
+  return { ...ir, properties, required: ir.required.filter((name) => name !== 'idempotencyKey') };
+}
+
 /** `order.RegisterSessionsApi.openRegisterSession` → `order__RegisterSessionsApi__openRegisterSession` */
 export function toolNameFor(operation: Operation): string {
   const name = operation.id.replace(/[^A-Za-z0-9_.-]/g, '_').replace(/\./g, '__');
@@ -141,6 +156,7 @@ export class ToolRuntime {
   private vendorPaymentsMade = 0;
   private finished: FinishReport | undefined;
   private readonly validators = new Map<string, z.ZodType>();
+  private readonly leanValidators = new Map<string, z.ZodType>();
   private readonly now: () => Date;
 
   constructor(private readonly options: ToolRuntimeOptions) {
@@ -158,8 +174,22 @@ export class ToolRuntime {
   private validatorFor(operation: Operation): z.ZodType {
     let validator = this.validators.get(operation.id);
     if (!validator) {
-      validator = zodFromIr(operation.input);
+      validator = zodFromIr(modelInput(operation));
       this.validators.set(operation.id, validator);
+    }
+    return validator;
+  }
+
+  /**
+   * The same validator with field descriptions cut to their first sentence: the
+   * schema a pinned tool is offered with. It is resent on every model turn, so
+   * the full field text stays behind sdk_describe.
+   */
+  private leanValidatorFor(operation: Operation): z.ZodType {
+    let validator = this.leanValidators.get(operation.id);
+    if (!validator) {
+      validator = zodFromIr(modelInput(operation), { maxDescription: LEAN_FIELD_DESCRIPTION });
+      this.leanValidators.set(operation.id, validator);
     }
     return validator;
   }
@@ -218,7 +248,7 @@ export class ToolRuntime {
   async callOperation(
     operation: Operation,
     rawInput: unknown,
-    call: { persona?: string; validate?: boolean; source?: 'agent' | 'backstop' } = {},
+    call: { persona?: string; validate?: boolean; source?: 'agent' | 'backstop' | 'harness' } = {},
   ): Promise<Record<string, unknown>> {
     const refusal = this.refusal(operation);
     if (refusal) {
@@ -242,12 +272,11 @@ export class ToolRuntime {
         ? { ...(rawInput as Record<string, unknown>) }
         : {};
     if (validate) {
-      // The backend requires the header on these operations; supplying one by
-      // default keeps a model from failing on a UUID it has no reason to care
-      // about. A scenario that tests the contract passes its own (or a blank).
-      if (operation.takesIdempotencyKey && input['idempotencyKey'] === undefined) {
-        input['idempotencyKey'] = randomUUID();
-      }
+      // The Idempotency-Key is never the model's to write: it is not in the schema the model sees,
+      // any key it sends anyway is dropped, and a fresh UUID goes with every validated call. A model
+      // left to it invents keys that are not UUIDs and spends turns on the 400. The error drill that
+      // tests the header sends its own with validate=false, which reaches the backend as written.
+      delete input['idempotencyKey'];
       const parsed = this.validatorFor(operation).safeParse(input);
       if (!parsed.success) {
         return {
@@ -257,6 +286,9 @@ export class ToolRuntime {
         };
       }
       input = parsed.data as Record<string, unknown>;
+      if (operation.takesIdempotencyKey) {
+        input['idempotencyKey'] = randomUUID();
+      }
     }
 
     // Closing a pay period for payroll cannot be undone, so it is not left to a prompt either.
@@ -322,10 +354,13 @@ export class ToolRuntime {
     };
   }
 
+  /**
+   * A pinned tool's description: route and summary only. Preconditions, events
+   * and error statuses run to kilobytes per operation and would be resent on
+   * every turn; sdk_describe returns them when the model needs them.
+   */
   private describe(operation: Operation): string {
-    const prefix = `[${operation.http} ${operation.path}] ${operation.summary}.`;
-    const text = `${prefix} ${operation.description}`;
-    return text.length > 1800 ? `${text.slice(0, 1799)}…` : text;
+    return `[${operation.http} ${operation.path}] ${operation.summary}. Full rules and errors: sdk_describe.`;
   }
 
   private pinnedTools(): QaTool[] {
@@ -344,7 +379,7 @@ export class ToolRuntime {
       tools.push({
         name,
         description: this.describe(operation),
-        schema: this.validatorFor(operation),
+        schema: this.leanValidatorFor(operation),
         execute: (input) => this.callOperation(operation, input),
       });
     }
@@ -432,10 +467,15 @@ export class ToolRuntime {
         description:
           'Call any SDK operation by id. The input is validated against the operation schema before anything is sent; ' +
           'an "invalid-input" result means nothing was sent. HTTP errors are returned as results, not thrown. ' +
-          'An Idempotency-Key is generated when the operation needs one and none is given.',
-        schema: z.strictObject({
+          'The Idempotency-Key is always generated for you; do not send one.',
+        // Loose, and `input` may be an object or a JSON string: some models drop an open-ended nested
+        // object from a tool call, and then put its fields beside operationId or send it as text.
+        schema: z.looseObject({
           operationId: z.string(),
-          input: z.record(z.string(), z.any()).default({}).describe('Request parameters, per sdk_describe'),
+          input: z
+            .union([z.record(z.string(), z.any()), z.string()])
+            .optional()
+            .describe('The operation\'s parameters as one object, per sdk_describe, e.g. {"estimateId": "...", "addEstimateItemRequest": {...}}'),
           persona: z.string().optional().describe(`Who makes the call. One of: ${this.options.personas.join(', ')}`),
           validate: z
             .boolean()
@@ -443,12 +483,25 @@ export class ToolRuntime {
             .describe('false sends the input as-is, skipping client-side validation, to provoke a server-side 400/422'),
         }),
         execute: async (input) => {
-          const args = input as { operationId: string; input: Record<string, unknown>; persona?: string; validate?: boolean };
-          const operation = lookup(args.operationId);
+          const { operationId, input: given, persona, validate, ...beside } = input as {
+            operationId: string;
+            input?: Record<string, unknown> | string;
+            persona?: string;
+            validate?: boolean;
+          } & Record<string, unknown>;
+          const operation = lookup(operationId);
           if (typeof operation === 'string') {
             return { outcome: 'refused', reason: operation };
           }
-          return this.callOperation(operation, args.input, { persona: args.persona, validate: args.validate });
+          let parameters: unknown = given ?? beside;
+          if (typeof parameters === 'string') {
+            try {
+              parameters = JSON.parse(parameters);
+            } catch {
+              return { outcome: 'invalid-input', issues: ['input: not a JSON object'], hint: 'Nothing was sent. Pass input as an object.' };
+            }
+          }
+          return this.callOperation(operation, parameters, { persona, validate });
         },
       },
     ];
@@ -474,15 +527,27 @@ export class ToolRuntime {
       tools.push({
         name: 'remember',
         description:
-          'Save a fact about this customer visit for the colleague who handles its next step, later today or the next working day (ids, names, what the customer decided). ' +
-          'Saving a key again replaces its value.',
-        schema: z.strictObject({
-          key: z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,39}$/, 'a short camelCase name, e.g. workorderId'),
-          value: z.string().min(1).max(300),
-        }),
+          'Save facts about this customer visit for the colleague who handles its next step, later today or the next working day ' +
+          '(names, what the customer decided). Save them all in one call, as facts: {"key": "value", ...}. Ids returned by the ' +
+          'calls that create records are saved for you. Saving a key again replaces its value.',
+        schema: z
+          .strictObject({
+            facts: z
+              .record(z.string().regex(FACT_KEY, 'a short camelCase name, e.g. customerName'), z.string().min(1).max(300))
+              .optional()
+              .describe('Every fact to save, by key'),
+            key: z.string().regex(FACT_KEY, 'a short camelCase name, e.g. customerName').optional().describe('One fact\'s key, when saving one'),
+            value: z.string().min(1).max(300).optional(),
+          })
+          .refine((input) => (input.facts && Object.keys(input.facts).length > 0) || (input.key && input.value), {
+            message: 'give facts: {"key": "value", ...}',
+          }),
         execute: async (input) => {
-          const { key, value } = input as { key: string; value: string };
-          memory[key] = value;
+          const { facts, key, value } = input as { facts?: Record<string, string>; key?: string; value?: string };
+          Object.assign(memory, facts ?? {});
+          if (key && value) {
+            memory[key] = value;
+          }
           return { remembered: Object.keys(memory) };
         },
       });

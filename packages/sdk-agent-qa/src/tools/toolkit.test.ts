@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { buildCatalog } from '../catalog/buildCatalog';
 import { CoverageStore } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
@@ -6,6 +7,7 @@ import { ToolRuntime, type QaTool, type SafetyPolicy, type ToolRuntimeOptions } 
 
 const catalog = buildCatalog();
 const AT = new Date('2026-03-10T15:00:00Z');
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 function setup(overrides: Partial<Omit<ToolRuntimeOptions, 'policy'>> & { policy?: Partial<SafetyPolicy> } = {}): {
   runtime: ToolRuntime;
@@ -76,6 +78,15 @@ describe('ToolRuntime tools', () => {
     expect(remember.schema.safeParse({ key: 'not a key!', value: 'x' }).success).toBe(false);
   });
 
+  it('saves several facts in one call, so a handoff costs one turn', async () => {
+    const memory: Record<string, string> = {};
+    const remember = setup({ memory }).tool('remember');
+    await remember.execute(remember.schema.parse({ facts: { customerName: 'Ray Ortiz', vehicleDescription: '2019 Ford F-150' } }));
+    expect(memory).toEqual({ customerName: 'Ray Ortiz', vehicleDescription: '2019 Ford F-150' });
+    expect(remember.schema.safeParse({}).success).toBe(false);
+    expect(remember.schema.safeParse({ facts: { 'bad key': 'x' } }).success).toBe(false);
+  });
+
   it('waits when asked, without really sleeping in tests', async () => {
     const slept: number[] = [];
     const context = setup({ sleep: async (ms) => void slept.push(ms) });
@@ -142,14 +153,24 @@ describe('ToolRuntime tools', () => {
     expect(context.ledger.all()).toEqual([]);
   });
 
-  it('supplies an Idempotency-Key when the operation needs one and none is given', async () => {
-    const context = setup();
+  it('generates every Idempotency-Key itself, and does not offer the model the field', async () => {
+    const context = setup({ pinned: ['order.RegisterSessionsApi.recordCashMovement'] });
     const input = { sessionId: 's-1', cashMovementRequest: { amount: 5, currencyCode: 'USD', reason: 'BANK_DROP' } };
     await sdkCall(context, { operationId: 'order.RegisterSessionsApi.recordCashMovement', input });
     await sdkCall(context, { operationId: 'order.RegisterSessionsApi.recordCashMovement', input: { ...input, idempotencyKey: 'mine' } });
-    const [generated, explicit] = context.backend.requests.map((request) => request.headers.get('Idempotency-Key'));
-    expect(generated).toMatch(/^[0-9a-f-]{36}$/);
-    expect(explicit).toBe('mine');
+    const keys = context.backend.requests.map((request) => request.headers.get('Idempotency-Key'));
+    expect(keys).toEqual([expect.stringMatching(UUID), expect.stringMatching(UUID)]);
+    expect(keys[0]).not.toBe(keys[1]);
+
+    const offered = JSON.stringify(z.toJSONSchema(context.tool('order__RegisterSessionsApi__recordCashMovement').schema, { unrepresentable: 'any' }));
+    expect(offered).not.toContain('idempotencyKey');
+  });
+
+  it('sends an unvalidated call\'s Idempotency-Key as written, for the drill that tests the header', async () => {
+    const context = setup({ allowUnvalidated: true });
+    const input = { sessionId: 's-1', idempotencyKey: '', cashMovementRequest: { amount: 5, currencyCode: 'USD', reason: 'BANK_DROP' } };
+    await sdkCall(context, { operationId: 'order.RegisterSessionsApi.recordCashMovement', input, validate: false });
+    expect(context.backend.requests[0]?.headers.get('Idempotency-Key') ?? '').toBe('');
   });
 
   it('allows unvalidated calls only in scenarios that are meant to provoke errors', async () => {
@@ -310,5 +331,62 @@ describe('pay period guard', () => {
     });
     expect(created).toMatchObject({ outcome: 'refused' });
     expect(context.backend.requests).toEqual([]);
+  });
+});
+
+describe('pinned tool definitions', () => {
+  const APPROVE = 'workorder.EstimateAPIApi.approveEstimate';
+
+  it('carry the route and summary only, and leave the full description to sdk_describe', async () => {
+    const context = setup({ pinned: [APPROVE] });
+    const pinned = context.tool('workorder__EstimateAPIApi__approveEstimate');
+    expect(pinned.description).toMatch(/^\[POST \/v1\/workorders\/estimates\/\{estimateId\}\/approval\] .*sdk_describe\.$/);
+    expect(pinned.description.length).toBeLessThan(200);
+
+    const described = (await context.tool('sdk_describe').execute({ operationId: APPROVE })) as { description: string };
+    expect(described.description.length).toBeGreaterThan(pinned.description.length * 3);
+  });
+
+  it('cut field descriptions to their gist without changing what the schema accepts', () => {
+    const context = setup({ pinned: [APPROVE] });
+    const lean = z.toJSONSchema(context.tool('workorder__EstimateAPIApi__approveEstimate').schema, { unrepresentable: 'any' });
+    const descriptions = JSON.stringify(lean).match(/"description":"[^"]*"/g) ?? [];
+    expect(descriptions.length).toBeGreaterThan(0);
+    for (const description of descriptions) {
+      expect(description.length).toBeLessThanOrEqual('"description":""'.length + 100);
+    }
+    const input = { estimateId: 'e-1', approveEstimateRequest: { approvalMethod: 'SIGNATURE', customerId: 'c-1', signerName: 'Ann' } };
+    expect(context.tool('workorder__EstimateAPIApi__approveEstimate').schema.safeParse(input).success).toBe(true);
+    expect(context.tool('workorder__EstimateAPIApi__approveEstimate').schema.safeParse({ ...input, extra: 1 }).success).toBe(false);
+  });
+});
+
+describe('sdk_call input', () => {
+  const run = async (input: Record<string, unknown>) => {
+    const context = setup({ pinned: [] });
+    const tool = context.tool('sdk_call');
+    const parsed = tool.schema.safeParse(input);
+    expect(parsed.success).toBe(true);
+    const result = (await tool.execute(parsed.success ? parsed.data : input)) as Record<string, unknown>;
+    return { result, requests: context.backend.requests };
+  };
+  const LIST = 'inventory.InventoryStockApi.listStock';
+
+  it('takes the parameters as an object, as a JSON string, or beside operationId when a model leaves out input', async () => {
+    for (const input of [
+      { operationId: LIST, input: { scope: 'site-1' } },
+      { operationId: LIST, input: '{"scope":"site-1"}' },
+      { operationId: LIST, scope: 'site-1' },
+    ]) {
+      const { result, requests } = await run(input);
+      expect(result).toMatchObject({ outcome: 'success' });
+      expect(requests[0].path).toMatch(/scope=site-1/);
+    }
+  });
+
+  it('refuses input text that is not JSON, and sends nothing', async () => {
+    const { result, requests } = await run({ operationId: LIST, input: 'scope site-1' });
+    expect(result).toMatchObject({ outcome: 'invalid-input' });
+    expect(requests).toEqual([]);
   });
 });

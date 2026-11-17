@@ -6,20 +6,22 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { ModelPort } from '../agent/loop';
-import type { Catalog } from '../catalog/types';
+import type { Catalog, Operation } from '../catalog/types';
 import type { QaConfig } from '../config';
 import { describeVisit } from '../day/dayPlan';
 import { carriedVisits } from '../day/carryOver';
 import { DayPlanStore } from '../day/DayPlanStore';
 import { surveySites } from '../day/sites';
+import { prepareStage, type Lookup } from '../day/prepare';
 import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
+import { ToolRuntime } from '../tools/toolkit';
 import { CoverageStore, sweepQuota, type CoverageSummary } from '../sdk-coverage/CoverageStore';
 import { CallLedger } from '../ledger/CallLedger';
 import { SCENARIOS, SWEEP_SCENARIO_ID, SWEEP_SLOT } from '../scenarios/library';
 import type { Scenario } from '../scenarios/types';
 import { formatMinutes, localClock, planDay, runDaysLeftInMonth, type LocalClock, type PlannedSlot, type Schedulable } from '../schedule/planner';
 import { RunLock, RunState } from '../schedule/state';
-import type { SdkInvoker } from '../sdk/SdkInvoker';
+import type { CallOutcome, SdkInvoker } from '../sdk/SdkInvoker';
 import { readDayResults, renderReport } from './report';
 import { runScenario, type ScenarioResult } from './runScenario';
 import { runBackstop, sweepScenario, sweepTargets } from './sweep';
@@ -200,6 +202,53 @@ export class Harness {
     return { scenario: sweepScenario(targets), backstop: summary.missing.length > 0 && daysLeft <= config.backstopDays };
   }
 
+  /**
+   * SDK calls the harness makes itself while preparing a visit stage: validated,
+   * policy-checked and recorded under the stage's id like the agent's own, but
+   * answered with the full response body rather than the shrunk one a model sees.
+   */
+  private lookupFor(
+    scenarioId: string,
+    runId: string,
+    ledger: CallLedger,
+    coverage: CoverageStore,
+    onCall: (operation: Operation, outcome: CallOutcome) => void,
+  ): Lookup {
+    const { config, catalog, invoker, backend } = this.options;
+    const answer: { last?: CallOutcome } = {};
+    // Read through a function: the onCall callback sets it, which flow analysis cannot see.
+    const answered = (): CallOutcome | undefined => answer.last;
+    const runtime = new ToolRuntime({
+      catalog,
+      invoker,
+      ledger,
+      coverage,
+      policy: config.policy,
+      runId,
+      scenarioId,
+      persona: 'advisor',
+      personas: backend.personas,
+      pinned: [],
+      allowUnvalidated: false,
+      maxCalls: 30,
+      onCall: (operation, outcome) => {
+        answer.last = outcome;
+        onCall(operation, outcome);
+      },
+      now: this.now,
+    });
+    return async (operationId, input, persona) => {
+      const operation = catalog.byId.get(operationId);
+      if (!operation) {
+        return { ok: false, body: undefined };
+      }
+      answer.last = undefined;
+      const result = await runtime.callOperation(operation, input, { persona, source: 'harness' });
+      const full = answered();
+      return { ok: result['outcome'] === 'success' && full !== undefined, body: full?.body };
+    };
+  }
+
   private async execute(ids: readonly string[], clock: LocalClock): Promise<ScenarioResult[]> {
     const { config, catalog, invoker, backend, model } = this.options;
     const runId = `qa-${clock.date}-${this.now().toISOString().slice(11, 19).replace(/:/g, '')}`;
@@ -241,8 +290,21 @@ export class Harness {
         let skipReason: string | undefined;
         if (day && stage) {
           memory = day.memoryOf(stage.visit.id);
-          scenario = stageScenario(stage.visit, stage.stage, memory, { roleMode: backend.roleMode });
           skipReason = missingPrerequisite(stage.stage, memory);
+          if (!skipReason) {
+            const visitMemory = memory;
+            const lookup = this.lookupFor(id, runId, ledger, coverage, (operation, outcome) => {
+              harvestFacts(operation, outcome, visitMemory);
+            });
+            try {
+              await prepareStage(stage.visit, stage.stage.name, visitMemory, lookup, { roleMode: backend.roleMode });
+            } catch (error) {
+              // Preparation is a shortcut, not a precondition: whatever it missed, the agent is asked to do.
+              this.log(`${id} preparation stopped: ${error instanceof Error ? error.message : String(error)}`);
+            }
+            day.save();
+          }
+          scenario = stageScenario(stage.visit, stage.stage, memory, { roleMode: backend.roleMode });
         }
         if (!scenario) {
           this.log(`${id}: no such scenario`);
