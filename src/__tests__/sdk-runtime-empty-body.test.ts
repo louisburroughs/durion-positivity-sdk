@@ -19,8 +19,11 @@ function apiAnswering(status: number, body: string | null): RegisterSessionsApi 
 
 describe('generated runtime: empty response bodies', () => {
   it('returns undefined for a 204 with no body', async () => {
+    // Read the runtime response directly: an operation whose spec declares the 204 is generated to return null
+    // before value() is reached, which would hide whether the runtime patch works.
     const api = apiAnswering(204, null);
-    await expect(api.getCurrentRegisterSession({ terminalId: 'T-1' })).resolves.toBeUndefined();
+    const response = await api.getCurrentRegisterSessionRaw({ terminalId: 'T-1' });
+    await expect(response.value()).resolves.toBeUndefined();
   });
 
   it('returns undefined for a 200 with an empty body', async () => {
