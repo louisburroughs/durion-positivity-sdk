@@ -11,8 +11,9 @@ import type { QaConfig } from '../config';
 import { describeVisit } from '../day/dayPlan';
 import { carriedVisits } from '../day/carryOver';
 import { DayPlanStore } from '../day/DayPlanStore';
-import { counterTerminal, surveySites } from '../day/sites';
+import { counterTerminal, surveySites, type Site } from '../day/sites';
 import { prepareStage, type Lookup } from '../day/prepare';
+import { PREPARED_READS, prepareRoutine, renderFacts } from './prepareRoutine';
 import { harvestFacts, missingPrerequisite, stageScenario } from '../day/visitScenarios';
 import { ToolRuntime } from '../tools/toolkit';
 import { CoverageStore, sweepQuota, type CoverageSummary } from '../sdk-coverage/CoverageStore';
@@ -71,6 +72,8 @@ export class Harness {
   private readonly lock: RunLock;
   private readonly log: (message: string) => void;
   private readonly now: () => Date;
+  /** The site each per-site routine instance is at, by its id. */
+  private readonly routineSites = new Map<string, Site>();
 
   constructor(private readonly options: HarnessOptions) {
     this.scenarios = options.scenarios ?? SCENARIOS;
@@ -164,14 +167,17 @@ export class Harness {
       if (!scenario.perSite) {
         return [scenario];
       }
-      return (day?.plan.sites ?? []).map((site) => ({
+      return (day?.plan.sites ?? []).map((site) => {
+        this.routineSites.set(`${scenario.id}-${site.slug}`, site);
+        return {
         ...scenario,
         id: `${scenario.id}-${site.slug}`,
         title: `${scenario.title} — ${site.name}`,
         goal:
           `You work at the ${site.name} shop (location id ${site.id}, code ${site.code}). Everything in this task is about ` +
           `that location; do not pick another. Its front-counter register is terminal ${counterTerminal(site)} (terminalId).\n\n${scenario.goal}`,
-      }));
+        };
+      });
     });
   }
 
@@ -309,6 +315,30 @@ export class Harness {
         if (!scenario) {
           this.log(`${id}: no such scenario`);
           return;
+        }
+        if (!stage && scenario.prepare) {
+          const preparation = scenario.prepare;
+          const lookup = this.lookupFor(id, runId, ledger, coverage, () => undefined);
+          try {
+            const facts = await prepareRoutine(preparation, lookup, {
+              site: this.routineSites.get(id),
+              persona: scenario.persona,
+              roleMode: backend.roleMode,
+              date: clock.date,
+              timeZone: config.timezone,
+            });
+            if (facts.length > 0) {
+              const prepared = new Set(PREPARED_READS[preparation]);
+              scenario = {
+                ...scenario,
+                goal: scenario.goal + renderFacts(facts),
+                operations: scenario.operations.filter((operation) => !prepared.has(operation)),
+              };
+            }
+          } catch (error) {
+            // Preparation is a shortcut, not a precondition: the brief still says how to find all of it.
+            this.log(`${id} preparation stopped: ${error instanceof Error ? error.message : String(error)}`);
+          }
         }
         const task = scenario;
 
