@@ -1,6 +1,6 @@
 import type { Lookup } from '../day/prepare';
 import { SCENARIOS } from '../scenarios/library';
-import { prepareRoutine, renderFacts, type RoutineContext } from './prepareRoutine';
+import { bankItemKind, bankLedgerLines, lastSunday, prepareRoutine, renderFacts, type RoutineContext } from './prepareRoutine';
 
 type Answer = (input: Record<string, unknown>, persona?: string) => { ok: boolean; body?: unknown } | unknown;
 
@@ -124,6 +124,156 @@ describe('prepareRoutine: vendor bills', () => {
   });
 });
 
+describe('prepareRoutine: bank statement', () => {
+  // Tuesday 2026-03-17: last week ran Monday 03-09 to Sunday 03-15 (an odd week: keyed by hand).
+  const ACCT: RoutineContext = { persona: 'acct', roleMode: true, date: '2026-03-17', timeZone: 'America/New_York', bankOpeningBalance: 50_000 };
+  const ACCOUNT = { glAccountId: 'gl-1000', accountCode: '1000', accountName: 'Cash' };
+  const gl = (lines: Array<Record<string, unknown>>) => ({ accounts: [{ accountId: 'gl-1000', lines }] });
+  const line = (date: string, amount: number, sourceEventType: string, entryNumber: string, runningBalance?: number) => ({
+    transactionDate: new Date(`${date}T00:00:00Z`),
+    ...(amount >= 0 ? { debitAmount: amount } : { creditAmount: -amount }),
+    sourceEventType,
+    entryNumber,
+    runningBalance,
+    direction: amount >= 0 ? 'INCREASE' : 'DECREASE',
+  });
+  const answers = (statements: unknown[], ledger: Array<Record<string, unknown>>) => ({
+    'accounting.BankAccountsApi.listBankAccounts': (_input: Record<string, unknown>, persona?: string) =>
+      persona === 'controller' ? { accounts: [ACCOUNT] } : { ok: false },
+    'accounting.AccountingPeriodsApi.getBankReconciliationPolicy': () => ({ currency: 'USD' }),
+    'accounting.BankStatementsApi.listBankStatements': () => ({ statements }),
+    'accounting.FinancialReportingApi.generateGeneralLedger': () => gl(ledger),
+  });
+
+  it('reads last Sunday as the end of last week', () => {
+    expect(lastSunday('2026-03-16')).toBe('2026-03-15');
+    expect(lastSunday('2026-03-17')).toBe('2026-03-15');
+    expect(lastSunday('2026-03-15')).toBe('2026-03-08');
+  });
+
+  it('classifies ledger lines by what posted them', () => {
+    expect(bankItemKind({ amount: 900, sourceEventType: 'BANK_DEPOSIT' })).toBe('CASH_DEPOSIT');
+    expect(bankItemKind({ amount: 300, sourceEventType: 'PAYMENT_RECEIVED', description: 'Check 1042' })).toBe('CUSTOMER_CHECK');
+    expect(bankItemKind({ amount: 300, sourceEventType: 'PAYMENT_RECEIVED' })).toBe('CUSTOMER_TRANSFER');
+    expect(bankItemKind({ amount: -450, sourceEventType: 'AP_PAYMENT' })).toBe('VENDOR_PAYMENT');
+    expect(bankItemKind({ amount: 5, sourceEventType: 'MANUAL' })).toBe('OTHER');
+    expect(bankLedgerLines(gl([line('2026-03-10', -12.5, 'AP_PAYMENT', 'JE-2')]))).toEqual([
+      { date: '2026-03-10', amount: -12.5, sourceEventType: 'AP_PAYMENT', description: undefined, entryNumber: 'JE-2', runningBalance: undefined },
+    ]);
+  });
+
+  it('continues from the latest statement and hands over the statement to key in, read as the controller', async () => {
+    const { lookup, calls } = fakeLookup(
+      answers(
+        [{ statementId: 's-1', status: 'COMMITTED', startDate: new Date('2026-03-09'), endDate: new Date('2026-03-15'), closingBalance: 51_000 }],
+        [line('2026-03-12', 400, 'BANK_DEPOSIT', 'JE-1'), line('2026-03-18', 900, 'BANK_DEPOSIT', 'JE-3'), line('2026-03-20', -250, 'AP_PAYMENT', 'JE-4')],
+      ),
+    );
+    // Tuesday 03-24: last week ran 03-16 to 03-22, a week keyed in by hand.
+    const facts = await prepareRoutine('bank-statement', lookup, { ...ACCT, date: '2026-03-24' });
+
+    expect(facts[0]).toMatch(/^acct is refused \(403\) on the bank accounts, statements and reconciliations; controller can read it/);
+    expect(calls.find((call) => call.operationId === 'accounting.FinancialReportingApi.generateGeneralLedger')).toMatchObject({
+      input: { accountId: 'gl-1000', startDate: '2026-03-11', endDate: '2026-03-22' },
+      persona: 'controller',
+    });
+    expect(facts[1]).toContain('Cash (code 1000, glAccountId gl-1000), 2026-03-16 to 2026-03-22, opening 51000.00');
+    expect(facts[1]).toContain('accounting.BankStatementsApi.createBankStatement with sdk_call as persona "controller" with exactly this input: ');
+    const body = JSON.parse(facts[1].split('exactly this input: ')[1].split(' Enter it exactly')[0]) as {
+      bankStatementCreateRequest: { glAccountId: string; gapAcknowledgement?: string; statement: Record<string, unknown>; transactions: Array<Record<string, unknown>> };
+    };
+    expect(body.bankStatementCreateRequest.glAccountId).toBe('gl-1000');
+    expect(body.bankStatementCreateRequest.gapAcknowledgement).toBeUndefined();
+    expect(body.bankStatementCreateRequest.statement).toMatchObject({ startDate: '2026-03-16', endDate: '2026-03-22', openingBalance: 51_000 });
+    // The 03-12 deposit cleared on 03-13, inside the previous statement's period.
+    expect(body.bankStatementCreateRequest.transactions.map((entry) => entry['reference'])).toEqual(['JE-3']);
+    expect(facts[1]).toContain('Not yet cleared by the bank (1): JE-4 -250.00 (clears 2026-03-24).');
+  });
+
+  it('hands over the statement as a file to import in the other weeks', async () => {
+    const { lookup } = fakeLookup(
+      answers(
+        [{ statementId: 's-1', status: 'COMMITTED', endDate: new Date('2026-03-08'), closingBalance: 51_000 }],
+        [line('2026-03-11', 900, 'BANK_DEPOSIT', 'JE-3')],
+      ),
+    );
+    const [, fact] = await prepareRoutine('bank-statement', lookup, ACCT);
+    expect(fact).toContain('comes as a file. Upload it: call accounting.BankImportsApi.createBankImport');
+    const body = JSON.parse(fact.split('exactly this input: ')[1].split(' Then read the import')[0]) as {
+      bankImportCreateRequest: { content: string; formatCode: string; statement: Record<string, unknown> };
+    };
+    expect(body.bankImportCreateRequest.formatCode).toBe('CSV');
+    expect(Buffer.from(body.bankImportCreateRequest.content, 'base64').toString('utf8')).toContain('2026-03-12,DEPOSIT,900.00,JE-3');
+    expect(body.bankImportCreateRequest.statement).toEqual({ startDate: '2026-03-09', endDate: '2026-03-15', openingBalance: 51_000, closingBalance: 51_900 });
+    expect(fact).toContain('commit it (commitBankImport)');
+  });
+
+  it('puts a first opening balance on the books before the first statement', async () => {
+    const { lookup } = fakeLookup(answers([], [line('2026-03-11', 900, 'BANK_DEPOSIT', 'JE-3')]));
+    const [, fact] = await prepareRoutine('bank-statement', lookup, ACCT);
+
+    expect(fact).toContain('has no opening balance on the books. Put it on first: call accounting.BankAccountsApi.establishBankOpeningBalance');
+    expect(fact).toContain('"asOfDate":"2026-03-08","currencyCode":"USD","statementBalance":50000');
+    expect(fact).toContain('"gapAcknowledgement":"First statement for account 1000');
+    expect(fact).toContain('"openingBalance":50000');
+  });
+
+  it('continues a first statement from an opening balance already on the books', async () => {
+    const { lookup } = fakeLookup(
+      answers([], [line('2026-03-01', 50_000, 'OPENING_BALANCE', 'JE-0', 50_000), line('2026-03-11', 900, 'BANK_DEPOSIT', 'JE-3', 50_900)]),
+    );
+    const [, fact] = await prepareRoutine('bank-statement', lookup, ACCT);
+
+    expect(fact).not.toContain('establishBankOpeningBalance');
+    expect(fact).toContain('2026-03-02 to 2026-03-15, opening 50000.00');
+  });
+
+  it('enters nothing for a week where nothing cleared', async () => {
+    const { lookup } = fakeLookup(
+      answers([{ statementId: 's-1', status: 'COMMITTED', endDate: new Date('2026-03-08'), closingBalance: 50_000 }], []),
+    );
+    const [, fact] = await prepareRoutine('bank-statement', lookup, ACCT);
+    expect(fact).toContain('nothing cleared the bank from 2026-03-09 to 2026-03-15');
+    expect(fact).not.toContain('createBankStatement');
+  });
+
+  it('skips an account whose statements already reach last Sunday', async () => {
+    const { lookup } = fakeLookup(answers([{ statementId: 's-2', status: 'COMMITTED', endDate: new Date('2026-03-15'), closingBalance: 1 }], []));
+    const [, fact] = await prepareRoutine('bank-statement', lookup, ACCT);
+    expect(fact).toContain('statements already cover last week (through 2026-03-15). Nothing to enter; skip it.');
+  });
+});
+
+describe('prepareRoutine: bank reconciliation', () => {
+  const CONTROLLER: RoutineContext = { persona: 'controller', roleMode: true, date: '2026-03-16', timeZone: 'America/New_York' };
+  const statement = { statementId: 's-1', status: 'COMMITTED', startDate: new Date('2026-03-09'), endDate: new Date('2026-03-15'), openingBalance: 100, closingBalance: 150, bankTransactionCount: 3 };
+  const run = async (reconciliations: unknown[], statements: unknown[] = [statement]) => {
+    const { lookup } = fakeLookup({
+      'accounting.BankAccountsApi.listBankAccounts': () => ({ accounts: [{ glAccountId: 'gl-1000', accountCode: '1000', accountName: 'Cash' }] }),
+      'accounting.BankStatementsApi.listBankStatements': () => ({ statements }),
+      'accounting.BankReconciliationApi.listReconciliations': () => ({ reconciliations }),
+    });
+    return prepareRoutine('bank-reconciliation', lookup, CONTROLLER);
+  };
+
+  it('gives the create call for a statement with no reconciliation, and the adjustment types', async () => {
+    const facts = await run([]);
+    expect(facts[0]).toContain('the latest committed statement is statementId s-1, 2026-03-09 to 2026-03-15, opening 100, closing 150, 3 line(s).');
+    expect(facts[0]).toContain('{"reconciliationCreateRequest":{"glAccountId":"gl-1000","statementId":"s-1"}}');
+    expect(facts[1]).toContain('BANK_FEE for a service charge, INTEREST_EARNED for interest paid');
+  });
+
+  it('carries on with a reconciliation in progress', async () => {
+    const [fact] = await run([{ reconciliationId: 'r-1', statementId: 's-1', status: 'IN_PROGRESS', countUnexplainedBank: 2, difference: 18 }]);
+    expect(fact).toContain('Its reconciliation r-1 is IN_PROGRESS (countUnexplainedBank 2, difference 18): carry on with that one; do not open another.');
+  });
+
+  it('skips a statement already reconciled, and an account with no statement', async () => {
+    expect((await run([{ reconciliationId: 'r-0', statementId: 's-1', status: 'FINALIZED' }]))[0]).toContain('is FINALIZED: nothing to do. Skip it.');
+    expect((await run([], []))[0]).toContain('has no committed statement: there is nothing to reconcile. Skip it.');
+  });
+});
+
 describe('routine preparation in the library', () => {
   it('is set on the crew, bank and vendor-bill routines, and the crew routines are per site', () => {
     const prepared = Object.fromEntries(SCENARIOS.filter((scenario) => scenario.prepare).map((scenario) => [scenario.id, scenario.prepare]));
@@ -134,7 +284,9 @@ describe('routine preparation in the library', () => {
       'lunch-back': 'crew',
       'timekeeping-review': 'crew',
       'vendor-bills': 'vendor-bills',
-      'weekly-bank-statement': 'bank-accounts',
+      'weekly-bank-statement': 'bank-statement',
+      'weekly-bank-reconciliation': 'bank-reconciliation',
+      'monthly-bank-reconciliation': 'bank-accounts',
     });
     for (const scenario of SCENARIOS.filter((entry) => entry.prepare === 'crew')) {
       expect([scenario.id, scenario.perSite]).toEqual([scenario.id, true]);

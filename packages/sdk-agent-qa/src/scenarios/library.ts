@@ -709,7 +709,7 @@ const weekly: ScenarioInput[] = [
     at: '08:30',
     persona: 'acct',
     kind: 'operations',
-    prepare: 'bank-accounts',
+    prepare: 'bank-statement',
     tools: ['bank_statement', 'request_id'],
     goal:
       "Last week's bank statement has arrived. For each bank account the business reconciles (list the bank accounts), " +
@@ -732,7 +732,8 @@ const weekly: ScenarioInput[] = [
       '(upload the CSV it gives you with its mapping, read the import\'s preview and rows, then commit it). Use the ' +
       'request ids it gives you. A first statement for an account needs a gap acknowledgement saying it is the first. ' +
       'Finish by reading the committed statement back, and report its closing balance and how many items the bank had ' +
-      'not yet cleared.',
+      'not yet cleared. When the statement has already been prepared for you below, all that reading and the bank are done: ' +
+      'make the calls it gives, exactly as given, then read the statement back and report.',
     operations: [
       'accounting.BankAccountsApi.listBankAccounts',
       'accounting.BankAccountsApi.establishBankOpeningBalance',
@@ -764,7 +765,7 @@ const weekly: ScenarioInput[] = [
     at: '10:30',
     persona: 'acct',
     kind: 'operations',
-    prepare: 'bank-accounts',
+    prepare: 'bank-reconciliation',
     tools: ['request_id'],
     goal:
       'Reconcile the bank statement entered this morning. List the bank accounts and their statements; for each account ' +

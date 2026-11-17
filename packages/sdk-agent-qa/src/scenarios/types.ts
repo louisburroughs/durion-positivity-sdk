@@ -62,7 +62,7 @@ export const scenarioSchema = z.strictObject({
    * accounts and their statements; `vendor-bills` — accounts payable's stages and
    * the purchase orders received lately. Its facts close the brief.
    */
-  prepare: z.enum(['crew', 'bank-accounts', 'vendor-bills']).optional(),
+  prepare: z.enum(['crew', 'bank-accounts', 'bank-statement', 'bank-reconciliation', 'vendor-bills']).optional(),
   /** Skipped (not failed) when every persona shares the admin login, where a 403 can never happen. */
   requiresRoleMode: z.boolean().default(false),
   goal: z.string(),

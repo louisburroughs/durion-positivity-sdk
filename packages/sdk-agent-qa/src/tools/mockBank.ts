@@ -257,6 +257,34 @@ export const bankStatementInputSchema = z.strictObject({
 });
 
 /**
+ * How a statement is entered, alternating so both intake paths get used: even weeks
+ * (counted from the epoch, by the statement's end date) by file, odd ones by hand.
+ */
+export function entryMethodFor(endDate: string): 'file-import' | 'keyed-by-hand' {
+  const week = Math.floor(toDate(endDate).getTime() / (7 * 86_400_000));
+  return week % 2 === 0 ? 'file-import' : 'keyed-by-hand';
+}
+
+/** The CSV file a statement is imported from, as accounting's import takes it. */
+export function statementFile(statement: BankStatement): {
+  fileName: string;
+  contentType: string;
+  formatCode: string;
+  signConvention: string;
+  columnMapping: Record<string, string>;
+  content: string;
+} {
+  return {
+    fileName: `statement-${statement.statement.startDate}-to-${statement.statement.endDate}.csv`,
+    contentType: 'text/csv',
+    formatCode: 'CSV',
+    signConvention: 'SIGNED_AMOUNT',
+    columnMapping: { date: 'date', description: 'description', amount: 'amount', reference: 'reference', checkNumber: 'checkNumber' },
+    content: Buffer.from(statementCsv(statement), 'utf8').toString('base64'),
+  };
+}
+
+/**
  * The tool a bookkeeping task uses to get the bank's statement for a period.
  * @param now injected for tests
  */
@@ -272,21 +300,16 @@ export function mockBankTool(now: () => number = Date.now): QaTool {
     schema: bankStatementInputSchema,
     execute: async (input) => {
       const statement = buildBankStatement(input as BankStatementInput);
-      const csv = statementCsv(statement);
-      // Alternate how it is entered, so both intake paths get used: even ISO weeks by file, odd by hand.
-      const week = Math.floor(toDate(statement.statement.endDate).getTime() / (7 * 86_400_000));
+      // Accounting refuses a statement with no lines ("at least one transaction is required"),
+      // and a quiet week has none: nothing to enter, the next statement picks the period up.
+      const quiet = statement.transactions.length === 0;
       return {
         statement: statement.statement,
         transactions: statement.transactions,
-        enterIt: week % 2 === 0 ? 'file-import' : 'keyed-by-hand',
-        file: {
-          fileName: `statement-${statement.statement.startDate}-to-${statement.statement.endDate}.csv`,
-          contentType: 'text/csv',
-          formatCode: 'CSV',
-          signConvention: 'SIGNED_AMOUNT',
-          columnMapping: { date: 'date', description: 'description', amount: 'amount', reference: 'reference', checkNumber: 'checkNumber' },
-          content: Buffer.from(csv, 'utf8').toString('base64'),
-        },
+        enterIt: quiet ? 'nothing-to-enter' : entryMethodFor(statement.statement.endDate),
+        ...(quiet
+          ? { why: 'Nothing cleared the bank in this period. Enter no statement; the next one will start where the last one ended.' }
+          : { file: statementFile(statement) }),
         // Accounting's intake wants time-ordered request ids, which are not something to make up.
         requestIds: [uuidv7(now()), uuidv7(now() + 1), uuidv7(now() + 2)],
         notOnThisStatement: statement.notYetCleared,
