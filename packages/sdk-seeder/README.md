@@ -44,7 +44,6 @@ All configuration is via environment variables.
 | Variable                       | Default                 | Required | Description                                                          |
 | ------------------------------ | ----------------------- | -------- | -------------------------------------------------------------------- |
 | `SEEDER_BASE_URL`              | `http://localhost:8080` | No       | API gateway base URL                                                 |
-| `SEEDER_SECURITY_SERVICE_URL`  | `http://localhost:8086` | No       | Direct security service URL                                          |
 | `SEEDER_USERNAME`              | —                       | **Yes**  | Login username                                                       |
 | `SEEDER_PASSWORD`              | —                       | **Yes**  | Login password                                                       |
 | `SEEDER_DAYS`                  | `365`                   | No       | Number of virtual days to simulate                                   |

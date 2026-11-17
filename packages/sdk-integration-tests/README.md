@@ -178,9 +178,10 @@ npm run test:integration                 # everything
 npm run test:integration -- appointments # one suite, by filename substring
 ```
 
-The tunnel prints the two exports it has made available
-(`http://localhost:18080` and `http://localhost:18086`); put them in
-`.env.itest` or the shell.
+The tunnel prints the export it has made available
+(`ITEST_BASE_URL=http://localhost:18080`); put it in `.env.itest` or the
+shell. Login and account activation go through the gateway's
+`/security-service` route, so the suite needs no other address.
 
 If the tunnel drops mid-session — the SSM session has its own idle timeout —
 global setup says so directly: *"cannot reach the backend at … Is the tunnel up
@@ -188,9 +189,8 @@ global setup says so directly: *"cannot reach the backend at … Is the tunnel u
 
 ### Against a local stack
 
-Same commands, no tunnel, with `ITEST_BASE_URL=http://localhost:8080` and
-`ITEST_SECURITY_SERVICE_URL=http://localhost:8086` — which are the defaults, so
-usually just credentials are needed.
+Same commands, no tunnel, with `ITEST_BASE_URL=http://localhost:8080` — which
+is the default, so usually just credentials are needed.
 ---
 
 ## Accelerated year run
@@ -483,7 +483,6 @@ accelerated entry point adds:
 | Variable | Default | Required | Description |
 | --- | --- | --- | --- |
 | `ITEST_BASE_URL` | `http://localhost:8080` | No | API gateway base URL |
-| `ITEST_SECURITY_SERVICE_URL` | `http://localhost:8086` | No | Security service URL (bootstrap + login) |
 | `ITEST_USERNAME` | — | **Yes** | Admin login (SYSTEM_ADMINISTRATOR) |
 | `ITEST_PASSWORD` | — | **Yes** | Admin password |
 | `ITEST_ADVISOR_USERNAME` / `_PASSWORD` | _(admin)_ | No | SERVICE_ADVISOR persona |
@@ -578,7 +577,7 @@ Consequences for the suite, all of which the harness has to learn:
   individually, and so does the admin login. One activated persona says nothing
   about the other six.
 - **The tunnel host names no tenant.** The suite reaches the backend at
-  `localhost:18086`, so `tenantSlug` (or `X-Tenant-Slug`) is not optional here
+  `localhost:18080`, so `tenantSlug` (or `X-Tenant-Slug`) is not optional here
   the way it is for a tenant-hosted request. The harness sends
   `ALPHA_TENANT_SLUG`.
 - **Activation issues no token, and revokes the ones already minted.** It sets

@@ -218,14 +218,12 @@ try {
   # ---- Print the exports the suite needs ----------------------------------
 
   Write-Host ""
-  Write-Host "Tunnel is up. Set these in the shell that runs the suite:"
+  Write-Host "Tunnel is up. Set this in the shell that runs the suite:"
   Write-Host ""
   Write-Host "  `$env:ITEST_BASE_URL = 'http://localhost:$GatewayLocalPort'"
-  Write-Host "  `$env:ITEST_SECURITY_SERVICE_URL = 'http://localhost:$SecurityLocalPort'"
   Write-Host ""
   Write-Host "  # bash/zsh equivalent:"
   Write-Host "  export ITEST_BASE_URL=http://localhost:$GatewayLocalPort"
-  Write-Host "  export ITEST_SECURITY_SERVICE_URL=http://localhost:$SecurityLocalPort"
   Write-Host ""
   Write-Host "Then:  npm run test:integration"
   Write-Host ""

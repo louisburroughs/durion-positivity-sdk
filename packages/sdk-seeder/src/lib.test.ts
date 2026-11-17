@@ -45,7 +45,6 @@ describe('sdk-seeder library barrel', () => {
       });
 
       expect(config.baseUrl).toBe('http://localhost:8080');
-      expect(config.securityServiceUrl).toBe('http://localhost:8086');
       expect(config.username).toBe('itest-user');
       expect(config.password).toBe('itest-pass');
       expect(config.days).toBe(365);
@@ -58,7 +57,6 @@ describe('sdk-seeder library barrel', () => {
     it('honors explicit overrides', () => {
       const config = SeederConfig.fromValues({
         baseUrl: 'http://localhost:18080',
-        securityServiceUrl: 'http://localhost:18086',
         username: 'u',
         password: 'p',
         days: 1,
@@ -69,7 +67,6 @@ describe('sdk-seeder library barrel', () => {
       });
 
       expect(config.baseUrl).toBe('http://localhost:18080');
-      expect(config.securityServiceUrl).toBe('http://localhost:18086');
       expect(config.days).toBe(1);
       expect(config.seed).toBe(1422);
       expect(config.minCustomersPerDay).toBe(0);

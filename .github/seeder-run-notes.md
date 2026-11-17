@@ -16,7 +16,7 @@ This file is maintained by the **SeederDebug** agent. It is updated after every 
 packages/sdk-seeder/
   src/
     index.ts                        ← Entry point; wires config, auth, bootstrap, daily loop
-    SeederConfig.ts                 ← Reads env vars (SEEDER_BASE_URL, SEEDER_SECURITY_SERVICE_URL,
+    SeederConfig.ts                 ← Reads env vars (SEEDER_BASE_URL,
                                        SEEDER_USERNAME, SEEDER_PASSWORD, SEEDER_DAYS, SEEDER_SEED,
                                        SEEDER_MIN_CUSTOMERS_PER_DAY, SEEDER_MAX_CUSTOMERS_PER_DAY,
                                        SEEDER_POLL_INTERVAL_MS)

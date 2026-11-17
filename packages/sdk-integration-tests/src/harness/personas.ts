@@ -102,7 +102,6 @@ export class Personas {
       auth = new SeederAuth(
         SeederConfig.fromValues({
           baseUrl: this.config.baseUrl,
-          securityServiceUrl: this.config.securityServiceUrl,
           username: credentials.username,
           password: credentials.password,
           seed: this.config.seed,

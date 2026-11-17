@@ -40,7 +40,6 @@ export default async function globalSetup(): Promise<void> {
 
   const adminConfig = SeederConfig.fromValues({
     baseUrl: config.baseUrl,
-    securityServiceUrl: config.securityServiceUrl,
     username: config.admin.username,
     password: config.admin.password,
     seed: config.seed,
