@@ -377,7 +377,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     for (const code of monthsToClose(first.virtualStart, dayStart, journal.closedPeriods)) {
       let outcome: Awaited<ReturnType<typeof closeMonth>>;
       try {
-        outcome = await closeMonth(periods, code);
+        outcome = await closeMonth(periods, code, context.runId);
       } catch (error) {
         // Not a refusal (see closeMonth): the harness or the tenant is miswired, and
         // the run stops the way a day that threw does.
