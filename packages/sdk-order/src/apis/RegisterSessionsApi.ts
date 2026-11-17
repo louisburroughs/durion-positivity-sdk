@@ -293,9 +293,16 @@ export class RegisterSessionsApi extends runtime.BaseAPI {
      * Returns the active register session on a terminal, preferring an OPEN session and falling back to one in CLOSING. Use this tool to resolve which drawer a terminal is on; use getRegisterSession instead when the session id is already known. Preconditions: none — a terminal without an active session is a normal outcome. Required inputs: terminalId as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the OPEN or CLOSING session, and 204 when the terminal has no active session. 
      * Get the Current Session for a Terminal
      */
-    async getCurrentRegisterSession(requestParameters: GetCurrentRegisterSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterSessionResponse> {
+    async getCurrentRegisterSession(requestParameters: GetCurrentRegisterSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterSessionResponse | null | undefined > {
         const response = await this.getCurrentRegisterSessionRaw(requestParameters, initOverrides);
-        return await response.value();
+        switch (response.raw.status) {
+            case 200:
+                return await response.value();
+            case 204:
+                return null;
+            default:
+                return await response.value();
+        }
     }
 
     /**
