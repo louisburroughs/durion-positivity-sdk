@@ -357,3 +357,44 @@ describe('the intake brief', () => {
     expect(stageNamed(visit, 'intake').goal).toMatch(/customerId and crmPartyId are both the customer's partyId; .*crmContactIds may be an empty list/);
   });
 });
+
+describe('the work brief', () => {
+  const visit = () => find((entry) => entry.kind === 'service' && entry.parts === 'none');
+  const STAFFED = { workorderId: 'w-1', technicianId: 't-1', technicianName: 'Amber Nguyen', positionType: 'BAY', positionId: 'b-2', positionName: 'Bay 02' };
+
+  it('names the prepared technician and position with the call shapes, and drops the floor lookups', () => {
+    const scenario = stageNamed(visit(), 'work', { ...STAFFED });
+    expect(scenario.goal).toContain('- positionId: b-2');
+    expect(scenario.goal).toMatch(/assignServicePositionRequest \{ resourceType: positionType, resourceId: positionId/);
+    expect(scenario.operations).not.toContain('workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard');
+    expect(scenario.expect.map((entry) => (entry.kind === 'call' ? entry.operation : ''))).not.toContain(
+      'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard',
+    );
+  });
+
+  it('makes a full floor a short task: approve, note the wait, finish, with only those calls offered', () => {
+    const scenario = stageNamed(visit(), 'work', { workorderId: 'w-1', floorNote: 'every bay and mobile unit here is taken' });
+    expect(scenario.goal).toMatch(/cannot go onto the floor yet: every bay and mobile unit here is taken/);
+    expect(scenario.goal).toMatch(/That is the whole task/);
+    expect(scenario.operations).toEqual([
+      'workorder.WorkorderDetailApi.getWorkorderDetail',
+      'workorder.WorkOrderAPIApi.approveWorkorder',
+      'workorder.WorkorderNoteAPIApi.addWorkorderNote',
+    ]);
+    expect(scenario.limits.maxSteps).toBe(10);
+  });
+
+  it('keeps the floor facts away from checkout', () => {
+    const scenario = stageNamed(visit(), 'checkout', { ...STAFFED });
+    expect(scenario.goal).not.toContain('positionId');
+    expect(scenario.goal).toContain('- technicianName: Amber Nguyen');
+  });
+});
+
+
+describe('the sale brief', () => {
+  it('names the counter terminal, since the backend has no list of terminals to search', () => {
+    const visit = find((entry) => entry.kind === 'counter-sale');
+    expect(stageNamed(visit, 'sale').goal).toContain(`terminalId ${SITE.code}-FRONT-COUNTER`);
+  });
+});

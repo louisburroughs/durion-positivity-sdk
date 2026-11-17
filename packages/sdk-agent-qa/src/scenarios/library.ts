@@ -188,6 +188,7 @@ const daily: ScenarioInput[] = [
     at: '15:20',
     persona: 'acct',
     kind: 'operations',
+    prepare: 'vendor-bills',
     goal:
       'Process the vendor bills for the deliveries the shops received. Start with the Bills to pay stage counts and the ' +
       'bills in the CHECK stage: a bill waiting on its receipt match is a delivery that was received and not yet billed by ' +
@@ -257,6 +258,7 @@ const daily: ScenarioInput[] = [
     at: '07:50',
     persona: 'manager',
     kind: 'operations',
+    prepare: 'crew',
     goal:
       'The crew is arriving for the day. Read who works at this location (the people available here, with their roles): ' +
       'advisors, technicians, parts and office staff alike. For each person, read their current clock state. Someone ' +
@@ -287,6 +289,7 @@ const daily: ScenarioInput[] = [
     at: '09:10',
     persona: 'manager',
     kind: 'operations',
+    prepare: 'crew',
     goal:
       "Go through this location's timekeeping before the day gets busy. " +
       'First, missed clock-outs: read who works here and each person\'s clock state. Anyone whose work session has been ' +
@@ -336,6 +339,7 @@ const daily: ScenarioInput[] = [
     at: '12:00',
     persona: 'manager',
     kind: 'operations',
+    prepare: 'crew',
     goal:
       'It is lunchtime at this location. Read who works here and each person\'s clock state. Everyone who is clocked in ' +
       'and not already on a break starts a break on their work session — with one exception: on Tuesdays and Fridays ' +
@@ -361,6 +365,7 @@ const daily: ScenarioInput[] = [
     at: '12:40',
     persona: 'manager',
     kind: 'operations',
+    prepare: 'crew',
     goal:
       'Lunch is over at this location. Read who works here and each person\'s clock state. Everyone who is on a break ' +
       'comes back: stop the break on their work session. Leave alone anyone who is not on a break. Report how many came ' +
@@ -384,6 +389,7 @@ const daily: ScenarioInput[] = [
     at: '17:35',
     persona: 'manager',
     kind: 'operations',
+    prepare: 'crew',
     goal:
       'The day is over at this location. Read who works here and each person\'s clock state. Everyone who is clocked in ' +
       'clocks out — except, on Wednesdays, the technician whose name comes last alphabetically, who walks out without ' +
@@ -703,6 +709,7 @@ const weekly: ScenarioInput[] = [
     at: '08:30',
     persona: 'acct',
     kind: 'operations',
+    prepare: 'bank-accounts',
     tools: ['bank_statement', 'request_id'],
     goal:
       "Last week's bank statement has arrived. For each bank account the business reconciles (list the bank accounts), " +
@@ -757,6 +764,7 @@ const weekly: ScenarioInput[] = [
     at: '10:30',
     persona: 'acct',
     kind: 'operations',
+    prepare: 'bank-accounts',
     tools: ['request_id'],
     goal:
       'Reconcile the bank statement entered this morning. List the bank accounts and their statements; for each account ' +
@@ -855,6 +863,7 @@ const weekly: ScenarioInput[] = [
     at: '16:00',
     persona: 'acct',
     kind: 'operations',
+    prepare: 'bank-accounts',
     goal:
       'Take the week\'s cash to the bank. List the bank accounts and the closed register sessions that are still undeposited. ' +
       'If there are any, record one bank deposit covering one or more of them and read the deposit back. Then list recent ' +
@@ -982,6 +991,7 @@ const monthly: ScenarioInput[] = [
     at: '10:00',
     persona: 'controller',
     kind: 'operations',
+    prepare: 'bank-accounts',
     goal:
       'Review last month\'s bank reconciliations before the books are closed. The statements are entered and reconciled ' +
       'weekly; this is the controller checking that the month is covered. For each bank account: read how far its ' +

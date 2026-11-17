@@ -488,6 +488,50 @@ describe('a tenant with several sites', () => {
     expect(report).not.toMatch(/Parts Warehouse/);
   });
 
+  it('prepares a crew routine before the agent starts: its site\'s people and their clock state close the brief', async () => {
+    const crewRoute: Route = (request) => {
+      if (request.path.includes('/v1/people/availability')) {
+        const crew = request.path.includes('loc-main')
+          ? [{ personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE' }]
+          : [{ personId: 'p-2', firstName: 'Ray', lastName: 'Ortiz', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE' }];
+        return { status: 200, body: crew };
+      }
+      if (request.path.includes('/v1/people/workSessions/current')) {
+        return { status: 200, body: { personId: request.path.includes('p-1') ? 'p-1' : 'p-2', clockState: 'CLOCKED_OUT' } };
+      }
+      return route(request);
+    };
+    const CREW = defineScenarios([
+      {
+        id: 'crew-clock-in',
+        title: 'The crew clocks in',
+        cadence: 'daily',
+        at: '07:50',
+        perSite: true,
+        prepare: 'crew',
+        persona: 'manager',
+        kind: 'operations',
+        goal: 'Clock the crew in.',
+        operations: ['people.WorkSessionsAPIApi.getCurrentWorkSession', 'people.WorkSessionsAPIApi.startWorkSession'],
+        expect: [],
+      },
+    ]);
+    const model = new ScriptedModel(FINISH);
+    const state = world({ route: crewRoute, scenarios: CREW, env: { ...env, QA_VISITS_PER_SITE_MAX: '0' }, model });
+    state.setTime('2026-03-10 08:00');
+    await state.harness.tick();
+
+    const briefs = model.requests.map((request) => (request.messages[0] as { content: string }).content);
+    const main = briefs.find((brief) => brief.includes('location id loc-main')) ?? '';
+    expect(main).toContain('The reading this task starts with has been done for you');
+    expect(main).toContain('Amber Nguyen — TECHNICIAN, personId p-1, CLOCKED_OUT');
+    expect(main).not.toContain('Ray Ortiz');
+    expect(briefs.find((brief) => brief.includes('location id loc-north'))).toContain('Ray Ortiz');
+    const offered = model.requests[0].tools.map((tool) => tool.name);
+    expect(offered).not.toContain('people__WorkSessionsAPIApi__getCurrentWorkSession');
+    expect(offered).toContain('people__WorkSessionsAPIApi__startWorkSession');
+  });
+
   it('works the sites at the same time, up to the configured concurrency', async () => {
     let inFlight = 0;
     let peak = 0;

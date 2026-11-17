@@ -56,6 +56,13 @@ export const scenarioSchema = z.strictObject({
    * accounting requests require.
    */
   tools: z.array(z.enum(['bank_statement', 'request_id'])).default([]),
+  /**
+   * Reading the harness does before the agent starts (runner/prepareRoutine.ts):
+   * `crew` — the site's people and their clock state; `bank-accounts` — the bank
+   * accounts and their statements; `vendor-bills` — accounts payable's stages and
+   * the purchase orders received lately. Its facts close the brief.
+   */
+  prepare: z.enum(['crew', 'bank-accounts', 'vendor-bills']).optional(),
   /** Skipped (not failed) when every persona shares the admin login, where a 403 can never happen. */
   requiresRoleMode: z.boolean().default(false),
   goal: z.string(),
