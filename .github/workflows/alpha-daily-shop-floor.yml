@@ -137,7 +137,7 @@ jobs:
           fi
           # On the host the stack is local; .env.itest beside the checkout
           # supplies the credentials.
-          ITEST_BASE_URL=http://localhost:8080 ITEST_SECURITY_SERVICE_URL=http://localhost:8086 \
+          ITEST_BASE_URL=http://localhost:8080 \
             npm run --silent "\${script}"
           INNER
           chmod 0644 "\${inner}"

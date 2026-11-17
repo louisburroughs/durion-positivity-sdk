@@ -265,7 +265,6 @@ docker compose exec pos-workorder printenv | grep -E 'SPRING_PROFILES|POS_TIME_A
 ```bash
 cd ~/IdeaProjects/durion-positivity-sdk
 export ITEST_BASE_URL=http://localhost:8080
-export ITEST_SECURITY_SERVICE_URL=http://localhost:8086
 
 npm run test:accelerated:parity   # minutes — fails fast on a bad clock
 npm run test:accelerated          # the year: 1-6 h
@@ -320,7 +319,7 @@ the moment the stack verifies: `test:accelerated` (the default), `test:accelerat
 `populate:accelerated-year`, or `none` to deploy and start nothing. It runs from the
 host's checkout of this repo (`/home/ec2-user/durion-positivity-sdk`, kept current by
 `deploy-alpha-checkout.yml`) as `ec2-user`, with the host's `.env.itest` for
-credentials and `ITEST_BASE_URL`/`ITEST_SECURITY_SERVICE_URL` pointed at the ports
+credentials and `ITEST_BASE_URL` pointed at the gateway port
 the stack publishes there, detached, logging to `accelerated-<timestamp>.log` in the
 checkout (`accelerated-latest.log` points at the newest; `.accelerated-run.pid` holds
 the pid). Before starting it, the workflow moves the previous run's journal aside — every

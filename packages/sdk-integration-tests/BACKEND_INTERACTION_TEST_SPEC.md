@@ -79,7 +79,6 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | Variable | Default | Required | Description |
 | --- | --- | --- | --- |
 | `ITEST_BASE_URL` | `http://localhost:8080` | No | API gateway base URL |
-| `ITEST_SECURITY_SERVICE_URL` | `http://localhost:8086` | No | Direct security service URL (bootstrap + login) |
 | `ITEST_USERNAME` | — | **Yes** | Admin login (SYSTEM_ADMINISTRATOR) — bootstrap and persona fallback |
 | `ITEST_PASSWORD` | — | **Yes** | Admin password |
 | `ITEST_ADVISOR_USERNAME` / `_PASSWORD` | *(admin fallback)* | No | SERVICE_ADVISOR persona login |
@@ -105,7 +104,6 @@ the alpha gateway and security service, and the shell exports:
 
 ```properties
 ITEST_BASE_URL=http://localhost:18080          # tunneled pos-api-gateway
-ITEST_SECURITY_SERVICE_URL=http://localhost:18086  # tunneled pos-security-service
 ITEST_USERNAME=<alpha seeder/admin username>
 ITEST_PASSWORD=<alpha password>
 ```

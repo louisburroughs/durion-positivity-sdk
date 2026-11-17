@@ -46,8 +46,7 @@ OPENROUTER_API_KEY=...
 ```
 
 No tunnel is needed: the gateway is public at `https://durionpos.org/api` and every call the harness makes goes
-through it. (The integration suites' `ITEST_SECURITY_SERVICE_URL` and the SSM tunnel are for their
-direct-to-service bootstrap; the harness sends nothing there.) To run against a local stack or through the tunnel
+through it, login included (the gateway's `/security-service` route). To run against a local stack or through the tunnel
 instead, leave `ITEST_BASE_URL` at its `http://localhost:…` value.
 
 ```bash

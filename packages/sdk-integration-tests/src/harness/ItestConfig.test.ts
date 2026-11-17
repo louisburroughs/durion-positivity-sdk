@@ -12,7 +12,6 @@ describe('ItestConfig', () => {
     const config = ItestConfig.fromEnv({ ...baseEnv });
 
     expect(config.baseUrl).toBe('http://localhost:8080');
-    expect(config.securityServiceUrl).toBe('http://localhost:8086');
     expect(config.admin).toEqual({ username: 'admin-user', password: 'admin-pass' });
     expect(config.seed).toBeUndefined();
     expect(config.waitTimeoutMs).toBe(30000);
@@ -24,14 +23,12 @@ describe('ItestConfig', () => {
     const config = ItestConfig.fromEnv({
       ...baseEnv,
       ITEST_BASE_URL: 'http://localhost:18080',
-      ITEST_SECURITY_SERVICE_URL: 'http://localhost:18086',
       ITEST_SEED: '1422',
       ITEST_WAIT_TIMEOUT_MS: '60000',
       ITEST_WAIT_INTERVAL_MS: '250',
     });
 
     expect(config.baseUrl).toBe('http://localhost:18080');
-    expect(config.securityServiceUrl).toBe('http://localhost:18086');
     expect(config.seed).toBe(1422);
     expect(config.waitTimeoutMs).toBe(60000);
     expect(config.waitIntervalMs).toBe(250);

@@ -46,7 +46,6 @@ type EnvShape = Record<string, string | undefined>;
 export class ItestConfig {
   private constructor(
     readonly baseUrl: string,
-    readonly securityServiceUrl: string,
     readonly admin: PersonaCredentials,
     readonly personaCredentials: Partial<Record<CredentialedPersona, PersonaCredentials>>,
     readonly seed: number | undefined,
@@ -221,7 +220,6 @@ export class ItestConfig {
 
     return new ItestConfig(
       env['ITEST_BASE_URL'] ?? 'http://localhost:8080',
-      env['ITEST_SECURITY_SERVICE_URL'] ?? 'http://localhost:8086',
       { username: username as string, password: password as string },
       personaCredentials,
       seed,

@@ -1,6 +1,5 @@
 export interface SeederConfigShape {
   baseUrl: string;
-  securityServiceUrl: string;
   username: string;
   password: string;
   days: number;
@@ -20,7 +19,6 @@ export interface SeederConfigShape {
  */
 export interface SeederConfigValues {
   baseUrl?: string;
-  securityServiceUrl?: string;
   username: string;
   password: string;
   days?: number;
@@ -44,7 +42,6 @@ function parseInteger(value: string, key: string): number {
 
 export class SeederConfig implements SeederConfigShape {
   readonly baseUrl: string;
-  readonly securityServiceUrl: string;
   readonly username: string;
   readonly password: string;
   readonly days: number;
@@ -57,7 +54,6 @@ export class SeederConfig implements SeederConfigShape {
 
   private constructor(values: SeederConfigValues) {
     this.baseUrl = values.baseUrl ?? 'http://localhost:8080';
-    this.securityServiceUrl = values.securityServiceUrl ?? 'http://localhost:8086';
     this.username = values.username;
     this.password = values.password;
     this.days = values.days ?? 365;
@@ -118,7 +114,6 @@ export class SeederConfig implements SeederConfigShape {
 
     return new SeederConfig({
       baseUrl: env['SEEDER_BASE_URL'],
-      securityServiceUrl: env['SEEDER_SECURITY_SERVICE_URL'],
       username: required('SEEDER_USERNAME'),
       password: required('SEEDER_PASSWORD'),
       days: optInt('SEEDER_DAYS'),

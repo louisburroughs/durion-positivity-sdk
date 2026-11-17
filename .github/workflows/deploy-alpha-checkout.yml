@@ -302,4 +302,4 @@ jobs:
           echo "'Deploy Alpha (Accelerated Clock)' workflow (its sdk_run input), the moment"
           echo "the accelerated stack verifies. It logs to ${CHECKOUT_DIR}/accelerated-latest.log."
           echo "By hand, on the host (sdk_run=none):"
-          echo "  cd ${CHECKOUT_DIR} && ITEST_BASE_URL=http://localhost:8080 ITEST_SECURITY_SERVICE_URL=http://localhost:8086 npm run test:accelerated"
+          echo "  cd ${CHECKOUT_DIR} && ITEST_BASE_URL=http://localhost:8080 npm run test:accelerated"

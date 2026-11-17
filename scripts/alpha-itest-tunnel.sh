@@ -227,10 +227,9 @@ fi
 
 cat <<EXPORTS
 
-Tunnel is up. Export these in the shell that runs the suite:
+Tunnel is up. Export this in the shell that runs the suite:
 
 export ITEST_BASE_URL=http://localhost:$GATEWAY_LOCAL_PORT
-export ITEST_SECURITY_SERVICE_URL=http://localhost:$SECURITY_LOCAL_PORT
 
 Then:  npm run test:integration
 
