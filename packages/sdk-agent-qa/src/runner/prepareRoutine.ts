@@ -16,7 +16,7 @@
 import type { Lookup } from '../day/prepare';
 import { buildBankStatement, entryMethodFor, statementFile, type BankItemKind, type LedgerItem } from '../tools/mockBank';
 
-export type RoutinePreparation = 'crew' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
+export type RoutinePreparation = 'crew' | 'self' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
 
 export interface RoutineContext {
   /** The site a per-site routine is at. */
@@ -44,6 +44,8 @@ export const PREPARED_READS: Record<RoutinePreparation, readonly string[]> = {
     'shop-manager.TechnicianAPIApi.listLocationTechnicians',
     'people.EmployeeAPIApi.searchEmployees',
   ],
+  // The work session stays offered: the routine still starts or stops it.
+  self: ['people-contact.PeopleAPIApi.getCurrentPerson'],
   'bank-accounts': ['accounting.BankAccountsApi.listBankAccounts'],
   // The statement is built in code from the ledger, so none of the reading that feeds it is left to do.
   'bank-statement': [
@@ -668,11 +670,42 @@ async function vendorBills(lookup: Lookup, context: RoutineContext): Promise<str
   return facts;
 }
 
+/**
+ * The routine's own login: its personId and its clock state, so the agent can
+ * read and close its own work session without guessing an id.
+ */
+async function self(lookup: Lookup, context: RoutineContext): Promise<string[]> {
+  const persona = context.roleMode ? context.persona : undefined;
+  const me = await lookup('people-contact.PeopleAPIApi.getCurrentPerson', {}, persona);
+  const person = asRecord(me.body);
+  const personId = me.ok ? text(person['id']) : undefined;
+  if (!personId) {
+    return [];
+  }
+  const name = [text(person['firstName']), text(person['lastName'])].filter(Boolean).join(' ');
+  const state = await lookup('people.WorkSessionsAPIApi.getCurrentWorkSession', { personId }, persona);
+  const session = asRecord(state.body);
+  const parts = [`You are ${name || 'this login'}, personId ${personId}`];
+  if (state.ok) {
+    parts.push(text(session['clockState']) ?? 'clock state unknown');
+    const since = iso(session['clockedInAt']);
+    if (since) {
+      parts.push(`since ${localDate(since, context.timeZone)} ${localTime(since, context.timeZone)}`);
+    }
+    if (text(session['workSessionId'])) {
+      parts.push(`workSessionId ${String(session['workSessionId'])}`);
+    }
+  }
+  return [`${parts.join(', ')}. Use this personId for your own work session.`];
+}
+
 /** Runs the routine's preparation and returns the facts it established. Never throws for a failed read. */
 export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, context: RoutineContext): Promise<string[]> {
   switch (kind) {
     case 'crew':
       return crew(lookup, context);
+    case 'self':
+      return self(lookup, context);
     case 'bank-accounts':
       return bankAccounts(lookup, context);
     case 'bank-statement':

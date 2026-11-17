@@ -32,6 +32,7 @@ const daily: ScenarioInput[] = [
     at: '07:45',
     persona: 'manager',
     kind: 'operations',
+    prepare: 'self',
     // The register is the advisor's (open-register, close-shop): LOCATION_MANAGER holds no order:session:* grant.
     goal:
       'It is opening time. Review the dispatch board and the shop dashboard for this location. Then make sure you are ' +
@@ -57,6 +58,7 @@ const daily: ScenarioInput[] = [
     at: '07:48',
     persona: 'advisor',
     kind: 'operations',
+    prepare: 'self',
     goal:
       'You run the front counter. Check whether the front-counter terminal at this location already has an open ' +
       'register session; if it has none, open one with a sensible opening float. Then make sure you are clocked in: ' +
@@ -122,7 +124,7 @@ const daily: ScenarioInput[] = [
       'The parts truck has arrived with replenishment stock for this location. List the purchase orders shipping here and ' +
       'find one that is approved and not yet fully received — the oldest first, which is usually one raised earlier today or ' +
       'yesterday. (Leave alone any purchase order whose comment says it is for a specific workorder: those are received ' +
-      "against the job.) If there is none, check the receipts expected and pending, say there was nothing to receive, and " +
+      "against the job.) If there is none, check the receipts expected here, say there was nothing to receive, and " +
       'finish. Otherwise receive it properly: record the vendor\'s ship notice (an ASN for the purchase order, with its ' +
       'lines), then post a goods receipt for the delivery at this location — every line in full, except that on a ' +
       'purchase order with more than one line the last line arrives one unit short. (Inventory can take a minute to learn ' +
@@ -134,7 +136,6 @@ const daily: ScenarioInput[] = [
       'order.PurchaseOrdersApi.listPurchaseOrders',
       'order.PurchaseOrdersApi.getPurchaseOrder',
       'inventory.ReceiptsApi.listExpectedReceipts',
-      'inventory.ReceiptsApi.listPendingReceipts',
       'inventory.ASNApi.createAsn',
       'inventory.ASNApi.createGoodsReceipt',
       'inventory.ASNApi.getGoodsReceipt',
@@ -443,8 +444,11 @@ const daily: ScenarioInput[] = [
     // The advisor closes the register; undeposited sessions are the bookkeeper's (weekly-bank-deposit).
     persona: 'advisor',
     kind: 'operations',
+    prepare: 'self',
     goal:
-      'It is closing time. Find the register session that is open on the front-counter terminal at this location. Read its X report and its cash ' +
+      'It is closing time. Find the register session that is open on the front-counter terminal at this location. If ' +
+      'the terminal has no open session (the read answers with no session), there is nothing to close: say so, stop ' +
+      'your own work session if one is open, and finish; do not look for other work. Otherwise read its X report and its cash ' +
       'movements. If the session is open and has no orders awaiting payment, begin the close with a counted cash figure that ' +
       'matches the X report\'s expected cash, then confirm the close and read the Z report. The crew has already clocked ' +
       'out; finally stop your own work session if one is open.',

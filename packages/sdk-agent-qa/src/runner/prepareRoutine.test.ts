@@ -307,3 +307,33 @@ describe('routine preparation in the library', () => {
     expect(facts).toMatch(/In all: 1 CLOCKED_OUT\. Nobody here has an open work session right now\.$/);
   });
 });
+
+describe('prepareRoutine: self', () => {
+  const ADVISOR: RoutineContext = { ...CONTEXT, persona: 'advisor' };
+
+  it("names the login's own personId and open work session, read as the routine's persona", async () => {
+    const { lookup, calls } = fakeLookup({
+      'people-contact.PeopleAPIApi.getCurrentPerson': () => ({ id: 'p-7', firstName: 'Rachel', lastName: 'Kim' }),
+      'people.WorkSessionsAPIApi.getCurrentWorkSession': () => ({
+        personId: 'p-7',
+        clockState: 'CLOCKED_IN',
+        clockedInAt: new Date('2026-03-10T12:48:00Z'),
+        workSessionId: 'ws-7',
+      }),
+    });
+    const facts = await prepareRoutine('self', lookup, ADVISOR);
+    expect(facts).toEqual([
+      'You are Rachel Kim, personId p-7, CLOCKED_IN, since 2026-03-10 08:48, workSessionId ws-7. Use this personId for your own work session.',
+    ]);
+    expect(calls.map((call) => [call.operationId, call.persona])).toEqual([
+      ['people-contact.PeopleAPIApi.getCurrentPerson', 'advisor'],
+      ['people.WorkSessionsAPIApi.getCurrentWorkSession', 'advisor'],
+    ]);
+    expect(calls[1]?.input).toEqual({ personId: 'p-7' });
+  });
+
+  it('establishes nothing when the login has no person', async () => {
+    const { lookup } = fakeLookup({});
+    await expect(prepareRoutine('self', lookup, ADVISOR)).resolves.toEqual([]);
+  });
+});
