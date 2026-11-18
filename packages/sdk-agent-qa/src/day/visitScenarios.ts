@@ -496,7 +496,9 @@ function checkout(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenari
         'invoice is open against their account, and record an interaction noting the invoice was sent to their accounts ' +
         'payable contact.'
       : 'The customer pays in full at pickup, in cash: record a cash payment for the invoice total, confirm the invoice shows ' +
-        'as paid, and generate a receipt.';
+        'as paid, and generate a receipt: paymentIntentId is the one recordCashPayment returned, templateId "standard-receipt", ' +
+        `templateVersion "v1", terminalId "${counterTerminal(visit.site)}" (the front-counter terminal). There is nothing to ` +
+        'look up for these: do not search for templates or terminals.';
 
   return scenarioSchema.parse({
     id: stage.id,

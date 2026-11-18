@@ -59,11 +59,12 @@ export const scenarioSchema = z.strictObject({
   /**
    * Reading the harness does before the agent starts (runner/prepareRoutine.ts):
    * `crew` — the site's people and their clock state; `self` — the routine's own personId and
-   * clock state; `register` — the front-counter float on the books once, then `self`; `bank-accounts` — the bank
+   * clock state; `register` — the front-counter float on the books once, then `self`; `stock` — the site's
+   * lowest-stocked SKUs with their catalog products; `bank-accounts` — the bank
    * accounts and their statements; `vendor-bills` — accounts payable's stages and
    * the purchase orders received lately. Its facts close the brief.
    */
-  prepare: z.enum(['crew', 'self', 'register', 'bank-accounts', 'bank-statement', 'bank-reconciliation', 'vendor-bills']).optional(),
+  prepare: z.enum(['crew', 'self', 'register', 'stock', 'bank-accounts', 'bank-statement', 'bank-reconciliation', 'vendor-bills']).optional(),
   /** Skipped (not failed) when every persona shares the admin login, where a 403 can never happen. */
   requiresRoleMode: z.boolean().default(false),
   goal: z.string(),

@@ -389,3 +389,48 @@ describe('prepareRoutine: register', () => {
     expect(calls.map((call) => call.operationId)).not.toContain(GO_LIVE);
   });
 });
+
+describe('prepareRoutine: stock', () => {
+  const STOCK_CONTEXT: RoutineContext = { ...CONTEXT, persona: 'parts' };
+  const row = (sku: string, available: number, onHand = available) => ({ sku, available, onHand, inbound: 0, status: 'ok', statusReason: 'IN_STOCK' });
+
+  it('reads every page of stock, names the lowest available with their catalog products, and reads as the routine', async () => {
+    const { lookup, calls } = fakeLookup({
+      'inventory.InventoryStockApi.listStock': (input) =>
+        input['pageToken'] === 'p2'
+          ? { groupBy: 'item', items: [row('C-3', 1), row('D-4', 40)], nextPageToken: null }
+          : { groupBy: 'item', items: [row('A-1', 90), row('B-2', 5, 7)], nextPageToken: 'p2' },
+      'catalog.ProductsAPIApi.searchCatalogProducts': (input) => ({
+        data: [
+          { sku: `${String(input['q'])}X`, productId: 'wrong', name: 'Near miss' },
+          { sku: input['q'], productId: `prod-${String(input['q'])}`, name: `Part ${String(input['q'])}` },
+        ],
+      }),
+    });
+
+    const facts = await prepareRoutine('stock', lookup, STOCK_CONTEXT);
+
+    expect(calls.filter((call) => call.operationId === 'inventory.InventoryStockApi.listStock').map((call) => call.input)).toEqual([
+      { scope: 'site-1', groupBy: 'item', pageSize: 200 },
+      { scope: 'site-1', groupBy: 'item', pageSize: 200, pageToken: 'p2' },
+    ]);
+    expect(calls.every((call) => call.persona === 'parts')).toBe(true);
+    expect(facts).toHaveLength(1);
+    const lines = facts[0]!.split('\n');
+    expect(lines[0]).toContain('4 SKUs stocked');
+    expect(lines[1]).toBe('  C-3 — Part C-3: productId prod-C-3, available 1, on hand 1, inbound 0, IN_STOCK');
+    expect(lines[2]).toContain('B-2 — Part B-2: productId prod-B-2, available 5, on hand 7');
+    expect(lines.slice(1).map((line) => line.trim().split(' ')[0])).toEqual(['C-3', 'B-2', 'D-4', 'A-1']);
+  });
+
+  it('says so when a SKU has no catalog product, and states nothing when the stock cannot be read', async () => {
+    const matched = fakeLookup({
+      'inventory.InventoryStockApi.listStock': () => ({ items: [row('Z-9', 2)] }),
+      'catalog.ProductsAPIApi.searchCatalogProducts': () => ({ data: [] }),
+    });
+    expect((await prepareRoutine('stock', matched.lookup, STOCK_CONTEXT))[0]).toContain('Z-9: no catalog product matched, available 2');
+
+    const refused = fakeLookup({});
+    expect(await prepareRoutine('stock', refused.lookup, STOCK_CONTEXT)).toEqual([]);
+  });
+});

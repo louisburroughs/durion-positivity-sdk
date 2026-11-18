@@ -178,11 +178,11 @@ properties that matter are properties of the loop:
   reminded twice to call a tool.
 - **Models fail over.** `QA_MODELS` is a chain. When a model errors after the AI SDK's own retries, the turn is
   retried on the next model, mid-conversation, and the run stays there.
-- **Responses are bounded.** Bodies are pruned to a budget as valid JSON (lists cut with their true length
+- **Responses are bounded.** Bodies are pruned to 6000 characters as valid JSON (lists cut with their true length
   stated), so three list calls cannot fill a small model's context.
 - **Old results shrink.** Every turn resends the whole conversation, so a visit's tokens grow with the square of its
-  turns. Results older than the last two tool turns are pruned again to 600 characters: their ids survive, their
-  bulk does not.
+  turns. Results older than the last two tool turns are cut to their identity fields (ids, status, numbers, codes,
+  names, page tokens) within 1200 characters, so a line id read early is still there when a later step needs it.
 - **The model is a port.** The loop sees a `ModelPort`; `agent/aiSdkModel.ts` is the only file that imports `ai`.
   That is what lets the loop be unit-tested with a scripted model.
 
