@@ -259,6 +259,7 @@ if [[ -n "$module" ]]; then
 		cleanup_vehicle_inventory_duplicate_exports
 	fi
 	prune_orphans "$module"
+	node scripts/patch-runtime-empty-body.mjs "$module"
 else
 	# Generate all SDK modules in deterministic order
 	for m in "${MODULES[@]}"; do
@@ -276,6 +277,7 @@ else
 			cleanup_vehicle_inventory_duplicate_exports
 		fi
 		prune_orphans "$m"
+		node scripts/patch-runtime-empty-body.mjs "$m"
 	done
 fi
 

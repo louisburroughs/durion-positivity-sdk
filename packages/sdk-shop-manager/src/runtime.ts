@@ -397,7 +397,16 @@ export class JSONApiResponse<T> {
     constructor(public raw: Response, private transformer: ResponseTransformer<T> = (jsonValue: any) => jsonValue) {}
 
     async value(): Promise<T> {
-        return this.transformer(await this.raw.json());
+        // A 204, or any empty body, has no JSON to parse (patched by
+        // scripts/patch-runtime-empty-body.mjs after generation).
+        if (this.raw.status === 204) {
+            return undefined as T;
+        }
+        const text = await this.raw.text();
+        if (text.trim() === '') {
+            return undefined as T;
+        }
+        return this.transformer(JSON.parse(text));
     }
 }
 
