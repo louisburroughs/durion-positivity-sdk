@@ -14,7 +14,7 @@ import type { CallOutcome, SdkInvoker } from '../sdk/SdkInvoker';
 import { mockBankTool, requestIdTool } from '../tools/mockBank';
 import { ToolRuntime, type FinishReport, type SafetyPolicy } from '../tools/toolkit';
 import { systemPrompt, taskPrompt, type PromptContext } from './prompt';
-import { shrink } from '../tools/shrink';
+import { compactResult } from '../tools/shrink';
 
 export interface ScenarioResult {
   scenarioId: string;
@@ -147,7 +147,7 @@ export async function runScenario(scenario: Scenario, deps: ScenarioDeps): Promi
     tools: runtime.tools(),
     finishTool: 'finish',
     // Older results keep their ids and lose their bulk; the last two stay whole.
-    compact: { keepRecent: 2, shrink: (output) => shrink(output, 600) },
+    compact: { keepRecent: 2, shrink: (output) => compactResult(output, 1200) },
     limits: {
       maxSteps: scenario.limits.maxSteps ?? deps.limits.maxSteps,
       timeoutMs: scenario.limits.timeoutMs ?? deps.limits.timeoutMs,

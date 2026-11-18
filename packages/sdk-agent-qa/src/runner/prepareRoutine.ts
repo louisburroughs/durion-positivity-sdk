@@ -17,7 +17,7 @@ import { counterTerminal } from '../day/sites';
 import type { Lookup } from '../day/prepare';
 import { buildBankStatement, entryMethodFor, statementFile, type BankItemKind, type LedgerItem } from '../tools/mockBank';
 
-export type RoutinePreparation = 'crew' | 'self' | 'register' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
+export type RoutinePreparation = 'crew' | 'self' | 'register' | 'stock' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
 
 export interface RoutineContext {
   /** The site a per-site routine is at. */
@@ -50,6 +50,8 @@ export const PREPARED_READS: Record<RoutinePreparation, readonly string[]> = {
   // The work session stays offered: the routine still starts or stops it.
   self: ['people-contact.PeopleAPIApi.getCurrentPerson'],
   register: ['people-contact.PeopleAPIApi.getCurrentPerson'],
+  // Paging the whole stock to find the lowest is what the agent did with this read (36 pages of 5 on one run).
+  stock: ['inventory.InventoryStockApi.listStock'],
   'bank-accounts': ['accounting.BankAccountsApi.listBankAccounts'],
   // The statement is built in code from the ledger, so none of the reading that feeds it is left to do.
   'bank-statement': [
@@ -742,6 +744,68 @@ async function register(lookup: Lookup, context: RoutineContext): Promise<string
   return [...facts, ...(await self(lookup, context))];
 }
 
+/** How many of the lowest-stocked SKUs the brief names, and how many stock pages the read follows. */
+const STOCK_SHORTLIST = 6;
+const STOCK_MAX_PAGES = 10;
+
+/**
+ * The site's stock by SKU, read in full in code and cut to the lowest available,
+ * each matched to its catalog product (the id a purchase-order line takes as
+ * skuId). With nothing flagged by replenishment, the agent's only other way to
+ * find the lowest on hand is to page the whole stock list, which the result
+ * budget shows it a few rows at a time.
+ */
+async function stock(lookup: Lookup, context: RoutineContext): Promise<string[]> {
+  if (!context.site) {
+    return [];
+  }
+  const persona = context.roleMode ? context.persona : undefined;
+  const rows: Record<string, unknown>[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < STOCK_MAX_PAGES; page++) {
+    const answer = await lookup(
+      'inventory.InventoryStockApi.listStock',
+      { scope: context.site.id, groupBy: 'item', pageSize: 200, ...(pageToken ? { pageToken } : {}) },
+      persona,
+    );
+    if (!answer.ok) {
+      break;
+    }
+    rows.push(...listOf(answer.body, 'items'));
+    pageToken = text(asRecord(answer.body)['nextPageToken']);
+    if (!pageToken) {
+      break;
+    }
+  }
+  const count = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
+  const stocked = rows.filter((row) => text(row['sku']));
+  if (stocked.length === 0) {
+    return [];
+  }
+  const lowest = [...stocked]
+    .sort((a, b) => count(a['available']) - count(b['available']) || count(a['onHand']) - count(b['onHand']) || String(a['sku']).localeCompare(String(b['sku'])))
+    .slice(0, STOCK_SHORTLIST);
+
+  const lines = [
+    `Stock on hand at ${context.site.name}, read just now: ${stocked.length} SKUs stocked. The ${lowest.length} with the least ` +
+      'available, lowest first (productId is what a purchase-order line takes as skuId):',
+  ];
+  for (const row of lowest) {
+    const sku = String(row['sku']);
+    const found = await lookup('catalog.ProductsAPIApi.searchCatalogProducts', { q: sku, limit: 5 }, persona);
+    const product = found.ok ? listOf(found.body, 'data', 'items').find((item) => item['sku'] === sku) : undefined;
+    const name = product ? text(product['name']) : undefined;
+    const productId = product ? text(product['productId']) : undefined;
+    const status = text(row['statusReason']) ?? text(row['status']);
+    lines.push(
+      `  ${sku}${name ? ` — ${name}` : ''}: ${productId ? `productId ${productId}, ` : 'no catalog product matched, '}` +
+        `available ${count(row['available'])}, on hand ${count(row['onHand'])}, inbound ${count(row['inbound'])}` +
+        (status ? `, ${status}` : ''),
+    );
+  }
+  return [lines.join('\n')];
+}
+
 /** Runs the routine's preparation and returns the facts it established. Never throws for a failed read. */
 export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, context: RoutineContext): Promise<string[]> {
   switch (kind) {
@@ -751,6 +815,8 @@ export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, c
       return self(lookup, context);
     case 'register':
       return register(lookup, context);
+    case 'stock':
+      return stock(lookup, context);
     case 'bank-accounts':
       return bankAccounts(lookup, context);
     case 'bank-statement':

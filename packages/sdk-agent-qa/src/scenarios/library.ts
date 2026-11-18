@@ -84,11 +84,12 @@ const daily: ScenarioInput[] = [
     at: '08:40',
     persona: 'parts',
     kind: 'operations',
+    prepare: 'stock',
     goal:
       "Place today's stock order for this location. Review what needs replenishing: the replenishment needs and " +
-      'suggestions, the purchase suggestions and shortfalls, and the stocking levels against what is on hand here. Pick two ' +
-      'to four products that are at or below their minimum (if nothing is flagged, pick fast-moving parts that are lowest ' +
-      'on hand). Choose a vendor the shop can order from and raise one purchase order for them, shipping to this location, ' +
+      'suggestions, the purchase suggestions and shortfalls, and the stocking levels; what is on hand here has been read ' +
+      'for you below. Pick two to four products that are at or below their minimum (if nothing is flagged, pick from the ' +
+      'lowest-stocked SKUs listed below, using their productIds; do not page through the stock yourself). Choose a vendor the shop can order from and raise one purchase order for them, shipping to this location, ' +
       'with sensible quantities and unit costs and a comment saying it is replenishment stock. A purchase order is approved ' +
       'by a manager, not by the person who raised it: make the approval call with sdk_call and persona "manager" (if the ' +
       'harness refuses that persona, approve it yourself). Read the purchase order back to confirm it is approved. Do not ' +

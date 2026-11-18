@@ -101,7 +101,12 @@ export interface ToolRuntimeOptions {
   onCall?(operation: Operation, outcome: CallOutcome): void;
   /** Pause used by the `wait` tool. */
   sleep?(ms: number): Promise<void>;
-  /** Characters of response body returned to the model per call. */
+  /**
+   * Characters of response body returned to the model per call (default 6000). At
+   * 4000 a day's time entries for one site (about 470 characters each) were cut to
+   * five rows, and the agent paged them three at a time; a result is resent whole
+   * for two turns only before compaction keeps just its ids.
+   */
   resultBudget?: number;
   now?: () => Date;
 }
@@ -346,7 +351,7 @@ export class ToolRuntime {
       status: outcome.status,
       errorCode: outcome.errorCode,
       message: outcome.message,
-      body: shrink(outcome.body, this.options.resultBudget ?? 4000),
+      body: shrink(outcome.body, this.options.resultBudget ?? 6000),
       correlationId: outcome.correlationId,
       hint: transient
         ? 'Temporary: a record created moments ago has not replicated yet. Call wait for 10 seconds, then repeat this exact call (up to 6 times).'
