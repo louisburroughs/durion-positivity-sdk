@@ -337,3 +337,55 @@ describe('prepareRoutine: self', () => {
     await expect(prepareRoutine('self', lookup, ADVISOR)).resolves.toEqual([]);
   });
 });
+
+describe('prepareRoutine: register', () => {
+  const ADVISOR: RoutineContext = { ...CONTEXT, persona: 'advisor', registerFloat: 200 };
+  const SITE_CODE = { ...SITE, code: 'CLT-MAIN-001' };
+  const ME = {
+    'people-contact.PeopleAPIApi.getCurrentPerson': () => ({ id: 'p-7', firstName: 'Rachel', lastName: 'Kim' }),
+    'people.WorkSessionsAPIApi.getCurrentWorkSession': () => ({ personId: 'p-7', clockState: 'CLOCKED_OUT' }),
+  };
+  const GO_LIVE = 'accounting.AccountingRegisterFloatApi.establishGoLiveRegisterFloat';
+
+  it("puts the front-counter float on the books as the controller, then names the routine's own login", async () => {
+    const { lookup, calls } = fakeLookup({
+      ...ME,
+      'accounting.AccountingPeriodsApi.getBankReconciliationPolicy': () => ({ currency: 'USD' }),
+      [GO_LIVE]: () => ({ newAmount: 200, journalEntryNumber: 'JE-1' }),
+    });
+
+    const facts = await prepareRoutine('register', lookup, { ...ADVISOR, site: SITE_CODE });
+
+    const goLive = calls.find((call) => call.operationId === GO_LIVE);
+    expect(goLive?.persona).toBe('controller');
+    expect(goLive?.input).toEqual({
+      registerId: 'CLT-MAIN-001-FRONT-COUNTER',
+      registerFloatGoLiveRequest: {
+        locationId: 'site-1',
+        amount: 200,
+        currencyCode: 'USD',
+        goLiveDate: '2026-03-10',
+        justification: 'Front-counter change float for Main Street, put on the books at go-live',
+      },
+    });
+    expect(facts[0]).toMatch(/CLT-MAIN-001-FRONT-COUNTER went live just now with a 200 USD change float/);
+    expect(facts[1]).toMatch(/^You are Rachel Kim, personId p-7/);
+  });
+
+  it('says nothing about the float when the register already has one (409), and still names the login', async () => {
+    const { lookup } = fakeLookup({ ...ME, [GO_LIVE]: () => ({ ok: false }) });
+
+    const facts = await prepareRoutine('register', lookup, { ...ADVISOR, site: SITE_CODE });
+
+    expect(facts).toHaveLength(1);
+    expect(facts[0]).toMatch(/^You are Rachel Kim/);
+  });
+
+  it('puts no float on the books when QA_REGISTER_FLOAT is 0', async () => {
+    const { lookup, calls } = fakeLookup(ME);
+
+    await prepareRoutine('register', lookup, { ...ADVISOR, site: SITE_CODE, registerFloat: 0 });
+
+    expect(calls.map((call) => call.operationId)).not.toContain(GO_LIVE);
+  });
+});

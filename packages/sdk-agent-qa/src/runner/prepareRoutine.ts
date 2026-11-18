@@ -13,10 +13,11 @@
  * recorded under the routine's id, and every step is best effort: a read that
  * fails leaves its fact out, and the brief still says how to find it.
  */
+import { counterTerminal } from '../day/sites';
 import type { Lookup } from '../day/prepare';
 import { buildBankStatement, entryMethodFor, statementFile, type BankItemKind, type LedgerItem } from '../tools/mockBank';
 
-export type RoutinePreparation = 'crew' | 'self' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
+export type RoutinePreparation = 'crew' | 'self' | 'register' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
 
 export interface RoutineContext {
   /** The site a per-site routine is at. */
@@ -31,6 +32,8 @@ export interface RoutineContext {
   timeZone: string;
   /** The statement balance a bank account's first statement opens at (QA_BANK_OPENING_BALANCE). */
   bankOpeningBalance?: number;
+  /** The change float each front-counter register goes live with (QA_REGISTER_FLOAT); 0 or unset puts none on the books. */
+  registerFloat?: number;
 }
 
 /**
@@ -46,6 +49,7 @@ export const PREPARED_READS: Record<RoutinePreparation, readonly string[]> = {
   ],
   // The work session stays offered: the routine still starts or stops it.
   self: ['people-contact.PeopleAPIApi.getCurrentPerson'],
+  register: ['people-contact.PeopleAPIApi.getCurrentPerson'],
   'bank-accounts': ['accounting.BankAccountsApi.listBankAccounts'],
   // The statement is built in code from the ledger, so none of the reading that feeds it is left to do.
   'bank-statement': [
@@ -699,6 +703,45 @@ async function self(lookup: Lookup, context: RoutineContext): Promise<string[]> 
   return [`${parts.join(', ')}. Use this personId for your own work session.`];
 }
 
+/**
+ * Puts the site's front-counter register float on the books once, as the
+ * controller (go-live float: Dr 1080 Register Float / Cr 3900 Opening Balance
+ * Equity), so a session opens with change in the drawer. A register that already
+ * has one answers 409 FLOAT_ALREADY_ESTABLISHED, which is the normal case after
+ * the first day. Then the routine's own identity, as for `self`.
+ */
+async function register(lookup: Lookup, context: RoutineContext): Promise<string[]> {
+  const facts: string[] = [];
+  const amount = context.registerFloat ?? 0;
+  if (context.site && amount > 0) {
+    const controller = context.roleMode ? 'controller' : undefined;
+    const policy = await lookup('accounting.AccountingPeriodsApi.getBankReconciliationPolicy', {}, controller);
+    const currencyCode = (policy.ok ? text(asRecord(policy.body)['currency']) : undefined) ?? 'USD';
+    const registerId = counterTerminal(context.site);
+    const goLive = await lookup(
+      'accounting.AccountingRegisterFloatApi.establishGoLiveRegisterFloat',
+      {
+        registerId,
+        registerFloatGoLiveRequest: {
+          locationId: context.site.id,
+          amount,
+          currencyCode,
+          goLiveDate: context.date,
+          justification: `Front-counter change float for ${context.site.name}, put on the books at go-live`,
+        },
+      },
+      controller,
+    );
+    if (goLive.ok) {
+      facts.push(
+        `The front-counter register ${registerId} went live just now with a ${amount} ${currencyCode} change float ` +
+          '(the controller put it on the books). A session opened from now on starts with it.',
+      );
+    }
+  }
+  return [...facts, ...(await self(lookup, context))];
+}
+
 /** Runs the routine's preparation and returns the facts it established. Never throws for a failed read. */
 export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, context: RoutineContext): Promise<string[]> {
   switch (kind) {
@@ -706,6 +749,8 @@ export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, c
       return crew(lookup, context);
     case 'self':
       return self(lookup, context);
+    case 'register':
+      return register(lookup, context);
     case 'bank-accounts':
       return bankAccounts(lookup, context);
     case 'bank-statement':

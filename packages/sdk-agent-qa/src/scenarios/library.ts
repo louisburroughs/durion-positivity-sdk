@@ -58,7 +58,7 @@ const daily: ScenarioInput[] = [
     at: '07:48',
     persona: 'advisor',
     kind: 'operations',
-    prepare: 'self',
+    prepare: 'register',
     goal:
       'You run the front counter. Check whether the front-counter terminal at this location already has an open ' +
       'register session; if it has none, open one. The opening float is not yours to set: the session takes the ' +

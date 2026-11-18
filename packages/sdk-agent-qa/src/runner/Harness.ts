@@ -327,6 +327,7 @@ export class Harness {
               date: clock.date,
               timeZone: config.timezone,
               bankOpeningBalance: config.bankOpeningBalance,
+              registerFloat: config.registerFloat,
             });
             if (facts.length > 0) {
               const prepared = new Set(PREPARED_READS[preparation]);
