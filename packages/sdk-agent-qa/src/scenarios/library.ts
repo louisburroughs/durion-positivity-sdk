@@ -44,10 +44,10 @@ const daily: ScenarioInput[] = [
       'people.WorkSessionsAPIApi.getCurrentWorkSession',
       'people.WorkSessionsAPIApi.startWorkSession',
     ],
+    // The brief names the site and the routine's own clock state, so neither is read again.
     expect: [
-      { kind: 'call', operation: 'location.LocationAPIApi.listLocations', outcome: 'success' },
       { kind: 'call', operation: 'workorder.DailyDispatchBoardDashboardApi.getDispatchDashboard' },
-      { kind: 'call', operation: 'people.WorkSessionsAPIApi.getCurrentWorkSession' },
+      { kind: 'call', operation: 'shop-manager.ShopDashboardAPIApi.getShopDashboard' },
     ],
   },
   {
@@ -61,8 +61,9 @@ const daily: ScenarioInput[] = [
     prepare: 'self',
     goal:
       'You run the front counter. Check whether the front-counter terminal at this location already has an open ' +
-      'register session; if it has none, open one with a sensible opening float. Then make sure you are clocked in: ' +
-      'check your current work session and start one if none is open.',
+      'register session; if it has none, open one. The opening float is not yours to set: the session takes the ' +
+      "register's configured float. Report the float it opened with, and do not try to change it. Then make sure you " +
+      'are clocked in, using your work session as given below, and start one if none is open.',
     operations: [
       'location.LocationAPIApi.listLocations',
       'order.RegisterSessionsApi.getCurrentRegisterSession',
