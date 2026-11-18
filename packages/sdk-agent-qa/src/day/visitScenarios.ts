@@ -184,8 +184,10 @@ function intake(visit: Visit, stage: VisitStage, memory: VisitMemory): Scenario 
     operations.push('catalog.ProductsAPIApi.searchCatalogProducts', 'inventory.InventoryAvailabilityApi.getAvailabilityByProduct');
     partsLine =
       ' The job also needs a part the shop does not keep in stock: search the product catalog for a part that fits the ' +
-      'concern, check its availability, and pick one with nothing on hand at this location. Add it as a part line ' +
-      '(quantity 1 or 2) and tell the customer it has to be ordered in: it will arrive on the next working day, and the ' +
+      'concern, check its availability (the parts counter does that: make the availability call with sdk_call and ' +
+      'persona "parts"; if the harness refuses that persona, check it yourself), and pick one with nothing on hand at ' +
+      'this location. Add it as a part line (quantity 1 or 2) at a sensible unit price you choose: the counter has no ' +
+      'price lookup, so do not search for one. Tell the customer it has to be ordered in: it will arrive on the next working day, and the ' +
       'job will be done then.';
   }
 
@@ -296,7 +298,8 @@ function work(visit: Visit, stage: VisitStage, memory: VisitMemory, context: Sta
           'to the job before completing the part line.\n\n';
   }
   const technician = context.roleMode
-    ? ' The technician starts the workorder and clocks labor: make those calls with sdk_call and persona "tech".'
+    ? ' The technician starts the workorder and clocks labor: make those calls, starting and stopping each labor ' +
+      'session, with sdk_call and persona "tech". Only the technician can stop a labor session.'
     : '';
 
   return scenarioSchema.parse({
