@@ -22,6 +22,7 @@ import type {
   WorkSessionClockStateResponse,
   WorkSessionCloseMissedRequest,
   WorkSessionCloseMissedResponse,
+  WorkSessionDayResponse,
   WorkSessionDto,
   WorkSessionRequest,
   WorkSessionSubmitRequest,
@@ -41,6 +42,8 @@ import {
     WorkSessionCloseMissedRequestToJSON,
     WorkSessionCloseMissedResponseFromJSON,
     WorkSessionCloseMissedResponseToJSON,
+    WorkSessionDayResponseFromJSON,
+    WorkSessionDayResponseToJSON,
     WorkSessionDtoFromJSON,
     WorkSessionDtoToJSON,
     WorkSessionRequestFromJSON,
@@ -57,6 +60,12 @@ export interface CloseMissedWorkSessionClockOutRequest {
 
 export interface GetCurrentWorkSessionRequest {
     personId?: string;
+}
+
+export interface GetWorkSessionDayRequest {
+    personId?: string;
+    workDate?: Date;
+    timeZone?: string;
 }
 
 export interface StartWorkSessionRequest {
@@ -193,6 +202,54 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
      */
     async getCurrentWorkSession(requestParameters: GetCurrentWorkSessionRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionClockStateResponse> {
         const response = await this.getCurrentWorkSessionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Reads every work session a person started on one calendar day, in start order, each with its breaks in start order, plus the day\'s elapsed, break and billable minutes. The minutes are computed on the server with the same arithmetic submit stores (DECISION-PEOPLE-029): break minutes are the whole-minute sum of a session\'s breaks and billable minutes are its whole-minute duration less that break time, floored at 0; fractions truncate. An open session and an active break are measured up to asOf, which the answer carries, so the client may advance the display from asOf but never computes minutes itself. Nothing is created, closed or changed.A session belongs to the day it STARTED in: the day is the calendar day workDate names in timeZone, read as [start of that day, start of the next), so a session that started at 23:30 local and ended after midnight is returned for its start day only. Every session of the day is returned, an UNDONE (retracted) one included, with its stored status and startTrigger and zero minutes; the client decides what to show. A work session has no location, so none is returned. A break\'s note is returned only when the caller is the person themself.Use this tool to render an employee profile\'s \"hours today\" and \"Today\" list of punches and breaks; use getCurrentWorkSession instead to render only the clock-in/out toggle for right now, and listTimeEntries to read submitted time entries for approval.Preconditions: the person must exist, either as an employee of this module or in the identity replica.Required inputs: none are mandatory. personId (UUID) defaults to the caller\'s own linked person; workDate (ISO date, YYYY-MM-DD) defaults to today in timeZone; timeZone (IANA zone id) defaults to UTC and names the zone whose calendar day workDate is.Authorization: a person reads their own day with people:self:view; reading another person\'s day needs people:timekeeping:view, and when that grant is location-scoped it must cover one of the person\'s active assignment locations today.Emits a PEOPLE_WORK_SESSION_DAY_GET audit event but changes no state.Returns 200 with an empty sessions list and zero minutes for a day with no sessions — never 404 for that; 400 VALIDATION_ERROR for an unknown timeZone or a malformed workDate; 404 PERSON_NOT_FOUND when the person is unknown, and 404 when personId is omitted and the caller\'s person link is present but no longer active; 503 USER_LINK_REPLICATION_PENDING with a Retry-After header when personId is omitted and the caller has no person link in the replica yet; 403 FORBIDDEN when the caller is neither the person nor a people:timekeeping:view holder, and 403 LOCATION_SCOPE_DENIED when the caller\'s grant does not cover the person\'s location.
+     * Get A Person\'s Work Sessions For One Day, With Breaks And Minutes
+     */
+    async getWorkSessionDayRaw(requestParameters: GetWorkSessionDayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionDayResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['personId'] != null) {
+            queryParameters['personId'] = requestParameters['personId'];
+        }
+
+        if (requestParameters['workDate'] != null) {
+            queryParameters['workDate'] = (requestParameters['workDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['timeZone'] != null) {
+            queryParameters['timeZone'] = requestParameters['timeZone'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/workSessions`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkSessionDayResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reads every work session a person started on one calendar day, in start order, each with its breaks in start order, plus the day\'s elapsed, break and billable minutes. The minutes are computed on the server with the same arithmetic submit stores (DECISION-PEOPLE-029): break minutes are the whole-minute sum of a session\'s breaks and billable minutes are its whole-minute duration less that break time, floored at 0; fractions truncate. An open session and an active break are measured up to asOf, which the answer carries, so the client may advance the display from asOf but never computes minutes itself. Nothing is created, closed or changed.A session belongs to the day it STARTED in: the day is the calendar day workDate names in timeZone, read as [start of that day, start of the next), so a session that started at 23:30 local and ended after midnight is returned for its start day only. Every session of the day is returned, an UNDONE (retracted) one included, with its stored status and startTrigger and zero minutes; the client decides what to show. A work session has no location, so none is returned. A break\'s note is returned only when the caller is the person themself.Use this tool to render an employee profile\'s \"hours today\" and \"Today\" list of punches and breaks; use getCurrentWorkSession instead to render only the clock-in/out toggle for right now, and listTimeEntries to read submitted time entries for approval.Preconditions: the person must exist, either as an employee of this module or in the identity replica.Required inputs: none are mandatory. personId (UUID) defaults to the caller\'s own linked person; workDate (ISO date, YYYY-MM-DD) defaults to today in timeZone; timeZone (IANA zone id) defaults to UTC and names the zone whose calendar day workDate is.Authorization: a person reads their own day with people:self:view; reading another person\'s day needs people:timekeeping:view, and when that grant is location-scoped it must cover one of the person\'s active assignment locations today.Emits a PEOPLE_WORK_SESSION_DAY_GET audit event but changes no state.Returns 200 with an empty sessions list and zero minutes for a day with no sessions — never 404 for that; 400 VALIDATION_ERROR for an unknown timeZone or a malformed workDate; 404 PERSON_NOT_FOUND when the person is unknown, and 404 when personId is omitted and the caller\'s person link is present but no longer active; 503 USER_LINK_REPLICATION_PENDING with a Retry-After header when personId is omitted and the caller has no person link in the replica yet; 403 FORBIDDEN when the caller is neither the person nor a people:timekeeping:view holder, and 403 LOCATION_SCOPE_DENIED when the caller\'s grant does not cover the person\'s location.
+     * Get A Person\'s Work Sessions For One Day, With Breaks And Minutes
+     */
+    async getWorkSessionDay(requestParameters: GetWorkSessionDayRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionDayResponse> {
+        const response = await this.getWorkSessionDayRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
