@@ -68,7 +68,7 @@ export interface AddEstimateItemRequest {
      */
     taxCode?: string;
     /**
-     * Unit price for the line item (hourly labor rate for LABOR). Required, EXCEPT on a LABOR item that names a serviceId: omitting it there asks pos-price to prefill the shop's labor rate with its labor matrix applied (#1575 Tier 0); when no rate is available the request is rejected and an explicit unitPrice must be sent. A supplied unitPrice always wins over the resolved rate.
+     * Unit price for the line item (hourly labor rate for LABOR). Required, EXCEPT on a LABOR item that names a serviceId and on a PART item that names a productId. Omitted on such a LABOR item, pos-price prefills the shop's labor rate with its labor matrix applied (#1575 Tier 0); omitted on such a PART item, pos-price prefills the product's sell price at the estimate's location, converted to uomCode when one is given (#3607). When no price is available the request is rejected and an explicit unitPrice must be sent. A supplied unitPrice always wins over the resolved price.
      * @type {number}
      * @memberof AddEstimateItemRequest
      */
