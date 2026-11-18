@@ -55,6 +55,8 @@ const schema = z.object({
   QA_DENY: z.string().default(''),
   /** The bank balance put on the books the first time a bank account is worked. */
   QA_BANK_OPENING_BALANCE: z.coerce.number().min(0).max(1_000_000_000).default(50_000),
+  /** The change float each front-counter register goes live with, once; 0 puts none on the books. */
+  QA_REGISTER_FLOAT: z.coerce.number().min(0).max(100_000).default(200),
   QA_PAY_VENDORS: bool.default(true),
   QA_AP_PAYMENT_MAX: z.coerce.number().min(0).max(10_000_000).default(5000),
   QA_AP_PAYMENTS_PER_RUN: intIn(0, 1000).default(5),
@@ -120,6 +122,7 @@ export interface QaConfig {
   minGapMinutes: number;
   /** Opening bank balance assumed for a bank account the harness has not worked before. */
   bankOpeningBalance: number;
+  registerFloat: number;
   /** How each site's customer visits are generated; `visitsMax` 0 turns them off. */
   day: DayPlanOptions;
   /** Base URL for a package's requests, or undefined when it cannot be reached. */
@@ -201,6 +204,7 @@ export function loadQaConfig(env: Env, gatewayBaseUrl: string): QaConfig {
     maxPerTick: data.QA_MAX_PER_TICK,
     concurrency: data.QA_CONCURRENCY,
     bankOpeningBalance: data.QA_BANK_OPENING_BALANCE,
+    registerFloat: data.QA_REGISTER_FLOAT,
     minGapMinutes: data.QA_MIN_GAP_MINUTES,
     day: {
       visitsMin: Math.min(data.QA_VISITS_PER_SITE_MIN, data.QA_VISITS_PER_SITE_MAX),
