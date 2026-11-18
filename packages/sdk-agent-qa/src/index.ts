@@ -42,7 +42,13 @@ function buildModel(config: QaConfig, required: boolean): ModelPort {
     }
     return noModel;
   }
-  return new AiSdkModel({ chain, temperature: config.temperature, maxOutputTokens: config.maxOutputTokens, log });
+  return new AiSdkModel({
+    chain,
+    temperature: config.temperature,
+    maxOutputTokens: config.maxOutputTokens,
+    openrouterProvider: config.openrouterProvider,
+    log,
+  });
 }
 
 function build(options: { modelRequired: boolean }): { harness: Harness; config: QaConfig; backend: BackendSession } {

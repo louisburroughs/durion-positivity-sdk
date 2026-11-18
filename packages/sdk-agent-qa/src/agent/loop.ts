@@ -41,9 +41,11 @@ export type LoopMessage =
 export interface ModelTurn {
   text: string;
   toolCalls: ModelToolCall[];
-  usage: { inputTokens: number; outputTokens: number };
+  usage: { inputTokens: number; outputTokens: number; cachedInputTokens?: number };
   /** Which model actually answered (the adapter may have failed over). */
   model: string;
+  /** The upstream host that served the turn, when the router says (OpenRouter's `provider`). */
+  provider?: string;
 }
 
 export interface ModelRequest {
@@ -97,7 +99,7 @@ export interface LoopOptions {
 }
 
 export type LoopEvent =
-  | { type: 'model'; step: number; model: string; text: string; toolCalls: ModelToolCall[]; usage?: ModelTurn['usage'] }
+  | { type: 'model'; step: number; model: string; provider?: string; text: string; toolCalls: ModelToolCall[]; usage?: ModelTurn['usage'] }
   | { type: 'tool'; step: number; name: string; input: unknown; output: unknown }
   | { type: 'end'; status: LoopStatus; detail?: string };
 
@@ -187,7 +189,15 @@ export async function runLoop(options: LoopOptions): Promise<LoopResult> {
     usage.inputTokens += turn.usage.inputTokens;
     usage.outputTokens += turn.usage.outputTokens;
     models.add(turn.model);
-    options.onEvent?.({ type: 'model', step: steps, model: turn.model, text: turn.text, toolCalls: turn.toolCalls, usage: turn.usage });
+    options.onEvent?.({
+      type: 'model',
+      step: steps,
+      model: turn.model,
+      provider: turn.provider,
+      text: turn.text,
+      toolCalls: turn.toolCalls,
+      usage: turn.usage,
+    });
     messages.push({ role: 'assistant', text: turn.text, toolCalls: turn.toolCalls });
 
     if (turn.toolCalls.length === 0) {

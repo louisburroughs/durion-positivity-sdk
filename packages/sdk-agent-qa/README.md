@@ -498,6 +498,14 @@ for finding the request in the backend's logs.
 | `gateway` | `AI_GATEWAY_API_KEY` | Vercel AI Gateway; ships with the AI SDK. |
 | `custom` | `QA_CUSTOM_BASE_URL`, `QA_CUSTOM_API_KEY` | Any other OpenAI-compatible endpoint (LM Studio, vLLM, a corporate proxy). |
 
+**OpenRouter routing.** One OpenRouter model id is served by many hosts, and they count the same prompt very
+differently: on 2026-11-17 the first turn of one scenario cost about 5k input tokens on some hosts and about 20k on
+others, and runs that landed on a costly host ran out of `QA_MAX_TOKENS` three times as often. Each transcript's
+`model` events record the serving host as `provider`, plus `cachedInputTokens` when the host reports a cache hit.
+Set `QA_OPENROUTER_PROVIDER` to OpenRouter's provider-routing object, as JSON, to exclude or prefer hosts:
+`QA_OPENROUTER_PROVIDER={"ignore":["Wafer"]}` or `{"order":["DeepInfra","Novita"],"allow_fallbacks":true}`.
+It applies to `openrouter` models only.
+
 All but `gateway` go through one adapter, `@ai-sdk/openai-compatible`. Adding a first-party provider package
 (`@ai-sdk/anthropic`, `@ai-sdk/google`) is a few lines in `agent/aiSdkModel.ts`.
 
