@@ -169,10 +169,19 @@ export interface AiSdkModelOptions {
   maxRetries?: number;
   temperature?: number;
   maxOutputTokens?: number;
+  /**
+   * OpenRouter provider routing (its `provider` request object, e.g. `{ "ignore": ["Wafer"] }`),
+   * sent on OpenRouter models only. One model id is served by many hosts that count the same
+   * prompt very differently, so an unrouted run can spend four times the tokens of another.
+   */
+  openrouterProvider?: Record<string, unknown>;
   /** Test seam: supplies the model for a ref instead of building a provider. */
   resolve?(ref: ModelRef): LanguageModel;
   log?(message: string): void;
 }
+
+/** Parsed from QA_OPENROUTER_PROVIDER, so plain JSON. */
+type ProviderOptions = NonNullable<Parameters<typeof generateText>[0]['providerOptions']>;
 
 export class AiSdkModel implements ModelPort {
   private readonly models: Array<{ ref: ModelRef; model: LanguageModel }>;
@@ -223,7 +232,13 @@ export class AiSdkModel implements ModelPort {
           temperature: this.options.temperature,
           maxOutputTokens: this.options.maxOutputTokens,
           abortSignal: request.abortSignal,
+          // The body names the host that served the turn; OpenRouter routes each request on its own.
+          include: { responseBody: true },
+          ...(ref.provider === 'openrouter' && this.options.openrouterProvider
+            ? { providerOptions: { openrouter: { provider: this.options.openrouterProvider } } as unknown as ProviderOptions }
+            : {}),
         });
+        const body = result.response?.body as { provider?: unknown } | undefined;
         if (index !== this.preferred) {
           this.options.log?.(`model failover: now using ${label}`);
           this.preferred = index;
@@ -242,8 +257,13 @@ export class AiSdkModel implements ModelPort {
             }
             return { id: call.toolCallId, name: call.toolName, input };
           }),
-          usage: { inputTokens: result.usage.inputTokens ?? 0, outputTokens: result.usage.outputTokens ?? 0 },
+          usage: {
+            inputTokens: result.usage.inputTokens ?? 0,
+            outputTokens: result.usage.outputTokens ?? 0,
+            cachedInputTokens: result.usage.inputTokenDetails?.cacheReadTokens,
+          },
           model: label,
+          provider: typeof body?.provider === 'string' ? body.provider : undefined,
         };
       } catch (error) {
         if (request.abortSignal?.aborted) {

@@ -21,6 +21,13 @@ describe('loadQaConfig', () => {
     });
   });
 
+  it('reads OpenRouter provider routing as a JSON object and rejects anything else', () => {
+    expect(loadQaConfig({}, GATEWAY).openrouterProvider).toBeUndefined();
+    expect(loadQaConfig({ QA_OPENROUTER_PROVIDER: '{"ignore":["Wafer"]}' }, GATEWAY).openrouterProvider).toEqual({ ignore: ['Wafer'] });
+    expect(() => loadQaConfig({ QA_OPENROUTER_PROVIDER: '["Wafer"]' }, GATEWAY)).toThrow(/QA_OPENROUTER_PROVIDER/);
+    expect(() => loadQaConfig({ QA_OPENROUTER_PROVIDER: '{nope' }, GATEWAY)).toThrow(/QA_OPENROUTER_PROVIDER/);
+  });
+
   it('routes each package through its gateway prefix', () => {
     const config = loadQaConfig({}, GATEWAY);
     expect(config.baseUrlFor('order')).toBe('http://localhost:18080/order');

@@ -68,6 +68,8 @@ const schema = z.object({
   QA_MAX_TOKENS: intIn(1_000, 50_000_000).default(400_000),
   QA_REQUEST_TIMEOUT_MS: intIn(1_000, 600_000).default(30_000),
   QA_TEMPERATURE: z.coerce.number().min(0).max(2).optional(),
+  /** OpenRouter provider routing as JSON, e.g. {"ignore":["Wafer"]} or {"order":["z-ai"],"allow_fallbacks":true}. */
+  QA_OPENROUTER_PROVIDER: z.string().optional(),
   QA_MAX_OUTPUT_TOKENS: intIn(64, 100_000).optional(),
   QA_POLL_SECONDS: intIn(5, 3_600).default(60),
   QA_JITTER_MINUTES: intIn(0, 120).default(10),
@@ -105,6 +107,7 @@ export interface QaConfig {
   limits: { maxSteps: number; maxCalls: number; timeoutMs: number; maxTokens: number };
   requestTimeoutMs: number;
   temperature: number | undefined;
+  openrouterProvider: Record<string, unknown> | undefined;
   maxOutputTokens: number | undefined;
   pollSeconds: number;
   jitterMinutes: number;
@@ -149,6 +152,18 @@ export function loadQaConfig(env: Env, gatewayBaseUrl: string): QaConfig {
       problems.push(`QA_TIMEZONE: "${parsed.data.QA_TIMEZONE}" is not an IANA time zone`);
     }
   }
+  let openrouterProvider: Record<string, unknown> | undefined;
+  if (parsed.success && parsed.data.QA_OPENROUTER_PROVIDER?.trim()) {
+    try {
+      const value: unknown = JSON.parse(parsed.data.QA_OPENROUTER_PROVIDER);
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        throw new Error('not an object');
+      }
+      openrouterProvider = value as Record<string, unknown>;
+    } catch {
+      problems.push('QA_OPENROUTER_PROVIDER: must be a JSON object, e.g. {"ignore":["Wafer"]}');
+    }
+  }
   if (!parsed.success || problems.length > 0) {
     throw new Error(`Agent QA configuration is invalid:\n  - ${problems.join('\n  - ')}`);
   }
@@ -178,6 +193,7 @@ export function loadQaConfig(env: Env, gatewayBaseUrl: string): QaConfig {
     },
     requestTimeoutMs: data.QA_REQUEST_TIMEOUT_MS,
     temperature: data.QA_TEMPERATURE,
+    openrouterProvider,
     maxOutputTokens: data.QA_MAX_OUTPUT_TOKENS,
     pollSeconds: data.QA_POLL_SECONDS,
     jitterMinutes: data.QA_JITTER_MINUTES,

@@ -414,7 +414,8 @@ export class ToolRuntime {
         risk: operation.risk,
         calledThisMonth: this.options.coverage.isCalled(operation.id),
       })),
-      packages: pkg ? undefined : this.options.catalog.packages,
+      // The package list only helps a search that found nothing; every other turn would resend it.
+      packages: pkg || scored.length > 0 ? undefined : this.options.catalog.packages,
     };
   }
 
@@ -437,7 +438,7 @@ export class ToolRuntime {
         }),
         execute: async (input) => {
           const { query, pkg, risk, limit } = input as { query: string; pkg?: string; risk?: Risk; limit?: number };
-          return this.search(query, pkg, risk, limit ?? 15);
+          return this.search(query, pkg, risk, limit ?? 8);
         },
       },
       {
