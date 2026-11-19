@@ -51,6 +51,24 @@ import {
  */
 export interface BillIntakeResponse {
     /**
+     * When it was attached
+     * @type {Date}
+     * @memberof BillIntakeResponse
+     */
+    attachedAt?: Date;
+    /**
+     * The existing bill this draft's document was attached to, once ATTACHED
+     * @type {string}
+     * @memberof BillIntakeResponse
+     */
+    attachedBillId?: string;
+    /**
+     * Who attached it
+     * @type {string}
+     * @memberof BillIntakeResponse
+     */
+    attachedBy?: string;
+    /**
      * 
      * @type {string}
      * @memberof BillIntakeResponse
@@ -237,7 +255,7 @@ export interface BillIntakeResponse {
      */
     vendorResolution?: BillIntakeResponseVendorResolutionEnum;
     /**
-     * Send this back with an edit or a confirmation: a draft changed since is 409 OPTIMISTIC_LOCK
+     * Send this back with an edit, a confirmation or an attach: a draft changed since is 409 OPTIMISTIC_LOCK
      * @type {number}
      * @memberof BillIntakeResponse
      */
@@ -272,7 +290,8 @@ export enum BillIntakeResponseStatusEnum {
     Extracting = 'EXTRACTING',
     ReadyForReview = 'READY_FOR_REVIEW',
     Confirmed = 'CONFIRMED',
-    Discarded = 'DISCARDED'
+    Discarded = 'DISCARDED',
+    Attached = 'ATTACHED'
 }
 /**
 * @export
@@ -303,6 +322,9 @@ export function BillIntakeResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'attachedAt': json['attachedAt'] == null ? undefined : (new Date(json['attachedAt'])),
+        'attachedBillId': json['attachedBillId'] == null ? undefined : json['attachedBillId'],
+        'attachedBy': json['attachedBy'] == null ? undefined : json['attachedBy'],
         'channel': json['channel'] == null ? undefined : json['channel'],
         'confirmedAt': json['confirmedAt'] == null ? undefined : (new Date(json['confirmedAt'])),
         'confirmedBillId': json['confirmedBillId'] == null ? undefined : json['confirmedBillId'],
@@ -344,6 +366,9 @@ export function BillIntakeResponseToJSON(value?: BillIntakeResponse | null): any
     }
     return {
         
+        'attachedAt': value['attachedAt'] == null ? undefined : ((value['attachedAt'] as any).toISOString()),
+        'attachedBillId': value['attachedBillId'],
+        'attachedBy': value['attachedBy'],
         'channel': value['channel'],
         'confirmedAt': value['confirmedAt'] == null ? undefined : ((value['confirmedAt']).toISOString()),
         'confirmedBillId': value['confirmedBillId'],

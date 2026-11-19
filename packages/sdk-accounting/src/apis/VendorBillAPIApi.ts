@@ -98,6 +98,7 @@ export interface ListVendorBillsByStageRequest {
     stage: ListVendorBillsByStageStageEnum;
     page?: number;
     size?: number;
+    hasDocument?: boolean;
 }
 
 export interface MatchVendorInvoiceRequest {
@@ -439,7 +440,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists vendor bills whose due date falls in [dueFrom, dueTo], optionally filtered by status, ordered by due date ascending. Use this tool to browse or triage upcoming/overdue payables across vendors; do not use listApBills for this, which is scoped to APPROVED-only bills sorted for payment selection, and use getVendorBillById when the bill id is already known. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: dueFrom and dueTo (ISO dates, dueTo on or after dueFrom); the window cannot exceed 366 days, to bound the scan. status is an optional filter (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, CURRENCY_HOLD, APPROVED, REJECTED, PAID, VOIDED); page/size/sort are standard, though the due-date-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_VENDOR_BILL_LIST_VIEW audit event; no state changes. Returns 400 when dueTo is before dueFrom, the window exceeds 366 days, or status is not a recognized VendorBillStatus value. 
+     * Lists vendor bills whose due date falls in [dueFrom, dueTo], optionally filtered by status, ordered by due date ascending. Use this tool to browse or triage upcoming/overdue payables across vendors; do not use listApBills for this, which is scoped to APPROVED-only bills sorted for payment selection, and use getVendorBillById when the bill id is already known. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: dueFrom and dueTo (ISO dates, dueTo on or after dueFrom); the window cannot exceed 366 days, to bound the scan. status is an optional filter (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, CURRENCY_HOLD, AWAITING_APPROVAL, APPROVED, REJECTED, PAID, VOIDED); page/size/sort are standard, though the due-date-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_VENDOR_BILL_LIST_VIEW audit event; no state changes. Returns 400 when dueTo is before dueFrom, the window exceeds 366 days, or status is not a recognized VendorBillStatus value. 
      * List Vendor Bills By Due Date
      */
     async listVendorBillsRaw(requestParameters: ListVendorBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageVendorBillListRow>> {
@@ -504,7 +505,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists vendor bills whose due date falls in [dueFrom, dueTo], optionally filtered by status, ordered by due date ascending. Use this tool to browse or triage upcoming/overdue payables across vendors; do not use listApBills for this, which is scoped to APPROVED-only bills sorted for payment selection, and use getVendorBillById when the bill id is already known. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: dueFrom and dueTo (ISO dates, dueTo on or after dueFrom); the window cannot exceed 366 days, to bound the scan. status is an optional filter (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, CURRENCY_HOLD, APPROVED, REJECTED, PAID, VOIDED); page/size/sort are standard, though the due-date-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_VENDOR_BILL_LIST_VIEW audit event; no state changes. Returns 400 when dueTo is before dueFrom, the window exceeds 366 days, or status is not a recognized VendorBillStatus value. 
+     * Lists vendor bills whose due date falls in [dueFrom, dueTo], optionally filtered by status, ordered by due date ascending. Use this tool to browse or triage upcoming/overdue payables across vendors; do not use listApBills for this, which is scoped to APPROVED-only bills sorted for payment selection, and use getVendorBillById when the bill id is already known. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: dueFrom and dueTo (ISO dates, dueTo on or after dueFrom); the window cannot exceed 366 days, to bound the scan. status is an optional filter (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, CURRENCY_HOLD, AWAITING_APPROVAL, APPROVED, REJECTED, PAID, VOIDED); page/size/sort are standard, though the due-date-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_VENDOR_BILL_LIST_VIEW audit event; no state changes. Returns 400 when dueTo is before dueFrom, the window exceeds 366 days, or status is not a recognized VendorBillStatus value. 
      * List Vendor Bills By Due Date
      */
     async listVendorBills(requestParameters: ListVendorBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillListRow> {
@@ -513,7 +514,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the vendor bills of one stage of Bills to pay, each with its bill number, vendor name, total, currency, bill and due dates, status, channel, submittedAt, open amount and, in review, the requiredTier from the current clerk limit. The server sets the order: CHECK and APPROVE oldest first, PAY by due date with bills without one last, DONE newest paid first. There is no due-date window. Use this tool for the bills behind one count of getVendorBillStageCounts; use getVendorBillById instead for one bill\'s full review read. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: stage (CHECK, APPROVE, PAY or DONE); page (from 0) and size (capped at 100) are optional. Emits an ACCOUNTING_VENDOR_BILL_STAGE_LIST audit event; no state changes. Returns 200 with a page of rows, 400 VALIDATION_ERROR for an unknown stage, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * Lists the vendor bills of one stage of Bills to pay, each with its bill number, vendor name, total, currency, bill and due dates, status, channel, submittedAt, open amount, sourceFileId (its document, null when it has none) and, in review, the requiredTier from the current clerk limit. The server sets the order: CHECK and APPROVE oldest first, PAY by due date with bills without one last, DONE newest paid first. There is no due-date window. Use this tool for the bills behind one count of getVendorBillStageCounts; use getVendorBillById instead for one bill\'s full review read. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: stage (CHECK, APPROVE, PAY or DONE); page (from 0) and size (capped at 100) are optional, and so is hasDocument: true lists only the bills that have a document, false only those that have none. Emits an ACCOUNTING_VENDOR_BILL_STAGE_LIST audit event; no state changes. Returns 200 with a page of rows, 400 VALIDATION_ERROR for an unknown stage, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
      * List Vendor Bills By Stage
      */
     async listVendorBillsByStageRaw(requestParameters: ListVendorBillsByStageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageVendorBillStageRow>> {
@@ -538,6 +539,10 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
             queryParameters['size'] = requestParameters['size'];
         }
 
+        if (requestParameters['hasDocument'] != null) {
+            queryParameters['hasDocument'] = requestParameters['hasDocument'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.accessToken) {
@@ -559,7 +564,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the vendor bills of one stage of Bills to pay, each with its bill number, vendor name, total, currency, bill and due dates, status, channel, submittedAt, open amount and, in review, the requiredTier from the current clerk limit. The server sets the order: CHECK and APPROVE oldest first, PAY by due date with bills without one last, DONE newest paid first. There is no due-date window. Use this tool for the bills behind one count of getVendorBillStageCounts; use getVendorBillById instead for one bill\'s full review read. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: stage (CHECK, APPROVE, PAY or DONE); page (from 0) and size (capped at 100) are optional. Emits an ACCOUNTING_VENDOR_BILL_STAGE_LIST audit event; no state changes. Returns 200 with a page of rows, 400 VALIDATION_ERROR for an unknown stage, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * Lists the vendor bills of one stage of Bills to pay, each with its bill number, vendor name, total, currency, bill and due dates, status, channel, submittedAt, open amount, sourceFileId (its document, null when it has none) and, in review, the requiredTier from the current clerk limit. The server sets the order: CHECK and APPROVE oldest first, PAY by due date with bills without one last, DONE newest paid first. There is no due-date window. Use this tool for the bills behind one count of getVendorBillStageCounts; use getVendorBillById instead for one bill\'s full review read. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: stage (CHECK, APPROVE, PAY or DONE); page (from 0) and size (capped at 100) are optional, and so is hasDocument: true lists only the bills that have a document, false only those that have none. Emits an ACCOUNTING_VENDOR_BILL_STAGE_LIST audit event; no state changes. Returns 200 with a page of rows, 400 VALIDATION_ERROR for an unknown stage, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
      * List Vendor Bills By Stage
      */
     async listVendorBillsByStage(requestParameters: ListVendorBillsByStageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillStageRow> {

@@ -62,6 +62,12 @@ export interface VendorBillStageRow {
      */
     requiredTier?: VendorBillStageRowRequiredTierEnum;
     /**
+     * The bill's document: the stored file its draft was read from, or the one attached to it later; null when the bill has no document
+     * @type {string}
+     * @memberof VendorBillStageRow
+     */
+    sourceFileId?: string;
+    /**
      * Status
      * @type {string}
      * @memberof VendorBillStageRow
@@ -163,6 +169,7 @@ export function VendorBillStageRowFromJSONTyped(json: any, ignoreDiscriminator: 
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'openAmount': json['openAmount'],
         'requiredTier': json['requiredTier'] == null ? undefined : json['requiredTier'],
+        'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
         'status': json['status'],
         'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
         'totalAmount': json['totalAmount'],
@@ -185,6 +192,7 @@ export function VendorBillStageRowToJSON(value?: VendorBillStageRow | null): any
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'openAmount': value['openAmount'],
         'requiredTier': value['requiredTier'],
+        'sourceFileId': value['sourceFileId'],
         'status': value['status'],
         'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
         'totalAmount': value['totalAmount'],

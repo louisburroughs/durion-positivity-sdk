@@ -23,6 +23,7 @@ import type {
   GeneralLedgerReport,
   IncomeStatementReport,
   JournalLineDrilldownResponse,
+  MonthEndPacketReadiness,
   PageReportExportResponse,
   ReportExportRequest,
   ReportExportResponse,
@@ -51,6 +52,8 @@ import {
     IncomeStatementReportToJSON,
     JournalLineDrilldownResponseFromJSON,
     JournalLineDrilldownResponseToJSON,
+    MonthEndPacketReadinessFromJSON,
+    MonthEndPacketReadinessToJSON,
     PageReportExportResponseFromJSON,
     PageReportExportResponseToJSON,
     ReportExportRequestFromJSON,
@@ -126,6 +129,11 @@ export interface GenerateTrialBalanceRequest {
     asOf: Date;
 }
 
+export interface GetMonthEndPacketReadinessRequest {
+    startDate: Date;
+    endDate: Date;
+}
+
 export interface GetReportExportStatusRequest {
     exportId: string;
 }
@@ -180,7 +188,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -387,7 +395,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates the Aged Payables report as of a date: per-vendor open vendor-bill balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals. Approved open vendor credit notes and unapplied AP payments are negative netting columns in addition to the buckets. Buckets are days past the bill\'s DUE date, falling back to the bill date when a bill carries no due date — the same rule generateAgedReceivables uses — and not-yet-due bills are INCLUDED in the 0-30 bucket, which therefore means \"not yet due, or up to 30 days past due\". Use this tool to review what is owed to vendors and how overdue it is; do not use generateAgedReceivables, which is the customer-side mirror, and use listApBills to pick individual bills for payment. Preconditions: none; rows are empty when no open payables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_PAYABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generates the Aged Payables report as of a date: per-vendor open vendor-bill balances bucketed by days past due, with grand totals, as notYetDue (due on the as-of date or later), days1To30, days31To60, days61To90, days90Plus, overdue (the sum of the four late buckets) and totalOutstanding (notYetDue plus overdue). Approved open vendor credit notes and unapplied AP payments are negative netting columns in addition to the buckets. Buckets are days past the bill\'s DUE date, falling back to the bill date when a bill carries no due date — the same rule generateAgedReceivables uses — and a bill that is not yet due is in notYetDue, never in days1To30. Use this tool to review what is owed to vendors and how overdue it is; do not use generateAgedReceivables, which is the customer-side mirror, and use listApBills to pick individual bills for payment. Preconditions: none; rows are empty when no open payables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_PAYABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
      * Generate Aged Payables
      */
     async generateAgedPayablesRaw(requestParameters: GenerateAgedPayablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AgedPayablesReport>> {
@@ -425,7 +433,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates the Aged Payables report as of a date: per-vendor open vendor-bill balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals. Approved open vendor credit notes and unapplied AP payments are negative netting columns in addition to the buckets. Buckets are days past the bill\'s DUE date, falling back to the bill date when a bill carries no due date — the same rule generateAgedReceivables uses — and not-yet-due bills are INCLUDED in the 0-30 bucket, which therefore means \"not yet due, or up to 30 days past due\". Use this tool to review what is owed to vendors and how overdue it is; do not use generateAgedReceivables, which is the customer-side mirror, and use listApBills to pick individual bills for payment. Preconditions: none; rows are empty when no open payables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_PAYABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generates the Aged Payables report as of a date: per-vendor open vendor-bill balances bucketed by days past due, with grand totals, as notYetDue (due on the as-of date or later), days1To30, days31To60, days61To90, days90Plus, overdue (the sum of the four late buckets) and totalOutstanding (notYetDue plus overdue). Approved open vendor credit notes and unapplied AP payments are negative netting columns in addition to the buckets. Buckets are days past the bill\'s DUE date, falling back to the bill date when a bill carries no due date — the same rule generateAgedReceivables uses — and a bill that is not yet due is in notYetDue, never in days1To30. Use this tool to review what is owed to vendors and how overdue it is; do not use generateAgedReceivables, which is the customer-side mirror, and use listApBills to pick individual bills for payment. Preconditions: none; rows are empty when no open payables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_PAYABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
      * Generate Aged Payables
      */
     async generateAgedPayables(requestParameters: GenerateAgedPayablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AgedPayablesReport> {
@@ -434,7 +442,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates the Aged Receivables report as of a date: per-customer open invoice balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals, leaving out the CASH walk-in house account, whose open sales getUnpaidWalkInSales reports. Buckets are days past the invoice\'s DUE date, falling back to the invoice date when an invoice carries no due date — the same rule generateAgedPayables uses — and not-yet-due balances are INCLUDED in the 0-30 bucket, which therefore means \"not yet due, or up to 30 days past due\". Use this tool to review customer collection exposure; do not use generateAgedPayables, which is the vendor-side mirror of this report. Preconditions: none; rows are empty when no open receivables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_RECEIVABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generates the Aged Receivables report as of a date: per-customer open invoice balances bucketed by days past due, with grand totals, as notYetDue (due on the as-of date or later), days1To30, days31To60, days61To90, days90Plus, overdue (the sum of the four late buckets) and totalOutstanding (notYetDue plus overdue), leaving out the CASH walk-in house account, whose open sales getUnpaidWalkInSales reports. Buckets are days past the invoice\'s DUE date, falling back to the invoice date when an invoice carries no due date — the same rule generateAgedPayables uses — and a balance that is not yet due is in notYetDue, never in days1To30. Use this tool to review customer collection exposure; do not use generateAgedPayables, which is the vendor-side mirror of this report. Preconditions: none; rows are empty when no open receivables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_RECEIVABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
      * Generate Aged Receivables
      */
     async generateAgedReceivablesRaw(requestParameters: GenerateAgedReceivablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AgedReceivablesReport>> {
@@ -472,7 +480,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates the Aged Receivables report as of a date: per-customer open invoice balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals, leaving out the CASH walk-in house account, whose open sales getUnpaidWalkInSales reports. Buckets are days past the invoice\'s DUE date, falling back to the invoice date when an invoice carries no due date — the same rule generateAgedPayables uses — and not-yet-due balances are INCLUDED in the 0-30 bucket, which therefore means \"not yet due, or up to 30 days past due\". Use this tool to review customer collection exposure; do not use generateAgedPayables, which is the vendor-side mirror of this report. Preconditions: none; rows are empty when no open receivables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_RECEIVABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generates the Aged Receivables report as of a date: per-customer open invoice balances bucketed by days past due, with grand totals, as notYetDue (due on the as-of date or later), days1To30, days31To60, days61To90, days90Plus, overdue (the sum of the four late buckets) and totalOutstanding (notYetDue plus overdue), leaving out the CASH walk-in house account, whose open sales getUnpaidWalkInSales reports. Buckets are days past the invoice\'s DUE date, falling back to the invoice date when an invoice carries no due date — the same rule generateAgedPayables uses — and a balance that is not yet due is in notYetDue, never in days1To30. Use this tool to review customer collection exposure; do not use generateAgedPayables, which is the vendor-side mirror of this report. Preconditions: none; rows are empty when no open receivables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_RECEIVABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
      * Generate Aged Receivables
      */
     async generateAgedReceivables(requestParameters: GenerateAgedReceivablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AgedReceivablesReport> {
@@ -749,6 +757,64 @@ export class FinancialReportingApi extends runtime.BaseAPI {
      */
     async generateTrialBalance(requestParameters: GenerateTrialBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TrialBalanceReport> {
         const response = await this.generateTrialBalanceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Counts what a month-end packet for a date range would hold: the vendor bills and vendor credit notes posted in the range (billsPosted), how many of them have a stored document or none, how many have no due date, the bills dated in the range that are not yet approved, the bill drafts uploaded in the range that still wait for review, and whether every accounting period the range touches is closed. Use this tool to see what still needs a document, an approval or a review before the month is handed over; do not use getBillIntakeCounts, which counts every open draft whatever its date, or getVendorBillStageCounts, which counts bills by stage and not by posting date. Preconditions: the caller holds accounting:report:export; a bill posts at approval, so a bill is counted by its posting date, never by its bill date. Required inputs: startDate and endDate (ISO dates, both inclusive, endDate on or after startDate, at most 366 days). Emits an ACCOUNTING_MONTH_END_PACKET_READINESS event, which carries no parameter, and changes nothing. Returns 200 with the counts and periodClosed, 400 VALIDATION_ERROR when a date is missing or malformed, startDate is after endDate or the range is longer than 366 days, 401 without a valid token, and 403 without accounting:report:export. 
+     * Get Month-End Packet Readiness
+     */
+    async getMonthEndPacketReadinessRaw(requestParameters: GetMonthEndPacketReadinessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MonthEndPacketReadiness>> {
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError(
+                'startDate',
+                'Required parameter "startDate" was null or undefined when calling getMonthEndPacketReadiness().'
+            );
+        }
+
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError(
+                'endDate',
+                'Required parameter "endDate" was null or undefined when calling getMonthEndPacketReadiness().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/month-end-packet/readiness`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MonthEndPacketReadinessFromJSON(jsonValue));
+    }
+
+    /**
+     * Counts what a month-end packet for a date range would hold: the vendor bills and vendor credit notes posted in the range (billsPosted), how many of them have a stored document or none, how many have no due date, the bills dated in the range that are not yet approved, the bill drafts uploaded in the range that still wait for review, and whether every accounting period the range touches is closed. Use this tool to see what still needs a document, an approval or a review before the month is handed over; do not use getBillIntakeCounts, which counts every open draft whatever its date, or getVendorBillStageCounts, which counts bills by stage and not by posting date. Preconditions: the caller holds accounting:report:export; a bill posts at approval, so a bill is counted by its posting date, never by its bill date. Required inputs: startDate and endDate (ISO dates, both inclusive, endDate on or after startDate, at most 366 days). Emits an ACCOUNTING_MONTH_END_PACKET_READINESS event, which carries no parameter, and changes nothing. Returns 200 with the counts and periodClosed, 400 VALIDATION_ERROR when a date is missing or malformed, startDate is after endDate or the range is longer than 366 days, 401 without a valid token, and 403 without accounting:report:export. 
+     * Get Month-End Packet Readiness
+     */
+    async getMonthEndPacketReadiness(requestParameters: GetMonthEndPacketReadinessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MonthEndPacketReadiness> {
+        const response = await this.getMonthEndPacketReadinessRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

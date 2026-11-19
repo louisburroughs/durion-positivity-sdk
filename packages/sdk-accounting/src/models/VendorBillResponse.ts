@@ -99,6 +99,12 @@ import {
  */
 export interface VendorBillResponse {
     /**
+     * For a bill whose document was attached to it: the document's total less the bill's total as it is now (totalAmount), so it follows a later change of the bill's total; 0 when they agree. Null for a bill with no attached document (one confirmed from its draft included), and when the document stated no total or another currency than the bill's (a document that states no currency is compared as the ledger currency). The bill's amounts were not changed by the attach
+     * @type {number}
+     * @memberof VendorBillResponse
+     */
+    amountDifference?: number;
+    /**
      * 
      * @type {VendorBillApproval}
      * @memberof VendorBillResponse
@@ -255,6 +261,12 @@ export interface VendorBillResponse {
      */
     rejection?: VendorBillRejection;
     /**
+     * The bill's document: the stored file its draft was read from, set at confirmation, or the one attached to it later (attachBillIntake); null when the bill has no document. Ask previewBillSourceFile or downloadBillSourceFile for it
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    sourceFileId?: string;
+    /**
      * Bill status
      * @type {string}
      * @memberof VendorBillResponse
@@ -378,6 +390,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'amountDifference': json['amountDifference'] == null ? undefined : json['amountDifference'],
         'approval': json['approval'] == null ? undefined : VendorBillApprovalFromJSON(json['approval']),
         'availableActions': ((json['availableActions'] as Array<any>).map(VendorBillAvailableActionFromJSON)),
         'billDate': json['billDate'] == null ? undefined : (new Date(json['billDate'])),
@@ -404,6 +417,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'posting': json['posting'] == null ? undefined : VendorBillPostingFromJSON(json['posting']),
         'reissues': ((json['reissues'] as Array<any>).map(VendorBillReissueFromJSON)),
         'rejection': json['rejection'] == null ? undefined : VendorBillRejectionFromJSON(json['rejection']),
+        'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
         'status': json['status'],
         'statusExplanation': json['statusExplanation'] == null ? undefined : json['statusExplanation'],
         'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
@@ -423,6 +437,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
     }
     return {
         
+        'amountDifference': value['amountDifference'],
         'approval': VendorBillApprovalToJSON(value['approval']),
         'availableActions': ((value['availableActions'] as Array<any>).map(VendorBillAvailableActionToJSON)),
         'billDate': value['billDate'] == null ? undefined : ((value['billDate']).toISOString()),
@@ -449,6 +464,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'posting': VendorBillPostingToJSON(value['posting']),
         'reissues': ((value['reissues'] as Array<any>).map(VendorBillReissueToJSON)),
         'rejection': VendorBillRejectionToJSON(value['rejection']),
+        'sourceFileId': value['sourceFileId'],
         'status': value['status'],
         'statusExplanation': value['statusExplanation'],
         'taxAmount': value['taxAmount'],
