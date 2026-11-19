@@ -85,6 +85,9 @@ const schema = z.object({
   QA_VISITS_PER_SITE_MIN: intIn(0, 200).default(4),
   QA_VISITS_PER_SITE_MAX: intIn(0, 200).default(8),
   QA_VISITS_TENANT_MAX: intIn(0, 2_000).default(60),
+  /** Comma-separated site codes kept below the tenant's average, at `QA_QUIET_SITE_SHARE` of their size-scaled count. */
+  QA_QUIET_SITES: z.string().default(''),
+  QA_QUIET_SITE_SHARE: z.coerce.number().min(0).max(1).default(0.5),
   QA_NEW_CUSTOMER_RATIO: z.coerce.number().min(0).max(1).default(0.3),
   QA_COMMERCIAL_RATIO: z.coerce.number().min(0).max(1).default(0.3),
   QA_NEW_VEHICLE_RATIO: z.coerce.number().min(0).max(1).default(0.2),
@@ -210,6 +213,8 @@ export function loadQaConfig(env: Env, gatewayBaseUrl: string): QaConfig {
       visitsMin: Math.min(data.QA_VISITS_PER_SITE_MIN, data.QA_VISITS_PER_SITE_MAX),
       visitsMax: data.QA_VISITS_PER_SITE_MAX,
       tenantMax: data.QA_VISITS_TENANT_MAX,
+      quietSites: data.QA_QUIET_SITES.split(',').map((code) => code.trim().toUpperCase()).filter(Boolean),
+      quietShare: data.QA_QUIET_SITE_SHARE,
       newCustomerRatio: data.QA_NEW_CUSTOMER_RATIO,
       commercialRatio: data.QA_COMMERCIAL_RATIO,
       newVehicleRatio: data.QA_NEW_VEHICLE_RATIO,

@@ -232,6 +232,19 @@ describe('a tenant with several sites', () => {
     expect(counts.every((count) => count >= 2)).toBe(true);
   });
 
+  it('keeps a quiet site below the tenant average, even when it is the biggest', () => {
+    for (const date of WEEKDAYS) {
+      const counts = visitCounts(date, SITES, { ...RANGE, visitsMin: 6, visitsMax: 14, quietSites: [DEPOT.code] });
+      const average = counts.reduce((sum, count) => sum + count, 0) / counts.length;
+      expect(counts[0]).toBeLessThan(average);
+      expect(counts[0]).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('leaves the counts alone when no site is quiet', () => {
+    expect(visitCounts('2026-03-10', SITES, { ...RANGE, quietSites: [] })).toEqual(visitCounts('2026-03-10', SITES, RANGE));
+  });
+
   it('plans nothing for a tenant with no sites', () => {
     expect(buildTenantDay('2026-03-10', [], RANGE)).toMatchObject({ sites: [], visits: [] });
   });
