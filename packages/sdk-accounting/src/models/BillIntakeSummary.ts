@@ -56,6 +56,12 @@ export interface BillIntakeSummary {
      */
     pageCount?: number;
     /**
+     * Whether the draft is ready to confirm: it is READY_FOR_REVIEW, its vendor is found, no required or valued field is CHECK_THIS, and billNumber, billDate, currency and totalAmount are present. Derived by the server; false in every other status. It covers no more: values are not validated and lines not checked for completeness, so confirmation may still answer a validation error, a duplicate, an inactive vendor or a newer version
+     * @type {boolean}
+     * @memberof BillIntakeSummary
+     */
+    readyToConfirm: boolean;
+    /**
      * 
      * @type {string}
      * @memberof BillIntakeSummary
@@ -119,7 +125,8 @@ export enum BillIntakeSummaryStatusEnum {
     Extracting = 'EXTRACTING',
     ReadyForReview = 'READY_FOR_REVIEW',
     Confirmed = 'CONFIRMED',
-    Discarded = 'DISCARDED'
+    Discarded = 'DISCARDED',
+    Attached = 'ATTACHED'
 }
 /**
 * @export
@@ -137,6 +144,7 @@ export enum BillIntakeSummaryVendorResolutionEnum {
  * Check if a given object implements the BillIntakeSummary interface.
  */
 export function instanceOfBillIntakeSummary(value: object): boolean {
+    if (!('readyToConfirm' in value)) return false;
     return true;
 }
 
@@ -156,6 +164,7 @@ export function BillIntakeSummaryFromJSONTyped(json: any, ignoreDiscriminator: b
         'intakeId': json['intakeId'] == null ? undefined : json['intakeId'],
         'intakeReference': json['intakeReference'] == null ? undefined : json['intakeReference'],
         'pageCount': json['pageCount'] == null ? undefined : json['pageCount'],
+        'readyToConfirm': json['readyToConfirm'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
         'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
         'status': json['status'] == null ? undefined : json['status'],
@@ -178,6 +187,7 @@ export function BillIntakeSummaryToJSON(value?: BillIntakeSummary | null): any {
         'intakeId': value['intakeId'],
         'intakeReference': value['intakeReference'],
         'pageCount': value['pageCount'],
+        'readyToConfirm': value['readyToConfirm'],
         'rejectionReason': value['rejectionReason'],
         'sourceFileId': value['sourceFileId'],
         'status': value['status'],

@@ -50,6 +50,12 @@ export interface VendorBillListRow {
      */
     dueDate?: Date;
     /**
+     * The bill's document: the stored file its draft was read from, or the one attached to it later; null when the bill has no document
+     * @type {string}
+     * @memberof VendorBillListRow
+     */
+    sourceFileId?: string;
+    /**
      * Bill lifecycle status
      * @type {string}
      * @memberof VendorBillListRow
@@ -121,6 +127,7 @@ export function VendorBillListRowFromJSONTyped(json: any, ignoreDiscriminator: b
         'billNumber': json['billNumber'],
         'documentType': json['documentType'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
+        'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
         'status': json['status'],
         'vendorId': json['vendorId'],
         'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
@@ -138,6 +145,7 @@ export function VendorBillListRowToJSON(value?: VendorBillListRow | null): any {
         'billNumber': value['billNumber'],
         'documentType': value['documentType'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
+        'sourceFileId': value['sourceFileId'],
         'status': value['status'],
         'vendorId': value['vendorId'],
         'vendorName': value['vendorName'],

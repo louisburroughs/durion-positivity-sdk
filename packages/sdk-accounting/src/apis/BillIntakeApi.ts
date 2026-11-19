@@ -16,11 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  BillIntakeAttachRequest,
+  BillIntakeAttachmentResponse,
   BillIntakeConfirmRequest,
+  BillIntakeCounts,
   BillIntakeDiscardRequest,
   BillIntakeEditRequest,
   BillIntakeMappingRequest,
   BillIntakeMappingTemplateList,
+  BillIntakeMatchSuggestions,
   BillIntakePage,
   BillIntakeResponse,
   BillIntakeUploadResponse,
@@ -29,8 +33,14 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    BillIntakeAttachRequestFromJSON,
+    BillIntakeAttachRequestToJSON,
+    BillIntakeAttachmentResponseFromJSON,
+    BillIntakeAttachmentResponseToJSON,
     BillIntakeConfirmRequestFromJSON,
     BillIntakeConfirmRequestToJSON,
+    BillIntakeCountsFromJSON,
+    BillIntakeCountsToJSON,
     BillIntakeDiscardRequestFromJSON,
     BillIntakeDiscardRequestToJSON,
     BillIntakeEditRequestFromJSON,
@@ -39,6 +49,8 @@ import {
     BillIntakeMappingRequestToJSON,
     BillIntakeMappingTemplateListFromJSON,
     BillIntakeMappingTemplateListToJSON,
+    BillIntakeMatchSuggestionsFromJSON,
+    BillIntakeMatchSuggestionsToJSON,
     BillIntakePageFromJSON,
     BillIntakePageToJSON,
     BillIntakeResponseFromJSON,
@@ -48,6 +60,12 @@ import {
     VendorBillResponseFromJSON,
     VendorBillResponseToJSON,
 } from '../models/index';
+
+export interface AttachBillIntakeRequest {
+    intakeId: string;
+    idempotencyKey: string;
+    billIntakeAttachRequest: BillIntakeAttachRequest;
+}
 
 export interface ConfirmBillIntakeRequest {
     intakeId: string;
@@ -78,6 +96,12 @@ export interface ListBillIntakeRequest {
     channel?: ListBillIntakeChannelEnum;
     page?: number;
     size?: number;
+    readiness?: ListBillIntakeReadinessEnum;
+    q?: string;
+}
+
+export interface ListBillIntakeMatchSuggestionsRequest {
+    intakeId: string;
 }
 
 export interface MapBillIntakeColumnsRequest {
@@ -103,6 +127,70 @@ export interface UploadBillDocumentsRequest {
  * 
  */
 export class BillIntakeApi extends runtime.BaseAPI {
+
+    /**
+     * Attaches a bill draft\'s stored document to a vendor bill that already exists, instead of confirming the draft into a new bill: the bill takes the draft\'s sourceFileId and intakeId and the document\'s stated total, the answer carries the difference between the two totals (amountDifference, the draft\'s less the bill\'s; null when the draft states no total or another currency than the bill\'s, a draft with no currency being compared as the ledger currency), and the draft becomes ATTACHED. Nothing else of the bill changes (not its amounts, dates, status or classification) and nothing posts; attaching is not the goods-receipt match and performs none, so a bill in PENDING_RECEIPT_MATCH is still PENDING_RECEIPT_MATCH afterwards. Use this tool when the captured bill is already in the books and only its paper is missing, after listBillIntakeMatchSuggestions; do not use it to create a bill (confirmBillIntake), to match a bill to its goods receipt (matchVendorBill) or to correct a bill\'s amounts. Preconditions: the draft is READY_FOR_REVIEW at the version you read, has a stored file and its vendor is found; the bill is that vendor\'s, is not VOIDED or REJECTED (any other status, PAID included, takes a document) and has no document yet; the caller holds accounting:bill_intake:create. Required inputs: intakeId, billId, version and the Idempotency-Key header, a UUID generated once per attach: a replay of the same key, draft and body answers the first answer with Idempotency-Replayed: true, and the same key on another draft, with another body, or by another caller is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_ATTACH event once, on the request that attaches, and one BILL_INTAKE audit row (ATTACH) with the file\'s sha-256 and the bill id, no extracted value and no amount. Returns 200 with the draft\'s and the bill\'s status; 400 VALIDATION_ERROR (a missing billId or version, or a missing or non-UUID Idempotency-Key); 404 BILL_INTAKE_NOT_FOUND or VENDOR_BILL_NOT_FOUND; 409 BILL_INTAKE_INVALID_STATE, OPTIMISTIC_LOCK, AP_BILL_NOT_ATTACHABLE (the message names the bill by number, vendor and date), AP_BILL_DOCUMENT_EXISTS, IDEMPOTENCY_CONFLICT or LOCK_TIMEOUT (another request, such as a payment in progress, holds the draft or the bill: nothing was written, retry); 422 VENDOR_NOT_FOUND when the draft\'s vendor is not found. 
+     * Attach Bill Draft To An Existing Bill
+     */
+    async attachBillIntakeRaw(requestParameters: AttachBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeAttachmentResponse>> {
+        if (requestParameters['intakeId'] == null) {
+            throw new runtime.RequiredError(
+                'intakeId',
+                'Required parameter "intakeId" was null or undefined when calling attachBillIntake().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling attachBillIntake().'
+            );
+        }
+
+        if (requestParameters['billIntakeAttachRequest'] == null) {
+            throw new runtime.RequiredError(
+                'billIntakeAttachRequest',
+                'Required parameter "billIntakeAttachRequest" was null or undefined when calling attachBillIntake().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:bill_intake:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/bill-intake/{intakeId}/attachment`.replace(`{${"intakeId"}}`, encodeURIComponent(String(requestParameters['intakeId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BillIntakeAttachRequestToJSON(requestParameters['billIntakeAttachRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillIntakeAttachmentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Attaches a bill draft\'s stored document to a vendor bill that already exists, instead of confirming the draft into a new bill: the bill takes the draft\'s sourceFileId and intakeId and the document\'s stated total, the answer carries the difference between the two totals (amountDifference, the draft\'s less the bill\'s; null when the draft states no total or another currency than the bill\'s, a draft with no currency being compared as the ledger currency), and the draft becomes ATTACHED. Nothing else of the bill changes (not its amounts, dates, status or classification) and nothing posts; attaching is not the goods-receipt match and performs none, so a bill in PENDING_RECEIPT_MATCH is still PENDING_RECEIPT_MATCH afterwards. Use this tool when the captured bill is already in the books and only its paper is missing, after listBillIntakeMatchSuggestions; do not use it to create a bill (confirmBillIntake), to match a bill to its goods receipt (matchVendorBill) or to correct a bill\'s amounts. Preconditions: the draft is READY_FOR_REVIEW at the version you read, has a stored file and its vendor is found; the bill is that vendor\'s, is not VOIDED or REJECTED (any other status, PAID included, takes a document) and has no document yet; the caller holds accounting:bill_intake:create. Required inputs: intakeId, billId, version and the Idempotency-Key header, a UUID generated once per attach: a replay of the same key, draft and body answers the first answer with Idempotency-Replayed: true, and the same key on another draft, with another body, or by another caller is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_ATTACH event once, on the request that attaches, and one BILL_INTAKE audit row (ATTACH) with the file\'s sha-256 and the bill id, no extracted value and no amount. Returns 200 with the draft\'s and the bill\'s status; 400 VALIDATION_ERROR (a missing billId or version, or a missing or non-UUID Idempotency-Key); 404 BILL_INTAKE_NOT_FOUND or VENDOR_BILL_NOT_FOUND; 409 BILL_INTAKE_INVALID_STATE, OPTIMISTIC_LOCK, AP_BILL_NOT_ATTACHABLE (the message names the bill by number, vendor and date), AP_BILL_DOCUMENT_EXISTS, IDEMPOTENCY_CONFLICT or LOCK_TIMEOUT (another request, such as a payment in progress, holds the draft or the bill: nothing was written, retry); 422 VENDOR_NOT_FOUND when the draft\'s vendor is not found. 
+     * Attach Bill Draft To An Existing Bill
+     */
+    async attachBillIntake(requestParameters: AttachBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeAttachmentResponse> {
+        const response = await this.attachBillIntakeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Confirms a checked bill draft and creates the vendor bill from it, created by the caller, in PENDING_RECEIPT_MATCH (CURRENCY_HOLD for a foreign currency). Nothing posts, and the draft\'s debit class is not copied onto the bill: submit and approval own it; a due date becomes the bill\'s only if a person accepted or corrected it. Use this tool when every field of the draft has been looked at; do not use it for a goods receipt (createVendorBillFromGoodsReceived) or a credit note (taken in by a vendor statement). Preconditions: the draft is READY_FOR_REVIEW at the version you read; its vendor is found and active; no field is CHECK_THIS (an empty optional field does not count); vendor, billNumber, billDate, currency and totalAmount are present; no live bill of the vendor holds the same number and date, or the same delivery of the same order. Required inputs: intakeId, version and the Idempotency-Key header, a UUID generated once per confirmation: a replay of the same key and version answers the bill it made with Idempotency-Replayed: true, and the same key on another draft, with another version, or by another caller is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_CONFIRM event once, on the request that creates the bill, and one BILL_INTAKE audit row. Returns 201 with the bill; 400 VALIDATION_ERROR (a required field empty, a total that is not above zero, or a missing or non-UUID Idempotency-Key); 404 BILL_INTAKE_NOT_FOUND; 409 AP_BILL_DUPLICATE with conflicts naming what matched, BILL_INTAKE_INVALID_STATE, OPTIMISTIC_LOCK or IDEMPOTENCY_CONFLICT; 422 BILL_INTAKE_FIELDS_UNCHECKED (fieldErrors name the fields), VENDOR_NOT_FOUND or VENDOR_INACTIVE; a draft whose documentType is CREDIT_NOTE becomes a credit note, a bill with negative amounts, that waits to be sent for approval. 
@@ -265,6 +353,42 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Counts the bill drafts waiting at each step, as of now: reading (QUARANTINED and EXTRACTING), needsCheck (READY_FOR_REVIEW with something left to check), readyToConfirm (READY_FOR_REVIEW and ready to confirm) and fileRejected (FILE_REJECTED). CONFIRMED, ATTACHED and DISCARDED drafts are not counted, and there is no date window. Each count equals the total of listBillIntake read with the matching status or readiness. Use this tool for the totals behind the review\'s filters; do not use listBillIntake, which pages through the drafts themselves, or getVendorBillStageCounts, which counts bills. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: none. Emits an ACCOUNTING_BILL_INTAKE_COUNTS event; no state changes. Returns 200 with the four counts and asOf, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * Get Bill Draft Counts
+     */
+    async getBillIntakeCountsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeCounts>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/bill-intake/counts`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillIntakeCountsFromJSON(jsonValue));
+    }
+
+    /**
+     * Counts the bill drafts waiting at each step, as of now: reading (QUARANTINED and EXTRACTING), needsCheck (READY_FOR_REVIEW with something left to check), readyToConfirm (READY_FOR_REVIEW and ready to confirm) and fileRejected (FILE_REJECTED). CONFIRMED, ATTACHED and DISCARDED drafts are not counted, and there is no date window. Each count equals the total of listBillIntake read with the matching status or readiness. Use this tool for the totals behind the review\'s filters; do not use listBillIntake, which pages through the drafts themselves, or getVendorBillStageCounts, which counts bills. Preconditions: none beyond the caller holding accounting:ap:view. Required inputs: none. Emits an ACCOUNTING_BILL_INTAKE_COUNTS event; no state changes. Returns 200 with the four counts and asOf, 401 without a valid token, and 403 FORBIDDEN without accounting:ap:view. 
+     * Get Bill Draft Counts
+     */
+    async getBillIntakeCounts(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeCounts> {
+        const response = await this.getBillIntakeCountsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Imports one CSV or XLSX file of supplier bills and creates one bill draft per invoice: rows are grouped by supplier, invoice number and invoice date, header fields repeat on each line row, and a row that cannot be read is listed in the draft\'s rowErrors with its field marked CHECK_THIS. A person checks each draft before any bill exists, and nothing posts. Use this tool to bring in many bills at once from a spreadsheet; do not use it for a PDF or a photo of one bill (uploadBillDocuments), for a bank statement (createBankImport) or for a vendor statement. Preconditions: the caller holds accounting:bill_intake:create (and accounting:bill_intake:manage to saveMappingAs); the file is judged by its content, never by its name or declared type, and a file that is neither text nor a workbook is refused with status FILE_REJECTED and reason TYPE_NOT_ALLOWED. Required inputs: file (one CSV or XLSX, at most 25 MB) and the Idempotency-Key header, a UUID generated once per import; optional: mapping (a JSON object of import column to the file\'s header), templateId (a saved mapping), saveMappingAs (a name to save the mapping under; a name that is taken is 409 MAPPING_TEMPLATE_EXISTS unless replace is true) and replace; an optional document_type column says what a row is: credit memo or credit note (any case) makes a credit note, invoice or blank an invoice, anything else is marked CHECK_THIS; amounts in a row are never negative; required columns: supplier_name, invoice_number, invoice_date, line_description, line_amount and due_date or terms; with none of mapping and templateId the file\'s headers are matched against a saved template, then against the column names themselves; when none fits the draft waits in EXTRACTING with mappingRequired and the file\'s sourceColumns until mapping is sent; a replay of the same key with the same file and options returns the same drafts with Idempotency-Replayed: true, and another file, mapping or saved name under that key is 409 IDEMPOTENCY_CONFLICT. Emits an ACCOUNTING_BILL_INTAKE_IMPORT event once, on the request that stores the draft, and one BILL_INTAKE audit row naming the file\'s sha-256. Returns 201 with the draft of the import (the first invoice; the others appear as READY_FOR_REVIEW drafts once the sheet is read); 400 VALIDATION_ERROR for no file, a malformed mapping, an unknown templateId, or a missing or non-UUID Idempotency-Key; 403 without the permission (or saveMappingAs without manage); 409 IDEMPOTENCY_CONFLICT when the key was used for another request; 409 MAPPING_TEMPLATE_EXISTS when saveMappingAs names a template that exists and replace is not true; 413 PAYLOAD_TOO_LARGE over 25 MB. 
      * Import Bills From A Spreadsheet
      */
@@ -356,7 +480,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists bill drafts, newest first, optionally for one status or one channel, a page at a time, each with its reference, vendor, bill number, total and status. Use this tool to find the drafts waiting for review or the files that were refused; do not use it for bills, use listVendorBills instead, and read one draft with getBillIntake before editing it. Preconditions: the caller holds accounting:ap:view. Inputs: optional status (QUARANTINED, FILE_REJECTED, EXTRACTING, READY_FOR_REVIEW, CONFIRMED, DISCARDED), optional channel (UPLOAD, IMPORT, EDI, EMAIL_IN), page (0-based) and size (1 to 200). Emits an ACCOUNTING_BILL_INTAKE_LIST event and changes nothing. Returns 200 with the page, 400 when the page bounds are invalid, and 403 without accounting:ap:view. 
+     * Lists bill drafts, newest first, a page at a time, each with its reference, vendor, bill number, total, status and whether it is ready to confirm; optionally for one status, one channel, one readiness or a search text. Use this tool to find the drafts waiting for review, the ones ready to confirm or the files that were refused, or to find a draft by its vendor or bill number; do not use it for bills, use listVendorBills instead, read one draft with getBillIntake before editing it, and use getBillIntakeCounts for the totals alone. Preconditions: the caller holds accounting:ap:view. Inputs: optional status (QUARANTINED, FILE_REJECTED, EXTRACTING, READY_FOR_REVIEW, CONFIRMED, DISCARDED, ATTACHED), optional channel (UPLOAD, IMPORT, EDI, EMAIL_IN), optional readiness (NEEDS_CHECK or READY_TO_CONFIRM; either implies status READY_FOR_REVIEW), optional q (2 to 100 characters after trimming: a case-insensitive \"contains\" over the vendor name, the bill number and the intake reference; a bill number matches without regard to case, spacing, punctuation or leading zeros), page (0-based) and size (1 to 200). The filters combine. A draft is ready to confirm when its vendor is found, no required or valued field is CHECK_THIS (an empty optional field does not count) and billNumber, billDate, currency and totalAmount are present; the server derives it from those three things only, not from whether the values are valid or the lines complete: confirmation may still answer VALIDATION_ERROR, AP_BILL_DUPLICATE, VENDOR_INACTIVE or OPTIMISTIC_LOCK. Emits an ACCOUNTING_BILL_INTAKE_LIST event, which carries no parameter, and changes nothing. Returns 200 with the page, 400 VALIDATION_ERROR when the page bounds are invalid, q is shorter than 2 or longer than 100 characters or holds a control character, or readiness is sent with a status other than READY_FOR_REVIEW (fieldErrors name the parameter), and 403 without accounting:ap:view. 
      * List Bill Drafts
      */
     async listBillIntakeRaw(requestParameters: ListBillIntakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakePage>> {
@@ -376,6 +500,14 @@ export class BillIntakeApi extends runtime.BaseAPI {
 
         if (requestParameters['size'] != null) {
             queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['readiness'] != null) {
+            queryParameters['readiness'] = requestParameters['readiness'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -399,7 +531,7 @@ export class BillIntakeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists bill drafts, newest first, optionally for one status or one channel, a page at a time, each with its reference, vendor, bill number, total and status. Use this tool to find the drafts waiting for review or the files that were refused; do not use it for bills, use listVendorBills instead, and read one draft with getBillIntake before editing it. Preconditions: the caller holds accounting:ap:view. Inputs: optional status (QUARANTINED, FILE_REJECTED, EXTRACTING, READY_FOR_REVIEW, CONFIRMED, DISCARDED), optional channel (UPLOAD, IMPORT, EDI, EMAIL_IN), page (0-based) and size (1 to 200). Emits an ACCOUNTING_BILL_INTAKE_LIST event and changes nothing. Returns 200 with the page, 400 when the page bounds are invalid, and 403 without accounting:ap:view. 
+     * Lists bill drafts, newest first, a page at a time, each with its reference, vendor, bill number, total, status and whether it is ready to confirm; optionally for one status, one channel, one readiness or a search text. Use this tool to find the drafts waiting for review, the ones ready to confirm or the files that were refused, or to find a draft by its vendor or bill number; do not use it for bills, use listVendorBills instead, read one draft with getBillIntake before editing it, and use getBillIntakeCounts for the totals alone. Preconditions: the caller holds accounting:ap:view. Inputs: optional status (QUARANTINED, FILE_REJECTED, EXTRACTING, READY_FOR_REVIEW, CONFIRMED, DISCARDED, ATTACHED), optional channel (UPLOAD, IMPORT, EDI, EMAIL_IN), optional readiness (NEEDS_CHECK or READY_TO_CONFIRM; either implies status READY_FOR_REVIEW), optional q (2 to 100 characters after trimming: a case-insensitive \"contains\" over the vendor name, the bill number and the intake reference; a bill number matches without regard to case, spacing, punctuation or leading zeros), page (0-based) and size (1 to 200). The filters combine. A draft is ready to confirm when its vendor is found, no required or valued field is CHECK_THIS (an empty optional field does not count) and billNumber, billDate, currency and totalAmount are present; the server derives it from those three things only, not from whether the values are valid or the lines complete: confirmation may still answer VALIDATION_ERROR, AP_BILL_DUPLICATE, VENDOR_INACTIVE or OPTIMISTIC_LOCK. Emits an ACCOUNTING_BILL_INTAKE_LIST event, which carries no parameter, and changes nothing. Returns 200 with the page, 400 VALIDATION_ERROR when the page bounds are invalid, q is shorter than 2 or longer than 100 characters or holds a control character, or readiness is sent with a status other than READY_FOR_REVIEW (fieldErrors name the parameter), and 403 without accounting:ap:view. 
      * List Bill Drafts
      */
     async listBillIntake(requestParameters: ListBillIntakeRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakePage> {
@@ -440,6 +572,49 @@ export class BillIntakeApi extends runtime.BaseAPI {
      */
     async listBillIntakeMappingTemplates(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeMappingTemplateList> {
         const response = await this.listBillIntakeMappingTemplatesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Suggests the existing vendor bills a bill draft\'s document may belong to, best first, at most 10: the bills of the draft\'s vendor that are not VOIDED, not REJECTED and have no document yet, scored on bill number, total and bill date; every attachable bill named in the draft\'s possibleDuplicates is among them. Each suggestion carries a confidence (HIGH, MEDIUM, LOW) and reasons from a closed set: VENDOR_MATCH, NUMBER_MATCH, AMOUNT_MATCH, AMOUNT_DIFFERS (with amountDifference, the draft\'s total less the bill\'s) and DATE_NEAR (bill dates at most 7 days apart); amounts are compared only when both are in the same currency (a draft or a bill that states none is in the ledger currency), and the answer echoes the draft\'s purchaseOrderNumber (a purchase order is never a suggestion). Use this tool when a captured bill may already be in the books (keyed by hand, created from goods received or imported earlier), before attachBillIntake; do not use it for the goods-receipt match (matchVendorBill), and confirm the draft with confirmBillIntake when no suggestion is the bill. Preconditions: the draft is READY_FOR_REVIEW; the caller holds accounting:ap:view. Required inputs: intakeId. Emits an ACCOUNTING_BILL_INTAKE_MATCH_SUGGESTIONS event, which carries no value of the draft, and changes nothing. Returns 200 with the suggestions (an empty list when the draft\'s vendor is not found or the draft has no stored file), 404 BILL_INTAKE_NOT_FOUND, 409 BILL_INTAKE_INVALID_STATE when the draft is not READY_FOR_REVIEW, and 403 without accounting:ap:view. 
+     * Suggest Existing Bills For A Bill Draft
+     */
+    async listBillIntakeMatchSuggestionsRaw(requestParameters: ListBillIntakeMatchSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillIntakeMatchSuggestions>> {
+        if (requestParameters['intakeId'] == null) {
+            throw new runtime.RequiredError(
+                'intakeId',
+                'Required parameter "intakeId" was null or undefined when calling listBillIntakeMatchSuggestions().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/bill-intake/{intakeId}/match-suggestions`.replace(`{${"intakeId"}}`, encodeURIComponent(String(requestParameters['intakeId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillIntakeMatchSuggestionsFromJSON(jsonValue));
+    }
+
+    /**
+     * Suggests the existing vendor bills a bill draft\'s document may belong to, best first, at most 10: the bills of the draft\'s vendor that are not VOIDED, not REJECTED and have no document yet, scored on bill number, total and bill date; every attachable bill named in the draft\'s possibleDuplicates is among them. Each suggestion carries a confidence (HIGH, MEDIUM, LOW) and reasons from a closed set: VENDOR_MATCH, NUMBER_MATCH, AMOUNT_MATCH, AMOUNT_DIFFERS (with amountDifference, the draft\'s total less the bill\'s) and DATE_NEAR (bill dates at most 7 days apart); amounts are compared only when both are in the same currency (a draft or a bill that states none is in the ledger currency), and the answer echoes the draft\'s purchaseOrderNumber (a purchase order is never a suggestion). Use this tool when a captured bill may already be in the books (keyed by hand, created from goods received or imported earlier), before attachBillIntake; do not use it for the goods-receipt match (matchVendorBill), and confirm the draft with confirmBillIntake when no suggestion is the bill. Preconditions: the draft is READY_FOR_REVIEW; the caller holds accounting:ap:view. Required inputs: intakeId. Emits an ACCOUNTING_BILL_INTAKE_MATCH_SUGGESTIONS event, which carries no value of the draft, and changes nothing. Returns 200 with the suggestions (an empty list when the draft\'s vendor is not found or the draft has no stored file), 404 BILL_INTAKE_NOT_FOUND, 409 BILL_INTAKE_INVALID_STATE when the draft is not READY_FOR_REVIEW, and 403 without accounting:ap:view. 
+     * Suggest Existing Bills For A Bill Draft
+     */
+    async listBillIntakeMatchSuggestions(requestParameters: ListBillIntakeMatchSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillIntakeMatchSuggestions> {
+        const response = await this.listBillIntakeMatchSuggestionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -681,7 +856,8 @@ export enum ListBillIntakeStatusEnum {
     Extracting = 'EXTRACTING',
     ReadyForReview = 'READY_FOR_REVIEW',
     Confirmed = 'CONFIRMED',
-    Discarded = 'DISCARDED'
+    Discarded = 'DISCARDED',
+    Attached = 'ATTACHED'
 }
 /**
   * @export
@@ -692,4 +868,12 @@ export enum ListBillIntakeChannelEnum {
     Import = 'IMPORT',
     Edi = 'EDI',
     EmailIn = 'EMAIL_IN'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListBillIntakeReadinessEnum {
+    NeedsCheck = 'NEEDS_CHECK',
+    ReadyToConfirm = 'READY_TO_CONFIRM'
 }
