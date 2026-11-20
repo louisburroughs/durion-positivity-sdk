@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to reject a time period approval
+ * Request to reject a person's attendance for a pay period
  * @export
  * @interface RejectTimePeriodRequest
  */
 export interface RejectTimePeriodRequest {
     /**
-     * Reason the time period is being rejected
+     * Reason the attendance is sent back; stored on the approval record and on every rejected entry
      * @type {string}
      * @memberof RejectTimePeriodRequest
      */

@@ -26,11 +26,17 @@ export interface ReportExportResponse {
      */
     completedAt?: Date;
     /**
-     * Download URL (only present when status is COMPLETED)
+     * Path of this export's download endpoint, relative to the API root. Present only when status is COMPLETED and the file is still stored: absent while PENDING or IN_PROGRESS, when FAILED, and after the file was purged at expiresAt.
      * @type {string}
      * @memberof ReportExportResponse
      */
     downloadUrl?: string;
+    /**
+     * ISO-8601 timestamp after which the file is purged and its download answers 409 EXPORT_EXPIRED (completion plus the retention period, 30 days by default). The job itself stays readable. Null unless status is COMPLETED.
+     * @type {Date}
+     * @memberof ReportExportResponse
+     */
+    expiresAt?: Date;
     /**
      * Unique export job identifier
      * @type {string}
@@ -38,11 +44,11 @@ export interface ReportExportResponse {
      */
     exportId: string;
     /**
-     * Failure reason (only present when status is FAILED)
+     * Why the job failed, as a code (only present when status is FAILED): DOCUMENT_SERVICE_REFUSED (pos-documents refused the document), DOCUMENT_SERVICE_UNAVAILABLE (pos-documents unreachable or failing, after the last attempt), RENDERING_FAILED (the renderer failed, after the last attempt), ARTIFACT_TOO_LARGE (the file is over the size cap), PACKET_TOO_LARGE (a month-end packet is over a document or size limit; it is never shortened to fit), DOCUMENT_PAGES_UNAVAILABLE (the pages of a month-end packet's bill documents could not be rendered, after the last attempt; a packet is never completed with a page missing), ABANDONED (the worker stopped on the last attempt). Never a message, an upstream status or an id.
      * @type {string}
      * @memberof ReportExportResponse
      */
-    failureReason?: string;
+    failureReason?: ReportExportResponseFailureReasonEnum;
     /**
      * Export format
      * @type {string}
@@ -54,7 +60,7 @@ export interface ReportExportResponse {
      * @type {string}
      * @memberof ReportExportResponse
      */
-    reportType?: string;
+    reportType?: ReportExportResponseReportTypeEnum;
     /**
      * ISO-8601 timestamp when the export was requested
      * @type {Date}
@@ -62,7 +68,7 @@ export interface ReportExportResponse {
      */
     requestedAt?: Date;
     /**
-     * Current export status
+     * Current export status: PENDING when requested, IN_PROGRESS while a worker renders it, then COMPLETED or FAILED. A job waiting to be retried reads PENDING again.
      * @type {string}
      * @memberof ReportExportResponse
      */
@@ -73,11 +79,38 @@ export interface ReportExportResponse {
 * @export
 * @enum {string}
 */
+export enum ReportExportResponseFailureReasonEnum {
+    DocumentServiceRefused = 'DOCUMENT_SERVICE_REFUSED',
+    DocumentServiceUnavailable = 'DOCUMENT_SERVICE_UNAVAILABLE',
+    RenderingFailed = 'RENDERING_FAILED',
+    ArtifactTooLarge = 'ARTIFACT_TOO_LARGE',
+    PacketTooLarge = 'PACKET_TOO_LARGE',
+    DocumentPagesUnavailable = 'DOCUMENT_PAGES_UNAVAILABLE',
+    Abandoned = 'ABANDONED'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum ReportExportResponseFormatEnum {
     Pdf = 'PDF',
     Csv = 'CSV',
     Xlsx = 'XLSX',
     Json = 'JSON'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum ReportExportResponseReportTypeEnum {
+    TaxLiability = 'TAX_LIABILITY',
+    IncomeStatement = 'INCOME_STATEMENT',
+    BalanceSheet = 'BALANCE_SHEET',
+    TrialBalance = 'TRIAL_BALANCE',
+    GeneralLedger = 'GENERAL_LEDGER',
+    AgedReceivables = 'AGED_RECEIVABLES',
+    AgedPayables = 'AGED_PAYABLES',
+    MonthEndPacket = 'MONTH_END_PACKET'
 }
 /**
 * @export
@@ -112,6 +145,7 @@ export function ReportExportResponseFromJSONTyped(json: any, ignoreDiscriminator
         
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
         'downloadUrl': json['downloadUrl'] == null ? undefined : json['downloadUrl'],
+        'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
         'exportId': json['exportId'],
         'failureReason': json['failureReason'] == null ? undefined : json['failureReason'],
         'format': json['format'] == null ? undefined : json['format'],
@@ -129,6 +163,7 @@ export function ReportExportResponseToJSON(value?: ReportExportResponse | null):
         
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
         'downloadUrl': value['downloadUrl'],
+        'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
         'exportId': value['exportId'],
         'failureReason': value['failureReason'],
         'format': value['format'],

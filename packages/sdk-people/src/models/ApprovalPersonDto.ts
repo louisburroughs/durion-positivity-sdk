@@ -13,38 +13,71 @@
  */
 
 import { mapValues } from '../runtime';
+import type { TimeEntryStatusCounts } from './TimeEntryStatusCounts';
+import {
+    TimeEntryStatusCountsFromJSON,
+    TimeEntryStatusCountsFromJSONTyped,
+    TimeEntryStatusCountsToJSON,
+} from './TimeEntryStatusCounts';
+import type { TimePeriodApprovalDto } from './TimePeriodApprovalDto';
+import {
+    TimePeriodApprovalDtoFromJSON,
+    TimePeriodApprovalDtoFromJSONTyped,
+    TimePeriodApprovalDtoToJSON,
+} from './TimePeriodApprovalDto';
+
 /**
- * Person summary shown in timekeeping approval workflows
+ * A person with attendance time in a pay period, with figures and the latest decision
  * @export
  * @interface ApprovalPersonDto
  */
 export interface ApprovalPersonDto {
     /**
-     * Person display name
+     * 
+     * @type {TimeEntryStatusCounts}
+     * @memberof ApprovalPersonDto
+     */
+    countsByStatus: TimeEntryStatusCounts;
+    /**
+     * Person display name from the local person replica; the person id as text when the replica has no name yet
      * @type {string}
      * @memberof ApprovalPersonDto
      */
     displayName: string;
     /**
-     * Employee number
+     * Employee number, when the person has an employee record
      * @type {string}
      * @memberof ApprovalPersonDto
      */
     employeeNumber?: string;
+    /**
+     * 
+     * @type {TimePeriodApprovalDto}
+     * @memberof ApprovalPersonDto
+     */
+    latestApproval?: TimePeriodApprovalDto;
     /**
      * Person identifier
      * @type {string}
      * @memberof ApprovalPersonDto
      */
     personId: string;
+    /**
+     * Whole minutes worked in the period less breaks, across SUBMITTED, PENDING_APPROVAL and APPROVED entries (DRAFT and REJECTED never count); an entry with no clock-out is measured up to now. Same rule as periodTime.workedMinutes on the employee register
+     * @type {number}
+     * @memberof ApprovalPersonDto
+     */
+    totalWorkedMinutes: number;
 }
 
 /**
  * Check if a given object implements the ApprovalPersonDto interface.
  */
 export function instanceOfApprovalPersonDto(value: object): boolean {
+    if (!('countsByStatus' in value)) return false;
     if (!('displayName' in value)) return false;
     if (!('personId' in value)) return false;
+    if (!('totalWorkedMinutes' in value)) return false;
     return true;
 }
 
@@ -58,9 +91,12 @@ export function ApprovalPersonDtoFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
+        'countsByStatus': TimeEntryStatusCountsFromJSON(json['countsByStatus']),
         'displayName': json['displayName'],
         'employeeNumber': json['employeeNumber'] == null ? undefined : json['employeeNumber'],
+        'latestApproval': json['latestApproval'] == null ? undefined : TimePeriodApprovalDtoFromJSON(json['latestApproval']),
         'personId': json['personId'],
+        'totalWorkedMinutes': json['totalWorkedMinutes'],
     };
 }
 
@@ -70,9 +106,12 @@ export function ApprovalPersonDtoToJSON(value?: ApprovalPersonDto | null): any {
     }
     return {
         
+        'countsByStatus': TimeEntryStatusCountsToJSON(value['countsByStatus']),
         'displayName': value['displayName'],
         'employeeNumber': value['employeeNumber'],
+        'latestApproval': TimePeriodApprovalDtoToJSON(value['latestApproval']),
         'personId': value['personId'],
+        'totalWorkedMinutes': value['totalWorkedMinutes'],
     };
 }
 

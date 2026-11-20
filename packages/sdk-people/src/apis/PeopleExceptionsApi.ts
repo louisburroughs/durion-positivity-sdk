@@ -16,7 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  TimeEntryException,
+  PagedResponseTimeEntryException,
   TimeEntryExceptionRequest,
   TimeEntryExceptionResolveRequest,
   TimeEntryExceptionResponse,
@@ -25,8 +25,8 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    TimeEntryExceptionFromJSON,
-    TimeEntryExceptionToJSON,
+    PagedResponseTimeEntryExceptionFromJSON,
+    PagedResponseTimeEntryExceptionToJSON,
     TimeEntryExceptionRequestFromJSON,
     TimeEntryExceptionRequestToJSON,
     TimeEntryExceptionResolveRequestFromJSON,
@@ -40,19 +40,26 @@ import {
 export interface AcknowledgeTimeEntryExceptionRequest {
     exceptionId: string;
     xCorrelationId?: string;
+    idempotencyKey?: string;
 }
 
 export interface CreateTimeEntryExceptionRequest {
     timeEntryExceptionRequest: TimeEntryExceptionRequest;
+    idempotencyKey?: string;
 }
 
 export interface ListTimeEntryExceptionsRequest {
-    employeeId?: string;
+    locationId?: string;
+    status?: Array<ListTimeEntryExceptionsStatusEnum>;
+    personId?: string;
+    page?: number;
+    size?: number;
 }
 
 export interface ResolveTimeEntryExceptionRequest {
     exceptionId: string;
     xCorrelationId?: string;
+    idempotencyKey?: string;
     timeEntryExceptionResolveRequest?: TimeEntryExceptionResolveRequest;
 }
 
@@ -60,6 +67,7 @@ export interface WaiveTimeEntryExceptionRequest {
     exceptionId: string;
     timeEntryExceptionWaiveRequest: TimeEntryExceptionWaiveRequest;
     xCorrelationId?: string;
+    idempotencyKey?: string;
 }
 
 /**
@@ -68,8 +76,8 @@ export interface WaiveTimeEntryExceptionRequest {
 export class PeopleExceptionsApi extends runtime.BaseAPI {
 
     /**
-     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
-     * Acknowledge An Open Time Entry Exception
+     * Marks a time exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist, its location must lie within the caller\'s reach for people:timeException:acknowledge (one with no location only when that permission is not location-scoped for the caller), and it must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body. An optional X-Correlation-Id header is carried into the audit trail, and an optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row; an acknowledged BLOCKING exception still holds back period approval. Returns 200 with no body, 400 VALIDATION_ERROR when the Idempotency-Key is not a UUID, 404 when the exception does not exist, 403 LOCATION_SCOPE_DENIED when it is outside the caller\'s reach (404 is checked first, and both before the key is claimed), and 409 RESOURCE_STATE_CONFLICT when it is already RESOLVED or WAIVED or IDEMPOTENCY_CONFLICT when the key was already used with a different request. 
+     * Acknowledge An Open Time Exception
      */
     async acknowledgeTimeEntryExceptionRaw(requestParameters: AcknowledgeTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
@@ -85,6 +93,10 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
 
         if (requestParameters['xCorrelationId'] != null) {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
         if (this.configuration && this.configuration.accessToken) {
@@ -106,8 +118,8 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
-     * Acknowledge An Open Time Entry Exception
+     * Marks a time exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist, its location must lie within the caller\'s reach for people:timeException:acknowledge (one with no location only when that permission is not location-scoped for the caller), and it must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body. An optional X-Correlation-Id header is carried into the audit trail, and an optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row; an acknowledged BLOCKING exception still holds back period approval. Returns 200 with no body, 400 VALIDATION_ERROR when the Idempotency-Key is not a UUID, 404 when the exception does not exist, 403 LOCATION_SCOPE_DENIED when it is outside the caller\'s reach (404 is checked first, and both before the key is claimed), and 409 RESOURCE_STATE_CONFLICT when it is already RESOLVED or WAIVED or IDEMPOTENCY_CONFLICT when the key was already used with a different request. 
+     * Acknowledge An Open Time Exception
      */
     async acknowledgeTimeEntryException(requestParameters: AcknowledgeTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.acknowledgeTimeEntryExceptionRaw(requestParameters, initOverrides);
@@ -115,8 +127,8 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a timekeeping exception in OPEN status for an employee, such as a missed clock-out. Use this tool when a timekeeping anomaly is detected; do not use resolveTimeEntryException or waiveTimeEntryException, which close an existing exception. Preconditions: none are checked against other records; employeeId and timeEntryId are stored as given without referential validation. Required inputs: employeeId and exceptionCode; severity accepts WARNING or BLOCKING and silently falls back to WARNING on any other value, and detectedAt defaults to the current server time. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_CREATE event; the exception starts in OPEN status. Returns 200 with the new exceptionId, and 400 when the JSON payload is malformed. 
-     * Create A Time Entry Exception
+     * Records a time exception in OPEN status for a person, with the severity fixed by its code: MISSED_CLOCK_OUT is BLOCKING and LONG_BREAK is WARNING. Use this tool to record an anomaly a manager noticed that detection did not raise; detection raises MISSED_CLOCK_OUT and LONG_BREAK by itself on a schedule (every 15 minutes by default), so do not use this to repeat them, and do not use resolveTimeEntryException or waiveTimeEntryException, which close an existing exception. Preconditions: the person must exist, and unless people:timeException:create is unscoped for the caller one of the person\'s ACTIVE staffing-assignment locations today must lie within its reach; a given workSessionId must be one of the person\'s work sessions, and a given timeEntryId one of the person\'s time entries and, with workSessionId, that session\'s entry. Required inputs: personId (UUID) and exceptionCode (MISSED_CLOCK_OUT or LONG_BREAK; severity is not accepted); timeEntryId, workSessionId, resolutionNotes and detectedAt are optional, detectedAt defaulting to the current server time. With workSessionId the location and work date come from the session, and a MISSED_CLOCK_OUT also takes the session as its subject, so closing the session resolves it; a manual LONG_BREAK has no subject (it names no break) and is never resolved by a close; without workSessionId the location is the person\'s ACTIVE assignment on the UTC date of detectedAt and the work date and subject are null. An optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 201 with Idempotency-Replayed: true and records nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_CREATE event; the exception never changes recorded minutes or exported time, and an open BLOCKING one holds back period attendance approval. Returns 201 with the new exceptionId, 400 VALIDATION_ERROR when the body is malformed, personId or exceptionCode is missing, exceptionCode is outside the vocabulary (fieldErrors names exceptionCode) or the Idempotency-Key is not a UUID, 403 LOCATION_SCOPE_DENIED when the person is outside the caller\'s reach, 404 PERSON_NOT_FOUND for an unknown person (checked before 403 and before the key is claimed), 409 DUPLICATE_RESOURCE when a MISSED_CLOCK_OUT already names the work session or IDEMPOTENCY_CONFLICT when the key was already used with a different body, and 422 SEMANTIC_VALIDATION_ERROR when workSessionId is not one of the person\'s sessions or timeEntryId is not one of the person\'s time entries or not that session\'s entry. 
+     * Record A Time Exception Manually
      */
     async createTimeEntryExceptionRaw(requestParameters: CreateTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryExceptionResponse>> {
         if (requestParameters['timeEntryExceptionRequest'] == null) {
@@ -131,6 +143,10 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -152,8 +168,8 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a timekeeping exception in OPEN status for an employee, such as a missed clock-out. Use this tool when a timekeeping anomaly is detected; do not use resolveTimeEntryException or waiveTimeEntryException, which close an existing exception. Preconditions: none are checked against other records; employeeId and timeEntryId are stored as given without referential validation. Required inputs: employeeId and exceptionCode; severity accepts WARNING or BLOCKING and silently falls back to WARNING on any other value, and detectedAt defaults to the current server time. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_CREATE event; the exception starts in OPEN status. Returns 200 with the new exceptionId, and 400 when the JSON payload is malformed. 
-     * Create A Time Entry Exception
+     * Records a time exception in OPEN status for a person, with the severity fixed by its code: MISSED_CLOCK_OUT is BLOCKING and LONG_BREAK is WARNING. Use this tool to record an anomaly a manager noticed that detection did not raise; detection raises MISSED_CLOCK_OUT and LONG_BREAK by itself on a schedule (every 15 minutes by default), so do not use this to repeat them, and do not use resolveTimeEntryException or waiveTimeEntryException, which close an existing exception. Preconditions: the person must exist, and unless people:timeException:create is unscoped for the caller one of the person\'s ACTIVE staffing-assignment locations today must lie within its reach; a given workSessionId must be one of the person\'s work sessions, and a given timeEntryId one of the person\'s time entries and, with workSessionId, that session\'s entry. Required inputs: personId (UUID) and exceptionCode (MISSED_CLOCK_OUT or LONG_BREAK; severity is not accepted); timeEntryId, workSessionId, resolutionNotes and detectedAt are optional, detectedAt defaulting to the current server time. With workSessionId the location and work date come from the session, and a MISSED_CLOCK_OUT also takes the session as its subject, so closing the session resolves it; a manual LONG_BREAK has no subject (it names no break) and is never resolved by a close; without workSessionId the location is the person\'s ACTIVE assignment on the UTC date of detectedAt and the work date and subject are null. An optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 201 with Idempotency-Replayed: true and records nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_CREATE event; the exception never changes recorded minutes or exported time, and an open BLOCKING one holds back period attendance approval. Returns 201 with the new exceptionId, 400 VALIDATION_ERROR when the body is malformed, personId or exceptionCode is missing, exceptionCode is outside the vocabulary (fieldErrors names exceptionCode) or the Idempotency-Key is not a UUID, 403 LOCATION_SCOPE_DENIED when the person is outside the caller\'s reach, 404 PERSON_NOT_FOUND for an unknown person (checked before 403 and before the key is claimed), 409 DUPLICATE_RESOURCE when a MISSED_CLOCK_OUT already names the work session or IDEMPOTENCY_CONFLICT when the key was already used with a different body, and 422 SEMANTIC_VALIDATION_ERROR when workSessionId is not one of the person\'s sessions or timeEntryId is not one of the person\'s time entries or not that session\'s entry. 
+     * Record A Time Exception Manually
      */
     async createTimeEntryException(requestParameters: CreateTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryExceptionResponse> {
         const response = await this.createTimeEntryExceptionRaw(requestParameters, initOverrides);
@@ -161,14 +177,30 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists time entry exceptions, either all of them or those recorded for one employee. Use this tool to review open and historical exceptions; use createTimeEntryException instead to record a new one. Preconditions: none; when employeeId is omitted every exception in the system is returned without pagination. Required inputs: none; employeeId (string) is an optional filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches. 
-     * List Time Entry Exceptions By Employee
+     * Returns a page of time exceptions, newest detectedAt first, each with the person\'s id and display name, its location and work session, code, severity and status. Use this tool to show the exceptions a manager may act on, such as the open ones at one location; read totalElements with status=OPEN for an open-exception count, there is no separate count endpoint. Use acknowledgeTimeEntryException, resolveTimeEntryException or waiveTimeEntryException to act on a row. Preconditions: none beyond the permission; an empty page is returned rather than an error when nothing matches. Required inputs: none; locationId, personId and status are optional filters, ANDed; status may be repeated (OPEN, ACKNOWLEDGED, RESOLVED, WAIVED) and is every status when omitted; page defaults to 0 and size to 20 with a maximum of 100. Location scope: a given locationId must lie within the caller\'s location reach for people:timeException:view; when it is omitted a location-scoped caller sees only exceptions at locations within their reach (an empty page for an empty reach), while exceptions with no location are listed only to an unscoped caller. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_LIST audit event but changes no state. Returns 200 with the page envelope, 400 VALIDATION_ERROR for an unknown status, a malformed UUID or out-of-range paging parameters, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * List Time Exceptions For A Location
      */
-    async listTimeEntryExceptionsRaw(requestParameters: ListTimeEntryExceptionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimeEntryException>>> {
+    async listTimeEntryExceptionsRaw(requestParameters: ListTimeEntryExceptionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseTimeEntryException>> {
         const queryParameters: any = {};
 
-        if (requestParameters['employeeId'] != null) {
-            queryParameters['employeeId'] = requestParameters['employeeId'];
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['personId'] != null) {
+            queryParameters['personId'] = requestParameters['personId'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -188,21 +220,21 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TimeEntryExceptionFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseTimeEntryExceptionFromJSON(jsonValue));
     }
 
     /**
-     * Lists time entry exceptions, either all of them or those recorded for one employee. Use this tool to review open and historical exceptions; use createTimeEntryException instead to record a new one. Preconditions: none; when employeeId is omitted every exception in the system is returned without pagination. Required inputs: none; employeeId (string) is an optional filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches. 
-     * List Time Entry Exceptions By Employee
+     * Returns a page of time exceptions, newest detectedAt first, each with the person\'s id and display name, its location and work session, code, severity and status. Use this tool to show the exceptions a manager may act on, such as the open ones at one location; read totalElements with status=OPEN for an open-exception count, there is no separate count endpoint. Use acknowledgeTimeEntryException, resolveTimeEntryException or waiveTimeEntryException to act on a row. Preconditions: none beyond the permission; an empty page is returned rather than an error when nothing matches. Required inputs: none; locationId, personId and status are optional filters, ANDed; status may be repeated (OPEN, ACKNOWLEDGED, RESOLVED, WAIVED) and is every status when omitted; page defaults to 0 and size to 20 with a maximum of 100. Location scope: a given locationId must lie within the caller\'s location reach for people:timeException:view; when it is omitted a location-scoped caller sees only exceptions at locations within their reach (an empty page for an empty reach), while exceptions with no location are listed only to an unscoped caller. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_LIST audit event but changes no state. Returns 200 with the page envelope, 400 VALIDATION_ERROR for an unknown status, a malformed UUID or out-of-range paging parameters, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * List Time Exceptions For A Location
      */
-    async listTimeEntryExceptions(requestParameters: ListTimeEntryExceptionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimeEntryException>> {
+    async listTimeEntryExceptions(requestParameters: ListTimeEntryExceptionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseTimeEntryException> {
         const response = await this.listTimeEntryExceptionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
-     * Resolve A Time Entry Exception
+     * Marks a time exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. A MISSED_CLOCK_OUT raised by detection is also resolved by itself when its session is stopped or closed through closeMissedWorkSessionClockOut. Preconditions: the exception must exist, its location must lie within the caller\'s reach for people:timeException:resolve (one with no location only when that permission is not location-scoped for the caller), and it must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. An optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 200 with no body, 400 VALIDATION_ERROR when the Idempotency-Key is not a UUID, 404 when the exception does not exist, 403 LOCATION_SCOPE_DENIED when it is outside the caller\'s reach (404 is checked first, and both before the key is claimed), and 409 RESOURCE_STATE_CONFLICT when it is already RESOLVED or WAIVED or IDEMPOTENCY_CONFLICT when the key was already used with a different request. 
+     * Resolve A Time Exception
      */
     async resolveTimeEntryExceptionRaw(requestParameters: ResolveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
@@ -220,6 +252,10 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
 
         if (requestParameters['xCorrelationId'] != null) {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
         if (this.configuration && this.configuration.accessToken) {
@@ -242,8 +278,8 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
-     * Resolve A Time Entry Exception
+     * Marks a time exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. A MISSED_CLOCK_OUT raised by detection is also resolved by itself when its session is stopped or closed through closeMissedWorkSessionClockOut. Preconditions: the exception must exist, its location must lie within the caller\'s reach for people:timeException:resolve (one with no location only when that permission is not location-scoped for the caller), and it must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. An optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 200 with no body, 400 VALIDATION_ERROR when the Idempotency-Key is not a UUID, 404 when the exception does not exist, 403 LOCATION_SCOPE_DENIED when it is outside the caller\'s reach (404 is checked first, and both before the key is claimed), and 409 RESOURCE_STATE_CONFLICT when it is already RESOLVED or WAIVED or IDEMPOTENCY_CONFLICT when the key was already used with a different request. 
+     * Resolve A Time Exception
      */
     async resolveTimeEntryException(requestParameters: ResolveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.resolveTimeEntryExceptionRaw(requestParameters, initOverrides);
@@ -251,8 +287,8 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, 400 when waiveReason is blank, and 409 when the exception is already RESOLVED or WAIVED. 
-     * Waive A Time Entry Exception
+     * Marks a time exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist, its location must lie within the caller\'s reach for people:timeException:resolve (there is no separate waive permission; one with no location only when that permission is not location-scoped for the caller), and it must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. An optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 200 with no body, 400 VALIDATION_ERROR when waiveReason is blank or the Idempotency-Key is not a UUID, 404 when the exception does not exist, 403 LOCATION_SCOPE_DENIED when it is outside the caller\'s reach (404 is checked first, and both before the key is claimed), and 409 RESOURCE_STATE_CONFLICT when it is already RESOLVED or WAIVED or IDEMPOTENCY_CONFLICT when the key was already used with a different request. 
+     * Waive A Time Exception
      */
     async waiveTimeEntryExceptionRaw(requestParameters: WaiveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
@@ -279,6 +315,10 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
             const tokenString = await token("bearerAuth", ["people:timeException:resolve"]);
@@ -299,12 +339,23 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, 400 when waiveReason is blank, and 409 when the exception is already RESOLVED or WAIVED. 
-     * Waive A Time Entry Exception
+     * Marks a time exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist, its location must lie within the caller\'s reach for people:timeException:resolve (there is no separate waive permission; one with no location only when that permission is not location-scoped for the caller), and it must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. An optional Idempotency-Key header (ADR-0075) makes retries safe: a replay answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 200 with no body, 400 VALIDATION_ERROR when waiveReason is blank or the Idempotency-Key is not a UUID, 404 when the exception does not exist, 403 LOCATION_SCOPE_DENIED when it is outside the caller\'s reach (404 is checked first, and both before the key is claimed), and 409 RESOURCE_STATE_CONFLICT when it is already RESOLVED or WAIVED or IDEMPOTENCY_CONFLICT when the key was already used with a different request. 
+     * Waive A Time Exception
      */
     async waiveTimeEntryException(requestParameters: WaiveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.waiveTimeEntryExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListTimeEntryExceptionsStatusEnum {
+    Open = 'OPEN',
+    Acknowledged = 'ACKNOWLEDGED',
+    Resolved = 'RESOLVED',
+    Waived = 'WAIVED'
 }

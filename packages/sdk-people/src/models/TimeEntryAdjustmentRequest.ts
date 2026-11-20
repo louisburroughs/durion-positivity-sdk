@@ -14,17 +14,11 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to create a time entry adjustment
+ * Request to create a time entry adjustment; the author is the authenticated caller, never a request field
  * @export
  * @interface TimeEntryAdjustmentRequest
  */
 export interface TimeEntryAdjustmentRequest {
-    /**
-     * User creating the adjustment request
-     * @type {string}
-     * @memberof TimeEntryAdjustmentRequest
-     */
-    createdBy?: string;
     /**
      * Adjustment in minutes (positive to add time, negative to subtract)
      * @type {number}
@@ -82,7 +76,6 @@ export function TimeEntryAdjustmentRequestFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'minutesDelta': json['minutesDelta'] == null ? undefined : json['minutesDelta'],
         'notes': json['notes'] == null ? undefined : json['notes'],
         'proposedEndAt': json['proposedEndAt'] == null ? undefined : (new Date(json['proposedEndAt'])),
@@ -98,7 +91,6 @@ export function TimeEntryAdjustmentRequestToJSON(value?: TimeEntryAdjustmentRequ
     }
     return {
         
-        'createdBy': value['createdBy'],
         'minutesDelta': value['minutesDelta'],
         'notes': value['notes'],
         'proposedEndAt': value['proposedEndAt'] == null ? undefined : ((value['proposedEndAt']).toISOString()),

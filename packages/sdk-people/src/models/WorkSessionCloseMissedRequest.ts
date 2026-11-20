@@ -38,7 +38,7 @@ export interface WorkSessionCloseMissedRequest {
      */
     reasonCode?: string;
     /**
-     * Optional IANA time-zone id deciding which local day the session must have started before (for example America/Los_Angeles). Blank or absent means UTC. An unknown zone id is VALIDATION_ERROR.
+     * Optional IANA time-zone id (for example America/Los_Angeles) used to decide which local day the session must have started before only when the session's location has no known zone: the location's zone wins, then this one, then UTC when it is blank or absent. An unknown zone id is VALIDATION_ERROR even when the location's zone wins.
      * @type {string}
      * @memberof WorkSessionCloseMissedRequest
      */

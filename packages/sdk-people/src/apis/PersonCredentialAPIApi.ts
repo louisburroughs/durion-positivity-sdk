@@ -15,12 +15,52 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
+  CorrectPersonCredentialRequest,
+  CreatePersonCredentialRequest,
+  CredentialAttentionCounts,
+  CredentialAttentionPage,
   PersonCredentialResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
+    CorrectPersonCredentialRequestFromJSON,
+    CorrectPersonCredentialRequestToJSON,
+    CreatePersonCredentialRequestFromJSON,
+    CreatePersonCredentialRequestToJSON,
+    CredentialAttentionCountsFromJSON,
+    CredentialAttentionCountsToJSON,
+    CredentialAttentionPageFromJSON,
+    CredentialAttentionPageToJSON,
     PersonCredentialResponseFromJSON,
     PersonCredentialResponseToJSON,
 } from '../models/index';
+
+export interface CorrectPersonCredentialOperationRequest {
+    personId: string;
+    credentialId: string;
+    correctPersonCredentialRequest: CorrectPersonCredentialRequest;
+}
+
+export interface CreatePersonCredentialOperationRequest {
+    personId: string;
+    idempotencyKey: string;
+    createPersonCredentialRequest: CreatePersonCredentialRequest;
+}
+
+export interface GetCredentialAttentionCountsRequest {
+    locationId?: string;
+    expiringWithinDays?: number;
+}
+
+export interface ListCredentialsNeedingAttentionRequest {
+    locationId?: string;
+    attention?: ListCredentialsNeedingAttentionAttentionEnum;
+    expiringWithinDays?: number;
+    page?: number;
+    size?: number;
+}
 
 export interface ListPersonCredentialsRequest {
     personId: string;
@@ -32,7 +72,231 @@ export interface ListPersonCredentialsRequest {
 export class PersonCredentialAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today: ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; for a shop\'s roster use shop management\'s technician roster instead, which reads a replica of the same credentials. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
+     * Corrects the expiry date of a credential the person holds and returns it with its status re-derived as of today (UTC); expiresOn is replaced, so omitting it or sending null records that the credential does not expire. Use this tool to fix a mistyped or changed expiry; do not use it to renew, which is createPersonCredential with a later issuedOn, because skill, issuer and issuedOn identify the credential and cannot change here. Preconditions: the credential must belong to the person and be neither REVOKED nor SUPERSEDED, the person must not be TERMINATED, expiresOn must not be before the stored issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404s; the credential row is locked before these checks, so a concurrent renewal or correction is seen, not overwritten. Required inputs: personId and credentialId (UUID) path parameters and a body with expiresOn; skillCode, issuer and issuedOn may be echoed but must equal the stored values; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_UPDATE event and queues one people.person-credential.updated fact in the same transaction. Returns 200 with the credential; 404 PERSON_NOT_FOUND or CREDENTIAL_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 400 VALIDATION_ERROR for a malformed body; 422 SEMANTIC_VALIDATION_ERROR naming skillCode, issuer or issuedOn when it differs from the stored value, or expiresOn when it is before the stored issuedOn; 409 RESOURCE_STATE_CONFLICT when the credential is REVOKED or SUPERSEDED; and 422 EMPLOYEE_TERMINATED. 
+     * Correct A Credential\'s Expiry Date
+     */
+    async correctPersonCredentialRaw(requestParameters: CorrectPersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PersonCredentialResponse>> {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError(
+                'personId',
+                'Required parameter "personId" was null or undefined when calling correctPersonCredential().'
+            );
+        }
+
+        if (requestParameters['credentialId'] == null) {
+            throw new runtime.RequiredError(
+                'credentialId',
+                'Required parameter "credentialId" was null or undefined when calling correctPersonCredential().'
+            );
+        }
+
+        if (requestParameters['correctPersonCredentialRequest'] == null) {
+            throw new runtime.RequiredError(
+                'correctPersonCredentialRequest',
+                'Required parameter "correctPersonCredentialRequest" was null or undefined when calling correctPersonCredential().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:credential:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/{personId}/credentials/{credentialId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))).replace(`{${"credentialId"}}`, encodeURIComponent(String(requestParameters['credentialId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CorrectPersonCredentialRequestToJSON(requestParameters['correctPersonCredentialRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PersonCredentialResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Corrects the expiry date of a credential the person holds and returns it with its status re-derived as of today (UTC); expiresOn is replaced, so omitting it or sending null records that the credential does not expire. Use this tool to fix a mistyped or changed expiry; do not use it to renew, which is createPersonCredential with a later issuedOn, because skill, issuer and issuedOn identify the credential and cannot change here. Preconditions: the credential must belong to the person and be neither REVOKED nor SUPERSEDED, the person must not be TERMINATED, expiresOn must not be before the stored issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404s; the credential row is locked before these checks, so a concurrent renewal or correction is seen, not overwritten. Required inputs: personId and credentialId (UUID) path parameters and a body with expiresOn; skillCode, issuer and issuedOn may be echoed but must equal the stored values; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_UPDATE event and queues one people.person-credential.updated fact in the same transaction. Returns 200 with the credential; 404 PERSON_NOT_FOUND or CREDENTIAL_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 400 VALIDATION_ERROR for a malformed body; 422 SEMANTIC_VALIDATION_ERROR naming skillCode, issuer or issuedOn when it differs from the stored value, or expiresOn when it is before the stored issuedOn; 409 RESOURCE_STATE_CONFLICT when the credential is REVOKED or SUPERSEDED; and 422 EMPLOYEE_TERMINATED. 
+     * Correct A Credential\'s Expiry Date
+     */
+    async correctPersonCredential(requestParameters: CorrectPersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PersonCredentialResponse> {
+        const response = await this.correctPersonCredentialRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Records a credential the person holds, naming the registry skill it certifies, the issuer and the issue and expiry dates, and returns it with its status as of today (UTC). A renewal is this same call with a later issuedOn: it adds a new row and leaves the renewed one as it is, so the earlier qualification stays on record and stops needing attention. Use this tool to add or renew a licence or certification; do not use correctPersonCredential, which only changes the expiry of an existing row, and do not use the bulk credential ingest, which loads a vendor feed. Preconditions: the person must have an employee record that is not TERMINATED, skillCode must name an active registry skill, no credential may already have the same person, skill, issuer and issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404. Required inputs: personId (UUID) path parameter, an Idempotency-Key header (UUID, required, ADR-0075), and a body with skillCode, issuer (up to 32 characters), issuedOn and an optional expiresOn not before issuedOn; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_CREATE event and queues one people.person-credential.updated fact in the same transaction; a replay with the same key answers the stored 201 with Idempotency-Replayed: true and writes nothing. Returns 201 with the credential; 400 VALIDATION_ERROR for a missing or non-UUID key, a missing field or expiresOn before issuedOn (fieldErrors names expiresOn); 404 PERSON_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 409 IDEMPOTENCY_CONFLICT or DUPLICATE_RESOURCE (referenceId the existing credential); and 422 SEMANTIC_VALIDATION_ERROR naming skillCode or EMPLOYEE_TERMINATED. 
+     * Record Or Renew A Person\'s Credential
+     */
+    async createPersonCredentialRaw(requestParameters: CreatePersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PersonCredentialResponse>> {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError(
+                'personId',
+                'Required parameter "personId" was null or undefined when calling createPersonCredential().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling createPersonCredential().'
+            );
+        }
+
+        if (requestParameters['createPersonCredentialRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createPersonCredentialRequest',
+                'Required parameter "createPersonCredentialRequest" was null or undefined when calling createPersonCredential().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:credential:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/{personId}/credentials`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CreatePersonCredentialRequestToJSON(requestParameters['createPersonCredentialRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PersonCredentialResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Records a credential the person holds, naming the registry skill it certifies, the issuer and the issue and expiry dates, and returns it with its status as of today (UTC). A renewal is this same call with a later issuedOn: it adds a new row and leaves the renewed one as it is, so the earlier qualification stays on record and stops needing attention. Use this tool to add or renew a licence or certification; do not use correctPersonCredential, which only changes the expiry of an existing row, and do not use the bulk credential ingest, which loads a vendor feed. Preconditions: the person must have an employee record that is not TERMINATED, skillCode must name an active registry skill, no credential may already have the same person, skill, issuer and issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404. Required inputs: personId (UUID) path parameter, an Idempotency-Key header (UUID, required, ADR-0075), and a body with skillCode, issuer (up to 32 characters), issuedOn and an optional expiresOn not before issuedOn; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_CREATE event and queues one people.person-credential.updated fact in the same transaction; a replay with the same key answers the stored 201 with Idempotency-Replayed: true and writes nothing. Returns 201 with the credential; 400 VALIDATION_ERROR for a missing or non-UUID key, a missing field or expiresOn before issuedOn (fieldErrors names expiresOn); 404 PERSON_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 409 IDEMPOTENCY_CONFLICT or DUPLICATE_RESOURCE (referenceId the existing credential); and 422 SEMANTIC_VALIDATION_ERROR naming skillCode or EMPLOYEE_TERMINATED. 
+     * Record Or Renew A Person\'s Credential
+     */
+    async createPersonCredential(requestParameters: CreatePersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PersonCredentialResponse> {
+        const response = await this.createPersonCredentialRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns how many credentials are EXPIRED and how many are EXPIRING on today\'s date (UTC, returned as asOfDate), counting exactly the set listCredentialsNeedingAttention pages through for the same locationId and expiringWithinDays. Use this tool for a \"need attention\" badge or summary; do not use it to see which credentials they are, use listCredentialsNeedingAttention instead. Preconditions: none beyond the permission; REVOKED, SUPERSEDED, non-expiring and renewed credentials are never counted, and only people with an ACTIVE staffing assignment today count. Required inputs: none; expiringWithinDays defaults to 30 (1 to 365) and locationId is an optional filter. Location scope: a given locationId must lie within the caller\'s people:employee:view reach; when it is omitted a location-scoped caller counts only people assigned within their reach. Emits a PEOPLE_CREDENTIAL_ATTENTION_COUNTS audit event but changes no state. Returns 200 with asOfDate, expiredCount and expiringCount, 400 VALIDATION_ERROR for a filter out of range, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * Count Expired And Expiring Credentials Across People
+     */
+    async getCredentialAttentionCountsRaw(requestParameters: GetCredentialAttentionCountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CredentialAttentionCounts>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['expiringWithinDays'] != null) {
+            queryParameters['expiringWithinDays'] = requestParameters['expiringWithinDays'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/credentials/counts`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CredentialAttentionCountsFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns how many credentials are EXPIRED and how many are EXPIRING on today\'s date (UTC, returned as asOfDate), counting exactly the set listCredentialsNeedingAttention pages through for the same locationId and expiringWithinDays. Use this tool for a \"need attention\" badge or summary; do not use it to see which credentials they are, use listCredentialsNeedingAttention instead. Preconditions: none beyond the permission; REVOKED, SUPERSEDED, non-expiring and renewed credentials are never counted, and only people with an ACTIVE staffing assignment today count. Required inputs: none; expiringWithinDays defaults to 30 (1 to 365) and locationId is an optional filter. Location scope: a given locationId must lie within the caller\'s people:employee:view reach; when it is omitted a location-scoped caller counts only people assigned within their reach. Emits a PEOPLE_CREDENTIAL_ATTENTION_COUNTS audit event but changes no state. Returns 200 with asOfDate, expiredCount and expiringCount, 400 VALIDATION_ERROR for a filter out of range, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * Count Expired And Expiring Credentials Across People
+     */
+    async getCredentialAttentionCounts(requestParameters: GetCredentialAttentionCountsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CredentialAttentionCounts> {
+        const response = await this.getCredentialAttentionCountsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a page of the credentials that need attention on today\'s date (UTC, returned as asOfDate), ordered by expiry date: EXPIRED when the expiry date has passed, EXPIRING when it falls on asOfDate or within expiringWithinDays after it, each row with the person\'s id and display name and the days until expiry. Use this tool to find who must renew a licence or certification; do not use it for every credential of one person (use listPersonCredentials instead) or for the counts alone (use getCredentialAttentionCounts instead). Preconditions: none beyond the permission; REVOKED and SUPERSEDED credentials, credentials without an expiry date and credentials already renewed (a later issuedOn for the same person and skill, any issuer) never appear, and only people with an ACTIVE staffing assignment today are listed. Required inputs: none; attention is EXPIRED, EXPIRING or ALL (both, the default), expiringWithinDays defaults to 30 (1 to 365), locationId is an optional filter, page defaults to 0 and size to 20 with a maximum of 100. Location scope: a given locationId must lie within the caller\'s people:employee:view reach; when it is omitted a location-scoped caller sees only people assigned within their reach (an empty page for an empty reach) while an unscoped caller sees every location. Emits a PEOPLE_CREDENTIAL_ATTENTION_LIST audit event but changes no state. Returns 200 with the page and asOfDate, 400 VALIDATION_ERROR for a filter or paging value out of range, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * List Expired And Expiring Credentials Across People
+     */
+    async listCredentialsNeedingAttentionRaw(requestParameters: ListCredentialsNeedingAttentionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CredentialAttentionPage>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['attention'] != null) {
+            queryParameters['attention'] = requestParameters['attention'];
+        }
+
+        if (requestParameters['expiringWithinDays'] != null) {
+            queryParameters['expiringWithinDays'] = requestParameters['expiringWithinDays'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/credentials`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CredentialAttentionPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a page of the credentials that need attention on today\'s date (UTC, returned as asOfDate), ordered by expiry date: EXPIRED when the expiry date has passed, EXPIRING when it falls on asOfDate or within expiringWithinDays after it, each row with the person\'s id and display name and the days until expiry. Use this tool to find who must renew a licence or certification; do not use it for every credential of one person (use listPersonCredentials instead) or for the counts alone (use getCredentialAttentionCounts instead). Preconditions: none beyond the permission; REVOKED and SUPERSEDED credentials, credentials without an expiry date and credentials already renewed (a later issuedOn for the same person and skill, any issuer) never appear, and only people with an ACTIVE staffing assignment today are listed. Required inputs: none; attention is EXPIRED, EXPIRING or ALL (both, the default), expiringWithinDays defaults to 30 (1 to 365), locationId is an optional filter, page defaults to 0 and size to 20 with a maximum of 100. Location scope: a given locationId must lie within the caller\'s people:employee:view reach; when it is omitted a location-scoped caller sees only people assigned within their reach (an empty page for an empty reach) while an unscoped caller sees every location. Emits a PEOPLE_CREDENTIAL_ATTENTION_LIST audit event but changes no state. Returns 200 with the page and asOfDate, 400 VALIDATION_ERROR for a filter or paging value out of range, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * List Expired And Expiring Credentials Across People
+     */
+    async listCredentialsNeedingAttention(requestParameters: ListCredentialsNeedingAttentionRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CredentialAttentionPage> {
+        const response = await this.listCredentialsNeedingAttentionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today (UTC): ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible; the renewed row names its renewal in renewedByCredentialId, and hasDocument says whether evidence is on record. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; do not use it to find expired and expiring credentials across people, use listCredentialsNeedingAttention instead, and for a shop\'s roster use shop management\'s technician roster instead. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CREDENTIAL_LIST audit event but changes no state. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
      * List a Person\'s Credentials
      */
     async listPersonCredentialsRaw(requestParameters: ListPersonCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PersonCredentialResponse>>> {
@@ -66,7 +330,7 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today: ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; for a shop\'s roster use shop management\'s technician roster instead, which reads a replica of the same credentials. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
+     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today (UTC): ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible; the renewed row names its renewal in renewedByCredentialId, and hasDocument says whether evidence is on record. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; do not use it to find expired and expiring credentials across people, use listCredentialsNeedingAttention instead, and for a shop\'s roster use shop management\'s technician roster instead. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CREDENTIAL_LIST audit event but changes no state. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
      * List a Person\'s Credentials
      */
     async listPersonCredentials(requestParameters: ListPersonCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PersonCredentialResponse>> {
@@ -74,4 +338,14 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListCredentialsNeedingAttentionAttentionEnum {
+    Expired = 'EXPIRED',
+    Expiring = 'EXPIRING',
+    All = 'ALL'
 }

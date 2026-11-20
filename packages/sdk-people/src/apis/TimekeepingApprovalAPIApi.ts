@@ -16,24 +16,21 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  ApprovalPersonDto,
+  PagedResponseApprovalPersonDto,
   RejectTimePeriodRequest,
   TimePeriodApprovalDto,
-  TimePeriodDecisionResponse,
   TimePeriodDto,
   TimekeepingEntryDto,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    ApprovalPersonDtoFromJSON,
-    ApprovalPersonDtoToJSON,
+    PagedResponseApprovalPersonDtoFromJSON,
+    PagedResponseApprovalPersonDtoToJSON,
     RejectTimePeriodRequestFromJSON,
     RejectTimePeriodRequestToJSON,
     TimePeriodApprovalDtoFromJSON,
     TimePeriodApprovalDtoToJSON,
-    TimePeriodDecisionResponseFromJSON,
-    TimePeriodDecisionResponseToJSON,
     TimePeriodDtoFromJSON,
     TimePeriodDtoToJSON,
     TimekeepingEntryDtoFromJSON,
@@ -43,6 +40,8 @@ import {
 export interface ApproveTimePeriodRequest {
     timePeriodId: string;
     personId: string;
+    idempotencyKey: string;
+    xCorrelationId?: string;
 }
 
 export interface GetTimePeriodApprovalRequest {
@@ -54,6 +53,13 @@ export interface ListTimePeriodsRequest {
     tenantId?: string;
 }
 
+export interface ListTimekeepingApprovalPeopleRequest {
+    timePeriodId: string;
+    locationId?: string;
+    page?: number;
+    size?: number;
+}
+
 export interface ListTimekeepingEntriesRequest {
     personId: string;
     timePeriodId: string;
@@ -62,7 +68,9 @@ export interface ListTimekeepingEntriesRequest {
 export interface RejectTimePeriodOperationRequest {
     timePeriodId: string;
     personId: string;
+    idempotencyKey: string;
     rejectTimePeriodRequest: RejectTimePeriodRequest;
+    xCorrelationId?: string;
 }
 
 /**
@@ -71,10 +79,10 @@ export interface RejectTimePeriodOperationRequest {
 export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
 
     /**
-     * Bulk-approves every PENDING_APPROVAL timekeeping entry for a person within a pay period\'s date range. Use this tool for pay-period sign-off; do not use approveTimeEntriesBatch, which decides individually selected time entries instead of a whole period. Preconditions: the time period must exist; only entries currently in PENDING_APPROVAL are touched, so already decided entries are left as they are. Required inputs: timePeriodId (UUID) and personId (UUID) path parameters; there is no request body. No events are emitted; entries are flipped to APPROVED in place and the response reports the processed count. Returns 200 with processedCount 0 when nothing was pending, and 404 when the time period does not exist. 
-     * Approve All Pending Entries In Period
+     * Approves every PENDING_APPROVAL attendance time entry of the person in the pay period in one transaction and appends a decision record naming the approver (from the authenticated caller) and the time; a partial outcome never exists. Use this tool for pay-period sign-off of one person; do not use approveTimeEntriesBatch, which decides individually selected entries, and use rejectTimePeriod to send the period back. Preconditions: the period must be OPEN or SUBMISSION_CLOSED, the person must have at least one PENDING_APPROVAL entry in it, the caller must not be that person nor have filed a PENDING or APPROVED adjustment on any of those entries (separation of duties; waived only when the tenant\'s sole-approver switch is on and no other manager-role approver is staffed at any of those entries\' locations or a location above them, in which case the decision record is marked as a self-approval), every location of those entries must lie within the caller\'s people:timeEntry:approve reach, and the person must have no OPEN or ACKNOWLEDGED BLOCKING time exception (such as MISSED_CLOCK_OUT) dated in the period. Required inputs: timePeriodId and personId (UUID) path parameters and an Idempotency-Key header (UUID, required); there is no request body; an optional X-Correlation-Id is carried into the audit trail. A replay with the same key answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_PERIOD_APPROVE event; in the same transaction writes one audit row per entry and stores one decision record; publishes no attendance fact. Returns 200 with the decision record; 400 for a missing or non-UUID Idempotency-Key; 404 NOT_FOUND or PERSON_NOT_FOUND (checked first); 403 TIME_SELF_APPROVAL for the caller\'s own time, then 403 TIME_SELF_APPROVAL for the caller\'s own filing, then 403 LOCATION_SCOPE_DENIED, all before the Idempotency-Key is claimed; 409 RESOURCE_STATE_CONFLICT when the period is PAYROLL_CLOSED or nothing is pending, or IDEMPOTENCY_CONFLICT; and 422 TIME_EXCEPTIONS_OPEN with one blocker per open BLOCKING exception (code = exception code, subject = exceptionId) — resolve those exceptions first. The nothing-pending 409 names the earlier decision (referenceId = its approvalId) only for a caller whose people:timeEntry:approve grant is unscoped or whose reach covers the location of one of the person\'s entries in the period; any other caller gets a plain message and no referenceId; the 422 blockers cover the person\'s whole period and may name exceptions at locations outside the caller\'s reach. 
+     * Approve A Person\'s Pending Attendance For A Period
      */
-    async approveTimePeriodRaw(requestParameters: ApproveTimePeriodRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimePeriodDecisionResponse>> {
+    async approveTimePeriodRaw(requestParameters: ApproveTimePeriodRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimePeriodApprovalDto>> {
         if (requestParameters['timePeriodId'] == null) {
             throw new runtime.RequiredError(
                 'timePeriodId',
@@ -89,13 +97,28 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
             );
         }
 
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling approveTimePeriod().'
+            );
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (requestParameters['xCorrelationId'] != null) {
+            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:timekeeping:approve"]);
+            const tokenString = await token("bearerAuth", ["people:timeEntry:approve"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -108,23 +131,23 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TimePeriodDecisionResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => TimePeriodApprovalDtoFromJSON(jsonValue));
     }
 
     /**
-     * Bulk-approves every PENDING_APPROVAL timekeeping entry for a person within a pay period\'s date range. Use this tool for pay-period sign-off; do not use approveTimeEntriesBatch, which decides individually selected time entries instead of a whole period. Preconditions: the time period must exist; only entries currently in PENDING_APPROVAL are touched, so already decided entries are left as they are. Required inputs: timePeriodId (UUID) and personId (UUID) path parameters; there is no request body. No events are emitted; entries are flipped to APPROVED in place and the response reports the processed count. Returns 200 with processedCount 0 when nothing was pending, and 404 when the time period does not exist. 
-     * Approve All Pending Entries In Period
+     * Approves every PENDING_APPROVAL attendance time entry of the person in the pay period in one transaction and appends a decision record naming the approver (from the authenticated caller) and the time; a partial outcome never exists. Use this tool for pay-period sign-off of one person; do not use approveTimeEntriesBatch, which decides individually selected entries, and use rejectTimePeriod to send the period back. Preconditions: the period must be OPEN or SUBMISSION_CLOSED, the person must have at least one PENDING_APPROVAL entry in it, the caller must not be that person nor have filed a PENDING or APPROVED adjustment on any of those entries (separation of duties; waived only when the tenant\'s sole-approver switch is on and no other manager-role approver is staffed at any of those entries\' locations or a location above them, in which case the decision record is marked as a self-approval), every location of those entries must lie within the caller\'s people:timeEntry:approve reach, and the person must have no OPEN or ACKNOWLEDGED BLOCKING time exception (such as MISSED_CLOCK_OUT) dated in the period. Required inputs: timePeriodId and personId (UUID) path parameters and an Idempotency-Key header (UUID, required); there is no request body; an optional X-Correlation-Id is carried into the audit trail. A replay with the same key answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_PERIOD_APPROVE event; in the same transaction writes one audit row per entry and stores one decision record; publishes no attendance fact. Returns 200 with the decision record; 400 for a missing or non-UUID Idempotency-Key; 404 NOT_FOUND or PERSON_NOT_FOUND (checked first); 403 TIME_SELF_APPROVAL for the caller\'s own time, then 403 TIME_SELF_APPROVAL for the caller\'s own filing, then 403 LOCATION_SCOPE_DENIED, all before the Idempotency-Key is claimed; 409 RESOURCE_STATE_CONFLICT when the period is PAYROLL_CLOSED or nothing is pending, or IDEMPOTENCY_CONFLICT; and 422 TIME_EXCEPTIONS_OPEN with one blocker per open BLOCKING exception (code = exception code, subject = exceptionId) — resolve those exceptions first. The nothing-pending 409 names the earlier decision (referenceId = its approvalId) only for a caller whose people:timeEntry:approve grant is unscoped or whose reach covers the location of one of the person\'s entries in the period; any other caller gets a plain message and no referenceId; the 422 blockers cover the person\'s whole period and may name exceptions at locations outside the caller\'s reach. 
+     * Approve A Person\'s Pending Attendance For A Period
      */
-    async approveTimePeriod(requestParameters: ApproveTimePeriodRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimePeriodDecisionResponse> {
+    async approveTimePeriod(requestParameters: ApproveTimePeriodRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimePeriodApprovalDto> {
         const response = await this.approveTimePeriodRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Summarises a person\'s timekeeping approval state for a pay period: total, pending, approved, and rejected counts plus an overall status. Use this tool for a status badge or gate; use listTimekeepingEntries instead when the individual entries are needed. Preconditions: the time period must exist; the overall status is PENDING_APPROVAL while any entry is pending, else REJECTED if any entry was rejected, else APPROVED. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
-     * Get Time Period Approval Summary
+     * Returns the recorded attendance decisions for one person in one pay period, newest first, so the first element is the current state; each names the outcome (APPROVED or REJECTED), the reason of a rejection, who decided, when, and how many entries it moved. Use this tool to answer who decided a person\'s period and when, including earlier rejections; use listTimekeepingApprovalPeople instead for the latest decision of every person in a period, and do not use it to decide (approveTimePeriod or rejectTimePeriod record a new decision). Preconditions: the pay period and the person must exist; a person never decided for the period yields an empty list. Required inputs: timePeriodId (UUID) and personId (UUID) query parameters; there is no request body. Location scope: a location-scoped caller gets the records only when at least one of the person\'s time entries in the period lies at a location within their people:timeEntry:view reach, otherwise an empty list. Emits a PEOPLE_TIME_PERIOD_APPROVAL_LIST audit event but changes no state; records are append-only. Returns 200 with the list, 400 VALIDATION_ERROR for a missing or malformed id, and 404 NOT_FOUND for an unknown period or PERSON_NOT_FOUND for an unknown person. 
+     * List Recorded Pay-Period Decisions For A Person
      */
-    async getTimePeriodApprovalRaw(requestParameters: GetTimePeriodApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimePeriodApprovalDto>> {
+    async getTimePeriodApprovalRaw(requestParameters: GetTimePeriodApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimePeriodApprovalDto>>> {
         if (requestParameters['personId'] == null) {
             throw new runtime.RequiredError(
                 'personId',
@@ -153,7 +176,7 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:timekeeping:view"]);
+            const tokenString = await token("bearerAuth", ["people:timeEntry:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -166,20 +189,20 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TimePeriodApprovalDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TimePeriodApprovalDtoFromJSON));
     }
 
     /**
-     * Summarises a person\'s timekeeping approval state for a pay period: total, pending, approved, and rejected counts plus an overall status. Use this tool for a status badge or gate; use listTimekeepingEntries instead when the individual entries are needed. Preconditions: the time period must exist; the overall status is PENDING_APPROVAL while any entry is pending, else REJECTED if any entry was rejected, else APPROVED. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
-     * Get Time Period Approval Summary
+     * Returns the recorded attendance decisions for one person in one pay period, newest first, so the first element is the current state; each names the outcome (APPROVED or REJECTED), the reason of a rejection, who decided, when, and how many entries it moved. Use this tool to answer who decided a person\'s period and when, including earlier rejections; use listTimekeepingApprovalPeople instead for the latest decision of every person in a period, and do not use it to decide (approveTimePeriod or rejectTimePeriod record a new decision). Preconditions: the pay period and the person must exist; a person never decided for the period yields an empty list. Required inputs: timePeriodId (UUID) and personId (UUID) query parameters; there is no request body. Location scope: a location-scoped caller gets the records only when at least one of the person\'s time entries in the period lies at a location within their people:timeEntry:view reach, otherwise an empty list. Emits a PEOPLE_TIME_PERIOD_APPROVAL_LIST audit event but changes no state; records are append-only. Returns 200 with the list, 400 VALIDATION_ERROR for a missing or malformed id, and 404 NOT_FOUND for an unknown period or PERSON_NOT_FOUND for an unknown person. 
+     * List Recorded Pay-Period Decisions For A Person
      */
-    async getTimePeriodApproval(requestParameters: GetTimePeriodApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimePeriodApprovalDto> {
+    async getTimePeriodApproval(requestParameters: GetTimePeriodApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimePeriodApprovalDto>> {
         const response = await this.getTimePeriodApprovalRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Lists pay periods with their start and end dates and status, newest first when scoped to a tenant. Use this tool to choose the period for approval screens; use listTimekeepingEntries instead for the entries inside a chosen period. Preconditions: none; tenantId is an optional scope and omitting it returns all periods in repository order. Required inputs: none; tenantId (UUID) is an optional query parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no pay periods exist. 
+     * Lists pay periods with their start and end dates and status, newest first when scoped to a tenant. Use this tool to choose the period for approval screens; use listTimekeepingApprovalPeople instead for the people with attendance time inside a chosen period. Preconditions: none; tenantId is an optional scope and omitting it returns all periods in repository order. Required inputs: none; tenantId (UUID) is an optional query parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no pay periods exist. 
      * List Pay Periods For Timekeeping Approval
      */
     async listTimePeriodsRaw(requestParameters: ListTimePeriodsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimePeriodDto>>> {
@@ -210,7 +233,7 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists pay periods with their start and end dates and status, newest first when scoped to a tenant. Use this tool to choose the period for approval screens; use listTimekeepingEntries instead for the entries inside a chosen period. Preconditions: none; tenantId is an optional scope and omitting it returns all periods in repository order. Required inputs: none; tenantId (UUID) is an optional query parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no pay periods exist. 
+     * Lists pay periods with their start and end dates and status, newest first when scoped to a tenant. Use this tool to choose the period for approval screens; use listTimekeepingApprovalPeople instead for the people with attendance time inside a chosen period. Preconditions: none; tenantId is an optional scope and omitting it returns all periods in repository order. Required inputs: none; tenantId (UUID) is an optional query parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no pay periods exist. 
      * List Pay Periods For Timekeeping Approval
      */
     async listTimePeriods(requestParameters: ListTimePeriodsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimePeriodDto>> {
@@ -219,17 +242,40 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the distinct employees that have at least one timekeeping entry, with display name and employee number. Use this tool to build the person picker for pay-period approval; use listTimekeepingEntries instead for one person\'s entries in a period. Preconditions: none; display names come from the person identity replica, which is eventually consistent. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no timekeeping entries exist. 
-     * List Employees With Timekeeping Entries
+     * Returns a page of the people with at least one attendance time entry in the pay period, ordered by display name, each with display name, employee number, total worked minutes, entry counts per status and the latest recorded period decision (outcome, decider, time). Use this tool to build the period approval list and find whose attendance is pending; do not use it to decide (use approveTimePeriod or rejectTimePeriod instead), and use getTimePeriodApproval for the full decision history or listTimeEntries for the individual entries. Preconditions: the pay period must exist, in any status; an entry belongs to the period when its attendance start is on or after startDate 00:00 UTC and before endDate + 1 day 00:00 UTC. Required inputs: timePeriodId (UUID); locationId is an optional filter; page defaults to 0 and size to 20 with a maximum of 100. Location scope: a given locationId must lie within the caller\'s reach for people:timeEntry:view; when it is omitted a location-scoped caller sees only entries at locations within their reach (an empty page for an empty reach), and entries with no location count only for an unscoped caller; the minutes and counts cover the entries that pass this filter, while latestApproval is the person\'s latest decision whatever the filter. Emits a PEOPLE_TIME_PERIOD_APPROVAL_PEOPLE_LIST audit event but changes no state. Returns 200 with the page envelope, 400 VALIDATION_ERROR when timePeriodId is missing, a UUID is malformed or paging is out of range, 404 NOT_FOUND for an unknown period (checked first), and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * List People With Attendance In A Pay Period
      */
-    async listTimekeepingApprovalPeopleRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ApprovalPersonDto>>> {
+    async listTimekeepingApprovalPeopleRaw(requestParameters: ListTimekeepingApprovalPeopleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseApprovalPersonDto>> {
+        if (requestParameters['timePeriodId'] == null) {
+            throw new runtime.RequiredError(
+                'timePeriodId',
+                'Required parameter "timePeriodId" was null or undefined when calling listTimekeepingApprovalPeople().'
+            );
+        }
+
         const queryParameters: any = {};
+
+        if (requestParameters['timePeriodId'] != null) {
+            queryParameters['timePeriodId'] = requestParameters['timePeriodId'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:timekeeping:view"]);
+            const tokenString = await token("bearerAuth", ["people:timeEntry:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -242,20 +288,20 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ApprovalPersonDtoFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseApprovalPersonDtoFromJSON(jsonValue));
     }
 
     /**
-     * Lists the distinct employees that have at least one timekeeping entry, with display name and employee number. Use this tool to build the person picker for pay-period approval; use listTimekeepingEntries instead for one person\'s entries in a period. Preconditions: none; display names come from the person identity replica, which is eventually consistent. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no timekeeping entries exist. 
-     * List Employees With Timekeeping Entries
+     * Returns a page of the people with at least one attendance time entry in the pay period, ordered by display name, each with display name, employee number, total worked minutes, entry counts per status and the latest recorded period decision (outcome, decider, time). Use this tool to build the period approval list and find whose attendance is pending; do not use it to decide (use approveTimePeriod or rejectTimePeriod instead), and use getTimePeriodApproval for the full decision history or listTimeEntries for the individual entries. Preconditions: the pay period must exist, in any status; an entry belongs to the period when its attendance start is on or after startDate 00:00 UTC and before endDate + 1 day 00:00 UTC. Required inputs: timePeriodId (UUID); locationId is an optional filter; page defaults to 0 and size to 20 with a maximum of 100. Location scope: a given locationId must lie within the caller\'s reach for people:timeEntry:view; when it is omitted a location-scoped caller sees only entries at locations within their reach (an empty page for an empty reach), and entries with no location count only for an unscoped caller; the minutes and counts cover the entries that pass this filter, while latestApproval is the person\'s latest decision whatever the filter. Emits a PEOPLE_TIME_PERIOD_APPROVAL_PEOPLE_LIST audit event but changes no state. Returns 200 with the page envelope, 400 VALIDATION_ERROR when timePeriodId is missing, a UUID is malformed or paging is out of range, 404 NOT_FOUND for an unknown period (checked first), and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s reach. 
+     * List People With Attendance In A Pay Period
      */
-    async listTimekeepingApprovalPeople(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ApprovalPersonDto>> {
-        const response = await this.listTimekeepingApprovalPeopleRaw(initOverrides);
+    async listTimekeepingApprovalPeople(requestParameters: ListTimekeepingApprovalPeopleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseApprovalPersonDto> {
+        const response = await this.listTimekeepingApprovalPeopleRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Lists a person\'s timekeeping entries whose sessions fall entirely within the given pay period\'s date range, evaluated in UTC. Use this tool to review entries before deciding a period; use getTimePeriodApproval instead for just the status counts. Preconditions: the time period must exist; sessions straddling the period boundary are excluded because both start and end must fall inside it. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
+     * Lists a person\'s timekeeping entries whose sessions fall entirely within the given pay period\'s date range, evaluated in UTC. Use this tool to review entries before deciding a period; use listTimekeepingApprovalPeople instead for attendance counts per person. Preconditions: the time period must exist; sessions straddling the period boundary are excluded because both start and end must fall inside it. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
      * List Timekeeping Entries For Person And Period
      */
     async listTimekeepingEntriesRaw(requestParameters: ListTimekeepingEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimekeepingEntryDto>>> {
@@ -304,7 +350,7 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists a person\'s timekeeping entries whose sessions fall entirely within the given pay period\'s date range, evaluated in UTC. Use this tool to review entries before deciding a period; use getTimePeriodApproval instead for just the status counts. Preconditions: the time period must exist; sessions straddling the period boundary are excluded because both start and end must fall inside it. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
+     * Lists a person\'s timekeeping entries whose sessions fall entirely within the given pay period\'s date range, evaluated in UTC. Use this tool to review entries before deciding a period; use listTimekeepingApprovalPeople instead for attendance counts per person. Preconditions: the time period must exist; sessions straddling the period boundary are excluded because both start and end must fall inside it. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
      * List Timekeeping Entries For Person And Period
      */
     async listTimekeepingEntries(requestParameters: ListTimekeepingEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimekeepingEntryDto>> {
@@ -313,10 +359,10 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Bulk-rejects every PENDING_APPROVAL timekeeping entry for a person within a pay period, storing the reason on each entry as its correctionReason. Use this tool to send a whole period back for correction; do not use rejectTimeEntriesBatch, which rejects individually selected time entries. Preconditions: the time period must exist; only entries currently in PENDING_APPROVAL are touched. Required inputs: timePeriodId (UUID) and personId (UUID) path parameters and a body with a non-blank reason. No events are emitted; entries are flipped to REJECTED in place and the response reports the processed count. Returns 400 when reason is blank, and 404 when the time period does not exist. 
-     * Reject All Pending Entries In Period
+     * Rejects every PENDING_APPROVAL attendance time entry of the person in the pay period in one transaction, storing the reason on each entry and on a new decision record that names the rejecting user and the time. Use this tool to send a person\'s period back for correction; do not use rejectTimeEntriesBatch, which rejects individually selected entries, and use approveTimePeriod to sign the period off. A rejection is never blocked by open time exceptions. Preconditions: the period must be OPEN or SUBMISSION_CLOSED, the person must have at least one PENDING_APPROVAL entry in it, the caller must not be that person, and every location of those entries must lie within the caller\'s people:timeEntry:reject reach. Required inputs: timePeriodId and personId (UUID) path parameters, an Idempotency-Key header (UUID, required), and a body with reason (1 to 500 characters, not blank); an optional X-Correlation-Id is carried into the audit trail. A replay with the same key and body answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_PERIOD_REJECT event; in the same transaction writes one audit row per entry and stores one decision record; publishes no attendance fact; corrected entries can be approved later, which appends a second record. Returns 200 with the decision record; 400 VALIDATION_ERROR when reason is missing, blank or longer than 500 characters or the Idempotency-Key is missing or not a UUID; 404 NOT_FOUND or PERSON_NOT_FOUND (checked first); 403 TIME_SELF_APPROVAL, then 403 LOCATION_SCOPE_DENIED; and 409 RESOURCE_STATE_CONFLICT when the period is PAYROLL_CLOSED or nothing is pending, or IDEMPOTENCY_CONFLICT; the nothing-pending 409 names the earlier decision (referenceId = its approvalId) only for a caller whose people:timeEntry:reject grant is unscoped or whose reach covers the location of one of the person\'s entries in the period; any other caller gets a plain message and no referenceId. 
+     * Reject A Person\'s Pending Attendance For A Period
      */
-    async rejectTimePeriodRaw(requestParameters: RejectTimePeriodOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimePeriodDecisionResponse>> {
+    async rejectTimePeriodRaw(requestParameters: RejectTimePeriodOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimePeriodApprovalDto>> {
         if (requestParameters['timePeriodId'] == null) {
             throw new runtime.RequiredError(
                 'timePeriodId',
@@ -328,6 +374,13 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'personId',
                 'Required parameter "personId" was null or undefined when calling rejectTimePeriod().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling rejectTimePeriod().'
             );
         }
 
@@ -344,9 +397,17 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (requestParameters['xCorrelationId'] != null) {
+            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:timekeeping:reject"]);
+            const tokenString = await token("bearerAuth", ["people:timeEntry:reject"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -360,14 +421,14 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
             body: RejectTimePeriodRequestToJSON(requestParameters['rejectTimePeriodRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TimePeriodDecisionResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => TimePeriodApprovalDtoFromJSON(jsonValue));
     }
 
     /**
-     * Bulk-rejects every PENDING_APPROVAL timekeeping entry for a person within a pay period, storing the reason on each entry as its correctionReason. Use this tool to send a whole period back for correction; do not use rejectTimeEntriesBatch, which rejects individually selected time entries. Preconditions: the time period must exist; only entries currently in PENDING_APPROVAL are touched. Required inputs: timePeriodId (UUID) and personId (UUID) path parameters and a body with a non-blank reason. No events are emitted; entries are flipped to REJECTED in place and the response reports the processed count. Returns 400 when reason is blank, and 404 when the time period does not exist. 
-     * Reject All Pending Entries In Period
+     * Rejects every PENDING_APPROVAL attendance time entry of the person in the pay period in one transaction, storing the reason on each entry and on a new decision record that names the rejecting user and the time. Use this tool to send a person\'s period back for correction; do not use rejectTimeEntriesBatch, which rejects individually selected entries, and use approveTimePeriod to sign the period off. A rejection is never blocked by open time exceptions. Preconditions: the period must be OPEN or SUBMISSION_CLOSED, the person must have at least one PENDING_APPROVAL entry in it, the caller must not be that person, and every location of those entries must lie within the caller\'s people:timeEntry:reject reach. Required inputs: timePeriodId and personId (UUID) path parameters, an Idempotency-Key header (UUID, required), and a body with reason (1 to 500 characters, not blank); an optional X-Correlation-Id is carried into the audit trail. A replay with the same key and body answers the stored 200 with Idempotency-Replayed: true and changes nothing. Emits a PEOPLE_TIME_PERIOD_REJECT event; in the same transaction writes one audit row per entry and stores one decision record; publishes no attendance fact; corrected entries can be approved later, which appends a second record. Returns 200 with the decision record; 400 VALIDATION_ERROR when reason is missing, blank or longer than 500 characters or the Idempotency-Key is missing or not a UUID; 404 NOT_FOUND or PERSON_NOT_FOUND (checked first); 403 TIME_SELF_APPROVAL, then 403 LOCATION_SCOPE_DENIED; and 409 RESOURCE_STATE_CONFLICT when the period is PAYROLL_CLOSED or nothing is pending, or IDEMPOTENCY_CONFLICT; the nothing-pending 409 names the earlier decision (referenceId = its approvalId) only for a caller whose people:timeEntry:reject grant is unscoped or whose reach covers the location of one of the person\'s entries in the period; any other caller gets a plain message and no referenceId. 
+     * Reject A Person\'s Pending Attendance For A Period
      */
-    async rejectTimePeriod(requestParameters: RejectTimePeriodOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimePeriodDecisionResponse> {
+    async rejectTimePeriod(requestParameters: RejectTimePeriodOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimePeriodApprovalDto> {
         const response = await this.rejectTimePeriodRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -26,7 +26,7 @@ export interface Decision {
      */
     rejectionReason?: string;
     /**
-     * The unique identifier of the time entry
+     * The unique identifier of the time entry; a value that is not a UUID is refused 400 VALIDATION_ERROR naming decisions[i].timeEntryId
      * @type {string}
      * @memberof Decision
      */
