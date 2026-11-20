@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ShiftResponse } from './ShiftResponse';
+import {
+    ShiftResponseFromJSON,
+    ShiftResponseFromJSONTyped,
+    ShiftResponseToJSON,
+} from './ShiftResponse';
+
 /**
  * A person's current work-session (clock) state, derived from their open work session and open break. CLOCKED_OUT is an answer, not an error: it is returned when nothing is open.
  * @export
@@ -43,6 +50,12 @@ export interface WorkSessionClockStateResponse {
      * @memberof WorkSessionClockStateResponse
      */
     personId: string;
+    /**
+     * 
+     * @type {ShiftResponse}
+     * @memberof WorkSessionClockStateResponse
+     */
+    todayShift?: ShiftResponse;
     /**
      * The open work session; non-null exactly when clockState is CLOCKED_IN or ON_BREAK. The break endpoints are keyed by this id.
      * @type {string}
@@ -85,6 +98,7 @@ export function WorkSessionClockStateResponseFromJSONTyped(json: any, ignoreDisc
         'clockState': json['clockState'],
         'clockedInAt': json['clockedInAt'] == null ? undefined : (new Date(json['clockedInAt'])),
         'personId': json['personId'],
+        'todayShift': json['todayShift'] == null ? undefined : ShiftResponseFromJSON(json['todayShift']),
         'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
     };
 }
@@ -99,6 +113,7 @@ export function WorkSessionClockStateResponseToJSON(value?: WorkSessionClockStat
         'clockState': value['clockState'],
         'clockedInAt': value['clockedInAt'] == null ? undefined : ((value['clockedInAt']).toISOString()),
         'personId': value['personId'],
+        'todayShift': ShiftResponseToJSON(value['todayShift']),
         'workSessionId': value['workSessionId'],
     };
 }

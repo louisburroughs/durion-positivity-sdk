@@ -26,6 +26,12 @@ export interface BillIntakeTaxView {
      */
     amount?: number;
     /**
+     * Why the entry is CHECK_THIS when confirmation would refuse it: INVALID_TAX_ENTRY (no valid tax type, or no amount) or NEGATIVE (a negative amount). Null otherwise. The code never carries the value.
+     * @type {string}
+     * @memberof BillIntakeTaxView
+     */
+    reason?: BillIntakeTaxViewReasonEnum;
+    /**
      * READ, CHECK_THIS, ACCEPTED or CORRECTED
      * @type {string}
      * @memberof BillIntakeTaxView
@@ -39,6 +45,25 @@ export interface BillIntakeTaxView {
     taxType?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum BillIntakeTaxViewReasonEnum {
+    Required = 'REQUIRED',
+    NotANumber = 'NOT_A_NUMBER',
+    TooManyDecimals = 'TOO_MANY_DECIMALS',
+    Negative = 'NEGATIVE',
+    NotPositive = 'NOT_POSITIVE',
+    NotADate = 'NOT_A_DATE',
+    NotACurrency = 'NOT_A_CURRENCY',
+    InvalidDocumentType = 'INVALID_DOCUMENT_TYPE',
+    InvalidDebitClass = 'INVALID_DEBIT_CLASS',
+    TooLong = 'TOO_LONG',
+    InvalidExpenseKey = 'INVALID_EXPENSE_KEY',
+    InvalidTaxEntry = 'INVALID_TAX_ENTRY',
+    UnitCostRequired = 'UNIT_COST_REQUIRED'
+}
 /**
 * @export
 * @enum {string}
@@ -69,6 +94,7 @@ export function BillIntakeTaxViewFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'amount': json['amount'] == null ? undefined : json['amount'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
         'state': json['state'] == null ? undefined : json['state'],
         'taxType': json['taxType'] == null ? undefined : json['taxType'],
     };
@@ -81,6 +107,7 @@ export function BillIntakeTaxViewToJSON(value?: BillIntakeTaxView | null): any {
     return {
         
         'amount': value['amount'],
+        'reason': value['reason'],
         'state': value['state'],
         'taxType': value['taxType'],
     };

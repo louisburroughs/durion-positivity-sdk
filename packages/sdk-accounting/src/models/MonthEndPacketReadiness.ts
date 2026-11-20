@@ -14,41 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * What a month-end packet for a date range would hold: the vendor bills and vendor credit notes posted in the range and how many of them have a document, the bills dated in the range that are not yet approved, the drafts still in review, and whether the range's periods are closed
+ * What a month-end packet for a date range would hold: the vendor bills (invoices) posted in the range, how many of them have a document, no due date, or were voided since; the same for the vendor credit notes posted in the range, counted separately; the bills and credit notes dated in the range that are not yet approved; the drafts still in review; and whether the range's periods are closed
  * @export
  * @interface MonthEndPacketReadiness
  */
 export interface MonthEndPacketReadiness {
     /**
-     * Bills dated in the range that have not posted and are neither REJECTED nor VOIDED; never counted in billsPosted
+     * Vendor bills and vendor credit notes together, dated in the range, that have not posted and are neither REJECTED nor VOIDED; never counted in billsPosted or creditNotesPosted
      * @type {number}
      * @memberof MonthEndPacketReadiness
      */
     billsNotYetApproved: number;
     /**
-     * Vendor bills and vendor credit notes whose posting date is in the range. A bill posts at approval, so its posting date, not its bill date, decides
+     * Vendor bills (invoices only; vendor credit notes are in creditNotesPosted) whose posting date is in the range. A bill posts at approval, so its posting date, not its bill date, decides. A bill voided after it posted is still counted, and once more in billsVoided
      * @type {number}
      * @memberof MonthEndPacketReadiness
      */
     billsPosted: number;
     /**
-     * Of billsPosted, those with a stored document (sourceFileId names a file that is neither quarantined, rejected nor purged)
+     * Of billsPosted, the invoices whose posting carries a reversal when the read is made: voided after they posted, whatever the void date, inside the range or after it. A voided credit note is not counted here
+     * @type {number}
+     * @memberof MonthEndPacketReadiness
+     */
+    billsVoided: number;
+    /**
+     * Of billsPosted (invoices only), those with a stored document (sourceFileId names a file that is neither quarantined, rejected nor purged). A stored CSV or XLSX import file counts as a document
      * @type {number}
      * @memberof MonthEndPacketReadiness
      */
     billsWithDocument: number;
     /**
-     * Of billsPosted, those with no document, or whose file is quarantined, rejected or purged; billsWithDocument + billsWithoutDocument = billsPosted
+     * Of billsPosted (invoices only), those with no document, or whose file is quarantined, rejected or purged; billsWithDocument + billsWithoutDocument = billsPosted. Credit notes without a document are in creditNotesWithoutDocument
      * @type {number}
      * @memberof MonthEndPacketReadiness
      */
     billsWithoutDocument: number;
     /**
-     * Of billsPosted, those with no due date
+     * Of billsPosted (invoices only), those with no due date. A credit note is never paid, so a credit note without a due date is not counted
      * @type {number}
      * @memberof MonthEndPacketReadiness
      */
     billsWithoutDueDate: number;
+    /**
+     * Vendor credit notes whose posting date is in the range; never counted in billsPosted. A credit note voided after it posted is still counted
+     * @type {number}
+     * @memberof MonthEndPacketReadiness
+     */
+    creditNotesPosted: number;
+    /**
+     * Of creditNotesPosted, those with a stored document (sourceFileId names a file that is neither quarantined, rejected nor purged)
+     * @type {number}
+     * @memberof MonthEndPacketReadiness
+     */
+    creditNotesWithDocument: number;
+    /**
+     * Of creditNotesPosted, those with no document, or whose file is quarantined, rejected or purged; creditNotesWithDocument + creditNotesWithoutDocument = creditNotesPosted
+     * @type {number}
+     * @memberof MonthEndPacketReadiness
+     */
+    creditNotesWithoutDocument: number;
     /**
      * Bill drafts in READY_FOR_REVIEW that were uploaded in the range, by the tenant's accounting calendar
      * @type {number}
@@ -69,9 +93,13 @@ export interface MonthEndPacketReadiness {
 export function instanceOfMonthEndPacketReadiness(value: object): boolean {
     if (!('billsNotYetApproved' in value)) return false;
     if (!('billsPosted' in value)) return false;
+    if (!('billsVoided' in value)) return false;
     if (!('billsWithDocument' in value)) return false;
     if (!('billsWithoutDocument' in value)) return false;
     if (!('billsWithoutDueDate' in value)) return false;
+    if (!('creditNotesPosted' in value)) return false;
+    if (!('creditNotesWithDocument' in value)) return false;
+    if (!('creditNotesWithoutDocument' in value)) return false;
     if (!('draftsAwaitingReview' in value)) return false;
     if (!('periodClosed' in value)) return false;
     return true;
@@ -89,9 +117,13 @@ export function MonthEndPacketReadinessFromJSONTyped(json: any, ignoreDiscrimina
         
         'billsNotYetApproved': json['billsNotYetApproved'],
         'billsPosted': json['billsPosted'],
+        'billsVoided': json['billsVoided'],
         'billsWithDocument': json['billsWithDocument'],
         'billsWithoutDocument': json['billsWithoutDocument'],
         'billsWithoutDueDate': json['billsWithoutDueDate'],
+        'creditNotesPosted': json['creditNotesPosted'],
+        'creditNotesWithDocument': json['creditNotesWithDocument'],
+        'creditNotesWithoutDocument': json['creditNotesWithoutDocument'],
         'draftsAwaitingReview': json['draftsAwaitingReview'],
         'periodClosed': json['periodClosed'],
     };
@@ -105,9 +137,13 @@ export function MonthEndPacketReadinessToJSON(value?: MonthEndPacketReadiness | 
         
         'billsNotYetApproved': value['billsNotYetApproved'],
         'billsPosted': value['billsPosted'],
+        'billsVoided': value['billsVoided'],
         'billsWithDocument': value['billsWithDocument'],
         'billsWithoutDocument': value['billsWithoutDocument'],
         'billsWithoutDueDate': value['billsWithoutDueDate'],
+        'creditNotesPosted': value['creditNotesPosted'],
+        'creditNotesWithDocument': value['creditNotesWithDocument'],
+        'creditNotesWithoutDocument': value['creditNotesWithoutDocument'],
         'draftsAwaitingReview': value['draftsAwaitingReview'],
         'periodClosed': value['periodClosed'],
     };

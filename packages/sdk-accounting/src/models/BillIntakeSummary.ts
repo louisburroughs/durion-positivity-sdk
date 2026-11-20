@@ -56,7 +56,7 @@ export interface BillIntakeSummary {
      */
     pageCount?: number;
     /**
-     * Whether the draft is ready to confirm: it is READY_FOR_REVIEW, its vendor is found, no required or valued field is CHECK_THIS, and billNumber, billDate, currency and totalAmount are present. Derived by the server; false in every other status. It covers no more: values are not validated and lines not checked for completeness, so confirmation may still answer a validation error, a duplicate, an inactive vendor or a newer version
+     * Whether the draft is ready to confirm: it is READY_FOR_REVIEW, its vendor is found, no required or valued field is CHECK_THIS, and every value is one confirmation accepts (the required fields present, each invoice line with a description and an amount, every date, amount and code well formed). Derived by the server with the judgement confirmation uses; false in every other status. A ready draft is not refused for one of its fields; confirmation may still answer a duplicate, an inactive vendor or a newer version
      * @type {boolean}
      * @memberof BillIntakeSummary
      */

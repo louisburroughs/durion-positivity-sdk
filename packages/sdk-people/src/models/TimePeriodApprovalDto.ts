@@ -14,61 +14,78 @@
 
 import { mapValues } from '../runtime';
 /**
- * Aggregated approval state for a person within a time period
+ * A recorded pay-period attendance decision for one person
  * @export
  * @interface TimePeriodApprovalDto
  */
 export interface TimePeriodApprovalDto {
     /**
-     * Number of approved entries
-     * @type {number}
-     * @memberof TimePeriodApprovalDto
-     */
-    approvedCount: number;
-    /**
-     * Overall approval status for the person in the period
+     * Approval record identifier
      * @type {string}
      * @memberof TimePeriodApprovalDto
      */
-    overallStatus: TimePeriodApprovalDtoOverallStatusEnum;
+    approvalId: string;
     /**
-     * Number of entries still pending approval
+     * When the decision was made
+     * @type {Date}
+     * @memberof TimePeriodApprovalDto
+     */
+    decidedAt: Date;
+    /**
+     * Username of the deciding user, from the authenticated caller
+     * @type {string}
+     * @memberof TimePeriodApprovalDto
+     */
+    decidedBy: string;
+    /**
+     * Person linked to the deciding user; null for a user with no linked person
+     * @type {string}
+     * @memberof TimePeriodApprovalDto
+     */
+    decidedByPersonId?: string;
+    /**
+     * Number of PENDING_APPROVAL entries the decision moved
      * @type {number}
      * @memberof TimePeriodApprovalDto
      */
-    pendingCount: number;
+    entryCount: number;
     /**
-     * Person identifier
+     * Outcome of the decision
+     * @type {string}
+     * @memberof TimePeriodApprovalDto
+     */
+    outcome: TimePeriodApprovalDtoOutcomeEnum;
+    /**
+     * Person whose attendance was decided
      * @type {string}
      * @memberof TimePeriodApprovalDto
      */
     personId: string;
     /**
-     * Number of rejected entries
-     * @type {number}
+     * Reason given on a rejection; null on an approval
+     * @type {string}
      * @memberof TimePeriodApprovalDto
      */
-    rejectedCount: number;
+    reason?: string;
     /**
-     * Time period identifier
+     * Whether the decider approved a period carrying a time correction they filed themselves, allowed only as the location's sole approver; false on a rejection
+     * @type {boolean}
+     * @memberof TimePeriodApprovalDto
+     */
+    readonly selfApproved: boolean;
+    /**
+     * Pay period the decision covers
      * @type {string}
      * @memberof TimePeriodApprovalDto
      */
     timePeriodId: string;
-    /**
-     * Total number of entries in the period
-     * @type {number}
-     * @memberof TimePeriodApprovalDto
-     */
-    totalCount: number;
 }
 
 /**
 * @export
 * @enum {string}
 */
-export enum TimePeriodApprovalDtoOverallStatusEnum {
-    PendingApproval = 'PENDING_APPROVAL',
+export enum TimePeriodApprovalDtoOutcomeEnum {
     Approved = 'APPROVED',
     Rejected = 'REJECTED'
 }
@@ -78,13 +95,14 @@ export enum TimePeriodApprovalDtoOverallStatusEnum {
  * Check if a given object implements the TimePeriodApprovalDto interface.
  */
 export function instanceOfTimePeriodApprovalDto(value: object): boolean {
-    if (!('approvedCount' in value)) return false;
-    if (!('overallStatus' in value)) return false;
-    if (!('pendingCount' in value)) return false;
+    if (!('approvalId' in value)) return false;
+    if (!('decidedAt' in value)) return false;
+    if (!('decidedBy' in value)) return false;
+    if (!('entryCount' in value)) return false;
+    if (!('outcome' in value)) return false;
     if (!('personId' in value)) return false;
-    if (!('rejectedCount' in value)) return false;
+    if (!('selfApproved' in value)) return false;
     if (!('timePeriodId' in value)) return false;
-    if (!('totalCount' in value)) return false;
     return true;
 }
 
@@ -98,29 +116,34 @@ export function TimePeriodApprovalDtoFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'approvedCount': json['approvedCount'],
-        'overallStatus': json['overallStatus'],
-        'pendingCount': json['pendingCount'],
+        'approvalId': json['approvalId'],
+        'decidedAt': (new Date(json['decidedAt'])),
+        'decidedBy': json['decidedBy'],
+        'decidedByPersonId': json['decidedByPersonId'] == null ? undefined : json['decidedByPersonId'],
+        'entryCount': json['entryCount'],
+        'outcome': json['outcome'],
         'personId': json['personId'],
-        'rejectedCount': json['rejectedCount'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'selfApproved': json['selfApproved'],
         'timePeriodId': json['timePeriodId'],
-        'totalCount': json['totalCount'],
     };
 }
 
-export function TimePeriodApprovalDtoToJSON(value?: TimePeriodApprovalDto | null): any {
+export function TimePeriodApprovalDtoToJSON(value?: Omit<TimePeriodApprovalDto, 'selfApproved'> | null): any {
     if (value == null) {
         return value;
     }
     return {
         
-        'approvedCount': value['approvedCount'],
-        'overallStatus': value['overallStatus'],
-        'pendingCount': value['pendingCount'],
+        'approvalId': value['approvalId'],
+        'decidedAt': ((value['decidedAt']).toISOString()),
+        'decidedBy': value['decidedBy'],
+        'decidedByPersonId': value['decidedByPersonId'],
+        'entryCount': value['entryCount'],
+        'outcome': value['outcome'],
         'personId': value['personId'],
-        'rejectedCount': value['rejectedCount'],
+        'reason': value['reason'],
         'timePeriodId': value['timePeriodId'],
-        'totalCount': value['totalCount'],
     };
 }
 

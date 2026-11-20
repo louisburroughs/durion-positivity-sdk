@@ -14,79 +14,105 @@
 
 import { mapValues } from '../runtime';
 /**
- * Time entry exception representing a discrepancy or issue with time tracking
+ * Time exception: a discrepancy in a person's recorded time, with its lifecycle status
  * @export
  * @interface TimeEntryException
  */
 export interface TimeEntryException {
     /**
-     * Timestamp when the exception was detected
+     * When the exception was detected or recorded
      * @type {Date}
      * @memberof TimeEntryException
      */
-    detectedAt?: Date;
+    detectedAt: Date;
     /**
-     * Employee identifier associated with the exception
+     * Person's display name from the local person replica; null when the person has not replicated or has no name on record
      * @type {string}
      * @memberof TimeEntryException
      */
-    employeeId: string;
+    displayName?: string;
     /**
-     * Exception code identifying the type of exception
+     * Exception code from the closed vocabulary
      * @type {string}
      * @memberof TimeEntryException
      */
-    exceptionCode: string;
+    exceptionCode: TimeEntryExceptionExceptionCodeEnum;
     /**
      * Unique identifier for the exception
      * @type {string}
      * @memberof TimeEntryException
      */
-    readonly exceptionId?: string;
+    readonly exceptionId: string;
     /**
-     * Notes describing resolution or actions taken
+     * Location the exception belongs to: the time entry's location when there is one, else the person's ACTIVE staffing assignment location (primary first) on the subject's start date; null when none could be resolved, and such rows are listed only to unscoped callers
+     * @type {string}
+     * @memberof TimeEntryException
+     */
+    locationId?: string;
+    /**
+     * Person the exception concerns
+     * @type {string}
+     * @memberof TimeEntryException
+     */
+    personId: string;
+    /**
+     * Notes describing the exception or the action taken on it
      * @type {string}
      * @memberof TimeEntryException
      */
     resolutionNotes?: string;
     /**
-     * Timestamp when the exception was resolved
+     * When the exception was last acted on
      * @type {Date}
      * @memberof TimeEntryException
      */
     resolvedAt?: Date;
     /**
-     * User who resolved the exception
+     * User who last acted on the exception (acknowledged, resolved or waived it)
      * @type {string}
      * @memberof TimeEntryException
      */
     resolvedBy?: string;
     /**
-     * Severity level of the exception
+     * Severity, fixed by the exception code
      * @type {string}
      * @memberof TimeEntryException
      */
     severity: TimeEntryExceptionSeverityEnum;
     /**
-     * Current status of the exception
+     * Current lifecycle status of the exception
      * @type {string}
      * @memberof TimeEntryException
      */
     status: TimeEntryExceptionStatusEnum;
     /**
-     * Associated time entry identifier
+     * Time entry the exception concerns, when there is one
      * @type {string}
      * @memberof TimeEntryException
      */
     timeEntryId?: string;
     /**
-     * Work date when the exception occurred
+     * Local date, in the location's time zone, that the session or break the exception names started on; null for a manual exception recorded without one
      * @type {Date}
      * @memberof TimeEntryException
      */
-    workDate: Date;
+    workDate?: Date;
+    /**
+     * Work session the exception concerns (set for MISSED_CLOCK_OUT and LONG_BREAK raised by detection); null otherwise
+     * @type {string}
+     * @memberof TimeEntryException
+     */
+    workSessionId?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum TimeEntryExceptionExceptionCodeEnum {
+    MissedClockOut = 'MISSED_CLOCK_OUT',
+    LongBreak = 'LONG_BREAK'
+}
 /**
 * @export
 * @enum {string}
@@ -111,11 +137,12 @@ export enum TimeEntryExceptionStatusEnum {
  * Check if a given object implements the TimeEntryException interface.
  */
 export function instanceOfTimeEntryException(value: object): boolean {
-    if (!('employeeId' in value)) return false;
+    if (!('detectedAt' in value)) return false;
     if (!('exceptionCode' in value)) return false;
+    if (!('exceptionId' in value)) return false;
+    if (!('personId' in value)) return false;
     if (!('severity' in value)) return false;
     if (!('status' in value)) return false;
-    if (!('workDate' in value)) return false;
     return true;
 }
 
@@ -129,17 +156,20 @@ export function TimeEntryExceptionFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'detectedAt': json['detectedAt'] == null ? undefined : (new Date(json['detectedAt'])),
-        'employeeId': json['employeeId'],
+        'detectedAt': (new Date(json['detectedAt'])),
+        'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'exceptionCode': json['exceptionCode'],
-        'exceptionId': json['exceptionId'] == null ? undefined : json['exceptionId'],
+        'exceptionId': json['exceptionId'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'personId': json['personId'],
         'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
         'resolvedAt': json['resolvedAt'] == null ? undefined : (new Date(json['resolvedAt'])),
         'resolvedBy': json['resolvedBy'] == null ? undefined : json['resolvedBy'],
         'severity': json['severity'],
         'status': json['status'],
         'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
-        'workDate': (new Date(json['workDate'])),
+        'workDate': json['workDate'] == null ? undefined : (new Date(json['workDate'])),
+        'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
     };
 }
 
@@ -149,16 +179,19 @@ export function TimeEntryExceptionToJSON(value?: Omit<TimeEntryException, 'excep
     }
     return {
         
-        'detectedAt': value['detectedAt'] == null ? undefined : ((value['detectedAt']).toISOString()),
-        'employeeId': value['employeeId'],
+        'detectedAt': ((value['detectedAt']).toISOString()),
+        'displayName': value['displayName'],
         'exceptionCode': value['exceptionCode'],
+        'locationId': value['locationId'],
+        'personId': value['personId'],
         'resolutionNotes': value['resolutionNotes'],
-        'resolvedAt': value['resolvedAt'] == null ? undefined : ((value['resolvedAt']).toISOString()),
+        'resolvedAt': value['resolvedAt'] == null ? undefined : ((value['resolvedAt'] as any).toISOString()),
         'resolvedBy': value['resolvedBy'],
         'severity': value['severity'],
         'status': value['status'],
         'timeEntryId': value['timeEntryId'],
-        'workDate': ((value['workDate']).toISOString().substring(0,10)),
+        'workDate': value['workDate'] == null ? undefined : ((value['workDate'] as any).toISOString().substring(0,10)),
+        'workSessionId': value['workSessionId'],
     };
 }
 

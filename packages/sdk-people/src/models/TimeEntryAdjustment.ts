@@ -80,6 +80,12 @@ export interface TimeEntryAdjustment {
      */
     reasonCode: string;
     /**
+     * Whether the adjustment was approved by the user who filed it, allowed only as the location's sole approver; false while pending and on a rejection
+     * @type {boolean}
+     * @memberof TimeEntryAdjustment
+     */
+    readonly selfApproved: boolean;
+    /**
      * Current status of the adjustment
      * @type {string}
      * @memberof TimeEntryAdjustment
@@ -110,6 +116,7 @@ export enum TimeEntryAdjustmentStatusEnum {
  */
 export function instanceOfTimeEntryAdjustment(value: object): boolean {
     if (!('reasonCode' in value)) return false;
+    if (!('selfApproved' in value)) return false;
     if (!('status' in value)) return false;
     if (!('timeEntryId' in value)) return false;
     return true;
@@ -135,12 +142,13 @@ export function TimeEntryAdjustmentFromJSONTyped(json: any, ignoreDiscriminator:
         'proposedEndAt': json['proposedEndAt'] == null ? undefined : (new Date(json['proposedEndAt'])),
         'proposedStartAt': json['proposedStartAt'] == null ? undefined : (new Date(json['proposedStartAt'])),
         'reasonCode': json['reasonCode'],
+        'selfApproved': json['selfApproved'],
         'status': json['status'],
         'timeEntryId': json['timeEntryId'],
     };
 }
 
-export function TimeEntryAdjustmentToJSON(value?: Omit<TimeEntryAdjustment, 'adjustmentId'> | null): any {
+export function TimeEntryAdjustmentToJSON(value?: Omit<TimeEntryAdjustment, 'adjustmentId'|'selfApproved'> | null): any {
     if (value == null) {
         return value;
     }

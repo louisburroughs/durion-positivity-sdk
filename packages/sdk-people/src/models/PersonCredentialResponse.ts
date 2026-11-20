@@ -32,17 +32,17 @@ export interface PersonCredentialResponse {
      */
     credentialId: string;
     /**
-     * Retained evidence document (49 CFR 396.19)
-     * @type {string}
-     * @memberof PersonCredentialResponse
-     */
-    evidenceRef?: string;
-    /**
      * Null: does not expire
      * @type {Date}
      * @memberof PersonCredentialResponse
      */
     expiresOn?: Date;
+    /**
+     * Whether a document (retained evidence, 49 CFR 396.19) is on record; the document reference itself is never returned
+     * @type {boolean}
+     * @memberof PersonCredentialResponse
+     */
+    hasDocument: boolean;
     /**
      * 
      * @type {Date}
@@ -79,6 +79,12 @@ export interface PersonCredentialResponse {
      * @memberof PersonCredentialResponse
      */
     proficiency?: number;
+    /**
+     * Credential that renewed this one: the person's next credential for the same skill (any issuer, not REVOKED or SUPERSEDED) with a later issuedOn; null when not renewed
+     * @type {string}
+     * @memberof PersonCredentialResponse
+     */
+    renewedByCredentialId?: string;
     /**
      * Durion skill code
      * @type {string}
@@ -129,6 +135,7 @@ export enum PersonCredentialResponseStatusEnum {
 export function instanceOfPersonCredentialResponse(value: object): boolean {
     if (!('competenceCode' in value)) return false;
     if (!('credentialId' in value)) return false;
+    if (!('hasDocument' in value)) return false;
     if (!('issuedOn' in value)) return false;
     if (!('issuer' in value)) return false;
     if (!('maxGvwrClass' in value)) return false;
@@ -152,14 +159,15 @@ export function PersonCredentialResponseFromJSONTyped(json: any, ignoreDiscrimin
         
         'competenceCode': json['competenceCode'],
         'credentialId': json['credentialId'],
-        'evidenceRef': json['evidenceRef'] == null ? undefined : json['evidenceRef'],
         'expiresOn': json['expiresOn'] == null ? undefined : (new Date(json['expiresOn'])),
+        'hasDocument': json['hasDocument'],
         'issuedOn': (new Date(json['issuedOn'])),
         'issuer': json['issuer'],
         'maxGvwrClass': json['maxGvwrClass'],
         'minGvwrClass': json['minGvwrClass'],
         'personId': json['personId'],
         'proficiency': json['proficiency'] == null ? undefined : json['proficiency'],
+        'renewedByCredentialId': json['renewedByCredentialId'] == null ? undefined : json['renewedByCredentialId'],
         'skillCode': json['skillCode'],
         'skillId': json['skillId'],
         'sourceCode': json['sourceCode'] == null ? undefined : json['sourceCode'],
@@ -176,14 +184,15 @@ export function PersonCredentialResponseToJSON(value?: PersonCredentialResponse 
         
         'competenceCode': value['competenceCode'],
         'credentialId': value['credentialId'],
-        'evidenceRef': value['evidenceRef'],
         'expiresOn': value['expiresOn'] == null ? undefined : ((value['expiresOn']).toISOString().substring(0,10)),
+        'hasDocument': value['hasDocument'],
         'issuedOn': ((value['issuedOn']).toISOString().substring(0,10)),
         'issuer': value['issuer'],
         'maxGvwrClass': value['maxGvwrClass'],
         'minGvwrClass': value['minGvwrClass'],
         'personId': value['personId'],
         'proficiency': value['proficiency'],
+        'renewedByCredentialId': value['renewedByCredentialId'],
         'skillCode': value['skillCode'],
         'skillId': value['skillId'],
         'sourceCode': value['sourceCode'],

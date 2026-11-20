@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to create a time entry exception
+ * Request to record a time exception manually; the severity follows from the code
  * @export
  * @interface TimeEntryExceptionRequest
  */
 export interface TimeEntryExceptionRequest {
     /**
-     * Timestamp when the exception was detected
+     * When the exception was detected; defaults to the current server time
      * @type {Date}
      * @memberof TimeEntryExceptionRequest
      */
     detectedAt?: Date;
     /**
-     * Employee identifier associated with the exception
+     * Exception code from the closed vocabulary; any other value is refused with 400
      * @type {string}
      * @memberof TimeEntryExceptionRequest
      */
-    employeeId: string;
+    exceptionCode: TimeEntryExceptionRequestExceptionCodeEnum;
     /**
-     * Exception code identifying the type of exception
+     * Person the exception concerns
      * @type {string}
      * @memberof TimeEntryExceptionRequest
      */
-    exceptionCode: string;
+    personId: string;
     /**
      * Notes describing the exception or initial resolution steps
      * @type {string}
@@ -44,26 +44,26 @@ export interface TimeEntryExceptionRequest {
      */
     resolutionNotes?: string;
     /**
-     * Severity level of the exception
-     * @type {string}
-     * @memberof TimeEntryExceptionRequest
-     */
-    severity?: TimeEntryExceptionRequestSeverityEnum;
-    /**
-     * Time entry identifier associated with the exception
+     * Time entry the exception concerns, when there is one; it must be one of the person's time entries and, with workSessionId, that session's time entry (422 SEMANTIC_VALIDATION_ERROR otherwise)
      * @type {string}
      * @memberof TimeEntryExceptionRequest
      */
     timeEntryId?: string;
+    /**
+     * Work session the exception concerns, when there is one; it must be one of the person's sessions (422 SEMANTIC_VALIDATION_ERROR otherwise). The exception then takes its location and work date from the session and names it as its subject, so closing the session resolves a MISSED_CLOCK_OUT, and a second exception with the same code for the same session is refused
+     * @type {string}
+     * @memberof TimeEntryExceptionRequest
+     */
+    workSessionId?: string;
 }
 
 /**
 * @export
 * @enum {string}
 */
-export enum TimeEntryExceptionRequestSeverityEnum {
-    Warning = 'WARNING',
-    Blocking = 'BLOCKING'
+export enum TimeEntryExceptionRequestExceptionCodeEnum {
+    MissedClockOut = 'MISSED_CLOCK_OUT',
+    LongBreak = 'LONG_BREAK'
 }
 
 
@@ -71,8 +71,8 @@ export enum TimeEntryExceptionRequestSeverityEnum {
  * Check if a given object implements the TimeEntryExceptionRequest interface.
  */
 export function instanceOfTimeEntryExceptionRequest(value: object): boolean {
-    if (!('employeeId' in value)) return false;
     if (!('exceptionCode' in value)) return false;
+    if (!('personId' in value)) return false;
     return true;
 }
 
@@ -87,11 +87,11 @@ export function TimeEntryExceptionRequestFromJSONTyped(json: any, ignoreDiscrimi
     return {
         
         'detectedAt': json['detectedAt'] == null ? undefined : (new Date(json['detectedAt'])),
-        'employeeId': json['employeeId'],
         'exceptionCode': json['exceptionCode'],
+        'personId': json['personId'],
         'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
-        'severity': json['severity'] == null ? undefined : json['severity'],
         'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
+        'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
     };
 }
 
@@ -102,11 +102,11 @@ export function TimeEntryExceptionRequestToJSON(value?: TimeEntryExceptionReques
     return {
         
         'detectedAt': value['detectedAt'] == null ? undefined : ((value['detectedAt']).toISOString()),
-        'employeeId': value['employeeId'],
         'exceptionCode': value['exceptionCode'],
+        'personId': value['personId'],
         'resolutionNotes': value['resolutionNotes'],
-        'severity': value['severity'],
         'timeEntryId': value['timeEntryId'],
+        'workSessionId': value['workSessionId'],
     };
 }
 
