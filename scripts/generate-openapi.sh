@@ -116,6 +116,27 @@ cleanup_accounting_duplicate_exports() {
 	fi
 }
 
+cleanup_documents_multipart_form_imports() {
+	# Post-generation cleanup: POST /v1/documents/compose accepts application/json
+	# and multipart/form-data. The multipart body is ComposeMultipartForm, an object
+	# whose image parts are additionalProperties of binary strings. typescript-fetch
+	# emits only the JSON variant of composeDocument() and generates no
+	# ComposeMultipartForm model, yet still imports it (and its FromJSON/ToJSON) from
+	# ../models/index, which fails the build with TS2305. The names are unused in the
+	# generated method, so drop the dangling imports.
+	echo "[generate] Applying sdk-documents multipart-form import cleanup..."
+	COMPOSE_API_FILE="packages/sdk-documents/src/apis/DocumentComposeAPIApi.ts"
+
+	if [[ -f "$COMPOSE_API_FILE" && ! -f "packages/sdk-documents/src/models/ComposeMultipartForm.ts" ]]; then
+		sed -i -E '/^[[:space:]]*ComposeMultipartForm(FromJSON|ToJSON)?,[[:space:]]*$/d' "$COMPOSE_API_FILE"
+		if grep -q 'ComposeMultipartForm' "$COMPOSE_API_FILE"; then
+			echo "[generate] ERROR: ComposeMultipartForm is still referenced in $COMPOSE_API_FILE after cleanup" >&2
+			exit 1
+		fi
+		echo "[generate] Patched DocumentComposeAPIApi.ts to drop the ungenerated ComposeMultipartForm imports"
+	fi
+}
+
 prune_orphans() {
 	# The generator writes what a spec calls for and never deletes what it stops
 	# writing. A file it no longer emits keeps its old imports, and because tsc
@@ -258,6 +279,10 @@ if [[ -n "$module" ]]; then
 	if [[ "$module" == "vehicle-inventory" ]]; then
 		cleanup_vehicle_inventory_duplicate_exports
 	fi
+	if [[ "$module" == "documents" ]]; then
+		cleanup_documents_multipart_form_imports
+	fi
+	node scripts/fix-operation-enum-refs.mjs "$module"
 	prune_orphans "$module"
 	node scripts/patch-runtime-empty-body.mjs "$module"
 else
@@ -276,6 +301,10 @@ else
 		if [[ "$m" == "vehicle-inventory" ]]; then
 			cleanup_vehicle_inventory_duplicate_exports
 		fi
+		if [[ "$m" == "documents" ]]; then
+			cleanup_documents_multipart_form_imports
+		fi
+		node scripts/fix-operation-enum-refs.mjs "$m"
 		prune_orphans "$m"
 		node scripts/patch-runtime-empty-body.mjs "$m"
 	done

@@ -16,14 +16,11 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  ComposeMultipartForm,
   ComposeRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    ComposeMultipartFormFromJSON,
-    ComposeMultipartFormToJSON,
     ComposeRequestFromJSON,
     ComposeRequestToJSON,
 } from '../models/index';

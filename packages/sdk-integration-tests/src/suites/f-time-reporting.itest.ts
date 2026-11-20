@@ -699,20 +699,26 @@ describe('Suite F — attendance approval and workorder time on task', () => {
     // assertions below still carry the test.
     if (periods.length > 0) {
       const period = periods[0];
-      const approval = await call('getTimePeriodApproval', () =>
+      // The decision history for the technician in this period, newest first; a
+      // person never decided for the period yields an empty list.
+      const decisions = await call('getTimePeriodApproval', () =>
         manager.people.timekeepingApprovalAPIApi.getTimePeriodApproval({
           personId: technicianId,
           timePeriodId: period.timePeriodId,
         }),
       );
       console.log(
-        `[F10] period ${period.timePeriodId} (${period.status}): ${approval.totalCount} entr(ies), ` +
-          `${approval.pendingCount} pending`,
+        `[F10] period ${period.timePeriodId} (${period.status}): ${decisions.length} recorded decision(s)` +
+          (decisions.length > 0 ? `, latest ${decisions[0].outcome}` : ''),
       );
-      expect(approval.personId).toBe(technicianId);
-      expect(approval.totalCount).toBe(
-        approval.pendingCount + approval.approvedCount + approval.rejectedCount,
-      );
+      expect(Array.isArray(decisions)).toBe(true);
+      for (const decision of decisions) {
+        expect(decision.personId).toBe(technicianId);
+        expect(decision.timePeriodId).toBe(period.timePeriodId);
+      }
+      for (let k = 1; k < decisions.length; k++) {
+        expect(decisions[k - 1].decidedAt.getTime()).toBeGreaterThanOrEqual(decisions[k].decidedAt.getTime());
+      }
     } else {
       console.log('[F10] no pay period exists on this environment; skipped the per-period read');
     }

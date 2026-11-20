@@ -100,7 +100,7 @@ export interface ListTimeOffRequestsRequest {
 
 export interface SetTimeOffBalanceOperationRequest {
     personId: string;
-    type: SetTimeOffBalanceTypeEnum;
+    type: SetTimeOffBalanceOperationTypeEnum;
     idempotencyKey: string;
     setTimeOffBalanceRequest: SetTimeOffBalanceRequest;
 }
