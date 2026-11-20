@@ -50,6 +50,12 @@ export interface VendorBillStageRow {
      */
     dueDate?: Date;
     /**
+     * The kind of the bill draft this bill was confirmed from, as on the single bill read: BILL, or RECEIPT for a purchase receipt (not a goods receipt). A RECEIPT's bill is never paid through AP: it stays listed in the PAY stage while it is open, but a payment allocation to it is refused (422 AP_ALLOCATION_TO_RECEIPT_BILL), so do not offer to pay it. Absent for a bill that was not created from a draft
+     * @type {string}
+     * @memberof VendorBillStageRow
+     */
+    intakeDocumentKind?: VendorBillStageRowIntakeDocumentKindEnum;
+    /**
      * Total less allocated payments
      * @type {number}
      * @memberof VendorBillStageRow
@@ -117,6 +123,14 @@ export enum VendorBillStageRowChannelEnum {
 * @export
 * @enum {string}
 */
+export enum VendorBillStageRowIntakeDocumentKindEnum {
+    Bill = 'BILL',
+    Receipt = 'RECEIPT'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillStageRowRequiredTierEnum {
     Clerk = 'CLERK',
     OverLimit = 'OVER_LIMIT'
@@ -167,6 +181,7 @@ export function VendorBillStageRowFromJSONTyped(json: any, ignoreDiscriminator: 
         'channel': json['channel'] == null ? undefined : json['channel'],
         'currencyCode': json['currencyCode'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
+        'intakeDocumentKind': json['intakeDocumentKind'] == null ? undefined : json['intakeDocumentKind'],
         'openAmount': json['openAmount'],
         'requiredTier': json['requiredTier'] == null ? undefined : json['requiredTier'],
         'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
@@ -190,6 +205,7 @@ export function VendorBillStageRowToJSON(value?: VendorBillStageRow | null): any
         'channel': value['channel'],
         'currencyCode': value['currencyCode'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
+        'intakeDocumentKind': value['intakeDocumentKind'],
         'openAmount': value['openAmount'],
         'requiredTier': value['requiredTier'],
         'sourceFileId': value['sourceFileId'],

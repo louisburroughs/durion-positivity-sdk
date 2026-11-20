@@ -40,6 +40,12 @@ export interface AttachImageOwnerOperationRequest {
     attachImageOwnerRequest: AttachImageOwnerRequest;
 }
 
+export interface DeleteOwnedImageRequest {
+    id: string;
+    ownerType: DeleteOwnedImageOwnerTypeEnum;
+    ownerId: string;
+}
+
 export interface GetImageByFilenameRequest {
     filename: string;
     ifNoneMatch?: string;
@@ -123,6 +129,62 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Deletes one image of one invoice: the image record, and the stored bytes and thumbnail that no other image record of the tenant names. Use this operation from pos-invoice when a photo is removed from an invoice; do not use it for another owner\'s images, which have no delete path, and it is not for users, because a user token is refused whatever it holds. Preconditions: the caller is a service whose verified assertion carries image:image:delete (today only the invoice issuer), and the image is tagged with exactly the ownerType and ownerId sent. Required inputs: id, ownerType (INVOICE) and ownerId; there is no request body and no Idempotency-Key, because every resend has the same outcome. Emits IMAGE_DELETE; content another record still names is kept, and the idempotency records that answered with this image are forgotten, so a store resent under the same key stores again. An id that names no image in the caller\'s tenant (already deleted, never stored, or another tenant\'s) answers 204 and changes nothing. Returns 400 for a malformed id or a missing or malformed ownerType or ownerId; 403 without image:image:delete or for a user token; 409 IMAGE_OWNER_CONFLICT when the image has another owner or none, with nothing deleted; and 422 IMAGE_OWNER_TYPE_NOT_DELETABLE for an ownerType other than INVOICE. 
+     * Delete an invoice\'s image
+     */
+    async deleteOwnedImageRaw(requestParameters: DeleteOwnedImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling deleteOwnedImage().'
+            );
+        }
+
+        if (requestParameters['ownerType'] == null) {
+            throw new runtime.RequiredError(
+                'ownerType',
+                'Required parameter "ownerType" was null or undefined when calling deleteOwnedImage().'
+            );
+        }
+
+        if (requestParameters['ownerId'] == null) {
+            throw new runtime.RequiredError(
+                'ownerId',
+                'Required parameter "ownerId" was null or undefined when calling deleteOwnedImage().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['ownerType'] != null) {
+            queryParameters['ownerType'] = requestParameters['ownerType'];
+        }
+
+        if (requestParameters['ownerId'] != null) {
+            queryParameters['ownerId'] = requestParameters['ownerId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/images/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Deletes one image of one invoice: the image record, and the stored bytes and thumbnail that no other image record of the tenant names. Use this operation from pos-invoice when a photo is removed from an invoice; do not use it for another owner\'s images, which have no delete path, and it is not for users, because a user token is refused whatever it holds. Preconditions: the caller is a service whose verified assertion carries image:image:delete (today only the invoice issuer), and the image is tagged with exactly the ownerType and ownerId sent. Required inputs: id, ownerType (INVOICE) and ownerId; there is no request body and no Idempotency-Key, because every resend has the same outcome. Emits IMAGE_DELETE; content another record still names is kept, and the idempotency records that answered with this image are forgotten, so a store resent under the same key stores again. An id that names no image in the caller\'s tenant (already deleted, never stored, or another tenant\'s) answers 204 and changes nothing. Returns 400 for a malformed id or a missing or malformed ownerType or ownerId; 403 without image:image:delete or for a user token; 409 IMAGE_OWNER_CONFLICT when the image has another owner or none, with nothing deleted; and 422 IMAGE_OWNER_TYPE_NOT_DELETABLE for an ownerType other than INVOICE. 
+     * Delete an invoice\'s image
+     */
+    async deleteOwnedImage(requestParameters: DeleteOwnedImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteOwnedImageRaw(requestParameters, initOverrides);
+    }
+
+    /**
      * Returns image bytes inline for an exact filename match. Use this operation when only the filename is known; do not use it when the image ID is available, use getImageById instead, because filenames are not unique over time. Preconditions: a matching record must exist in the caller\'s tenant; an image that has an owner is served only with image:image:view and reads as 404 otherwise; legacy records are served only when pos.image.legacy-root is configured and the path resolves safely beneath it. Required inputs: filename including its extension; If-None-Match is optional, and there is no body. No events are emitted and no state changes occur. Stored content has a strong ETag and private, no-cache headers; a matching If-None-Match returns 304. Filenames are never immutable. Returns 404 for no matching record, an unconfigured legacy root, a missing file, or an escaping path; variants are not currently supported. 
      * Get image by filename
      */
@@ -162,7 +224,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for an image record ID (a UUID), or its 320 px thumbnail with size=thumb. Use this operation when the caller has the image ID; when only the filename is known, use getImageByFilename instead. Preconditions: the record exists in the caller\'s tenant; an image with an owner (a check-in, workorder, service-line or change-request photo) needs image:image:view, while unowned images (catalogue artwork, logos, employee photos) need no permission, and legacy records are served only when pos.image.legacy-root resolves their path safely. Required inputs: id; size (original or thumb, where a record without a thumbnail serves the original) and If-None-Match are optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag (the served rendition\'s content hash) and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID or size is unknown, and 404 for an unknown or other-tenant record, an owned record without image:image:view, or an unavailable legacy file. 
+     * Returns image bytes inline for an image record ID (a UUID), or its 320 px thumbnail with size=thumb. Use this operation when the caller has the image ID; when only the filename is known, use getImageByFilename instead. Preconditions: the record exists in the caller\'s tenant; an image with an owner (a check-in, workorder, service-line, change-request or invoice photo) needs image:image:view, while unowned images (catalogue artwork, logos, employee photos) need no permission, and legacy records are served only when pos.image.legacy-root resolves their path safely. Required inputs: id; size (original or thumb, where a record without a thumbnail serves the original) and If-None-Match are optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag (the served rendition\'s content hash) and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID or size is unknown, and 404 for an unknown or other-tenant record, an owned record without image:image:view, or an unavailable legacy file. 
      * Get image by ID
      */
     async getImageByIdRaw(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -196,7 +258,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns image bytes inline for an image record ID (a UUID), or its 320 px thumbnail with size=thumb. Use this operation when the caller has the image ID; when only the filename is known, use getImageByFilename instead. Preconditions: the record exists in the caller\'s tenant; an image with an owner (a check-in, workorder, service-line or change-request photo) needs image:image:view, while unowned images (catalogue artwork, logos, employee photos) need no permission, and legacy records are served only when pos.image.legacy-root resolves their path safely. Required inputs: id; size (original or thumb, where a record without a thumbnail serves the original) and If-None-Match are optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag (the served rendition\'s content hash) and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID or size is unknown, and 404 for an unknown or other-tenant record, an owned record without image:image:view, or an unavailable legacy file. 
+     * Returns image bytes inline for an image record ID (a UUID), or its 320 px thumbnail with size=thumb. Use this operation when the caller has the image ID; when only the filename is known, use getImageByFilename instead. Preconditions: the record exists in the caller\'s tenant; an image with an owner (a check-in, workorder, service-line, change-request or invoice photo) needs image:image:view, while unowned images (catalogue artwork, logos, employee photos) need no permission, and legacy records are served only when pos.image.legacy-root resolves their path safely. Required inputs: id; size (original or thumb, where a record without a thumbnail serves the original) and If-None-Match are optional, and there is no request body. No events are emitted and no state changes occur. Stored bytes carry a strong ETag (the served rendition\'s content hash) and private, immutable-by-ID cache headers; a matching If-None-Match returns 304. Returns 400 when id is not a UUID or size is unknown, and 404 for an unknown or other-tenant record, an owned record without image:image:view, or an unavailable legacy file. 
      * Get image by ID
      */
     async getImageById(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -205,7 +267,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the images attached to one owner (a check-in, workorder, service line or change request), newest first, without their bytes; fetch bytes with getImageById and thumbnails with size=thumb. Use this operation to show a job\'s photos; do not use it to decide what belongs to the job, read the owning record (photoImageIds on a check-in or change request) instead, because that record is authoritative. Preconditions: the caller holds image:image:view; the owner is not validated, so an unknown owner simply has no images. Required inputs: ownerType and ownerId; there is no request body. Emits IMAGE_LIST_BY_OWNER; no state changes occur, and images in another tenant are never listed. Returns 400 for a missing or malformed ownerType or ownerId, and 403 without image:image:view. 
+     * Lists the images attached to one owner (a check-in, workorder, service line, change request or invoice), newest first, without their bytes; fetch bytes with getImageById and thumbnails with size=thumb. Use this operation to show a job\'s photos; do not use it to decide what belongs to the job, read the owning record (photoImageIds on a check-in or change request, listInvoiceAttachments for an invoice) instead, because that record is authoritative. Preconditions: the caller holds image:image:view; the owner is not validated, so an unknown owner simply has no images. Required inputs: ownerType and ownerId; there is no request body. Emits IMAGE_LIST_BY_OWNER; no state changes occur, and images in another tenant are never listed. Returns 400 for a missing or malformed ownerType or ownerId, and 403 without image:image:view. 
      * List an owner\'s images
      */
     async listImagesByOwnerRaw(requestParameters: ListImagesByOwnerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ImageSummary>>> {
@@ -246,7 +308,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the images attached to one owner (a check-in, workorder, service line or change request), newest first, without their bytes; fetch bytes with getImageById and thumbnails with size=thumb. Use this operation to show a job\'s photos; do not use it to decide what belongs to the job, read the owning record (photoImageIds on a check-in or change request) instead, because that record is authoritative. Preconditions: the caller holds image:image:view; the owner is not validated, so an unknown owner simply has no images. Required inputs: ownerType and ownerId; there is no request body. Emits IMAGE_LIST_BY_OWNER; no state changes occur, and images in another tenant are never listed. Returns 400 for a missing or malformed ownerType or ownerId, and 403 without image:image:view. 
+     * Lists the images attached to one owner (a check-in, workorder, service line, change request or invoice), newest first, without their bytes; fetch bytes with getImageById and thumbnails with size=thumb. Use this operation to show a job\'s photos; do not use it to decide what belongs to the job, read the owning record (photoImageIds on a check-in or change request, listInvoiceAttachments for an invoice) instead, because that record is authoritative. Preconditions: the caller holds image:image:view; the owner is not validated, so an unknown owner simply has no images. Required inputs: ownerType and ownerId; there is no request body. Emits IMAGE_LIST_BY_OWNER; no state changes occur, and images in another tenant are never listed. Returns 400 for a missing or malformed ownerType or ownerId, and 403 without image:image:view. 
      * List an owner\'s images
      */
     async listImagesByOwner(requestParameters: ListImagesByOwnerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ImageSummary>> {
@@ -309,6 +371,17 @@ export class ImageAPIApi extends runtime.BaseAPI {
   * @export
   * @enum {string}
   */
+export enum DeleteOwnedImageOwnerTypeEnum {
+    EstimateCheckIn = 'ESTIMATE_CHECK_IN',
+    Workorder = 'WORKORDER',
+    WorkorderService = 'WORKORDER_SERVICE',
+    ChangeRequest = 'CHANGE_REQUEST',
+    Invoice = 'INVOICE'
+}
+/**
+  * @export
+  * @enum {string}
+  */
 export enum GetImageByIdSizeEnum {
     Original = 'original',
     Thumb = 'thumb'
@@ -321,5 +394,6 @@ export enum ListImagesByOwnerOwnerTypeEnum {
     EstimateCheckIn = 'ESTIMATE_CHECK_IN',
     Workorder = 'WORKORDER',
     WorkorderService = 'WORKORDER_SERVICE',
-    ChangeRequest = 'CHANGE_REQUEST'
+    ChangeRequest = 'CHANGE_REQUEST',
+    Invoice = 'INVOICE'
 }

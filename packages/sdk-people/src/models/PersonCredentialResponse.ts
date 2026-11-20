@@ -38,7 +38,7 @@ export interface PersonCredentialResponse {
      */
     expiresOn?: Date;
     /**
-     * Whether a document (retained evidence, 49 CFR 396.19) is on record; the document reference itself is never returned
+     * Whether a photographed document (retained evidence, 49 CFR 396.19) is stored for the credential and can be revealed with revealCredentialDocument; an external evidence reference from a bulk feed alone leaves it false. The document is never returned here
      * @type {boolean}
      * @memberof PersonCredentialResponse
      */

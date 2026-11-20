@@ -111,6 +111,12 @@ export interface BillIntakeResponse {
      */
     discardedBy?: string;
     /**
+     * What the document is, said at upload and never changed: BILL, or RECEIPT for a purchase receipt not paid from the cash drawer. A RECEIPT is checked and confirmed as a bill is, with three rules of its own: debitClass is EXPENSE (set by the server), a line's debitClass is empty or EXPENSE, and documentType is INVOICE. Always sent
+     * @type {string}
+     * @memberof BillIntakeResponse
+     */
+    documentKind?: BillIntakeResponseDocumentKindEnum;
+    /**
      * True once a person has edited the draft
      * @type {boolean}
      * @memberof BillIntakeResponse
@@ -164,6 +170,12 @@ export interface BillIntakeResponse {
      * @memberof BillIntakeResponse
      */
     pageCount?: number;
+    /**
+     * For a RECEIPT, what the person said at upload: false, it was not paid from the cash drawer (a receipt paid from the drawer is refused). Absent for a BILL
+     * @type {boolean}
+     * @memberof BillIntakeResponse
+     */
+    paidFromDrawer?: boolean;
     /**
      * Possible duplicates found by the checks
      * @type {Array<BillIntakeDuplicateView>}
@@ -276,6 +288,14 @@ export enum BillIntakeResponseChannelEnum {
 * @export
 * @enum {string}
 */
+export enum BillIntakeResponseDocumentKindEnum {
+    Bill = 'BILL',
+    Receipt = 'RECEIPT'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum BillIntakeResponseExtractionOutcomeEnum {
     Manual = 'MANUAL',
     Extracted = 'EXTRACTED'
@@ -332,6 +352,7 @@ export function BillIntakeResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'discardReason': json['discardReason'] == null ? undefined : json['discardReason'],
         'discardedAt': json['discardedAt'] == null ? undefined : (new Date(json['discardedAt'])),
         'discardedBy': json['discardedBy'] == null ? undefined : json['discardedBy'],
+        'documentKind': json['documentKind'] == null ? undefined : json['documentKind'],
         'edited': json['edited'] == null ? undefined : json['edited'],
         'extractionOutcome': json['extractionOutcome'] == null ? undefined : json['extractionOutcome'],
         'header': json['header'] == null ? undefined : json['header'],
@@ -341,6 +362,7 @@ export function BillIntakeResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'lines': json['lines'] == null ? undefined : json['lines'],
         'mappingRequired': json['mappingRequired'] == null ? undefined : json['mappingRequired'],
         'pageCount': json['pageCount'] == null ? undefined : json['pageCount'],
+        'paidFromDrawer': json['paidFromDrawer'] == null ? undefined : json['paidFromDrawer'],
         'possibleDuplicates': json['possibleDuplicates'] == null ? undefined : ((json['possibleDuplicates'] as Array<any>).map(BillIntakeDuplicateViewFromJSON)),
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
         'rowErrors': json['rowErrors'] == null ? undefined : json['rowErrors'],
@@ -376,6 +398,7 @@ export function BillIntakeResponseToJSON(value?: BillIntakeResponse | null): any
         'discardReason': value['discardReason'],
         'discardedAt': value['discardedAt'] == null ? undefined : ((value['discardedAt']).toISOString()),
         'discardedBy': value['discardedBy'],
+        'documentKind': value['documentKind'],
         'edited': value['edited'],
         'extractionOutcome': value['extractionOutcome'],
         'header': value['header'],
@@ -385,6 +408,7 @@ export function BillIntakeResponseToJSON(value?: BillIntakeResponse | null): any
         'lines': value['lines'],
         'mappingRequired': value['mappingRequired'],
         'pageCount': value['pageCount'],
+        'paidFromDrawer': value['paidFromDrawer'],
         'possibleDuplicates': value['possibleDuplicates'] == null ? undefined : ((value['possibleDuplicates'] as Array<any>).map(BillIntakeDuplicateViewToJSON)),
         'rejectionReason': value['rejectionReason'],
         'rowErrors': value['rowErrors'],

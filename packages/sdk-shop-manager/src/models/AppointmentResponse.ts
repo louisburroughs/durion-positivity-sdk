@@ -39,7 +39,7 @@ export interface AppointmentResponse {
      */
     actualStartAt?: Date;
     /**
-     * DECISION-SHOPMGMT-022: true when this appointment is still SCHEDULED, starts in the future, names a BAY or MOBILE_UNIT resource, and that resource is now missing, not ACTIVE (out of service or retired), or — for a BAY — no longer passes DECISION-SHOPMGMT-021 eligibility for the appointment's services and vehicle. Derived at read time from the resource replicas, never stored; a resource returning to service or eligibility clears it on the next read. An affected appointment is not blocked from anything — it belongs in the reschedule queue (GET /v1/schedules/view?affected=true).
+     * DECISION-SHOPMGMT-022/-028: true when this appointment is still SCHEDULED, starts in the future, and either names a BAY or MOBILE_UNIT resource that is now missing, not ACTIVE (out of service or retired), or — for a BAY — no longer passes DECISION-SHOPMGMT-021 eligibility for the appointment's services and vehicle; or has an ASSIGNED LEAD mechanic who is on approved time off for part of the window, or has no shift covering it on a location date that publishes shifts (DECISION-SHOPMGMT-028 rule 2). Derived at read time from the replicas, never stored; the condition clearing (a resource back in service, time off withdrawn, a shift added, the LEAD reassigned) clears it on the next read. An affected appointment is not blocked from anything — it belongs in the reschedule queue (GET /v1/schedules/view?affected=true).
      * @type {boolean}
      * @memberof AppointmentResponse
      */

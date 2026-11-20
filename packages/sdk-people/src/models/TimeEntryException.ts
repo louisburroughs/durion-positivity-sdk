@@ -98,7 +98,7 @@ export interface TimeEntryException {
      */
     workDate?: Date;
     /**
-     * Work session the exception concerns (set for MISSED_CLOCK_OUT and LONG_BREAK raised by detection); null otherwise
+     * Work session the exception concerns (set for MISSED_CLOCK_OUT, LONG_BREAK and EARLY_CLOCK_IN raised by detection); null otherwise
      * @type {string}
      * @memberof TimeEntryException
      */
@@ -111,7 +111,8 @@ export interface TimeEntryException {
 */
 export enum TimeEntryExceptionExceptionCodeEnum {
     MissedClockOut = 'MISSED_CLOCK_OUT',
-    LongBreak = 'LONG_BREAK'
+    LongBreak = 'LONG_BREAK',
+    EarlyClockIn = 'EARLY_CLOCK_IN'
 }
 /**
 * @export
