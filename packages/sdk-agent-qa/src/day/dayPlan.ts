@@ -125,6 +125,12 @@ export interface DayPlanOptions {
   visitsMax: number;
   /** Ceiling on the whole tenant's visits in a day, to bound cost. Sites are trimmed evenly. */
   tenantMax: number;
+  /**
+   * Site codes kept quieter than the rest: their size-scaled count is multiplied by
+   * `quietShare`, so a tenant always has a shop running below the average.
+   */
+  quietSites?: readonly string[];
+  quietShare?: number;
   /** Share of visits by a customer the shop has never seen. */
   newCustomerRatio: number;
   /** Share of visits by a commercial account. */
@@ -270,7 +276,9 @@ export function visitCounts(date: string, sites: readonly Site[], options: DayPl
     const size = largest === smallest ? 0.5 : (site.positions - smallest) / (largest - smallest);
     const base = options.visitsMin + Math.round(span * size) + (span >= 2 ? random.int(-1, 1) : 0);
     const bounded = Math.min(options.visitsMax, Math.max(options.visitsMin, base));
-    return saturday ? Math.round(bounded * 0.6) : bounded;
+    const quiet = options.quietSites?.includes(site.code) ?? false;
+    const scaled = quiet ? Math.max(1, Math.round(bounded * (options.quietShare ?? 0.5))) : bounded;
+    return saturday ? Math.round(scaled * 0.6) : scaled;
   });
   // Over the ceiling: take one from the busiest site at a time, so no site is emptied to keep another full.
   for (let total = counts.reduce((sum, count) => sum + count, 0); total > options.tenantMax; total -= 1) {

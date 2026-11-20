@@ -227,6 +227,7 @@ that day, and which visits they are changes daily, so all four combinations turn
 | --- | --- | --- |
 | `QA_VISITS_PER_SITE_MIN` / `_MAX` | 4 / 8 | Visits per site on a full weekday: the smallest site gets about the minimum, the largest about the maximum. `QA_VISITS_PER_SITE_MAX=0` turns visits off. |
 | `QA_VISITS_TENANT_MAX` | 60 | Ceiling on the whole tenant's visits in a day, to bound cost. The busiest sites are trimmed first; none is emptied. |
+| `QA_QUIET_SITES` / `QA_QUIET_SITE_SHARE` | none / 0.5 | Comma-separated site codes kept below the tenant's average: their size-scaled count is multiplied by the share (at least one visit). Keeps a slow shop in the mix when the others are busy. |
 | `QA_NEW_CUSTOMER_RATIO` | 0.3 | Share of visits by a customer the shop has never seen. |
 | `QA_COMMERCIAL_RATIO` | 0.3 | Share of visits by a commercial account. |
 | `QA_NEW_VEHICLE_RATIO` | 0.2 | Share of returning customers who bring a vehicle not yet on file. |
