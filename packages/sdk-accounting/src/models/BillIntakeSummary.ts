@@ -38,6 +38,12 @@ export interface BillIntakeSummary {
      */
     currency?: string;
     /**
+     * What the document is: BILL, or RECEIPT for a purchase receipt not paid from the cash drawer, which becomes a vendor bill that is an expense. Always sent
+     * @type {string}
+     * @memberof BillIntakeSummary
+     */
+    documentKind?: BillIntakeSummaryDocumentKindEnum;
+    /**
      * 
      * @type {string}
      * @memberof BillIntakeSummary
@@ -119,6 +125,14 @@ export enum BillIntakeSummaryChannelEnum {
 * @export
 * @enum {string}
 */
+export enum BillIntakeSummaryDocumentKindEnum {
+    Bill = 'BILL',
+    Receipt = 'RECEIPT'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum BillIntakeSummaryStatusEnum {
     Quarantined = 'QUARANTINED',
     FileRejected = 'FILE_REJECTED',
@@ -161,6 +175,7 @@ export function BillIntakeSummaryFromJSONTyped(json: any, ignoreDiscriminator: b
         'billNumber': json['billNumber'] == null ? undefined : json['billNumber'],
         'channel': json['channel'] == null ? undefined : json['channel'],
         'currency': json['currency'] == null ? undefined : json['currency'],
+        'documentKind': json['documentKind'] == null ? undefined : json['documentKind'],
         'intakeId': json['intakeId'] == null ? undefined : json['intakeId'],
         'intakeReference': json['intakeReference'] == null ? undefined : json['intakeReference'],
         'pageCount': json['pageCount'] == null ? undefined : json['pageCount'],
@@ -184,6 +199,7 @@ export function BillIntakeSummaryToJSON(value?: BillIntakeSummary | null): any {
         'billNumber': value['billNumber'],
         'channel': value['channel'],
         'currency': value['currency'],
+        'documentKind': value['documentKind'],
         'intakeId': value['intakeId'],
         'intakeReference': value['intakeReference'],
         'pageCount': value['pageCount'],

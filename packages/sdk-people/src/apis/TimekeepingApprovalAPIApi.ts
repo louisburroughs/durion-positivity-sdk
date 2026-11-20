@@ -20,7 +20,6 @@ import type {
   RejectTimePeriodRequest,
   TimePeriodApprovalDto,
   TimePeriodDto,
-  TimekeepingEntryDto,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -33,8 +32,6 @@ import {
     TimePeriodApprovalDtoToJSON,
     TimePeriodDtoFromJSON,
     TimePeriodDtoToJSON,
-    TimekeepingEntryDtoFromJSON,
-    TimekeepingEntryDtoToJSON,
 } from '../models/index';
 
 export interface ApproveTimePeriodRequest {
@@ -58,11 +55,6 @@ export interface ListTimekeepingApprovalPeopleRequest {
     locationId?: string;
     page?: number;
     size?: number;
-}
-
-export interface ListTimekeepingEntriesRequest {
-    personId: string;
-    timePeriodId: string;
 }
 
 export interface RejectTimePeriodOperationRequest {
@@ -297,64 +289,6 @@ export class TimekeepingApprovalAPIApi extends runtime.BaseAPI {
      */
     async listTimekeepingApprovalPeople(requestParameters: ListTimekeepingApprovalPeopleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseApprovalPersonDto> {
         const response = await this.listTimekeepingApprovalPeopleRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Lists a person\'s timekeeping entries whose sessions fall entirely within the given pay period\'s date range, evaluated in UTC. Use this tool to review entries before deciding a period; use listTimekeepingApprovalPeople instead for attendance counts per person. Preconditions: the time period must exist; sessions straddling the period boundary are excluded because both start and end must fall inside it. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
-     * List Timekeeping Entries For Person And Period
-     */
-    async listTimekeepingEntriesRaw(requestParameters: ListTimekeepingEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimekeepingEntryDto>>> {
-        if (requestParameters['personId'] == null) {
-            throw new runtime.RequiredError(
-                'personId',
-                'Required parameter "personId" was null or undefined when calling listTimekeepingEntries().'
-            );
-        }
-
-        if (requestParameters['timePeriodId'] == null) {
-            throw new runtime.RequiredError(
-                'timePeriodId',
-                'Required parameter "timePeriodId" was null or undefined when calling listTimekeepingEntries().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['personId'] != null) {
-            queryParameters['personId'] = requestParameters['personId'];
-        }
-
-        if (requestParameters['timePeriodId'] != null) {
-            queryParameters['timePeriodId'] = requestParameters['timePeriodId'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:timekeeping:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/people/timekeeping/timekeeping-entries`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TimekeepingEntryDtoFromJSON));
-    }
-
-    /**
-     * Lists a person\'s timekeeping entries whose sessions fall entirely within the given pay period\'s date range, evaluated in UTC. Use this tool to review entries before deciding a period; use listTimekeepingApprovalPeople instead for attendance counts per person. Preconditions: the time period must exist; sessions straddling the period boundary are excluded because both start and end must fall inside it. Required inputs: personId (UUID) and timePeriodId (UUID) query parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the time period does not exist. 
-     * List Timekeeping Entries For Person And Period
-     */
-    async listTimekeepingEntries(requestParameters: ListTimekeepingEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimekeepingEntryDto>> {
-        const response = await this.listTimekeepingEntriesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

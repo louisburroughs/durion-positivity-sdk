@@ -13,12 +13,25 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CredentialDocumentPayload } from './CredentialDocumentPayload';
+import {
+    CredentialDocumentPayloadFromJSON,
+    CredentialDocumentPayloadFromJSONTyped,
+    CredentialDocumentPayloadToJSON,
+} from './CredentialDocumentPayload';
+
 /**
  * A credential to record for a person: a new one, or a renewal with a later issuedOn
  * @export
  * @interface CreatePersonCredentialRequest
  */
 export interface CreatePersonCredentialRequest {
+    /**
+     * 
+     * @type {CredentialDocumentPayload}
+     * @memberof CreatePersonCredentialRequest
+     */
+    document?: CredentialDocumentPayload;
     /**
      * Date the credential expires (yyyy-MM-dd), not before issuedOn; omit or null when it does not expire
      * @type {Date}
@@ -65,6 +78,7 @@ export function CreatePersonCredentialRequestFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
+        'document': json['document'] == null ? undefined : CredentialDocumentPayloadFromJSON(json['document']),
         'expiresOn': json['expiresOn'] == null ? undefined : (new Date(json['expiresOn'])),
         'issuedOn': (new Date(json['issuedOn'])),
         'issuer': json['issuer'],
@@ -78,6 +92,7 @@ export function CreatePersonCredentialRequestToJSON(value?: CreatePersonCredenti
     }
     return {
         
+        'document': CredentialDocumentPayloadToJSON(value['document']),
         'expiresOn': value['expiresOn'] == null ? undefined : ((value['expiresOn']).toISOString().substring(0,10)),
         'issuedOn': ((value['issuedOn']).toISOString().substring(0,10)),
         'issuer': value['issuer'],
