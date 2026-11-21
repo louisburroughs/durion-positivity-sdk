@@ -62,13 +62,13 @@ export interface Opening {
      */
     startAt: Date;
     /**
-     * Technician (person id) rostered that day and free in the window
+     * Technician (person id) whose available time that day (People shifts, or the whole day when the location publishes no shift that date, minus approved time off) covers the window and who is free of other work in it; never a technician on time off in it
      * @type {string}
      * @memberof Opening
      */
     technicianId: string;
     /**
-     * Grain of the roster check. DAY: rostered is day-grain from the staffing replica, busy is minute-grain from appointments; PTO is not modelled
+     * Grain of the roster check. DAY: the technician holds an ACTIVE technician staffing assignment that day and their available time is read from People shifts and approved time off (the whole day minus time off when the location publishes no shift that date); busy is minute-grain from appointments
      * @type {string}
      * @memberof Opening
      */

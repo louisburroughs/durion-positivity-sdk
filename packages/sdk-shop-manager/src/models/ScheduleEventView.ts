@@ -27,7 +27,7 @@ import {
  */
 export interface ScheduleEventView {
     /**
-     * DECISION-SHOPMGMT-022: true when this appointment (event) is SCHEDULED, starts in the future, names a BAY or MOBILE_UNIT resource, and that resource is now missing, not ACTIVE, or (a BAY) no longer eligible for the appointment's services and vehicle. Derived at read time, never stored. The `affected` query parameter on this endpoint filters on this same flag.
+     * DECISION-SHOPMGMT-022/-028: true when this appointment (event) is SCHEDULED, starts in the future, and either names a BAY or MOBILE_UNIT resource that is now missing, not ACTIVE, or (a BAY) no longer eligible for the appointment's services and vehicle; or has an ASSIGNED LEAD mechanic who is on approved time off for part of the window, or has no shift covering it on a location date that publishes shifts. Derived at read time, never stored. The `affected` query parameter on this endpoint filters on this same flag.
      * @type {boolean}
      * @memberof ScheduleEventView
      */

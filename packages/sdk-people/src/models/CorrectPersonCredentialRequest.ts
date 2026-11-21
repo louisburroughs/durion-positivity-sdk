@@ -13,12 +13,25 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CredentialDocumentPayload } from './CredentialDocumentPayload';
+import {
+    CredentialDocumentPayloadFromJSON,
+    CredentialDocumentPayloadFromJSONTyped,
+    CredentialDocumentPayloadToJSON,
+} from './CredentialDocumentPayload';
+
 /**
- * A correction of a recorded credential: only expiresOn changes
+ * A correction of a recorded credential: expiresOn changes, and an optional document replaces the stored one
  * @export
  * @interface CorrectPersonCredentialRequest
  */
 export interface CorrectPersonCredentialRequest {
+    /**
+     * 
+     * @type {CredentialDocumentPayload}
+     * @memberof CorrectPersonCredentialRequest
+     */
+    document?: CredentialDocumentPayload;
     /**
      * New expiry date (yyyy-MM-dd), not before the stored issuedOn (422 SEMANTIC_VALIDATION_ERROR naming expiresOn otherwise); omit or null when the credential does not expire
      * @type {Date}
@@ -62,6 +75,7 @@ export function CorrectPersonCredentialRequestFromJSONTyped(json: any, ignoreDis
     }
     return {
         
+        'document': json['document'] == null ? undefined : CredentialDocumentPayloadFromJSON(json['document']),
         'expiresOn': json['expiresOn'] == null ? undefined : (new Date(json['expiresOn'])),
         'issuedOn': json['issuedOn'] == null ? undefined : (new Date(json['issuedOn'])),
         'issuer': json['issuer'] == null ? undefined : json['issuer'],
@@ -75,6 +89,7 @@ export function CorrectPersonCredentialRequestToJSON(value?: CorrectPersonCreden
     }
     return {
         
+        'document': CredentialDocumentPayloadToJSON(value['document']),
         'expiresOn': value['expiresOn'] == null ? undefined : ((value['expiresOn']).toISOString().substring(0,10)),
         'issuedOn': value['issuedOn'] == null ? undefined : ((value['issuedOn']).toISOString().substring(0,10)),
         'issuer': value['issuer'],

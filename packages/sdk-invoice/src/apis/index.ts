@@ -7,6 +7,7 @@ export * from './InvoiceApi';
 export * from './InvoiceAnalyticsApi';
 export * from './InvoiceArtifactControllerApi';
 export * from './InvoiceArtifactDownloadControllerApi';
+export * from './InvoiceAttachmentsApi';
 export * from './InvoiceSearchApi';
 export * from './MerchantAccountsApi';
 export * from './PaymentApi';

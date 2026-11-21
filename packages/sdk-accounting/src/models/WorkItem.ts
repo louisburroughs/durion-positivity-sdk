@@ -69,7 +69,7 @@ export interface WorkItem {
      */
     postingPreview: Array<WorkItemPostingLine>;
     /**
-     * Why the item is listed, a code
+     * Why the item is listed, a code; a waiting bill's says what it waits for: CREDIT_NOTE for a credit note, PURCHASE_RECEIPT for a bill confirmed from a receipt draft, INVOICE_NOT_MATCHED while a goods-receipt bill awaits its invoice, else NO_DELIVERY_RECORDED
      * @type {string}
      * @memberof WorkItem
      */

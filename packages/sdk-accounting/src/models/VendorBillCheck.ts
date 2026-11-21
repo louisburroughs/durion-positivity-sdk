@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface VendorBillCheck {
     /**
-     * Values the message is built from
+     * Values the message is built from; reason on a failed MATCHED_TO_DELIVERY: PICK_A_MATCH, INVOICE_NOT_MATCHED, NO_DELIVERY_RECORDED, PURCHASE_RECEIPT for a bill confirmed from a receipt draft, or CREDIT_NOTE for a credit note
      * @type {{ [key: string]: string; }}
      * @memberof VendorBillCheck
      */

@@ -50,7 +50,7 @@ export interface TimeEntryExceptionRequest {
      */
     timeEntryId?: string;
     /**
-     * Work session the exception concerns, when there is one; it must be one of the person's sessions (422 SEMANTIC_VALIDATION_ERROR otherwise). The exception then takes its location and work date from the session and names it as its subject, so closing the session resolves a MISSED_CLOCK_OUT, and a second exception with the same code for the same session is refused
+     * Work session the exception concerns, when there is one; it must be one of the person's sessions (422 SEMANTIC_VALIDATION_ERROR otherwise). The exception then takes its location and work date from the session; a MISSED_CLOCK_OUT or EARLY_CLOCK_IN names it as its subject, so closing the session resolves a MISSED_CLOCK_OUT, and a second exception with the same code for the same session, recorded or detected, is refused
      * @type {string}
      * @memberof TimeEntryExceptionRequest
      */
@@ -63,7 +63,8 @@ export interface TimeEntryExceptionRequest {
 */
 export enum TimeEntryExceptionRequestExceptionCodeEnum {
     MissedClockOut = 'MISSED_CLOCK_OUT',
-    LongBreak = 'LONG_BREAK'
+    LongBreak = 'LONG_BREAK',
+    EarlyClockIn = 'EARLY_CLOCK_IN'
 }
 
 

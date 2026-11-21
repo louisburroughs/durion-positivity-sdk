@@ -47,3 +47,5 @@ export * from './StaffingAdvisory';
 export * from './SuggestedAlternative';
 export * from './TechnicianCapacityView';
 export * from './TechnicianCredentialResponse';
+export * from './TechnicianShiftResponse';
+export * from './TechnicianTimeOffResponse';

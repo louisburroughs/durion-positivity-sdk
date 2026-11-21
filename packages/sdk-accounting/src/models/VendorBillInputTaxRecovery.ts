@@ -38,7 +38,7 @@ export interface VendorBillInputTaxRecovery {
      */
     recoveredAmount: number;
     /**
-     * Why nothing was recovered: NOT_REGISTERED, NOT_RECOVERABLE, TAX_SPLIT_MISSING or SUPPLIER_REGISTRATION_MISSING; null when recovered
+     * Why nothing was recovered: NOT_REGISTERED, NOT_RECOVERABLE, TAX_SPLIT_MISSING, SUPPLIER_REGISTRATION_MISSING or RECEIPT_NOT_RECOVERED (the bill was confirmed from a purchase receipt, whose tax is stored as stated and never recovered); null when recovered
      * @type {string}
      * @memberof VendorBillInputTaxRecovery
      */

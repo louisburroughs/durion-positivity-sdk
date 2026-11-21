@@ -83,7 +83,8 @@ export enum ImageSummaryOwnerTypeEnum {
     EstimateCheckIn = 'ESTIMATE_CHECK_IN',
     Workorder = 'WORKORDER',
     WorkorderService = 'WORKORDER_SERVICE',
-    ChangeRequest = 'CHANGE_REQUEST'
+    ChangeRequest = 'CHANGE_REQUEST',
+    Invoice = 'INVOICE'
 }
 
 
