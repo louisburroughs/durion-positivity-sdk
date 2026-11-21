@@ -778,8 +778,8 @@ describe('Suite F — attendance approval and workorder time on task', () => {
 
   it('F11 — an unknown pay period is a 404, not an empty timesheet', async () => {
     const status = await expectHttpError(
-      manager.people.timekeepingApprovalAPIApi.listTimekeepingEntries({
-        personId: technicianId,
+      manager.people.timeEntryApprovalAPIApi.listTimeEntries({
+        employeeId: technicianId,
         timePeriodId: randomUUID(),
       }),
       404,

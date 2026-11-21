@@ -713,7 +713,7 @@ const weekly: ScenarioInput[] = [
       'people.TimePeriodManagementAPIApi.transitionTimePeriod',
       'people.TimekeepingApprovalAPIApi.listTimekeepingApprovalPeople',
       'people.TimekeepingApprovalAPIApi.getTimePeriodApproval',
-      'people.TimekeepingApprovalAPIApi.listTimekeepingEntries',
+      'people.TimeEntryApprovalAPIApi.listTimeEntries',
       'people.TimekeepingApprovalAPIApi.approveTimePeriod',
       'people.TimekeepingApprovalAPIApi.rejectTimePeriod',
       'people.PeopleReportsAPIApi.listApprovedTimeForExport',
