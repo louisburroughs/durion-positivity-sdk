@@ -17,7 +17,7 @@ import { counterTerminal } from '../day/sites';
 import type { Lookup } from '../day/prepare';
 import { buildBankStatement, entryMethodFor, statementFile, type BankItemKind, type LedgerItem } from '../tools/mockBank';
 
-export type RoutinePreparation = 'crew' | 'self' | 'register' | 'stock' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
+export type RoutinePreparation = 'crew' | 'self' | 'register' | 'stock' | 'purchase-orders' | 'bank-accounts' | 'bank-statement' | 'bank-reconciliation' | 'vendor-bills';
 
 export interface RoutineContext {
   /** The site a per-site routine is at. */
@@ -52,6 +52,8 @@ export const PREPARED_READS: Record<RoutinePreparation, readonly string[]> = {
   register: ['people-contact.PeopleAPIApi.getCurrentPerson'],
   // Paging the whole stock to find the lowest is what the agent did with this read (36 pages of 5 on one run).
   stock: ['inventory.InventoryStockApi.listStock'],
+  // Finding the order to receive is where receive-delivery spent its budget: 9 listings and each order read 2-3 times.
+  'purchase-orders': ['order.PurchaseOrdersApi.listPurchaseOrders'],
   'bank-accounts': ['accounting.BankAccountsApi.listBankAccounts'],
   // The statement is built in code from the ledger, so none of the reading that feeds it is left to do.
   'bank-statement': [
@@ -806,6 +808,82 @@ async function stock(lookup: Lookup, context: RoutineContext): Promise<string[]>
   return [lines.join('\n')];
 }
 
+/** How far back a purchase order counts as this delivery's before older ones are considered at all. */
+const RECENT_ORDER_DAYS = 7;
+
+const isoDay = (value: unknown): string | undefined => iso(value)?.slice(0, 10);
+
+/**
+ * The purchase order today's delivery is for, picked in code: approved or partly
+ * received, still open, not ordered for a workorder (those are received against
+ * the job), and the oldest raised in the last week, preferring one nothing has
+ * been received against yet over the remainder a short delivery left (the oldest
+ * of all when none is that recent). Its lines come with what is still open and what the
+ * delivery brings, so the ship notice and the receipt agree with the order.
+ */
+async function purchaseOrders(lookup: Lookup, context: RoutineContext): Promise<string[]> {
+  if (!context.site) {
+    return [];
+  }
+  const persona = context.roleMode ? context.persona : undefined;
+  const orders: Record<string, unknown>[] = [];
+  for (const status of ['APPROVED', 'PARTIALLY_RECEIVED']) {
+    const answer = await lookup(
+      'order.PurchaseOrdersApi.listPurchaseOrders',
+      { locationId: context.site.id, status, size: 100, sort: ['createdAt,asc'] },
+      persona,
+    );
+    if (!answer.ok) {
+      return [];
+    }
+    orders.push(...listOf(answer.body, 'content', 'items'));
+  }
+  const quantity = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
+  const openLines = (order: Record<string, unknown>) =>
+    listOf(order['lines']).filter((line) => quantity(line['openQuantityDecimal']) > 0);
+  const forWorkorder = (order: Record<string, unknown>): boolean =>
+    /workorder/i.test(text(order['comment']) ?? '') || listOf(order['lines']).some((line) => text(line['workorderId']));
+  const open = orders
+    .filter((order) => !forWorkorder(order) && openLines(order).length > 0)
+    .sort((a, b) => (iso(a['createdAt']) ?? '').localeCompare(iso(b['createdAt']) ?? ''));
+
+  if (open.length === 0) {
+    return [
+      `No purchase order shipping to ${context.site.name} is approved and still open, other than any ordered for a ` +
+        'workorder: there is nothing on this truck to receive against an order.',
+    ];
+  }
+  // createdAt, not poDate: on an accelerated clock poDate is virtual, and a months-old test order reads as this week's.
+  const since = new Date(Date.parse(`${context.date}T00:00:00Z`) - RECENT_ORDER_DAYS * 86_400_000).toISOString().slice(0, 10);
+  const recent = open.filter((order) => (isoDay(order['createdAt']) ?? '') >= since);
+  // A truck brings what was ordered: a whole recent order before the one unit a past delivery left short.
+  const untouched = recent.filter((order) => text(order['status']) === 'APPROVED');
+  const order = (untouched.length > 0 ? untouched : recent.length > 0 ? recent : open)[0]!;
+  const lines = openLines(order);
+  const comment = text(order['comment']);
+  const facts = [
+    `The purchase order this delivery is for: PO ${text(order['poNumber']) ?? '?'} (purchaseOrderId ` +
+      `${text(order['purchaseOrderId']) ?? '?'}, vendorId ${text(order['vendorId']) ?? '?'}), ${text(order['status']) ?? '?'}, ` +
+      `raised ${isoDay(order['poDate']) ?? isoDay(order['createdAt']) ?? '?'}${comment ? `, comment "${comment}"` : ''}. ` +
+      `Its open lines (skuId is the catalog productId), with what arrives on this truck:`,
+  ];
+  lines.forEach((line, index) => {
+    const openQuantity = quantity(line['openQuantityDecimal']);
+    const short = lines.length > 1 && index === lines.length - 1 && openQuantity > 1;
+    facts.push(
+      `  line ${quantity(line['lineNumber'])} (lineId ${text(line['lineId']) ?? '?'}): skuId ${text(line['skuId']) ?? '?'}` +
+        `${text(line['description']) ? ` — ${text(line['description'])}` : ''}; ordered ${quantity(line['quantityDecimal'])}, ` +
+        `open ${openQuantity}, unit cost ${quantity(line['unitCostMinor'])} minor ${text(order['currency']) ?? ''}`.trimEnd() +
+        `; arrives ${short ? `${openQuantity - 1} (one short)` : openQuantity}`,
+    );
+  });
+  const others = open.length - 1;
+  if (others > 0) {
+    facts.push(`  (${others} other open order${others === 1 ? '' : 's'} here can wait for a later truck.)`);
+  }
+  return [facts.join('\n')];
+}
+
 /** Runs the routine's preparation and returns the facts it established. Never throws for a failed read. */
 export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, context: RoutineContext): Promise<string[]> {
   switch (kind) {
@@ -817,6 +895,8 @@ export async function prepareRoutine(kind: RoutinePreparation, lookup: Lookup, c
       return register(lookup, context);
     case 'stock':
       return stock(lookup, context);
+    case 'purchase-orders':
+      return purchaseOrders(lookup, context);
     case 'bank-accounts':
       return bankAccounts(lookup, context);
     case 'bank-statement':
