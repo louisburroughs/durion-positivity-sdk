@@ -26,6 +26,12 @@ export interface BillIntakeItemResponse {
      */
     channel?: BillIntakeItemResponseChannelEnum;
     /**
+     * What the document is: BILL, or RECEIPT when the upload said so (a purchase receipt not paid from the cash drawer). Always sent
+     * @type {string}
+     * @memberof BillIntakeItemResponse
+     */
+    documentKind?: BillIntakeItemResponseDocumentKindEnum;
+    /**
      * Routing id of the draft
      * @type {string}
      * @memberof BillIntakeItemResponse
@@ -77,6 +83,14 @@ export enum BillIntakeItemResponseChannelEnum {
 * @export
 * @enum {string}
 */
+export enum BillIntakeItemResponseDocumentKindEnum {
+    Bill = 'BILL',
+    Receipt = 'RECEIPT'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum BillIntakeItemResponseStatusEnum {
     Quarantined = 'QUARANTINED',
     FileRejected = 'FILE_REJECTED',
@@ -107,6 +121,7 @@ export function BillIntakeItemResponseFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'channel': json['channel'] == null ? undefined : json['channel'],
+        'documentKind': json['documentKind'] == null ? undefined : json['documentKind'],
         'intakeId': json['intakeId'],
         'intakeReference': json['intakeReference'] == null ? undefined : json['intakeReference'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
@@ -123,6 +138,7 @@ export function BillIntakeItemResponseToJSON(value?: BillIntakeItemResponse | nu
     return {
         
         'channel': value['channel'],
+        'documentKind': value['documentKind'],
         'intakeId': value['intakeId'],
         'intakeReference': value['intakeReference'],
         'rejectionReason': value['rejectionReason'],

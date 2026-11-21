@@ -189,6 +189,12 @@ export interface VendorBillResponse {
      */
     inputTaxRecovery?: Array<VendorBillInputTaxRecovery>;
     /**
+     * The kind of the bill draft this bill was confirmed from: BILL, or RECEIPT for a purchase receipt (not a goods receipt) that was not paid from the cash drawer. A RECEIPT's bill is an expense whatever its vendor's default says (a classification naming another class is 400), and its stated tax is never recovered (inputTaxRecovery reads RECEIPT_NOT_RECOVERED). Absent for a bill that was not created from a draft, one a draft was attached to included
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    intakeDocumentKind?: VendorBillResponseIntakeDocumentKindEnum;
+    /**
      * Journal entry ID (if GL posted)
      * @type {string}
      * @memberof VendorBillResponse
@@ -348,6 +354,14 @@ export enum VendorBillResponseDocumentTypeEnum {
 * @export
 * @enum {string}
 */
+export enum VendorBillResponseIntakeDocumentKindEnum {
+    Bill = 'BILL',
+    Receipt = 'RECEIPT'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillResponseStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
@@ -405,6 +419,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'freightAmount': json['freightAmount'] == null ? undefined : json['freightAmount'],
         'inputTaxRecovery': json['inputTaxRecovery'] == null ? undefined : ((json['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryFromJSON)),
+        'intakeDocumentKind': json['intakeDocumentKind'] == null ? undefined : json['intakeDocumentKind'],
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'lines': ((json['lines'] as Array<any>).map(VendorBillLineFromJSON)),
         'match': json['match'] == null ? undefined : VendorBillMatchFromJSON(json['match']),
@@ -452,6 +467,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'freightAmount': value['freightAmount'],
         'inputTaxRecovery': value['inputTaxRecovery'] == null ? undefined : ((value['inputTaxRecovery'] as Array<any>).map(VendorBillInputTaxRecoveryToJSON)),
+        'intakeDocumentKind': value['intakeDocumentKind'],
         'journalEntryId': value['journalEntryId'],
         'lines': ((value['lines'] as Array<any>).map(VendorBillLineToJSON)),
         'match': VendorBillMatchToJSON(value['match']),

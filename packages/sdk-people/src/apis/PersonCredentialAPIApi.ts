@@ -20,7 +20,10 @@ import type {
   CreatePersonCredentialRequest,
   CredentialAttentionCounts,
   CredentialAttentionPage,
+  CredentialDocumentRevealPage,
   PersonCredentialResponse,
+  RevealCredentialDocumentRequest,
+  RevealCredentialDocumentResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -33,8 +36,14 @@ import {
     CredentialAttentionCountsToJSON,
     CredentialAttentionPageFromJSON,
     CredentialAttentionPageToJSON,
+    CredentialDocumentRevealPageFromJSON,
+    CredentialDocumentRevealPageToJSON,
     PersonCredentialResponseFromJSON,
     PersonCredentialResponseToJSON,
+    RevealCredentialDocumentRequestFromJSON,
+    RevealCredentialDocumentRequestToJSON,
+    RevealCredentialDocumentResponseFromJSON,
+    RevealCredentialDocumentResponseToJSON,
 } from '../models/index';
 
 export interface CorrectPersonCredentialOperationRequest {
@@ -54,6 +63,14 @@ export interface GetCredentialAttentionCountsRequest {
     expiringWithinDays?: number;
 }
 
+export interface ListCredentialDocumentRevealsRequest {
+    personId?: string;
+    from?: Date;
+    to?: Date;
+    page?: number;
+    size?: number;
+}
+
 export interface ListCredentialsNeedingAttentionRequest {
     locationId?: string;
     attention?: ListCredentialsNeedingAttentionAttentionEnum;
@@ -66,13 +83,20 @@ export interface ListPersonCredentialsRequest {
     personId: string;
 }
 
+export interface RevealCredentialDocumentOperationRequest {
+    personId: string;
+    credentialId: string;
+    revealCredentialDocumentRequest: RevealCredentialDocumentRequest;
+    xCorrelationId?: string;
+}
+
 /**
  * 
  */
 export class PersonCredentialAPIApi extends runtime.BaseAPI {
 
     /**
-     * Corrects the expiry date of a credential the person holds and returns it with its status re-derived as of today (UTC); expiresOn is replaced, so omitting it or sending null records that the credential does not expire. Use this tool to fix a mistyped or changed expiry; do not use it to renew, which is createPersonCredential with a later issuedOn, because skill, issuer and issuedOn identify the credential and cannot change here. Preconditions: the credential must belong to the person and be neither REVOKED nor SUPERSEDED, the person must not be TERMINATED, expiresOn must not be before the stored issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404s; the credential row is locked before these checks, so a concurrent renewal or correction is seen, not overwritten. Required inputs: personId and credentialId (UUID) path parameters and a body with expiresOn; skillCode, issuer and issuedOn may be echoed but must equal the stored values; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_UPDATE event and queues one people.person-credential.updated fact in the same transaction. Returns 200 with the credential; 404 PERSON_NOT_FOUND or CREDENTIAL_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 400 VALIDATION_ERROR for a malformed body; 422 SEMANTIC_VALIDATION_ERROR naming skillCode, issuer or issuedOn when it differs from the stored value, or expiresOn when it is before the stored issuedOn; 409 RESOURCE_STATE_CONFLICT when the credential is REVOKED or SUPERSEDED; and 422 EMPLOYEE_TERMINATED. 
+     * Corrects the expiry date of a credential the person holds, and optionally replaces its photographed document, and returns it with its status re-derived as of today (UTC); expiresOn is replaced, so omitting it or sending null records that the credential does not expire. Use this tool to fix a mistyped or changed expiry; do not use it to renew, which is createPersonCredential with a later issuedOn, because skill, issuer and issuedOn identify the credential and cannot change here. Preconditions: the credential must belong to the person and be neither REVOKED nor SUPERSEDED, the person must not be TERMINATED, expiresOn must not be before the stored issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404s; the credential row is locked before these checks, so a concurrent renewal or correction is seen, not overwritten. Required inputs: personId and credentialId (UUID) path parameters and a body with expiresOn; skillCode, issuer and issuedOn may be echoed but must equal the stored values; an optional document (base64 JPEG, PNG or WebP) replaces the stored one, and omitting it keeps it. Emits a PEOPLE_CREDENTIAL_UPDATE event and queues one people.person-credential.updated fact in the same transaction, never carrying the document. Returns 200 with the credential; 404 PERSON_NOT_FOUND or CREDENTIAL_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 400 VALIDATION_ERROR for a malformed body; 422 SEMANTIC_VALIDATION_ERROR naming skillCode, issuer or issuedOn when it differs from the stored value, or expiresOn when it is before the stored issuedOn; 409 RESOURCE_STATE_CONFLICT when the credential is REVOKED or SUPERSEDED; and 422 EMPLOYEE_TERMINATED, CREDENTIAL_DOCUMENT_UNSUPPORTED_TYPE or CREDENTIAL_DOCUMENT_TOO_LARGE. 
      * Correct A Credential\'s Expiry Date
      */
     async correctPersonCredentialRaw(requestParameters: CorrectPersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PersonCredentialResponse>> {
@@ -123,7 +147,7 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Corrects the expiry date of a credential the person holds and returns it with its status re-derived as of today (UTC); expiresOn is replaced, so omitting it or sending null records that the credential does not expire. Use this tool to fix a mistyped or changed expiry; do not use it to renew, which is createPersonCredential with a later issuedOn, because skill, issuer and issuedOn identify the credential and cannot change here. Preconditions: the credential must belong to the person and be neither REVOKED nor SUPERSEDED, the person must not be TERMINATED, expiresOn must not be before the stored issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404s; the credential row is locked before these checks, so a concurrent renewal or correction is seen, not overwritten. Required inputs: personId and credentialId (UUID) path parameters and a body with expiresOn; skillCode, issuer and issuedOn may be echoed but must equal the stored values; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_UPDATE event and queues one people.person-credential.updated fact in the same transaction. Returns 200 with the credential; 404 PERSON_NOT_FOUND or CREDENTIAL_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 400 VALIDATION_ERROR for a malformed body; 422 SEMANTIC_VALIDATION_ERROR naming skillCode, issuer or issuedOn when it differs from the stored value, or expiresOn when it is before the stored issuedOn; 409 RESOURCE_STATE_CONFLICT when the credential is REVOKED or SUPERSEDED; and 422 EMPLOYEE_TERMINATED. 
+     * Corrects the expiry date of a credential the person holds, and optionally replaces its photographed document, and returns it with its status re-derived as of today (UTC); expiresOn is replaced, so omitting it or sending null records that the credential does not expire. Use this tool to fix a mistyped or changed expiry; do not use it to renew, which is createPersonCredential with a later issuedOn, because skill, issuer and issuedOn identify the credential and cannot change here. Preconditions: the credential must belong to the person and be neither REVOKED nor SUPERSEDED, the person must not be TERMINATED, expiresOn must not be before the stored issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404s; the credential row is locked before these checks, so a concurrent renewal or correction is seen, not overwritten. Required inputs: personId and credentialId (UUID) path parameters and a body with expiresOn; skillCode, issuer and issuedOn may be echoed but must equal the stored values; an optional document (base64 JPEG, PNG or WebP) replaces the stored one, and omitting it keeps it. Emits a PEOPLE_CREDENTIAL_UPDATE event and queues one people.person-credential.updated fact in the same transaction, never carrying the document. Returns 200 with the credential; 404 PERSON_NOT_FOUND or CREDENTIAL_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 400 VALIDATION_ERROR for a malformed body; 422 SEMANTIC_VALIDATION_ERROR naming skillCode, issuer or issuedOn when it differs from the stored value, or expiresOn when it is before the stored issuedOn; 409 RESOURCE_STATE_CONFLICT when the credential is REVOKED or SUPERSEDED; and 422 EMPLOYEE_TERMINATED, CREDENTIAL_DOCUMENT_UNSUPPORTED_TYPE or CREDENTIAL_DOCUMENT_TOO_LARGE. 
      * Correct A Credential\'s Expiry Date
      */
     async correctPersonCredential(requestParameters: CorrectPersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PersonCredentialResponse> {
@@ -132,7 +156,7 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a credential the person holds, naming the registry skill it certifies, the issuer and the issue and expiry dates, and returns it with its status as of today (UTC). A renewal is this same call with a later issuedOn: it adds a new row and leaves the renewed one as it is, so the earlier qualification stays on record and stops needing attention. Use this tool to add or renew a licence or certification; do not use correctPersonCredential, which only changes the expiry of an existing row, and do not use the bulk credential ingest, which loads a vendor feed. Preconditions: the person must have an employee record that is not TERMINATED, skillCode must name an active registry skill, no credential may already have the same person, skill, issuer and issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404. Required inputs: personId (UUID) path parameter, an Idempotency-Key header (UUID, required, ADR-0075), and a body with skillCode, issuer (up to 32 characters), issuedOn and an optional expiresOn not before issuedOn; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_CREATE event and queues one people.person-credential.updated fact in the same transaction; a replay with the same key answers the stored 201 with Idempotency-Replayed: true and writes nothing. Returns 201 with the credential; 400 VALIDATION_ERROR for a missing or non-UUID key, a missing field or expiresOn before issuedOn (fieldErrors names expiresOn); 404 PERSON_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 409 IDEMPOTENCY_CONFLICT or DUPLICATE_RESOURCE (referenceId the existing credential); and 422 SEMANTIC_VALIDATION_ERROR naming skillCode or EMPLOYEE_TERMINATED. 
+     * Records a credential the person holds, naming the registry skill it certifies, the issuer and the issue and expiry dates, with an optional photographed document, and returns it with its status as of today (UTC). A renewal is this same call with a later issuedOn: it adds a new row and leaves the renewed one as it is, so the earlier qualification stays on record and stops needing attention. Use this tool to add or renew a licence or certification; do not use correctPersonCredential, which only changes the expiry of an existing row, and do not use the bulk credential ingest, which loads a vendor feed. Preconditions: the person must have an employee record that is not TERMINATED, skillCode must name an active registry skill, no credential may already have the same person, skill, issuer and issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404. Required inputs: personId (UUID) path parameter, an Idempotency-Key header (UUID, required, ADR-0075), and a body with skillCode, issuer (up to 32 characters), issuedOn and an optional expiresOn not before issuedOn; document is optional, a base64 JPEG, PNG or WebP image (5 MiB decoded by default) that is stored encrypted without its metadata and is never returned by a read, only by revealCredentialDocument. Emits a PEOPLE_CREDENTIAL_CREATE event and queues one people.person-credential.updated fact in the same transaction, never carrying the document; a replay with the same key answers the stored 201 with Idempotency-Replayed: true and writes nothing. Returns 201 with the credential; 400 VALIDATION_ERROR for a missing or non-UUID key, a missing field or expiresOn before issuedOn (fieldErrors names expiresOn); 404 PERSON_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 409 IDEMPOTENCY_CONFLICT or DUPLICATE_RESOURCE (referenceId the existing credential); and 422 SEMANTIC_VALIDATION_ERROR naming skillCode, EMPLOYEE_TERMINATED, CREDENTIAL_DOCUMENT_UNSUPPORTED_TYPE or CREDENTIAL_DOCUMENT_TOO_LARGE. 
      * Record Or Renew A Person\'s Credential
      */
     async createPersonCredentialRaw(requestParameters: CreatePersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PersonCredentialResponse>> {
@@ -187,7 +211,7 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a credential the person holds, naming the registry skill it certifies, the issuer and the issue and expiry dates, and returns it with its status as of today (UTC). A renewal is this same call with a later issuedOn: it adds a new row and leaves the renewed one as it is, so the earlier qualification stays on record and stops needing attention. Use this tool to add or renew a licence or certification; do not use correctPersonCredential, which only changes the expiry of an existing row, and do not use the bulk credential ingest, which loads a vendor feed. Preconditions: the person must have an employee record that is not TERMINATED, skillCode must name an active registry skill, no credential may already have the same person, skill, issuer and issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404. Required inputs: personId (UUID) path parameter, an Idempotency-Key header (UUID, required, ADR-0075), and a body with skillCode, issuer (up to 32 characters), issuedOn and an optional expiresOn not before issuedOn; no document is accepted in this version. Emits a PEOPLE_CREDENTIAL_CREATE event and queues one people.person-credential.updated fact in the same transaction; a replay with the same key answers the stored 201 with Idempotency-Replayed: true and writes nothing. Returns 201 with the credential; 400 VALIDATION_ERROR for a missing or non-UUID key, a missing field or expiresOn before issuedOn (fieldErrors names expiresOn); 404 PERSON_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 409 IDEMPOTENCY_CONFLICT or DUPLICATE_RESOURCE (referenceId the existing credential); and 422 SEMANTIC_VALIDATION_ERROR naming skillCode or EMPLOYEE_TERMINATED. 
+     * Records a credential the person holds, naming the registry skill it certifies, the issuer and the issue and expiry dates, with an optional photographed document, and returns it with its status as of today (UTC). A renewal is this same call with a later issuedOn: it adds a new row and leaves the renewed one as it is, so the earlier qualification stays on record and stops needing attention. Use this tool to add or renew a licence or certification; do not use correctPersonCredential, which only changes the expiry of an existing row, and do not use the bulk credential ingest, which loads a vendor feed. Preconditions: the person must have an employee record that is not TERMINATED, skillCode must name an active registry skill, no credential may already have the same person, skill, issuer and issuedOn, and one of the person\'s ACTIVE staffing-assignment locations must lie within the caller\'s people:credential:manage reach, checked after the 404. Required inputs: personId (UUID) path parameter, an Idempotency-Key header (UUID, required, ADR-0075), and a body with skillCode, issuer (up to 32 characters), issuedOn and an optional expiresOn not before issuedOn; document is optional, a base64 JPEG, PNG or WebP image (5 MiB decoded by default) that is stored encrypted without its metadata and is never returned by a read, only by revealCredentialDocument. Emits a PEOPLE_CREDENTIAL_CREATE event and queues one people.person-credential.updated fact in the same transaction, never carrying the document; a replay with the same key answers the stored 201 with Idempotency-Replayed: true and writes nothing. Returns 201 with the credential; 400 VALIDATION_ERROR for a missing or non-UUID key, a missing field or expiresOn before issuedOn (fieldErrors names expiresOn); 404 PERSON_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; 409 IDEMPOTENCY_CONFLICT or DUPLICATE_RESOURCE (referenceId the existing credential); and 422 SEMANTIC_VALIDATION_ERROR naming skillCode, EMPLOYEE_TERMINATED, CREDENTIAL_DOCUMENT_UNSUPPORTED_TYPE or CREDENTIAL_DOCUMENT_TOO_LARGE. 
      * Record Or Renew A Person\'s Credential
      */
     async createPersonCredential(requestParameters: CreatePersonCredentialOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PersonCredentialResponse> {
@@ -236,6 +260,62 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
      */
     async getCredentialAttentionCounts(requestParameters: GetCredentialAttentionCountsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CredentialAttentionCounts> {
         const response = await this.getCredentialAttentionCountsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a page of the tenant\'s credential-document reveals, newest first: who revealed which person\'s document, their roles, the reason, the correlation id, when, and whether it was REVEALED or UNREADABLE (an UNREADABLE row keeps no reason). Use this tool to review who saw people\'s licence and certificate images; do not use it to see a document, which only revealCredentialDocument returns, or to list credentials, which listPersonCredentials does. Preconditions: none beyond the permission; every location is included, and reveals of people no longer employed stay listed. Required inputs: none; personId filters to one person (an unknown one is an empty page), from (inclusive) and to (exclusive) are optional ISO-8601 instants bounding revealedAt, page defaults to 0 and size to 20 with a maximum of 100. Emits a PEOPLE_CREDENTIAL_DOCUMENT_REVEAL_LIST audit event but changes no state; no row carries the image, its type or its size. Returns 200 with the page, possibly empty, 400 VALIDATION_ERROR for a malformed parameter, from after to, or paging out of range, and 403 without the permission. 
+     * List Credential Document Reveals Across The Tenant
+     */
+    async listCredentialDocumentRevealsRaw(requestParameters: ListCredentialDocumentRevealsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CredentialDocumentRevealPage>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['personId'] != null) {
+            queryParameters['personId'] = requestParameters['personId'];
+        }
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString();
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString();
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:credential_document_audit:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/credential-document-reveals`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CredentialDocumentRevealPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a page of the tenant\'s credential-document reveals, newest first: who revealed which person\'s document, their roles, the reason, the correlation id, when, and whether it was REVEALED or UNREADABLE (an UNREADABLE row keeps no reason). Use this tool to review who saw people\'s licence and certificate images; do not use it to see a document, which only revealCredentialDocument returns, or to list credentials, which listPersonCredentials does. Preconditions: none beyond the permission; every location is included, and reveals of people no longer employed stay listed. Required inputs: none; personId filters to one person (an unknown one is an empty page), from (inclusive) and to (exclusive) are optional ISO-8601 instants bounding revealedAt, page defaults to 0 and size to 20 with a maximum of 100. Emits a PEOPLE_CREDENTIAL_DOCUMENT_REVEAL_LIST audit event but changes no state; no row carries the image, its type or its size. Returns 200 with the page, possibly empty, 400 VALIDATION_ERROR for a malformed parameter, from after to, or paging out of range, and 403 without the permission. 
+     * List Credential Document Reveals Across The Tenant
+     */
+    async listCredentialDocumentReveals(requestParameters: ListCredentialDocumentRevealsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CredentialDocumentRevealPage> {
+        const response = await this.listCredentialDocumentRevealsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -296,7 +376,7 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today (UTC): ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible; the renewed row names its renewal in renewedByCredentialId, and hasDocument says whether evidence is on record. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; do not use it to find expired and expiring credentials across people, use listCredentialsNeedingAttention instead, and for a shop\'s roster use shop management\'s technician roster instead. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CREDENTIAL_LIST audit event but changes no state. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
+     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today (UTC): ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible; the renewed row names its renewal in renewedByCredentialId, and hasDocument says whether a photographed document is stored. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; do not use it to find expired and expiring credentials across people, use listCredentialsNeedingAttention instead, and for a shop\'s roster use shop management\'s technician roster instead. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CREDENTIAL_LIST audit event but changes no state. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
      * List a Person\'s Credentials
      */
     async listPersonCredentialsRaw(requestParameters: ListPersonCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PersonCredentialResponse>>> {
@@ -330,11 +410,75 @@ export class PersonCredentialAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today (UTC): ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible; the renewed row names its renewal in renewedByCredentialId, and hasDocument says whether evidence is on record. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; do not use it to find expired and expiring credentials across people, use listCredentialsNeedingAttention instead, and for a shop\'s roster use shop management\'s technician roster instead. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CREDENTIAL_LIST audit event but changes no state. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
+     * Returns every credential the person holds or held, newest issue first, each with the registry skill it certifies and its status as of today (UTC): ACTIVE or EXPIRED from the dates, REVOKED or SUPERSEDED when set deliberately. A renewal appears as its own row beside the one it renewed, so a past date\'s qualification stays visible; the renewed row names its renewal in renewedByCredentialId, and hasDocument says whether a photographed document is stored. Use this tool to see what a technician is certified to do, or to audit an inspector\'s qualification on a past date; do not use it to find expired and expiring credentials across people, use listCredentialsNeedingAttention instead, and for a shop\'s roster use shop management\'s technician roster instead. Preconditions: the caller holds people:employee:view. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CREDENTIAL_LIST audit event but changes no state. Returns 200 with the list, empty when the person holds none, and 403 without the authority. 
      * List a Person\'s Credentials
      */
     async listPersonCredentials(requestParameters: ListPersonCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PersonCredentialResponse>> {
         const response = await this.listPersonCredentialsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the photographed document stored with a credential, after recording who revealed it, their roles, the reason and the correlation id in an append-only audit row that commits before the answer. Use this operation only when a person must see the licence or certificate itself, for example for a roadside inspection; do not call it to learn whether a document exists, which hasDocument on listPersonCredentials answers without revealing anything. Preconditions: the credential must belong to the person and have a document stored here, and one of the person\'s ACTIVE staffing-assignment locations today must lie within the caller\'s people:credential_document:reveal reach (a person with none needs an unscoped grant), checked after the 404s and before the document 404. Required inputs: personId and credentialId (UUID) path parameters and a reason of 10 to 500 characters once trimmed; there is no Idempotency-Key, each reveal is its own audited act. Emits a PEOPLE_CREDENTIAL_DOCUMENT_REVEAL event and writes one reveal audit row; the answer carries Cache-Control: no-store and must never be cached, logged or put in a URL. Returns 200 with the document; 400 JUSTIFICATION_REQUIRED or VALIDATION_ERROR for the reason; 404 PERSON_NOT_FOUND, CREDENTIAL_NOT_FOUND or CREDENTIAL_DOCUMENT_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; and 500 CREDENTIAL_DOCUMENT_UNREADABLE, which is still recorded. 
+     * Reveal A Credential\'s Photographed Document
+     */
+    async revealCredentialDocumentRaw(requestParameters: RevealCredentialDocumentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RevealCredentialDocumentResponse>> {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError(
+                'personId',
+                'Required parameter "personId" was null or undefined when calling revealCredentialDocument().'
+            );
+        }
+
+        if (requestParameters['credentialId'] == null) {
+            throw new runtime.RequiredError(
+                'credentialId',
+                'Required parameter "credentialId" was null or undefined when calling revealCredentialDocument().'
+            );
+        }
+
+        if (requestParameters['revealCredentialDocumentRequest'] == null) {
+            throw new runtime.RequiredError(
+                'revealCredentialDocumentRequest',
+                'Required parameter "revealCredentialDocumentRequest" was null or undefined when calling revealCredentialDocument().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xCorrelationId'] != null) {
+            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:credential_document:reveal"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/{personId}/credentials/{credentialId}/document/reveal`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))).replace(`{${"credentialId"}}`, encodeURIComponent(String(requestParameters['credentialId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RevealCredentialDocumentRequestToJSON(requestParameters['revealCredentialDocumentRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RevealCredentialDocumentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the photographed document stored with a credential, after recording who revealed it, their roles, the reason and the correlation id in an append-only audit row that commits before the answer. Use this operation only when a person must see the licence or certificate itself, for example for a roadside inspection; do not call it to learn whether a document exists, which hasDocument on listPersonCredentials answers without revealing anything. Preconditions: the credential must belong to the person and have a document stored here, and one of the person\'s ACTIVE staffing-assignment locations today must lie within the caller\'s people:credential_document:reveal reach (a person with none needs an unscoped grant), checked after the 404s and before the document 404. Required inputs: personId and credentialId (UUID) path parameters and a reason of 10 to 500 characters once trimmed; there is no Idempotency-Key, each reveal is its own audited act. Emits a PEOPLE_CREDENTIAL_DOCUMENT_REVEAL event and writes one reveal audit row; the answer carries Cache-Control: no-store and must never be cached, logged or put in a URL. Returns 200 with the document; 400 JUSTIFICATION_REQUIRED or VALIDATION_ERROR for the reason; 404 PERSON_NOT_FOUND, CREDENTIAL_NOT_FOUND or CREDENTIAL_DOCUMENT_NOT_FOUND; 403 LOCATION_SCOPE_DENIED; and 500 CREDENTIAL_DOCUMENT_UNREADABLE, which is still recorded. 
+     * Reveal A Credential\'s Photographed Document
+     */
+    async revealCredentialDocument(requestParameters: RevealCredentialDocumentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RevealCredentialDocumentResponse> {
+        const response = await this.revealCredentialDocumentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

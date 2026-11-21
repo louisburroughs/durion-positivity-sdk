@@ -32,6 +32,12 @@ export interface ReportExportResponse {
      */
     downloadUrl?: string;
     /**
+     * Period end date the export was requested for (inclusive, YYYY-MM-DD), as given in the request. For the as-of reports (BALANCE_SHEET, TRIAL_BALANCE, AGED_RECEIVABLES, AGED_PAYABLES) the as-of date. For MONTH_END_PACKET the last day of the packet's range.
+     * @type {Date}
+     * @memberof ReportExportResponse
+     */
+    endDate: Date;
+    /**
      * ISO-8601 timestamp after which the file is purged and its download answers 409 EXPORT_EXPIRED (completion plus the retention period, 30 days by default). The job itself stays readable. Null unless status is COMPLETED.
      * @type {Date}
      * @memberof ReportExportResponse
@@ -67,6 +73,12 @@ export interface ReportExportResponse {
      * @memberof ReportExportResponse
      */
     requestedAt?: Date;
+    /**
+     * Period start date the export was requested for (inclusive, YYYY-MM-DD), as given in the request. For MONTH_END_PACKET the first day of the packet's range.
+     * @type {Date}
+     * @memberof ReportExportResponse
+     */
+    startDate: Date;
     /**
      * Current export status: PENDING when requested, IN_PROGRESS while a worker renders it, then COMPLETED or FAILED. A job waiting to be retried reads PENDING again.
      * @type {string}
@@ -128,7 +140,9 @@ export enum ReportExportResponseStatusEnum {
  * Check if a given object implements the ReportExportResponse interface.
  */
 export function instanceOfReportExportResponse(value: object): boolean {
+    if (!('endDate' in value)) return false;
     if (!('exportId' in value)) return false;
+    if (!('startDate' in value)) return false;
     if (!('status' in value)) return false;
     return true;
 }
@@ -145,12 +159,14 @@ export function ReportExportResponseFromJSONTyped(json: any, ignoreDiscriminator
         
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
         'downloadUrl': json['downloadUrl'] == null ? undefined : json['downloadUrl'],
+        'endDate': (new Date(json['endDate'])),
         'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
         'exportId': json['exportId'],
         'failureReason': json['failureReason'] == null ? undefined : json['failureReason'],
         'format': json['format'] == null ? undefined : json['format'],
         'reportType': json['reportType'] == null ? undefined : json['reportType'],
         'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
+        'startDate': (new Date(json['startDate'])),
         'status': json['status'],
     };
 }
@@ -163,12 +179,14 @@ export function ReportExportResponseToJSON(value?: ReportExportResponse | null):
         
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
         'downloadUrl': value['downloadUrl'],
+        'endDate': ((value['endDate']).toISOString().substring(0,10)),
         'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
         'exportId': value['exportId'],
         'failureReason': value['failureReason'],
         'format': value['format'],
         'reportType': value['reportType'],
         'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
+        'startDate': ((value['startDate']).toISOString().substring(0,10)),
         'status': value['status'],
     };
 }
