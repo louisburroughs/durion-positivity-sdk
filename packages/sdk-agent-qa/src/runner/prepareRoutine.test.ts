@@ -434,3 +434,62 @@ describe('prepareRoutine: stock', () => {
     expect(await prepareRoutine('stock', refused.lookup, STOCK_CONTEXT)).toEqual([]);
   });
 });
+
+describe('prepareRoutine: purchase-orders', () => {
+  const PO_CONTEXT = { site: { id: 'site-1', name: 'Riverside', code: 'ATX-RIV-001' }, persona: 'parts', roleMode: true, date: '2026-11-21', timeZone: 'America/New_York' };
+  const line = (lineNumber: number, open: number, extra: Record<string, unknown> = {}) => ({
+    lineId: `l${lineNumber}`, lineNumber, skuId: `sku-${lineNumber}`, description: `Part ${lineNumber}`,
+    quantityDecimal: open, openQuantityDecimal: open, unitCostMinor: 100 * lineNumber, workorderId: null, ...extra,
+  });
+  const po = (id: string, createdAt: string, lines: unknown[], comment = 'Replenishment stock') => ({
+    purchaseOrderId: id, poNumber: id.toUpperCase(), vendorId: 'v1', status: 'APPROVED', currency: 'USD',
+    poDate: createdAt.slice(0, 10), createdAt, comment, lines,
+  });
+
+  it('picks the oldest recent untouched order not for a workorder over an older short remainder, and says what arrives', async () => {
+    const { lookup, calls } = fakeLookup({
+      'order.PurchaseOrdersApi.listPurchaseOrders': (input) =>
+        input['status'] === 'APPROVED'
+          ? {
+              content: [
+                { ...po('stale', '2025-12-20T13:00:00Z', [line(1, 5)], 'Integration test restock'), poDate: '2026-11-17' },
+                po('wo', '2026-11-19T10:00:00Z', [line(1, 1)], 'Ordered for workorder WO-1'),
+                po('tagged', '2026-11-19T11:00:00Z', [line(1, 2, { workorderId: 'wo-2' })]),
+                po('done', '2026-11-19T12:00:00Z', [line(1, 0)]),
+                po('target', '2026-11-20T13:50:00Z', [line(1, 10), line(2, 0), line(3, 12)]),
+              ],
+            }
+          : { content: [{ ...po('remainder', '2026-11-18T09:00:00Z', [line(1, 1)]), status: 'PARTIALLY_RECEIVED' }] },
+    });
+
+    const facts = await prepareRoutine('purchase-orders', lookup, PO_CONTEXT);
+
+    expect(calls.map((call) => [call.input['status'], call.input['locationId'], call.persona])).toEqual([
+      ['APPROVED', 'site-1', 'parts'],
+      ['PARTIALLY_RECEIVED', 'site-1', 'parts'],
+    ]);
+    const lines = facts[0]!.split('\n');
+    expect(lines[0]).toContain('PO TARGET (purchaseOrderId target, vendorId v1), APPROVED, raised 2026-11-20');
+    expect(lines[1]).toBe('  line 1 (lineId l1): skuId sku-1 — Part 1; ordered 10, open 10, unit cost 100 minor USD; arrives 10');
+    expect(lines[2]).toBe('  line 3 (lineId l3): skuId sku-3 — Part 3; ordered 12, open 12, unit cost 300 minor USD; arrives 11 (one short)');
+    expect(lines[3]).toContain('2 other open orders');
+  });
+
+  it('falls back to the oldest open order when none is recent, and says when there is nothing to receive', async () => {
+    const old = fakeLookup({
+      'order.PurchaseOrdersApi.listPurchaseOrders': (input) =>
+        input['status'] === 'APPROVED' ? { content: [po('old', '2025-12-20T13:00:00Z', [line(1, 5)])] } : { content: [] },
+    });
+    const [fact] = await prepareRoutine('purchase-orders', old.lookup, PO_CONTEXT);
+    // A remainder is still received when it is all there is.
+    expect(fact).toContain('PO OLD');
+    expect(fact).toContain('arrives 5');
+    expect(fact).not.toContain('one short');
+
+    const empty = fakeLookup({ 'order.PurchaseOrdersApi.listPurchaseOrders': () => ({ content: [po('wo', '2026-11-21T08:00:00Z', [line(1, 1)], 'For workorder X')] }) });
+    expect((await prepareRoutine('purchase-orders', empty.lookup, PO_CONTEXT))[0]).toContain('nothing on this truck to receive');
+
+    const refused = fakeLookup({});
+    expect(await prepareRoutine('purchase-orders', refused.lookup, PO_CONTEXT)).toEqual([]);
+  });
+});

@@ -117,6 +117,7 @@ const daily: ScenarioInput[] = [
   {
     id: 'receive-delivery',
     perSite: true,
+    prepare: 'purchase-orders',
     title: 'Receive the stock delivery and put it away',
     cadence: 'daily',
     at: '13:00',
