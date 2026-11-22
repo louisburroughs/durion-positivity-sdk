@@ -104,7 +104,10 @@ export enum ExecuteAPPaymentRequestPaymentMethodEnum {
     Wire = 'WIRE',
     CreditCard = 'CREDIT_CARD',
     Cash = 'CASH',
-    Other = 'OTHER'
+    Other = 'OTHER',
+    CompanyCard = 'COMPANY_CARD',
+    PersonalFunds = 'PERSONAL_FUNDS',
+    BankDebit = 'BANK_DEBIT'
 }
 
 

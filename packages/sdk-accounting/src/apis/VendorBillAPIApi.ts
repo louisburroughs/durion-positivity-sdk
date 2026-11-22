@@ -24,6 +24,7 @@ import type {
   VendorBillExceptionResolutionRequest,
   VendorBillExpenseCategoryListResponse,
   VendorBillMatchCandidateResponse,
+  VendorBillReceiptSettlementRequest,
   VendorBillRejectRequest,
   VendorBillResponse,
   VendorBillStageCounts,
@@ -50,6 +51,8 @@ import {
     VendorBillExpenseCategoryListResponseToJSON,
     VendorBillMatchCandidateResponseFromJSON,
     VendorBillMatchCandidateResponseToJSON,
+    VendorBillReceiptSettlementRequestFromJSON,
+    VendorBillReceiptSettlementRequestToJSON,
     VendorBillRejectRequestFromJSON,
     VendorBillRejectRequestToJSON,
     VendorBillResponseFromJSON,
@@ -122,6 +125,11 @@ export interface SelectVendorBillMatchCandidateRequest {
 export interface SetVendorBillDueDateRequest {
     billId: string;
     vendorBillDueDateRequest: VendorBillDueDateRequest;
+}
+
+export interface SettleVendorBillReceiptRequest {
+    billId: string;
+    vendorBillReceiptSettlementRequest: VendorBillReceiptSettlementRequest;
 }
 
 export interface SubmitVendorBillForApprovalRequest {
@@ -821,6 +829,59 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * States how an approved purchase receipt\'s bill captured before the statement existed was paid, and settles it (#3848, R9): Dr 2000 / Cr the statement\'s account (COMPANY_CARD: 2150 Company Card Payable; PERSONAL_FUNDS: 2160 Employee Reimbursements Payable; BANK_DEBIT: the BANK_CASH account the money left), through the RECEIPT_SETTLEMENT mappings, dated the bill entry\'s date when that period is open and today otherwise. A settlement payment with the statement as its method is created, never sent to the gateway, and allocated to the bill in full, so the bill leaves unpaid bills, aged payables and the cash outlook. Use this tool for a receipt\'s bill that is APPROVED and still shown as owed because it was captured before a receipt said how it was paid; do not use it for a receipt captured now (its draft states paidWith and its approval settles it), and never use executeApPayment on a receipt\'s bill: the purchase was already paid. Preconditions: either approve permission; the bill was confirmed from a purchase receipt and is not a credit note; it is APPROVED, states no paidWith yet and has nothing allocated; the caller is not its approver. Required inputs: billId (UUID) as a path parameter and paidWith; paidFromAccountId only with BANK_DEBIT, and then optional when exactly one bank account is eligible; overrideJustification (at least 10 characters) settles into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_RECEIPT_SETTLE and writes a VENDOR_BILL_RECEIPT_SETTLE audit row naming the statement, the settlement entry and its payment; a replay finds the statement set and is answered 409 AP_RECEIPT_NOT_SETTLEABLE. Returns 200 with the bill read (receiptPaidWith set, nothing open); 400 ARGUMENT_NOT_VALID or VALIDATION_ERROR (paidFromAccountId with another statement, or a bank account that is not eligible or cannot be chosen); 401 without a valid token; 403 FORBIDDEN without an approve permission, or AP_PAYMENT_SELF_APPROVED_BILL for the bill\'s approver; 404 VENDOR_BILL_NOT_FOUND; 409 AP_RECEIPT_NOT_SETTLEABLE when the bill is not APPROVED, already states how it was paid or has an allocation; 422 AP_BILL_NOT_FROM_RECEIPT for any other bill, GL_MAPPING_NOT_CONFIGURED, PERIOD_CLOSED or PERIOD_HARD_LOCKED, leaving the bill as it was. 
+     * State How a Receipt Was Paid
+     */
+    async settleVendorBillReceiptRaw(requestParameters: SettleVendorBillReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
+        if (requestParameters['billId'] == null) {
+            throw new runtime.RequiredError(
+                'billId',
+                'Required parameter "billId" was null or undefined when calling settleVendorBillReceipt().'
+            );
+        }
+
+        if (requestParameters['vendorBillReceiptSettlementRequest'] == null) {
+            throw new runtime.RequiredError(
+                'vendorBillReceiptSettlementRequest',
+                'Required parameter "vendorBillReceiptSettlementRequest" was null or undefined when calling settleVendorBillReceipt().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:approve", "accounting:ap:approve_over_limit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/{billId}/receipt-settlement`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VendorBillReceiptSettlementRequestToJSON(requestParameters['vendorBillReceiptSettlementRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * States how an approved purchase receipt\'s bill captured before the statement existed was paid, and settles it (#3848, R9): Dr 2000 / Cr the statement\'s account (COMPANY_CARD: 2150 Company Card Payable; PERSONAL_FUNDS: 2160 Employee Reimbursements Payable; BANK_DEBIT: the BANK_CASH account the money left), through the RECEIPT_SETTLEMENT mappings, dated the bill entry\'s date when that period is open and today otherwise. A settlement payment with the statement as its method is created, never sent to the gateway, and allocated to the bill in full, so the bill leaves unpaid bills, aged payables and the cash outlook. Use this tool for a receipt\'s bill that is APPROVED and still shown as owed because it was captured before a receipt said how it was paid; do not use it for a receipt captured now (its draft states paidWith and its approval settles it), and never use executeApPayment on a receipt\'s bill: the purchase was already paid. Preconditions: either approve permission; the bill was confirmed from a purchase receipt and is not a credit note; it is APPROVED, states no paidWith yet and has nothing allocated; the caller is not its approver. Required inputs: billId (UUID) as a path parameter and paidWith; paidFromAccountId only with BANK_DEBIT, and then optional when exactly one bank account is eligible; overrideJustification (at least 10 characters) settles into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_RECEIPT_SETTLE and writes a VENDOR_BILL_RECEIPT_SETTLE audit row naming the statement, the settlement entry and its payment; a replay finds the statement set and is answered 409 AP_RECEIPT_NOT_SETTLEABLE. Returns 200 with the bill read (receiptPaidWith set, nothing open); 400 ARGUMENT_NOT_VALID or VALIDATION_ERROR (paidFromAccountId with another statement, or a bank account that is not eligible or cannot be chosen); 401 without a valid token; 403 FORBIDDEN without an approve permission, or AP_PAYMENT_SELF_APPROVED_BILL for the bill\'s approver; 404 VENDOR_BILL_NOT_FOUND; 409 AP_RECEIPT_NOT_SETTLEABLE when the bill is not APPROVED, already states how it was paid or has an allocation; 422 AP_BILL_NOT_FROM_RECEIPT for any other bill, GL_MAPPING_NOT_CONFIGURED, PERIOD_CLOSED or PERIOD_HARD_LOCKED, leaving the bill as it was. 
+     * State How a Receipt Was Paid
+     */
+    async settleVendorBillReceipt(requestParameters: SettleVendorBillReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {
+        const response = await this.settleVendorBillReceiptRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Sends a vendor bill in PENDING_RECEIPT_MATCH or MATCH_EXCEPTION for approval: it moves to AWAITING_APPROVAL with the caller as submittedBy, and nothing is posted. From PENDING_RECEIPT_MATCH this is \"send without a delivery match\", for EDI bills only (a goods-receipt bill needs its vendor invoice matched first, AW45); from MATCH_EXCEPTION it resolves the exception for a person to approve. Use this tool when a clerk has checked a bill and wants it approved; do not use approveVendorBill, which is the approver\'s decision, or resolveVendorBillMatchException, which accepts, corrects or voids an exception directly. Preconditions: the bill is PENDING_RECEIPT_MATCH or MATCH_EXCEPTION (never CURRENCY_HOLD), no ambiguous match naming it is open, a goods-receipt bill has its invoice matched, its total is not 0.00, and the vendor\'s gross equals net + tax within 0.01 per stated line (at most 0.05) unless a difference is given (AW47). Required inputs: billId (UUID) as a path parameter and justification (at least 10 characters); classification {debitClass, expenseMappingKey} is an optional proposal the approver may keep, and difference {class FREIGHT|GOODS|EXPENSE|PRICE_DIFFERENCE, expenseMappingKey, justification} says where an unreconciled gap posts. Emits ACCOUNTING_VENDOR_BILL_SUBMIT and writes a VENDOR_BILL_SUBMIT audit row; the command takes no idempotency key, so a replay finds the bill AWAITING_APPROVAL and is answered 409 AP_BILL_NOT_APPROVABLE. Returns 200 with the bill read (each actor with its display name: createdByName, submittedByName, approvedByName and rejectedByName, absent when not known or SYSTEM); 400 JUSTIFICATION_REQUIRED, VALIDATION_ERROR or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:approve or accounting:ap:approve_over_limit; 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_APPROVABLE naming the status or an open ambiguous match, or AP_BILL_AWAITING_INVOICE; 422 AP_BILL_ZERO_TOTAL or AP_BILL_TOTALS_UNRECONCILED, writing nothing. 
      * Submit Vendor Bill For Approval
      */
@@ -874,7 +935,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Voids a vendor bill: an APPROVED bill with nothing allocated moves to VOIDED and its entry is reversed through the journal-entry reversal (linked both ways), dated today in today\'s period and never back in the original period (AW42), so 2100 is accrued again; a goods-receipt bill in PENDING_RECEIPT_MATCH that no vendor invoice will match moves to VOIDED and nothing is posted (AW45), its receipt accrual staying in 2100 until the vendor\'s EDI bill classified GOODS clears it. Use this tool to undo an approval that should not stand or to close a receipt placeholder; do not use rejectVendorBill, which refuses a bill not yet approved, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION, and correct a bill with payments allocated with a vendor credit note instead. Preconditions: every void needs accounting:ap:reject, and an approved bill\'s also either approve permission and then its tier against the current clerk limit (an OVER_LIMIT bill needs accounting:ap:approve_over_limit; the creator rule does not apply); only this void reverses a bill\'s entry (the journal-entry reversal refuses one with 409 AP_BILL_ENTRY_NOT_REVERSIBLE). Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters); overrideJustification (at least 10 characters) reverses an approved bill into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_VOID and writes a VENDOR_BILL_VOID audit row naming the action (VOID_APPROVED or VOID_UNMATCHED); a replay finds the bill VOIDED and is answered 409 AP_BILL_NOT_VOIDABLE. Returns 200 with the bill read (each actor with its display name: createdByName, submittedByName, approvedByName and rejectedByName, absent when not known or SYSTEM), an approved bill\'s posting with its reversalReference; 400 JUSTIFICATION_REQUIRED or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:reject, or for an approved bill without an approve permission, or AP_APPROVAL_LIMIT_EXCEEDED over the clerk limit (audited as VENDOR_BILL_VOID_REFUSED); 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_VOIDABLE for any other status or an allocated bill; 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for today\'s period, leaving the bill as it was. 
+     * Voids a vendor bill: an APPROVED bill with nothing allocated (a purchase receipt\'s own settlement aside) moves to VOIDED and its entry is reversed through the journal-entry reversal (linked both ways), dated today in today\'s period and never back in the original period (AW42), so 2100 is accrued again; a goods-receipt bill in PENDING_RECEIPT_MATCH that no vendor invoice will match moves to VOIDED and nothing is posted (AW45), its receipt accrual staying in 2100 until the vendor\'s EDI bill classified GOODS clears it. A settled purchase receipt\'s bill (#3848, R8) also has its settlement reversed on the same date, its allocation reopened and its settlement payment VOIDED, in the same command. Use this tool to undo an approval that should not stand or to close a receipt placeholder; do not use rejectVendorBill, which refuses a bill not yet approved, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION, and correct a bill with payments allocated with a vendor credit note instead. Preconditions: every void needs accounting:ap:reject, and an approved bill\'s also either approve permission and then its tier against the current clerk limit (an OVER_LIMIT bill needs accounting:ap:approve_over_limit; the creator rule does not apply); only this void reverses a bill\'s entry (the journal-entry reversal refuses one with 409 AP_BILL_ENTRY_NOT_REVERSIBLE). Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters); overrideJustification (at least 10 characters) reverses an approved bill into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_VOID and writes a VENDOR_BILL_VOID audit row naming the action (VOID_APPROVED or VOID_UNMATCHED); a replay finds the bill VOIDED and is answered 409 AP_BILL_NOT_VOIDABLE. Returns 200 with the bill read (each actor with its display name: createdByName, submittedByName, approvedByName and rejectedByName, absent when not known or SYSTEM), an approved bill\'s posting with its reversalReference; 400 JUSTIFICATION_REQUIRED or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:reject, or for an approved bill without an approve permission, or AP_APPROVAL_LIMIT_EXCEEDED over the clerk limit (audited as VENDOR_BILL_VOID_REFUSED); 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_VOIDABLE for any other status or an allocated bill; 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for today\'s period, leaving the bill as it was. 
      * Void Vendor Bill
      */
     async voidVendorBillRaw(requestParameters: VoidVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillResponse>> {
@@ -918,7 +979,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Voids a vendor bill: an APPROVED bill with nothing allocated moves to VOIDED and its entry is reversed through the journal-entry reversal (linked both ways), dated today in today\'s period and never back in the original period (AW42), so 2100 is accrued again; a goods-receipt bill in PENDING_RECEIPT_MATCH that no vendor invoice will match moves to VOIDED and nothing is posted (AW45), its receipt accrual staying in 2100 until the vendor\'s EDI bill classified GOODS clears it. Use this tool to undo an approval that should not stand or to close a receipt placeholder; do not use rejectVendorBill, which refuses a bill not yet approved, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION, and correct a bill with payments allocated with a vendor credit note instead. Preconditions: every void needs accounting:ap:reject, and an approved bill\'s also either approve permission and then its tier against the current clerk limit (an OVER_LIMIT bill needs accounting:ap:approve_over_limit; the creator rule does not apply); only this void reverses a bill\'s entry (the journal-entry reversal refuses one with 409 AP_BILL_ENTRY_NOT_REVERSIBLE). Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters); overrideJustification (at least 10 characters) reverses an approved bill into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_VOID and writes a VENDOR_BILL_VOID audit row naming the action (VOID_APPROVED or VOID_UNMATCHED); a replay finds the bill VOIDED and is answered 409 AP_BILL_NOT_VOIDABLE. Returns 200 with the bill read (each actor with its display name: createdByName, submittedByName, approvedByName and rejectedByName, absent when not known or SYSTEM), an approved bill\'s posting with its reversalReference; 400 JUSTIFICATION_REQUIRED or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:reject, or for an approved bill without an approve permission, or AP_APPROVAL_LIMIT_EXCEEDED over the clerk limit (audited as VENDOR_BILL_VOID_REFUSED); 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_VOIDABLE for any other status or an allocated bill; 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for today\'s period, leaving the bill as it was. 
+     * Voids a vendor bill: an APPROVED bill with nothing allocated (a purchase receipt\'s own settlement aside) moves to VOIDED and its entry is reversed through the journal-entry reversal (linked both ways), dated today in today\'s period and never back in the original period (AW42), so 2100 is accrued again; a goods-receipt bill in PENDING_RECEIPT_MATCH that no vendor invoice will match moves to VOIDED and nothing is posted (AW45), its receipt accrual staying in 2100 until the vendor\'s EDI bill classified GOODS clears it. A settled purchase receipt\'s bill (#3848, R8) also has its settlement reversed on the same date, its allocation reopened and its settlement payment VOIDED, in the same command. Use this tool to undo an approval that should not stand or to close a receipt placeholder; do not use rejectVendorBill, which refuses a bill not yet approved, or resolveVendorBillMatchException with VOID, which voids a bill still in MATCH_EXCEPTION, and correct a bill with payments allocated with a vendor credit note instead. Preconditions: every void needs accounting:ap:reject, and an approved bill\'s also either approve permission and then its tier against the current clerk limit (an OVER_LIMIT bill needs accounting:ap:approve_over_limit; the creator rule does not apply); only this void reverses a bill\'s entry (the journal-entry reversal refuses one with 409 AP_BILL_ENTRY_NOT_REVERSIBLE). Required inputs: billId (UUID) as a path parameter and reason (at least 10 characters); overrideJustification (at least 10 characters) reverses an approved bill into a CLOSED period with accounting:period:override. Emits ACCOUNTING_VENDOR_BILL_VOID and writes a VENDOR_BILL_VOID audit row naming the action (VOID_APPROVED or VOID_UNMATCHED); a replay finds the bill VOIDED and is answered 409 AP_BILL_NOT_VOIDABLE. Returns 200 with the bill read (each actor with its display name: createdByName, submittedByName, approvedByName and rejectedByName, absent when not known or SYSTEM), an approved bill\'s posting with its reversalReference; 400 JUSTIFICATION_REQUIRED or ARGUMENT_NOT_VALID; 401 without a valid token; 403 FORBIDDEN without accounting:ap:reject, or for an approved bill without an approve permission, or AP_APPROVAL_LIMIT_EXCEEDED over the clerk limit (audited as VENDOR_BILL_VOID_REFUSED); 404 VENDOR_BILL_NOT_FOUND; 409 AP_BILL_NOT_VOIDABLE for any other status or an allocated bill; 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for today\'s period, leaving the bill as it was. 
      * Void Vendor Bill
      */
     async voidVendorBill(requestParameters: VoidVendorBillRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillResponse> {

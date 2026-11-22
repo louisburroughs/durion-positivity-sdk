@@ -255,6 +255,18 @@ export interface VendorBillResponse {
      */
     posting?: VendorBillPosting;
     /**
+     * BANK_DEBIT only (#3848): the BANK_CASH account the receipt was paid from; set at settlement when the draft named none and exactly one account was eligible
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    receiptPaidFromAccountId?: string;
+    /**
+     * How the purchase receipt this bill was confirmed from was paid (#3848): COMPANY_CARD, PERSONAL_FUNDS or BANK_DEBIT. A receipt's bill with one is settled at approval against that account (Dr 2000 / Cr 2150, 2160 or the bank account), has nothing open afterwards and is never paid through executeApPayment. Absent for every other bill, and for a receipt's bill captured before the statement existed until settleVendorBillReceipt states it
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    receiptPaidWith?: VendorBillResponseReceiptPaidWithEnum;
+    /**
      * Re-issues of this approved bill under its number, held as exception items
      * @type {Array<VendorBillReissue>}
      * @memberof VendorBillResponse
@@ -362,6 +374,15 @@ export enum VendorBillResponseIntakeDocumentKindEnum {
 * @export
 * @enum {string}
 */
+export enum VendorBillResponseReceiptPaidWithEnum {
+    CompanyCard = 'COMPANY_CARD',
+    PersonalFunds = 'PERSONAL_FUNDS',
+    BankDebit = 'BANK_DEBIT'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VendorBillResponseStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
@@ -430,6 +451,8 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'originEventType': json['originEventType'] == null ? undefined : json['originEventType'],
         'paymentTransactionId': json['paymentTransactionId'] == null ? undefined : json['paymentTransactionId'],
         'posting': json['posting'] == null ? undefined : VendorBillPostingFromJSON(json['posting']),
+        'receiptPaidFromAccountId': json['receiptPaidFromAccountId'] == null ? undefined : json['receiptPaidFromAccountId'],
+        'receiptPaidWith': json['receiptPaidWith'] == null ? undefined : json['receiptPaidWith'],
         'reissues': ((json['reissues'] as Array<any>).map(VendorBillReissueFromJSON)),
         'rejection': json['rejection'] == null ? undefined : VendorBillRejectionFromJSON(json['rejection']),
         'sourceFileId': json['sourceFileId'] == null ? undefined : json['sourceFileId'],
@@ -478,6 +501,8 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'originEventType': value['originEventType'],
         'paymentTransactionId': value['paymentTransactionId'],
         'posting': VendorBillPostingToJSON(value['posting']),
+        'receiptPaidFromAccountId': value['receiptPaidFromAccountId'],
+        'receiptPaidWith': value['receiptPaidWith'],
         'reissues': ((value['reissues'] as Array<any>).map(VendorBillReissueToJSON)),
         'rejection': VendorBillRejectionToJSON(value['rejection']),
         'sourceFileId': value['sourceFileId'],

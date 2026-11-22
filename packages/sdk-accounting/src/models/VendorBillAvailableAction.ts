@@ -59,7 +59,8 @@ export enum VendorBillAvailableActionActionEnum {
     SelectCandidate = 'SELECT_CANDIDATE',
     VoidApproved = 'VOID_APPROVED',
     VoidUnmatched = 'VOID_UNMATCHED',
-    SetDueDate = 'SET_DUE_DATE'
+    SetDueDate = 'SET_DUE_DATE',
+    StateReceiptPayment = 'STATE_RECEIPT_PAYMENT'
 }
 
 

@@ -85,6 +85,24 @@ export interface VendorBillPosting {
      * @memberof VendorBillPosting
      */
     roundingAdjustment: number;
+    /**
+     * A purchase receipt's bill only (#3848): the settlement entry, Dr 2000 / Cr the account the receipt was paid from
+     * @type {string}
+     * @memberof VendorBillPosting
+     */
+    settlementJournalEntryId?: string;
+    /**
+     * The settlement entry's number
+     * @type {string}
+     * @memberof VendorBillPosting
+     */
+    settlementReference?: string;
+    /**
+     * The settlement's reversal entry's number after the bill's void
+     * @type {string}
+     * @memberof VendorBillPosting
+     */
+    settlementReversalReference?: string;
 }
 
 /**
@@ -142,6 +160,9 @@ export function VendorBillPostingFromJSONTyped(json: any, ignoreDiscriminator: b
         'reversalDate': json['reversalDate'] == null ? undefined : (new Date(json['reversalDate'])),
         'reversalReference': json['reversalReference'] == null ? undefined : json['reversalReference'],
         'roundingAdjustment': json['roundingAdjustment'],
+        'settlementJournalEntryId': json['settlementJournalEntryId'] == null ? undefined : json['settlementJournalEntryId'],
+        'settlementReference': json['settlementReference'] == null ? undefined : json['settlementReference'],
+        'settlementReversalReference': json['settlementReversalReference'] == null ? undefined : json['settlementReversalReference'],
     };
 }
 
@@ -162,6 +183,9 @@ export function VendorBillPostingToJSON(value?: VendorBillPosting | null): any {
         'reversalDate': value['reversalDate'] == null ? undefined : ((value['reversalDate']).toISOString().substring(0,10)),
         'reversalReference': value['reversalReference'],
         'roundingAdjustment': value['roundingAdjustment'],
+        'settlementJournalEntryId': value['settlementJournalEntryId'],
+        'settlementReference': value['settlementReference'],
+        'settlementReversalReference': value['settlementReversalReference'],
     };
 }
 
