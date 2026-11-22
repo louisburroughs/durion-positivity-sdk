@@ -380,6 +380,7 @@ export * from './VendorBillMatchCandidateResponse';
 export * from './VendorBillMatchCandidateSummary';
 export * from './VendorBillMatchPoints';
 export * from './VendorBillPosting';
+export * from './VendorBillReceiptSettlementRequest';
 export * from './VendorBillReissue';
 export * from './VendorBillRejectRequest';
 export * from './VendorBillRejection';

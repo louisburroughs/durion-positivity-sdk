@@ -81,7 +81,9 @@ export enum BillIntakeFieldViewReasonEnum {
     TooLong = 'TOO_LONG',
     InvalidExpenseKey = 'INVALID_EXPENSE_KEY',
     InvalidTaxEntry = 'INVALID_TAX_ENTRY',
-    UnitCostRequired = 'UNIT_COST_REQUIRED'
+    UnitCostRequired = 'UNIT_COST_REQUIRED',
+    InvalidPaidWith = 'INVALID_PAID_WITH',
+    InvalidPaidFromAccount = 'INVALID_PAID_FROM_ACCOUNT'
 }
 /**
 * @export
