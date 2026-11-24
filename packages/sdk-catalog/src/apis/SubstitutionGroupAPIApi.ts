@@ -85,7 +85,7 @@ export class SubstitutionGroupAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:substitution_group:edit"]);
+            const tokenString = await token("bearerAuth", ["catalog:substitution_group:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -131,7 +131,7 @@ export class SubstitutionGroupAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:substitution_group:edit"]);
+            const tokenString = await token("bearerAuth", ["catalog:substitution_group:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -175,7 +175,7 @@ export class SubstitutionGroupAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:substitution_group:edit"]);
+            const tokenString = await token("bearerAuth", ["catalog:substitution_group:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -217,7 +217,7 @@ export class SubstitutionGroupAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:substitution_group:view"]);
+            const tokenString = await token("bearerAuth", ["catalog:substitution_group:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -253,7 +253,7 @@ export class SubstitutionGroupAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:substitution_group:view"]);
+            const tokenString = await token("bearerAuth", ["catalog:substitution_group:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -303,7 +303,7 @@ export class SubstitutionGroupAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:substitution_group:edit"]);
+            const tokenString = await token("bearerAuth", ["catalog:substitution_group:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

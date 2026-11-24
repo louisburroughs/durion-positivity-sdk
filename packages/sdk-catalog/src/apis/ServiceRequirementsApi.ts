@@ -65,7 +65,7 @@ export class ServiceRequirementsApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_requirement:manage"]);
+            const tokenString = await token("bearerAuth", ["catalog:service_requirement:manage"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
