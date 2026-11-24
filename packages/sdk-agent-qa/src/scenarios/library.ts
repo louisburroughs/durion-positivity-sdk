@@ -129,7 +129,7 @@ const daily: ScenarioInput[] = [
       'yesterday. (Leave alone any purchase order whose comment says it is for a specific workorder: those are received ' +
       "against the job.) If there is none, check the receipts expected here, say there was nothing to receive, and " +
       'finish. Otherwise receive it properly: record the vendor\'s ship notice (an ASN for the purchase order, with its ' +
-      'lines), then post a goods receipt for the delivery at this location — every line in full, except that on a ' +
+      'lines), then post a goods receipt for the delivery booked at this location\'s receiving staging location (not the site itself: putaway only takes stock that went through staging) — every line in full, except that on a ' +
       'purchase order with more than one line the last line arrives one unit short. (Inventory can take a minute to learn ' +
       'of a purchase order approved moments ago; if told the reference is not known yet, wait and repeat.) Then put it ' +
       'away: generate putaway tasks for the receipt, claim one, and complete it. Finish by reading the purchase order to ' +

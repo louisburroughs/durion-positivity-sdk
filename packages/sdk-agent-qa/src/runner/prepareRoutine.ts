@@ -53,7 +53,8 @@ export const PREPARED_READS: Record<RoutinePreparation, readonly string[]> = {
   // Paging the whole stock to find the lowest is what the agent did with this read (36 pages of 5 on one run).
   stock: ['inventory.InventoryStockApi.listStock'],
   // Finding the order to receive is where receive-delivery spent its budget: 9 listings and each order read 2-3 times.
-  'purchase-orders': ['order.PurchaseOrdersApi.listPurchaseOrders'],
+  // The staging location is where the agent went hunting after a receipt booked at the site was refused putaway.
+  'purchase-orders': ['order.PurchaseOrdersApi.listPurchaseOrders', 'location.SiteDefaultsAPIApi.getSiteDefaults'],
   'bank-accounts': ['accounting.BankAccountsApi.listBankAccounts'],
   // The statement is built in code from the ledger, so none of the reading that feeds it is left to do.
   'bank-statement': [
@@ -821,6 +822,15 @@ const isoDay = (value: unknown): string | undefined => iso(value)?.slice(0, 10);
  * of all when none is that recent). Its lines come with what is still open and what the
  * delivery brings, so the ship notice and the receipt agree with the order.
  */
+/** The site's default receiving staging location (location getSiteDefaults), or undefined when unset or unreadable. */
+async function stagingLocation(lookup: Lookup, siteId: string, persona: string | undefined): Promise<string | undefined> {
+  const answer = await lookup('location.SiteDefaultsAPIApi.getSiteDefaults', { locationId: siteId }, persona);
+  if (!answer.ok || typeof answer.body !== 'object' || answer.body === null) {
+    return undefined;
+  }
+  return text((answer.body as Record<string, unknown>)['defaultStagingLocationId']);
+}
+
 async function purchaseOrders(lookup: Lookup, context: RoutineContext): Promise<string[]> {
   if (!context.site) {
     return [];
@@ -880,6 +890,14 @@ async function purchaseOrders(lookup: Lookup, context: RoutineContext): Promise<
   const others = open.length - 1;
   if (others > 0) {
     facts.push(`  (${others} other open order${others === 1 ? '' : 's'} here can wait for a later truck.)`);
+  }
+  const staging = await stagingLocation(lookup, context.site.id, persona);
+  if (staging) {
+    facts.push(
+      `The goods receipt is booked at ${context.site.name}'s receiving staging location, locationId ${staging} ` +
+        `(not the site id ${context.site.id}): putaway only moves stock that went through staging, and refuses a ` +
+        'receipt booked anywhere else with RECEIPT_NOT_STAGED.',
+    );
   }
   return [facts.join('\n')];
 }
