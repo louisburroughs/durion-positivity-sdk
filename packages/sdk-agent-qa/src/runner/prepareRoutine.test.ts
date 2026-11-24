@@ -460,19 +460,22 @@ describe('prepareRoutine: purchase-orders', () => {
               ],
             }
           : { content: [{ ...po('remainder', '2026-11-18T09:00:00Z', [line(1, 1)]), status: 'PARTIALLY_RECEIVED' }] },
+      'location.SiteDefaultsAPIApi.getSiteDefaults': () => ({ siteId: 'site-1', defaultStagingLocationId: 'stage-1', defaultQuarantineLocationId: 'quar-1' }),
     });
 
     const facts = await prepareRoutine('purchase-orders', lookup, PO_CONTEXT);
 
-    expect(calls.map((call) => [call.input['status'], call.input['locationId'], call.persona])).toEqual([
-      ['APPROVED', 'site-1', 'parts'],
-      ['PARTIALLY_RECEIVED', 'site-1', 'parts'],
+    expect(calls.map((call) => [call.operationId, call.input['status'], call.input['locationId'], call.persona])).toEqual([
+      ['order.PurchaseOrdersApi.listPurchaseOrders', 'APPROVED', 'site-1', 'parts'],
+      ['order.PurchaseOrdersApi.listPurchaseOrders', 'PARTIALLY_RECEIVED', 'site-1', 'parts'],
+      ['location.SiteDefaultsAPIApi.getSiteDefaults', undefined, 'site-1', 'parts'],
     ]);
     const lines = facts[0]!.split('\n');
     expect(lines[0]).toContain('PO TARGET (purchaseOrderId target, vendorId v1), APPROVED, raised 2026-11-20');
     expect(lines[1]).toBe('  line 1 (lineId l1): skuId sku-1 — Part 1; ordered 10, open 10, unit cost 100 minor USD; arrives 10');
     expect(lines[2]).toBe('  line 3 (lineId l3): skuId sku-3 — Part 3; ordered 12, open 12, unit cost 300 minor USD; arrives 11 (one short)');
     expect(lines[3]).toContain('2 other open orders');
+    expect(lines[4]).toContain('staging location, locationId stage-1 (not the site id site-1)');
   });
 
   it('falls back to the oldest open order when none is recent, and says when there is nothing to receive', async () => {
@@ -485,6 +488,8 @@ describe('prepareRoutine: purchase-orders', () => {
     expect(fact).toContain('PO OLD');
     expect(fact).toContain('arrives 5');
     expect(fact).not.toContain('one short');
+    // An unreadable site default leaves the staging location unstated rather than guessed.
+    expect(fact).not.toContain('staging location');
 
     const empty = fakeLookup({ 'order.PurchaseOrdersApi.listPurchaseOrders': () => ({ content: [po('wo', '2026-11-21T08:00:00Z', [line(1, 1)], 'For workorder X')] }) });
     expect((await prepareRoutine('purchase-orders', empty.lookup, PO_CONTEXT))[0]).toContain('nothing on this truck to receive');
