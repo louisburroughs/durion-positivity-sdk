@@ -93,7 +93,7 @@ export default async function globalSetup(): Promise<void> {
     new BootstrapOrchestrator(adminConfig, auth).run(),
   );
 
-  // Step 3 runs here rather than with the rest of the preflight: the employees
+  // Step 4 runs here rather than with the rest of the preflight: the employees
   // it links to are what the reference bootstrap just created.
   if (personaBootstrap.applies) {
     const { links, limitations } = await stage('persona person-links', () =>

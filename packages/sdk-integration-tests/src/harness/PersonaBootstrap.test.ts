@@ -2,9 +2,11 @@ import { ItestConfig } from './ItestConfig';
 import {
   normalizeRoleKey,
   PersonaBootstrap,
+  planSiteScope,
   PERSONA_ROLE,
   REQUIRED_AUTHORITIES,
   SUITE_SITE_CODE,
+  type HeldAssignment,
   type LinkOutcome,
   type RoleAssignmentScope,
   type PersonaPeoplePort,
@@ -32,6 +34,7 @@ interface SecurityCalls {
   getRoleIdByKey: string[];
   assignUserRole: Array<{ userId: string; roleId: string; scope: RoleAssignmentScope }>;
   findLocationIdByCode: string[];
+  listRoleAssignments: string[];
   /** Usernames the preflight logged in as to read enforced authorities. */
   getEnforcedAuthorities: string[];
 }
@@ -45,12 +48,15 @@ function fakeSecurity(
     failPermissions?: boolean;
     /** Location ids by code; a code absent here has no location yet. */
     locationIds?: Record<string, string>;
+    /** Currently effective assignments by user id; none when absent. */
+    held?: Record<string, HeldAssignment[]>;
   } = {},
 ): PersonaSecurityPort & { calls: SecurityCalls } {
   const calls: SecurityCalls = {
     getRoleIdByKey: [],
     assignUserRole: [],
     findLocationIdByCode: [],
+    listRoleAssignments: [],
     getEnforcedAuthorities: [],
   };
   return {
@@ -79,6 +85,10 @@ function fakeSecurity(
     findLocationIdByCode: (code) => {
       calls.findLocationIdByCode.push(code);
       return Promise.resolve(options.locationIds?.[code]);
+    },
+    listRoleAssignments: (userId) => {
+      calls.listRoleAssignments.push(userId);
+      return Promise.resolve(options.held?.[userId] ?? []);
     },
   };
 }
@@ -260,6 +270,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
       getRoleIdByKey: () => Promise.resolve('role-1'),
       assignUserRole: () => Promise.resolve(),
       findLocationIdByCode: () => Promise.resolve(undefined),
+      listRoleAssignments: () => Promise.resolve([]),
     };
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
 
@@ -372,5 +383,118 @@ describe('PERSONA_ROLE', () => {
       expect(key).toMatch(/^[a-z][a-z0-9_]*$/);
       expect(normalizeRoleKey(`ROLE_${key.toUpperCase()}`)).toBe(key);
     }
+  });
+});
+
+const located = (roleKey: string, ...locationIds: string[]): HeldAssignment => ({
+  roleId: `role-${roleKey}`,
+  roleKey,
+  scope: { kind: 'LOCATIONS', locationIds },
+});
+
+describe('planSiteScope', () => {
+  it('adds the suite site to the locations the seed holds the key at, keeping them', () => {
+    expect(planSiteScope('location_management', [located('location_management', 'clt-main')], 'site-1')).toEqual({
+      roleId: 'role-location_management',
+      scope: { kind: 'LOCATIONS', locationIds: ['clt-main', 'site-1'] },
+    });
+  });
+
+  it('unions the nodes of every assignment of the key, since the new assignment replaces them', () => {
+    const plan = planSiteScope(
+      'shop_floor',
+      [located('shop_floor', 'a', 'b'), located('shop_floor', 'b', 'c'), located('service_desk', 'z')],
+      'site-1',
+    );
+    expect(plan?.scope).toEqual({ kind: 'LOCATIONS', locationIds: ['a', 'b', 'c', 'site-1'] });
+  });
+
+  it('reads the key the way the backend does', () => {
+    expect(planSiteScope('shop_floor', [located('ROLE_SHOP_FLOOR', 'a')], 'site-1')).toBeDefined();
+  });
+
+  it('leaves a tenant-wide holder alone', () => {
+    const tenantWide: HeldAssignment = { roleId: 'r', roleKey: 'finance_books_and_close', scope: { kind: 'TENANT' } };
+    expect(planSiteScope('finance_books_and_close', [tenantWide], 'site-1')).toBeUndefined();
+    expect(planSiteScope('finance_books_and_close', [tenantWide], undefined)).toBeUndefined();
+  });
+
+  it('leaves an account already held at the site alone, so a re-run writes nothing', () => {
+    expect(planSiteScope('service_desk', [located('service_desk', 'a', 'site-1')], 'site-1')).toBeUndefined();
+  });
+
+  it('assigns nothing when the account does not hold the key at all - the authority check reports that', () => {
+    expect(planSiteScope('service_desk', [located('shop_floor', 'a')], 'site-1')).toBeUndefined();
+  });
+
+  it('goes tenant-wide only when the site does not exist yet', () => {
+    expect(planSiteScope('shop_floor', [located('shop_floor', 'a')], undefined)).toEqual({
+      roleId: 'role-shop_floor',
+      scope: { kind: 'TENANT' },
+    });
+  });
+
+  it('refuses to exceed the backend bound of 32 locations rather than drop one', () => {
+    const many = Array.from({ length: 32 }, (_, i) => `loc-${i}`);
+    expect(() => planSiteScope('shop_floor', [located('shop_floor', ...many)], 'site-1')).toThrow(/33 locations/);
+  });
+});
+
+describe('PersonaBootstrap.verifyAndProvision: the suite site', () => {
+  const env = {
+    ...BASE_ENV,
+    ITEST_MANAGER_USERNAME: 'diana.rowe',
+    ITEST_MANAGER_PASSWORD: 'manager-pw',
+    ITEST_CONTROLLER_USERNAME: 'margaret.olsen',
+    ITEST_CONTROLLER_PASSWORD: 'controller-pw',
+  };
+  const users = [
+    { id: 'u-m', username: 'diana.rowe', roles: ['location_management'] },
+    { id: 'u-c', username: 'margaret.olsen', roles: ['finance_books_and_close'] },
+  ];
+  const permissions = {
+    'diana.rowe': [...REQUIRED_AUTHORITIES.manager],
+    'margaret.olsen': [...REQUIRED_AUTHORITIES.controller],
+  };
+
+  it('widens a located persona to the suite site and leaves a tenant-wide one alone', async () => {
+    const security = fakeSecurity(users, {
+      permissions,
+      locationIds: { [SUITE_SITE_CODE]: 'site-1' },
+      held: {
+        'u-m': [located('location_management', 'clt-main')],
+        'u-c': [{ roleId: 'role-fin', roleKey: 'finance_books_and_close', scope: { kind: 'TENANT' } }],
+      },
+    });
+    const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(env), security, fakePeople());
+
+    const result = await bootstrap.verifyAndProvision();
+
+    expect(security.calls.assignUserRole).toEqual([
+      {
+        userId: 'u-m',
+        roleId: 'role-location_management',
+        scope: { kind: 'LOCATIONS', locationIds: ['clt-main', 'site-1'] },
+      },
+    ]);
+    expect(result.assignments).toEqual(['diana.rowe holds location_management at LOCATIONS clt-main, site-1']);
+    // One lookup of the site for the whole preflight.
+    expect(security.calls.findLocationIdByCode).toEqual([SUITE_SITE_CODE]);
+    // The authorities are read after the widening, from a fresh token.
+    expect(result.verified).toEqual(['manager=diana.rowe', 'controller=margaret.olsen']);
+  });
+
+  it('reports a widening the backend refuses against the persona', async () => {
+    const security = fakeSecurity(users, {
+      permissions,
+      locationIds: { [SUITE_SITE_CODE]: 'site-1' },
+      held: { 'u-m': [located('location_management', 'clt-main')] },
+    });
+    security.assignUserRole = () => Promise.reject(new Error('403 ASSIGNMENT_OUTSIDE_ADMIN_REACH'));
+    const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(env), security, fakePeople());
+
+    await expect(bootstrap.verifyAndProvision()).rejects.toThrow(
+      /manager: "diana.rowe" could not be given location_management at ATX-RIV-001 \(403 ASSIGNMENT_OUTSIDE_ADMIN_REACH\)/,
+    );
   });
 });

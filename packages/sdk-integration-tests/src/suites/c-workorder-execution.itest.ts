@@ -405,13 +405,15 @@ describe('Suite C — workorder execution', () => {
     expect(partTask?.pickedQty).toBe(0);
     expect(partTask?.remainingQty).toBe(PART_QUANTITY);
 
-    // The manager raises the list, not the technician: createPickList requires
-    // inventory:pick_list:create, which the seeded shop_floor role does not
-    // carry - it holds pick_list:execute and pick_list:view. In
-    // single-credential mode every persona is the admin login and this passed
-    // either way; in role mode a technician here is a 403.
+    // The parts clerk raises the list: createPickList requires
+    // inventory:pick_list:create, which only stockroom_operations (and
+    // stockroom_floor, full_access) holds. shop_floor carries pick_list:execute
+    // and :view, and location_management lost :create under ADR-0079 - its
+    // starter role records the drop ("Stockroom floor work" is not its work
+    // area). In single-credential mode every persona is the admin login and
+    // this passed either way; in role mode a technician or manager here is a 403.
     const pickList = await call('createPickList', () =>
-      manager.inventory.pickListsApi.createPickList({
+      parts.inventory.pickListsApi.createPickList({
         // priority is declared optional by the spec but lands in a primitive int
         // on the backend, which rejects the null the client sends for an omitted
         // field: "Cannot map `null` into type `int`". So it is always supplied.

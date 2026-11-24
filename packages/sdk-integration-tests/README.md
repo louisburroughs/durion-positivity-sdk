@@ -653,7 +653,15 @@ the middle of a suite:
    its location; only when that site does not exist yet (a database the packs
    never loaded, where the reference bootstrap creates it after this step) is it
    made tenant-wide.
-3. Each persona is linked to its matching seeded employee, so labor attributes
+3. Each persona's role is made to reach the suites' site. The alpha seed holds
+   the persona accounts at their own shops (`diana.rowe` at CLT-MAIN-001, ...),
+   and the token's `grants` claim reaches only those, so an account whose key is
+   held at locations that do not include `ATX-RIV-001` is reassigned the key at
+   those locations **plus** the site (read with `listUserRoleAssignments`;
+   reassigning a role at another scope replaces the earlier assignment, so the
+   union is what keeps the seed's locations). A tenant-wide holder is left alone;
+   the assignment goes tenant-wide only when the site does not exist yet.
+4. Each persona is linked to its matching seeded employee, so labor attributes
    to a real person. Never fatal — a persona already linked elsewhere, or one
    with no matching employee, is logged as a limitation.
 
@@ -680,9 +688,12 @@ Every role is held at a scope, and the access token's `grants` claim carries
 it: a persona reaches only the locations its assignment names (and those
 beneath them), and a persona with no assignment reaches none. The suites work
 at `ATX-RIV-001`, so a located persona must be held there (or above it) for its
-location-checked calls to pass; `users.csv` has `ATX-RIV-001` accounts for
-`service_desk`, `shop_floor`, `location_management` and
-`stockroom_operations`.
+location-checked calls to pass; preflight step 3 adds the site to the account's
+assignment when it is missing.
+
+C6 raises its pick list as `parts`: `inventory:pick_list:create` belongs to the
+stockroom roles, and `location_management` records it as a drop in
+`_starter-roles.yaml`.
 
 `acct` and `controller` have no matching employee record — PeopleBootstrap
 seeds technicians, service writers, a manager and a parts clerk, and no

@@ -60,6 +60,63 @@ export type RoleAssignmentScope =
   | { kind: 'TENANT' }
   | { kind: 'LOCATIONS'; locationIds: string[] };
 
+/** The backend's bound on one assignment's locations (`AssignmentScopeRequest.MAX_LOCATIONS`). */
+const MAX_SCOPE_LOCATIONS = 32;
+
+/** One currently effective role assignment of a user. */
+export interface HeldAssignment {
+  roleId: string;
+  /** The role's key, as `RoleAssignmentDto.roleCode` carries it. */
+  roleKey: string;
+  scope: RoleAssignmentScope;
+}
+
+/**
+ * The assignment that makes `key` reach the suite site without taking away any
+ * location the account holds it at, or undefined when nothing needs to change.
+ *
+ * - The account holds no assignment of `key`: undefined. Whether that is a
+ *   problem is the authority check's call, which names it; only the parts
+ *   persona is provisioned a role it lacks.
+ * - Any assignment of `key` is tenant-wide: undefined, it reaches every site.
+ * - The site does not exist yet (`siteId` undefined): TENANT, for the reason
+ *   {@link PersonaBootstrap} gives for the parts grant.
+ * - The site is already among the nodes: undefined.
+ * - Otherwise LOCATIONS over every node the account holds `key` at, plus the
+ *   site. Assigning a role the user holds at another scope REPLACES that
+ *   assignment, so the union is what keeps the seed's locations held.
+ */
+export function planSiteScope(
+  key: string,
+  held: readonly HeldAssignment[],
+  siteId: string | undefined,
+): { roleId: string; scope: RoleAssignmentScope } | undefined {
+  const ofKey = held.filter((assignment) => normalizeRoleKey(assignment.roleKey) === key);
+  if (ofKey.length === 0 || ofKey.some((assignment) => assignment.scope.kind === 'TENANT')) {
+    return undefined;
+  }
+  const roleId = ofKey[0].roleId;
+  if (siteId === undefined) {
+    return { roleId, scope: { kind: 'TENANT' } };
+  }
+  const nodes = new Set<string>();
+  for (const assignment of ofKey) {
+    if (assignment.scope.kind === 'LOCATIONS') {
+      assignment.scope.locationIds.forEach((id) => nodes.add(id));
+    }
+  }
+  if (nodes.has(siteId)) {
+    return undefined;
+  }
+  nodes.add(siteId);
+  if (nodes.size > MAX_SCOPE_LOCATIONS) {
+    throw new Error(
+      `holding ${key} at the suite site as well would name ${nodes.size} locations, above the backend's ${MAX_SCOPE_LOCATIONS}`,
+    );
+  }
+  return { roleId, scope: { kind: 'LOCATIONS', locationIds: [...nodes] } };
+}
+
 /**
  * The authorities each persona's suite steps actually exercise, taken verbatim
  * from the backend's R__seed_role_permissions.sql. Deliberately a few per
@@ -88,9 +145,6 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     // the authority named.
     'workorder:position:assign',
     'order:purchase_order:approve',
-    // C6 raises the pick list as the manager precisely because shop_floor
-    // cannot; checking it here is what stops that regressing silently.
-    'inventory:pick_list:create',
   ],
   parts: [
     'order:purchase_order:create',
@@ -101,6 +155,10 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     // the plan's tasks back as the clerk (E2).
     'inventory:cycle_count:initiate',
     'inventory:cycle_count:view',
+    // C6 raises the pick list as the parts clerk: neither shop_floor nor, since
+    // ADR-0079, location_management holds it (_starter-roles.yaml records the
+    // manager's drop). Checking it here is what stops that regressing silently.
+    'inventory:pick_list:create',
   ],
   // Backend V25 (#1499/#1512) rescoped the account manager role (today's
   // customer_accounts) to customer accounts (AR) and moved accounting
@@ -169,6 +227,8 @@ export interface PersonaSecurityPort {
   assignUserRole(userId: string, roleId: string, scope: RoleAssignmentScope): Promise<void>;
   /** The id of the location with this code, or undefined when there is none yet. */
   findLocationIdByCode(code: string): Promise<string | undefined>;
+  /** The user's currently effective role assignments (`listUserRoleAssignments`). */
+  listRoleAssignments(userId: string): Promise<HeldAssignment[]>;
 }
 
 export interface PersonaPeoplePort {
@@ -199,7 +259,7 @@ export class PersonaBootstrap {
   }
 
   /**
-   * Steps 1 and 2: confirm every configured persona resolves to a user that
+   * Steps 1-3: confirm every configured persona resolves to a user that
    * carries the authorities its suite steps need, granting the parts persona
    * its role (stockroom_operations) if it is the one thing missing.
    *
@@ -244,7 +304,30 @@ export class PersonaBootstrap {
         }
       }
 
-      // Whether the grant above ran or the account was already correct, the
+      // Under ADR-0079 phase 4 a role reaches only the locations its assignment
+      // names, and the token's grants claim carries exactly that. The alpha
+      // seed holds the persona accounts at their own shops (diana.rowe at
+      // CLT-MAIN-001, ...), while every suite works at SUITE_SITE_CODE, so
+      // without this each location-checked call in a role-mode run is refused.
+      // Widen, never narrow: the seed's locations stay held.
+      try {
+        const plan = planSiteScope(
+          PERSONA_ROLE[persona],
+          await this.security.listRoleAssignments(user.id),
+          await this.suiteSiteId(),
+        );
+        if (plan) {
+          await this.security.assignUserRole(user.id, plan.roleId, plan.scope);
+          assignments.push(`${username} holds ${PERSONA_ROLE[persona]} at ${describeScope(plan.scope)}`);
+        }
+      } catch (error) {
+        problems.push(
+          `${persona}: "${username}" could not be given ${PERSONA_ROLE[persona]} at ${SUITE_SITE_CODE} (${describe(error)})`,
+        );
+        continue;
+      }
+
+      // Whether the grants above ran or the account was already correct, the
       // authorities below are read from a freshly minted token, so a grant that
       // did not reach the set the token is built from shows up here as missing
       // authorities rather than as a false pass.
@@ -296,12 +379,20 @@ export class PersonaBootstrap {
    * tenant-wide - which still covers the site once it is created.
    */
   private async partsScope(): Promise<RoleAssignmentScope> {
-    const siteId = await this.security.findLocationIdByCode(SUITE_SITE_CODE);
+    const siteId = await this.suiteSiteId();
     return siteId ? { kind: 'LOCATIONS', locationIds: [siteId] } : { kind: 'TENANT' };
   }
 
+  private siteId: Promise<string | undefined> | undefined;
+
+  /** The suite site's id, looked up once per preflight. */
+  private suiteSiteId(): Promise<string | undefined> {
+    this.siteId ??= this.security.findLocationIdByCode(SUITE_SITE_CODE);
+    return this.siteId;
+  }
+
   /**
-   * Step 3: point each persona's login at the matching seeded employee.
+   * Step 4: point each persona's login at the matching seeded employee.
    *
    * Runs after the reference bootstrap, which is what creates the employees.
    * Never fatal: a persona already linked to a different person is a fact about
@@ -462,6 +553,18 @@ export function createPersonaPorts(adminAuth: SeederAuth, tenantSlug?: string): 
               ? { kind: AssignmentScopeRequestKindEnum.Tenant }
               : { kind: AssignmentScopeRequestKindEnum.Locations, locationIds: new Set(scope.locationIds) },
         });
+      },
+      async listRoleAssignments(userId: string): Promise<HeldAssignment[]> {
+        // Currently effective only (includeHistory defaults to false).
+        const rows = await securityClient.roleManagementApi.listUserRoleAssignments({ userId });
+        return rows.map((row) => ({
+          roleId: row.roleId,
+          roleKey: row.roleCode,
+          scope:
+            row.scope.kind === 'TENANT'
+              ? { kind: 'TENANT' }
+              : { kind: 'LOCATIONS', locationIds: (row.scope.nodes ?? []).map((node) => node.id) },
+        }));
       },
       async findLocationIdByCode(code: string): Promise<string | undefined> {
         const locations = await locationClient.locationApi.listLocations();
