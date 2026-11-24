@@ -50,18 +50,34 @@ export interface EmployeeRoleAssignmentDto {
      */
     roleId: string;
     /**
-     * The role's location scope: ALL (applies everywhere) or LOCATION (particular locations)
-     * @type {string}
-     * @memberof EmployeeRoleAssignmentDto
-     */
-    roleLocationScope: string;
-    /**
      * Display name of the assigned security role, as the tenant stores it: a label to show, never an identifier
      * @type {string}
      * @memberof EmployeeRoleAssignmentDto
      */
     roleName: string;
+    /**
+     * Where the role is held: TENANT (at every location) or LOCATIONS (at scopeLocationIds and the locations beneath each)
+     * @type {string}
+     * @memberof EmployeeRoleAssignmentDto
+     */
+    scopeKind: EmployeeRoleAssignmentDtoScopeKindEnum;
+    /**
+     * Ids of the locations the role is held at, as assigned (not expanded to the locations beneath them). Empty when scopeKind is TENANT
+     * @type {Array<string>}
+     * @memberof EmployeeRoleAssignmentDto
+     */
+    scopeLocationIds: Array<string>;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum EmployeeRoleAssignmentDtoScopeKindEnum {
+    Tenant = 'TENANT',
+    Locations = 'LOCATIONS'
+}
+
 
 /**
  * Check if a given object implements the EmployeeRoleAssignmentDto interface.
@@ -70,8 +86,9 @@ export function instanceOfEmployeeRoleAssignmentDto(value: object): boolean {
     if (!('assignmentId' in value)) return false;
     if (!('effectiveStartDate' in value)) return false;
     if (!('roleId' in value)) return false;
-    if (!('roleLocationScope' in value)) return false;
     if (!('roleName' in value)) return false;
+    if (!('scopeKind' in value)) return false;
+    if (!('scopeLocationIds' in value)) return false;
     return true;
 }
 
@@ -90,8 +107,9 @@ export function EmployeeRoleAssignmentDtoFromJSONTyped(json: any, ignoreDiscrimi
         'effectiveStartDate': (new Date(json['effectiveStartDate'])),
         'revokedAt': json['revokedAt'] == null ? undefined : (new Date(json['revokedAt'])),
         'roleId': json['roleId'],
-        'roleLocationScope': json['roleLocationScope'],
         'roleName': json['roleName'],
+        'scopeKind': json['scopeKind'],
+        'scopeLocationIds': json['scopeLocationIds'],
     };
 }
 
@@ -106,8 +124,9 @@ export function EmployeeRoleAssignmentDtoToJSON(value?: EmployeeRoleAssignmentDt
         'effectiveStartDate': ((value['effectiveStartDate']).toISOString()),
         'revokedAt': value['revokedAt'] == null ? undefined : ((value['revokedAt'] as any).toISOString()),
         'roleId': value['roleId'],
-        'roleLocationScope': value['roleLocationScope'],
         'roleName': value['roleName'],
+        'scopeKind': value['scopeKind'],
+        'scopeLocationIds': value['scopeLocationIds'],
     };
 }
 

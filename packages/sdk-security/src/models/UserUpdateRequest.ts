@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AssignmentScopeRequest } from './AssignmentScopeRequest';
+import {
+    AssignmentScopeRequestFromJSON,
+    AssignmentScopeRequestFromJSONTyped,
+    AssignmentScopeRequestToJSON,
+} from './AssignmentScopeRequest';
+
 /**
  * Partial update of a user account; only supplied fields are applied
  * @export
@@ -31,6 +38,12 @@ export interface UserUpdateRequest {
      * @memberof UserUpdateRequest
      */
     roles?: Set<string>;
+    /**
+     * 
+     * @type {AssignmentScopeRequest}
+     * @memberof UserUpdateRequest
+     */
+    scope?: AssignmentScopeRequest;
     /**
      * New login username
      * @type {string}
@@ -58,6 +71,7 @@ export function UserUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'password': json['password'] == null ? undefined : json['password'],
         'roles': json['roles'] == null ? undefined : json['roles'],
+        'scope': json['scope'] == null ? undefined : AssignmentScopeRequestFromJSON(json['scope']),
         'username': json['username'] == null ? undefined : json['username'],
     };
 }
@@ -70,6 +84,7 @@ export function UserUpdateRequestToJSON(value?: UserUpdateRequest | null): any {
         
         'password': value['password'],
         'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
+        'scope': AssignmentScopeRequestToJSON(value['scope']),
         'username': value['username'],
     };
 }

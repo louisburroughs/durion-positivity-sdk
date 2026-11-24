@@ -7,6 +7,7 @@ export * from './AuthAPIApi';
 export * from './AuthorizationApi';
 export * from './CapabilityCatalogApi';
 export * from './JWTAPIApi';
+export * from './MyAccessApi';
 export * from './PermissionRegistryApi';
 export * from './PlatformAdministratorAPIApi';
 export * from './PlatformRoleTemplateAPIApi';
