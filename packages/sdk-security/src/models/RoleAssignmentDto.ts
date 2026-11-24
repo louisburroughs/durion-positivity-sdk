@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AssignmentScopeDto } from './AssignmentScopeDto';
+import {
+    AssignmentScopeDtoFromJSON,
+    AssignmentScopeDtoFromJSONTyped,
+    AssignmentScopeDtoToJSON,
+} from './AssignmentScopeDto';
+
 /**
  * An effective-dated role assignment binding a user to a role
  * @export
@@ -86,6 +93,12 @@ export interface RoleAssignmentDto {
      */
     roleName: string;
     /**
+     * 
+     * @type {AssignmentScopeDto}
+     * @memberof RoleAssignmentDto
+     */
+    scope: AssignmentScopeDto;
+    /**
      * Identifier of the user the role is assigned to
      * @type {string}
      * @memberof RoleAssignmentDto
@@ -101,6 +114,7 @@ export function instanceOfRoleAssignmentDto(value: object): boolean {
     if (!('roleCode' in value)) return false;
     if (!('roleId' in value)) return false;
     if (!('roleName' in value)) return false;
+    if (!('scope' in value)) return false;
     if (!('userId' in value)) return false;
     return true;
 }
@@ -126,6 +140,7 @@ export function RoleAssignmentDtoFromJSONTyped(json: any, ignoreDiscriminator: b
         'roleCode': json['roleCode'],
         'roleId': json['roleId'],
         'roleName': json['roleName'],
+        'scope': AssignmentScopeDtoFromJSON(json['scope']),
         'userId': json['userId'],
     };
 }
@@ -147,6 +162,7 @@ export function RoleAssignmentDtoToJSON(value?: RoleAssignmentDto | null): any {
         'roleCode': value['roleCode'],
         'roleId': value['roleId'],
         'roleName': value['roleName'],
+        'scope': AssignmentScopeDtoToJSON(value['scope']),
         'userId': value['userId'],
     };
 }

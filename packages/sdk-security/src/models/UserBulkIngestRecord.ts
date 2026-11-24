@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AssignmentScopeRequest } from './AssignmentScopeRequest';
+import {
+    AssignmentScopeRequestFromJSON,
+    AssignmentScopeRequestFromJSONTyped,
+    AssignmentScopeRequestToJSON,
+} from './AssignmentScopeRequest';
+
 /**
  * One user account to provision, without password material
  * @export
@@ -26,6 +33,12 @@ export interface UserBulkIngestRecord {
      */
     roles: Set<string>;
     /**
+     * 
+     * @type {AssignmentScopeRequest}
+     * @memberof UserBulkIngestRecord
+     */
+    scope: AssignmentScopeRequest;
+    /**
      * Unique login name
      * @type {string}
      * @memberof UserBulkIngestRecord
@@ -38,6 +51,7 @@ export interface UserBulkIngestRecord {
  */
 export function instanceOfUserBulkIngestRecord(value: object): boolean {
     if (!('roles' in value)) return false;
+    if (!('scope' in value)) return false;
     if (!('username' in value)) return false;
     return true;
 }
@@ -53,6 +67,7 @@ export function UserBulkIngestRecordFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'roles': json['roles'],
+        'scope': AssignmentScopeRequestFromJSON(json['scope']),
         'username': json['username'],
     };
 }
@@ -64,6 +79,7 @@ export function UserBulkIngestRecordToJSON(value?: UserBulkIngestRecord | null):
     return {
         
         'roles': Array.from(value['roles'] as Set<any>),
+        'scope': AssignmentScopeRequestToJSON(value['scope']),
         'username': value['username'],
     };
 }

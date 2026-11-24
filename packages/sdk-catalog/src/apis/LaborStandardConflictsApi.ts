@@ -49,7 +49,7 @@ export class LaborStandardConflictsApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:labor_standard:view"]);
+            const tokenString = await token("bearerAuth", ["catalog:labor_standard:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

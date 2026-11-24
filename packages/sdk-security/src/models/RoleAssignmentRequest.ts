@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AssignmentScopeRequest } from './AssignmentScopeRequest';
+import {
+    AssignmentScopeRequestFromJSON,
+    AssignmentScopeRequestFromJSONTyped,
+    AssignmentScopeRequestToJSON,
+} from './AssignmentScopeRequest';
+
 /**
  * Request to assign a role to a user for an effective window
  * @export
@@ -38,6 +45,12 @@ export interface RoleAssignmentRequest {
      */
     roleId: string;
     /**
+     * 
+     * @type {AssignmentScopeRequest}
+     * @memberof RoleAssignmentRequest
+     */
+    scope: AssignmentScopeRequest;
+    /**
      * Identifier of the user to assign the role to
      * @type {string}
      * @memberof RoleAssignmentRequest
@@ -50,6 +63,7 @@ export interface RoleAssignmentRequest {
  */
 export function instanceOfRoleAssignmentRequest(value: object): boolean {
     if (!('roleId' in value)) return false;
+    if (!('scope' in value)) return false;
     if (!('userId' in value)) return false;
     return true;
 }
@@ -67,6 +81,7 @@ export function RoleAssignmentRequestFromJSONTyped(json: any, ignoreDiscriminato
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
         'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
         'roleId': json['roleId'],
+        'scope': AssignmentScopeRequestFromJSON(json['scope']),
         'userId': json['userId'],
     };
 }
@@ -80,6 +95,7 @@ export function RoleAssignmentRequestToJSON(value?: RoleAssignmentRequest | null
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
         'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
         'roleId': value['roleId'],
+        'scope': AssignmentScopeRequestToJSON(value['scope']),
         'userId': value['userId'],
     };
 }

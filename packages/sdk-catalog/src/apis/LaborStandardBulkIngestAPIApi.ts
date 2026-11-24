@@ -57,7 +57,7 @@ export class LaborStandardBulkIngestAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:labor_standard:import"]);
+            const tokenString = await token("bearerAuth", ["catalog:labor_standard:import"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
