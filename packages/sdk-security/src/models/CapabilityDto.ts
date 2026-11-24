@@ -56,6 +56,12 @@ export interface CapabilityDto {
      */
     permissions: Array<string>;
     /**
+     * True for a system capability, which only a system role may hold. The capability list never contains one, so this is false there; the field exists so every place a capability is described says which kind it is
+     * @type {boolean}
+     * @memberof CapabilityDto
+     */
+    system: boolean;
+    /**
      * True when the capability makes no sense at one location: a role holding it can only be assigned tenant-wide
      * @type {boolean}
      * @memberof CapabilityDto
@@ -83,6 +89,7 @@ export function instanceOfCapabilityDto(value: object): boolean {
     if (!('key' in value)) return false;
     if (!('name' in value)) return false;
     if (!('permissions' in value)) return false;
+    if (!('system' in value)) return false;
     if (!('tenantWideOnly' in value)) return false;
     return true;
 }
@@ -103,6 +110,7 @@ export function CapabilityDtoFromJSONTyped(json: any, ignoreDiscriminator: boole
         'key': json['key'],
         'name': json['name'],
         'permissions': json['permissions'],
+        'system': json['system'],
         'tenantWideOnly': json['tenantWideOnly'],
     };
 }
@@ -119,6 +127,7 @@ export function CapabilityDtoToJSON(value?: CapabilityDto | null): any {
         'key': value['key'],
         'name': value['name'],
         'permissions': value['permissions'],
+        'system': value['system'],
         'tenantWideOnly': value['tenantWideOnly'],
     };
 }

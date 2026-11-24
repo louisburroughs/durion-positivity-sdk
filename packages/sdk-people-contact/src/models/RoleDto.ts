@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface RoleDto {
     /**
-     * Stable role code, identical to the name
+     * The role code an assignment request names: identical to key
      * @type {string}
      * @memberof RoleDto
      */
@@ -38,11 +38,29 @@ export interface RoleDto {
      */
     id: string;
     /**
-     * Role name, which is also its stable code
+     * The role's immutable key within the tenant: lower-case letters, digits and underscores. It never changes on rename, and it is the roleCode an assignment names
+     * @type {string}
+     * @memberof RoleDto
+     */
+    key: string;
+    /**
+     * Display name, as the tenant typed it. Free text: show it, never compare on it
      * @type {string}
      * @memberof RoleDto
      */
     name: string;
+    /**
+     * True for a role the platform defines (support, platform operator, self-service customer). A system role cannot be renamed, edited or deleted
+     * @type {boolean}
+     * @memberof RoleDto
+     */
+    system?: boolean;
+    /**
+     * Non-null for a starter role, and then equal to its key, for the client to translate the name of a role the tenant has not renamed. Null for a role the tenant created
+     * @type {string}
+     * @memberof RoleDto
+     */
+    templateKey?: string;
 }
 
 /**
@@ -51,6 +69,7 @@ export interface RoleDto {
 export function instanceOfRoleDto(value: object): boolean {
     if (!('code' in value)) return false;
     if (!('id' in value)) return false;
+    if (!('key' in value)) return false;
     if (!('name' in value)) return false;
     return true;
 }
@@ -68,7 +87,10 @@ export function RoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): R
         'code': json['code'],
         'description': json['description'] == null ? undefined : json['description'],
         'id': json['id'],
+        'key': json['key'],
         'name': json['name'],
+        'system': json['system'] == null ? undefined : json['system'],
+        'templateKey': json['templateKey'] == null ? undefined : json['templateKey'],
     };
 }
 
@@ -81,7 +103,10 @@ export function RoleDtoToJSON(value?: RoleDto | null): any {
         'code': value['code'],
         'description': value['description'],
         'id': value['id'],
+        'key': value['key'],
         'name': value['name'],
+        'system': value['system'],
+        'templateKey': value['templateKey'],
     };
 }
 

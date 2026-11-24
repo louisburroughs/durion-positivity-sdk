@@ -13,19 +13,24 @@
  */
 
 import { mapValues } from '../runtime';
-import type { PermissionDto } from './PermissionDto';
-import {
-    PermissionDtoFromJSON,
-    PermissionDtoFromJSONTyped,
-    PermissionDtoToJSON,
-} from './PermissionDto';
-
 /**
- * Role definition including its granted permissions and audit metadata
+ * A role: a tenant's named set of capabilities. It holds no permission directly; what it grants is the union of its capabilities' permissions
  * @export
  * @interface RoleDto
  */
 export interface RoleDto {
+    /**
+     * True when the role holds every capability, including any added later (the owner role). Its capability set cannot be replaced
+     * @type {boolean}
+     * @memberof RoleDto
+     */
+    allCapabilities: boolean;
+    /**
+     * Keys of the capabilities the role holds, in key order. For a role with allCapabilities this is every capability a tenant can see
+     * @type {Array<string>}
+     * @memberof RoleDto
+     */
+    capabilities: Array<string>;
     /**
      * Creation timestamp
      * @type {Date}
@@ -51,6 +56,12 @@ export interface RoleDto {
      */
     id: string;
     /**
+     * The role's immutable key within the tenant: lower-case letters, digits and underscores. A starter role's key is fixed by the platform; a role a tenant creates gets a key derived from its first name. It never changes on rename, and it is what the access token's roles claim and every reference by key carry
+     * @type {string}
+     * @memberof RoleDto
+     */
+    key: string;
+    /**
      * Last-modified timestamp
      * @type {Date}
      * @memberof RoleDto
@@ -75,17 +86,11 @@ export interface RoleDto {
      */
     mcpPersonaRank?: number;
     /**
-     * Role name
+     * Display name, as the tenant typed it. Free text: show it, never compare on it
      * @type {string}
      * @memberof RoleDto
      */
     name: string;
-    /**
-     * Permissions granted to the role
-     * @type {Set<PermissionDto>}
-     * @memberof RoleDto
-     */
-    permissions?: Set<PermissionDto>;
     /**
      * MCP persona slot: what the caller works on
      * @type {string}
@@ -105,19 +110,30 @@ export interface RoleDto {
      */
     personaTone?: string;
     /**
-     * ADR-0062: key of the platform template role this role was provisioned from (its canonical name); null for a custom role. Template roles cannot be deleted.
+     * True for a role the platform defines (support, platform operator, self-service customer). A system role cannot be renamed, edited or deleted
+     * @type {boolean}
+     * @memberof RoleDto
+     */
+    system: boolean;
+    /**
+     * Non-null for a starter role, and then equal to its key: the entry of the platform's role template the role was created from, for the client to translate the name of a role the tenant has not renamed. Null for a role the tenant created
      * @type {string}
      * @memberof RoleDto
      */
-    templateKey?: string;
+    templateKey: string | null;
 }
 
 /**
  * Check if a given object implements the RoleDto interface.
  */
 export function instanceOfRoleDto(value: object): boolean {
+    if (!('allCapabilities' in value)) return false;
+    if (!('capabilities' in value)) return false;
     if (!('id' in value)) return false;
+    if (!('key' in value)) return false;
     if (!('name' in value)) return false;
+    if (!('system' in value)) return false;
+    if (!('templateKey' in value)) return false;
     return true;
 }
 
@@ -131,20 +147,23 @@ export function RoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): R
     }
     return {
         
+        'allCapabilities': json['allCapabilities'],
+        'capabilities': json['capabilities'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'description': json['description'] == null ? undefined : json['description'],
         'id': json['id'],
+        'key': json['key'],
         'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
         'mcpPersonaEligible': json['mcpPersonaEligible'] == null ? undefined : json['mcpPersonaEligible'],
         'mcpPersonaRank': json['mcpPersonaRank'] == null ? undefined : json['mcpPersonaRank'],
         'name': json['name'],
-        'permissions': json['permissions'] == null ? undefined : (new Set((json['permissions'] as Array<any>).map(PermissionDtoFromJSON))),
         'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
         'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
         'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
-        'templateKey': json['templateKey'] == null ? undefined : json['templateKey'],
+        'system': json['system'],
+        'templateKey': json['templateKey'],
     };
 }
 
@@ -154,19 +173,22 @@ export function RoleDtoToJSON(value?: RoleDto | null): any {
     }
     return {
         
+        'allCapabilities': value['allCapabilities'],
+        'capabilities': value['capabilities'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'description': value['description'],
         'id': value['id'],
+        'key': value['key'],
         'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'lastModifiedBy': value['lastModifiedBy'],
         'mcpPersonaEligible': value['mcpPersonaEligible'],
         'mcpPersonaRank': value['mcpPersonaRank'],
         'name': value['name'],
-        'permissions': value['permissions'] == null ? undefined : (Array.from(value['permissions'] as Set<any>).map(PermissionDtoToJSON)),
         'personaFocus': value['personaFocus'],
         'personaTitle': value['personaTitle'],
         'personaTone': value['personaTone'],
+        'system': value['system'],
         'templateKey': value['templateKey'],
     };
 }

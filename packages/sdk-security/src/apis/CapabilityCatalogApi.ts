@@ -31,7 +31,7 @@ import {
 export class CapabilityCatalogApi extends runtime.BaseAPI {
 
     /**
-     * Returns every capability in the platform catalog in key order. A capability is a named bundle of permissions that makes one piece of work fully function; a role is a set of capabilities. Use this tool to show what a role can be built from, or to explain what a capability grants; do not use getAuthCapabilities, which answers the deployment\'s self-service sign-in entry points, and do not use it to read what one role grants, which listRoles returns. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. The catalog is the same for every tenant and changes only with a deployment. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full list; there are no business error conditions. 
+     * Returns every capability in the platform catalog in key order. A capability is a named bundle of permissions that makes one piece of work fully function; a role is a set of capabilities. Use this tool to show what a role can be built from, or to explain what a capability grants; do not use it to read what one role holds, which is getRoleById. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. The catalog is the same for every tenant and changes only with a deployment. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full list; there are no business error conditions. 
      * List the Capability Catalog
      */
     async listCapabilitiesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CapabilityDto>>> {
@@ -58,7 +58,7 @@ export class CapabilityCatalogApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every capability in the platform catalog in key order. A capability is a named bundle of permissions that makes one piece of work fully function; a role is a set of capabilities. Use this tool to show what a role can be built from, or to explain what a capability grants; do not use getAuthCapabilities, which answers the deployment\'s self-service sign-in entry points, and do not use it to read what one role grants, which listRoles returns. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. The catalog is the same for every tenant and changes only with a deployment. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full list; there are no business error conditions. 
+     * Returns every capability in the platform catalog in key order. A capability is a named bundle of permissions that makes one piece of work fully function; a role is a set of capabilities. Use this tool to show what a role can be built from, or to explain what a capability grants; do not use it to read what one role holds, which is getRoleById. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. The catalog is the same for every tenant and changes only with a deployment. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full list; there are no business error conditions. 
      * List the Capability Catalog
      */
     async listCapabilities(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CapabilityDto>> {

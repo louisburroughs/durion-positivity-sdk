@@ -68,7 +68,7 @@ export interface RoleAssignmentDto {
      */
     revokedAt?: Date;
     /**
-     * Stable code of the assigned role, identical to the role's name
+     * Stable code of the assigned role: the role's immutable key
      * @type {string}
      * @memberof RoleAssignmentDto
      */
@@ -79,6 +79,12 @@ export interface RoleAssignmentDto {
      * @memberof RoleAssignmentDto
      */
     roleId: string;
+    /**
+     * Display name of the assigned role as the tenant stores it; show it, never compare on it
+     * @type {string}
+     * @memberof RoleAssignmentDto
+     */
+    roleName: string;
     /**
      * Identifier of the user the role is assigned to
      * @type {string}
@@ -94,6 +100,7 @@ export function instanceOfRoleAssignmentDto(value: object): boolean {
     if (!('id' in value)) return false;
     if (!('roleCode' in value)) return false;
     if (!('roleId' in value)) return false;
+    if (!('roleName' in value)) return false;
     if (!('userId' in value)) return false;
     return true;
 }
@@ -118,6 +125,7 @@ export function RoleAssignmentDtoFromJSONTyped(json: any, ignoreDiscriminator: b
         'revokedAt': json['revokedAt'] == null ? undefined : (new Date(json['revokedAt'])),
         'roleCode': json['roleCode'],
         'roleId': json['roleId'],
+        'roleName': json['roleName'],
         'userId': json['userId'],
     };
 }
@@ -138,6 +146,7 @@ export function RoleAssignmentDtoToJSON(value?: RoleAssignmentDto | null): any {
         'revokedAt': value['revokedAt'] == null ? undefined : ((value['revokedAt']).toISOString()),
         'roleCode': value['roleCode'],
         'roleId': value['roleId'],
+        'roleName': value['roleName'],
         'userId': value['userId'],
     };
 }

@@ -131,8 +131,6 @@ export enum BulkLoadJobResponseDomainTypeEnum {
     StaffingAssignment = 'STAFFING_ASSIGNMENT',
     PutawayRule = 'PUTAWAY_RULE',
     CycleCountPlan = 'CYCLE_COUNT_PLAN',
-    SecurityRole = 'SECURITY_ROLE',
-    SecurityRolePermission = 'SECURITY_ROLE_PERMISSION',
     SecurityUser = 'SECURITY_USER',
     UserPersonLink = 'USER_PERSON_LINK',
     PersonCredential = 'PERSON_CREDENTIAL',

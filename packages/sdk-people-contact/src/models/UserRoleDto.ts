@@ -32,7 +32,7 @@ export interface UserRoleDto {
      */
     endDate?: Date;
     /**
-     * Stable role code
+     * Key of the assigned role: immutable, and never its display name
      * @type {string}
      * @memberof UserRoleDto
      */

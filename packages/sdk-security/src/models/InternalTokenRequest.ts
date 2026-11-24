@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface InternalTokenRequest {
     /**
-     * Optional set of role names to include in token
+     * Optional set of role keys to include in the token; a ROLE_ prefix and any letter case are accepted
      * @type {Set<string>}
      * @memberof InternalTokenRequest
      */

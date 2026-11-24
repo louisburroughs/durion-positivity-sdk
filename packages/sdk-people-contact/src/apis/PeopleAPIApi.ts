@@ -410,7 +410,7 @@ export class PeopleAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "people-contact:fact:replay"]);
+            const tokenString = await token("bearerAuth", ["people-contact:fact:replay"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

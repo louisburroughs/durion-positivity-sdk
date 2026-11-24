@@ -26,6 +26,12 @@ export interface RolePersonaDto {
      */
     description?: string;
     /**
+     * The role's immutable key: what the access token's roles claim carries, and so what a caller's roles are matched against
+     * @type {string}
+     * @memberof RolePersonaDto
+     */
+    key: string;
+    /**
      * Whether this role participates in persona resolution at all
      * @type {boolean}
      * @memberof RolePersonaDto
@@ -38,7 +44,7 @@ export interface RolePersonaDto {
      */
     mcpPersonaRank?: number;
     /**
-     * Role name, unprefixed
+     * The role's display name as the tenant stores it; used to derive the persona title when personaTitle is absent, never to match a caller's roles
      * @type {string}
      * @memberof RolePersonaDto
      */
@@ -67,6 +73,7 @@ export interface RolePersonaDto {
  * Check if a given object implements the RolePersonaDto interface.
  */
 export function instanceOfRolePersonaDto(value: object): boolean {
+    if (!('key' in value)) return false;
     if (!('mcpPersonaEligible' in value)) return false;
     if (!('name' in value)) return false;
     return true;
@@ -83,6 +90,7 @@ export function RolePersonaDtoFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'description': json['description'] == null ? undefined : json['description'],
+        'key': json['key'],
         'mcpPersonaEligible': json['mcpPersonaEligible'],
         'mcpPersonaRank': json['mcpPersonaRank'] == null ? undefined : json['mcpPersonaRank'],
         'name': json['name'],
@@ -99,6 +107,7 @@ export function RolePersonaDtoToJSON(value?: RolePersonaDto | null): any {
     return {
         
         'description': value['description'],
+        'key': value['key'],
         'mcpPersonaEligible': value['mcpPersonaEligible'],
         'mcpPersonaRank': value['mcpPersonaRank'],
         'name': value['name'],
