@@ -39,7 +39,7 @@ export interface CreateGoodsReceiptRequest {
      */
     lines: Array<CreateGoodsReceiptLineRequest>;
     /**
-     * Identifier of the location where the goods are received into inventory
+     * Identifier of the location the goods are received into inventory: for a receipt meant for putaway, the site's default staging storage location (defaultStagingLocationId from pos-location getSiteDefaults, GET /location/v1/locations/{locationId}/defaults), never the site id. generatePutawayTasks refuses a receipt booked at any other location with RECEIPT_NOT_STAGED.
      * @type {string}
      * @memberof CreateGoodsReceiptRequest
      */
