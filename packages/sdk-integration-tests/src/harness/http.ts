@@ -87,6 +87,19 @@ const readBody = async (response: { text?: unknown; clone?: unknown }): Promise<
   return body;
 };
 
+/**
+ * The error's response body as text, read the way {@link formatError} reads it:
+ * through a clone and the shared cache, so a later formatError still sees it.
+ * Undefined when the error carries no readable response.
+ */
+export const readErrorBody = async (error: unknown): Promise<string | undefined> => {
+  const response = asRecord(error)?.['response'];
+  if (response === null || typeof response !== 'object') {
+    return undefined;
+  }
+  return readBody(response as { text?: unknown; clone?: unknown });
+};
+
 export const formatError = async (error: unknown): Promise<string> => {
   if (
     error !== null &&
