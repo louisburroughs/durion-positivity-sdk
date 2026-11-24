@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface CreateUserRequest {
     /**
-     * Initial password; hashed server-side before storage. Must meet the password policy GET /v1/auth/capabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the username); a refusal is 400 VALIDATION_ERROR with fieldErrors[password] starting PASSWORD_POLICY_VIOLATION
+     * Address to send the activation message to, for a username that is not itself an email address. Never stored; when absent the username is used if it is an address
      * @type {string}
      * @memberof CreateUserRequest
      */
-    password: string;
+    email?: string;
     /**
      * Keys of existing roles to attach directly
      * @type {Set<string>}
@@ -43,7 +43,6 @@ export interface CreateUserRequest {
  * Check if a given object implements the CreateUserRequest interface.
  */
 export function instanceOfCreateUserRequest(value: object): boolean {
-    if (!('password' in value)) return false;
     if (!('roles' in value)) return false;
     if (!('username' in value)) return false;
     return true;
@@ -59,7 +58,7 @@ export function CreateUserRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'password': json['password'],
+        'email': json['email'] == null ? undefined : json['email'],
         'roles': json['roles'],
         'username': json['username'],
     };
@@ -71,7 +70,7 @@ export function CreateUserRequestToJSON(value?: CreateUserRequest | null): any {
     }
     return {
         
-        'password': value['password'],
+        'email': value['email'],
         'roles': Array.from(value['roles'] as Set<any>),
         'username': value['username'],
     };
