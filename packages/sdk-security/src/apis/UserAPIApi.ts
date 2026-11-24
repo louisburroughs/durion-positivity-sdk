@@ -15,19 +15,28 @@
 
 import * as runtime from '../runtime';
 import type {
+  ActivationMessageResponse,
   ApiError,
   CreateUserRequest,
+  CreateUserResponse,
   LinkUserPersonRequest,
+  SendActivationMessageRequest,
   UserDto,
   UserUpdateRequest,
 } from '../models/index';
 import {
+    ActivationMessageResponseFromJSON,
+    ActivationMessageResponseToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
     CreateUserRequestFromJSON,
     CreateUserRequestToJSON,
+    CreateUserResponseFromJSON,
+    CreateUserResponseToJSON,
     LinkUserPersonRequestFromJSON,
     LinkUserPersonRequestToJSON,
+    SendActivationMessageRequestFromJSON,
+    SendActivationMessageRequestToJSON,
     UserDtoFromJSON,
     UserDtoToJSON,
     UserUpdateRequestFromJSON,
@@ -54,6 +63,11 @@ export interface GetUserByIdRequest {
 export interface LinkUserPersonOperationRequest {
     id: string;
     linkUserPersonRequest: LinkUserPersonRequest;
+}
+
+export interface ResendUserActivationRequest {
+    userId: string;
+    sendActivationMessageRequest?: SendActivationMessageRequest;
 }
 
 export interface UpdateUserRequest {
@@ -120,10 +134,10 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a user account with a username, a hashed password, and an open-ended effective role assignment for each of a set of granted roles, all in one transaction. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. The password must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the username) — an administrator cannot set what a user could not. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 409 when the username already exists, 400 with INVALID_REQUEST when a required field is missing, 400 with VALIDATION_ERROR and fieldErrors[password] starting PASSWORD_POLICY_VIOLATION when the password fails the policy, and 404 with ROLE_NOT_FOUND when a named role does not exist — in which case no user and no assignment are created. 
-     * Create a User With Roles
+     * Creates a user account awaiting activation with an open-ended effective role assignment for each named role, and mails the user a one-time link to choose their own password. Use this tool for administrator provisioning of a colleague\'s account; do not use selfRegisterUser, the anonymous customer flow, and do not use updateUser to give a new account its first password. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username and roles, a non-empty array of existing role keys; email is optional and names the address when the username is not one, and no password is accepted. Emits a SECURITY_USER_CREATE event and a UserProvisionedAwaitingActivation audit event; the account cannot sign in until the link is exchanged at activateAccount, and only the hash of its 72-hour token is stored. Returns 201 with the user and activation, where activation.sent is false with reason MAIL_NOT_CONFIGURED, NO_ADDRESS or MAIL_FAILED when no message went out; the account exists either way and resendUserActivation sends the message again. Returns 409 with USER_ALREADY_EXISTS when the username is taken, 400 with INVALID_REQUEST for a missing or malformed field or a supplied password, and 404 with ROLE_NOT_FOUND when a named role does not exist, in which case nothing is created. 
+     * Create a User Awaiting Activation
      */
-    async createUserRaw(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
+    async createUserRaw(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateUserResponse>> {
         if (requestParameters['createUserRequest'] == null) {
             throw new runtime.RequiredError(
                 'createUserRequest',
@@ -153,14 +167,14 @@ export class UserAPIApi extends runtime.BaseAPI {
             body: CreateUserRequestToJSON(requestParameters['createUserRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => CreateUserResponseFromJSON(jsonValue));
     }
 
     /**
-     * Creates a user account with a username, a hashed password, and an open-ended effective role assignment for each of a set of granted roles, all in one transaction. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. The password must meet the platform password policy getAuthCapabilities publishes as passwordPolicy (12 to 64 characters by default, not a common password, not containing the username) — an administrator cannot set what a user could not. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 409 when the username already exists, 400 with INVALID_REQUEST when a required field is missing, 400 with VALIDATION_ERROR and fieldErrors[password] starting PASSWORD_POLICY_VIOLATION when the password fails the policy, and 404 with ROLE_NOT_FOUND when a named role does not exist — in which case no user and no assignment are created. 
-     * Create a User With Roles
+     * Creates a user account awaiting activation with an open-ended effective role assignment for each named role, and mails the user a one-time link to choose their own password. Use this tool for administrator provisioning of a colleague\'s account; do not use selfRegisterUser, the anonymous customer flow, and do not use updateUser to give a new account its first password. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username and roles, a non-empty array of existing role keys; email is optional and names the address when the username is not one, and no password is accepted. Emits a SECURITY_USER_CREATE event and a UserProvisionedAwaitingActivation audit event; the account cannot sign in until the link is exchanged at activateAccount, and only the hash of its 72-hour token is stored. Returns 201 with the user and activation, where activation.sent is false with reason MAIL_NOT_CONFIGURED, NO_ADDRESS or MAIL_FAILED when no message went out; the account exists either way and resendUserActivation sends the message again. Returns 409 with USER_ALREADY_EXISTS when the username is taken, 400 with INVALID_REQUEST for a missing or malformed field or a supplied password, and 404 with ROLE_NOT_FOUND when a named role does not exist, in which case nothing is created. 
+     * Create a User Awaiting Activation
      */
-    async createUser(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
+    async createUser(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateUserResponse> {
         const response = await this.createUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -335,6 +349,52 @@ export class UserAPIApi extends runtime.BaseAPI {
      */
     async listUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserDto>> {
         const response = await this.listUsersRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Issues a fresh one-time activation link for an account still awaiting activation and mails it to the user, closing every earlier link of that account. Use this tool when a provisioned user lost or never received the message, or it expired; do not use requestPasswordReset, which refuses an account that has never been activated, and do not use updateUser to set the password for them. Preconditions: the caller must hold security:user:create and the user must exist in the caller\'s organization and still be awaiting activation. Required inputs: userId as a path parameter; the body is optional and its email names the address when the account\'s linked person and username supply none. Emits a SECURITY_USER_ACTIVATION_RESEND event and a UserActivationMessageRequested audit event; the token and the link are never returned. Returns 200 with sent true and expiresAt, or sent false with reason MAIL_NOT_CONFIGURED, NO_ADDRESS or MAIL_FAILED. Returns 404 with USER_NOT_FOUND, 409 with USER_NOT_AWAITING_ACTIVATION when the account already has a password of its own, 429 with ACTIVATION_MESSAGE_THROTTLED and Retry-After inside the per-account window after a sent message, and 400 with INVALID_REQUEST for a malformed email. 
+     * Send a User\'s Activation Message Again
+     */
+    async resendUserActivationRaw(requestParameters: ResendUserActivationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ActivationMessageResponse>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling resendUserActivation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users/{userId}/activation`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SendActivationMessageRequestToJSON(requestParameters['sendActivationMessageRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ActivationMessageResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Issues a fresh one-time activation link for an account still awaiting activation and mails it to the user, closing every earlier link of that account. Use this tool when a provisioned user lost or never received the message, or it expired; do not use requestPasswordReset, which refuses an account that has never been activated, and do not use updateUser to set the password for them. Preconditions: the caller must hold security:user:create and the user must exist in the caller\'s organization and still be awaiting activation. Required inputs: userId as a path parameter; the body is optional and its email names the address when the account\'s linked person and username supply none. Emits a SECURITY_USER_ACTIVATION_RESEND event and a UserActivationMessageRequested audit event; the token and the link are never returned. Returns 200 with sent true and expiresAt, or sent false with reason MAIL_NOT_CONFIGURED, NO_ADDRESS or MAIL_FAILED. Returns 404 with USER_NOT_FOUND, 409 with USER_NOT_AWAITING_ACTIVATION when the account already has a password of its own, 429 with ACTIVATION_MESSAGE_THROTTLED and Retry-After inside the per-account window after a sent message, and 400 with INVALID_REQUEST for a malformed email. 
+     * Send a User\'s Activation Message Again
+     */
+    async resendUserActivation(requestParameters: ResendUserActivationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ActivationMessageResponse> {
+        const response = await this.resendUserActivationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

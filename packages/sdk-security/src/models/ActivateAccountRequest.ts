@@ -26,7 +26,7 @@ export interface ActivateAccountRequest {
      */
     newPassword: string;
     /**
-     * The activation token the operator handed over
+     * The activation token: the token parameter of the mailed activation link, or the one a platform operator handed over
      * @type {string}
      * @memberof ActivateAccountRequest
      */
