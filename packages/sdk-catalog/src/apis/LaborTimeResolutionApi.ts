@@ -54,7 +54,7 @@ export class LaborTimeResolutionApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:labor_time:resolve"]);
+            const tokenString = await token("bearerAuth", ["catalog:labor_time:resolve"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
