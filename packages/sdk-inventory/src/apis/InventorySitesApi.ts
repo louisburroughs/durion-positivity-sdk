@@ -37,7 +37,7 @@ export interface UpdateSiteDefaultLocationsRequest {
 export class InventorySitesApi extends runtime.BaseAPI {
 
     /**
-     * Returns the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteInventoryRollup instead for actual site inventory data, and do not expect updateSiteDefaultLocations to have stored anything readable here. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the stub performs no lookup. Returns 501 unconditionally until the configuration store is implemented. 
+     * Returns the configured default storage locations for a site; this endpoint is a stub that always answers 501 Not Implemented and has no configuration store behind it. Do not use this tool to discover a site\'s staging location: the real contract lives in pos-location as getSiteDefaults (GET /v1/locations/{locationId}/defaults), which returns both defaultStagingLocationId and defaultQuarantineLocationId. Use configureSiteDefaults to change them, and use getSiteInventoryRollup for actual site inventory data. Preconditions: none are evaluated; no configuration store exists. Required inputs: siteId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the stub performs no lookup. Returns 501 with code NOT_IMPLEMENTED on every call. 
      * Get site default locations
      */
     async getSiteDefaultLocationsRaw(requestParameters: GetSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
@@ -71,7 +71,7 @@ export class InventorySitesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteInventoryRollup instead for actual site inventory data, and do not expect updateSiteDefaultLocations to have stored anything readable here. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the stub performs no lookup. Returns 501 unconditionally until the configuration store is implemented. 
+     * Returns the configured default storage locations for a site; this endpoint is a stub that always answers 501 Not Implemented and has no configuration store behind it. Do not use this tool to discover a site\'s staging location: the real contract lives in pos-location as getSiteDefaults (GET /v1/locations/{locationId}/defaults), which returns both defaultStagingLocationId and defaultQuarantineLocationId. Use configureSiteDefaults to change them, and use getSiteInventoryRollup for actual site inventory data. Preconditions: none are evaluated; no configuration store exists. Required inputs: siteId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the stub performs no lookup. Returns 501 with code NOT_IMPLEMENTED on every call. 
      * Get site default locations
      */
     async getSiteDefaultLocations(requestParameters: GetSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
@@ -80,7 +80,7 @@ export class InventorySitesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteDefaultLocations instead to read the configuration once implemented. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) path parameter and an optional JSON array of storage-location UUIDs as the body. Emits an INVENTORY_SITE_DEFAULT_LOCATIONS_UPDATE event when invoked; no configuration is stored. Returns 501 unconditionally until the configuration store is implemented. 
+     * Replaces the configured default storage locations for a site; this endpoint is a stub that always answers 501 Not Implemented and stores nothing. Do not use this tool to configure a site\'s staging location: the real contract lives in pos-location as configureSiteDefaults (PUT /v1/locations/{locationId}/defaults), and getSiteDefaults reads back both defaultStagingLocationId and defaultQuarantineLocationId. Preconditions: none are evaluated; no configuration store exists. Required inputs: siteId (UUID) path parameter and an optional JSON array of storage-location UUIDs as the body. Emits an INVENTORY_SITE_DEFAULT_LOCATIONS_UPDATE event when invoked; no configuration is stored. Returns 501 with code NOT_IMPLEMENTED on every call. 
      * Replace site default locations
      */
     async updateSiteDefaultLocationsRaw(requestParameters: UpdateSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -117,7 +117,7 @@ export class InventorySitesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteDefaultLocations instead to read the configuration once implemented. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) path parameter and an optional JSON array of storage-location UUIDs as the body. Emits an INVENTORY_SITE_DEFAULT_LOCATIONS_UPDATE event when invoked; no configuration is stored. Returns 501 unconditionally until the configuration store is implemented. 
+     * Replaces the configured default storage locations for a site; this endpoint is a stub that always answers 501 Not Implemented and stores nothing. Do not use this tool to configure a site\'s staging location: the real contract lives in pos-location as configureSiteDefaults (PUT /v1/locations/{locationId}/defaults), and getSiteDefaults reads back both defaultStagingLocationId and defaultQuarantineLocationId. Preconditions: none are evaluated; no configuration store exists. Required inputs: siteId (UUID) path parameter and an optional JSON array of storage-location UUIDs as the body. Emits an INVENTORY_SITE_DEFAULT_LOCATIONS_UPDATE event when invoked; no configuration is stored. Returns 501 with code NOT_IMPLEMENTED on every call. 
      * Replace site default locations
      */
     async updateSiteDefaultLocations(requestParameters: UpdateSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
