@@ -22,6 +22,7 @@ export * from './BulkIngestRequestUserBulkIngestRecord';
 export * from './BulkIngestRequestUserPersonLinkBulkIngestRecord';
 export * from './BulkIngestResponse';
 export * from './BulkIngestResult';
+export * from './CapabilityDto';
 export * from './CatalogVersionResponse';
 export * from './Conflict';
 export * from './CreateUserRequest';

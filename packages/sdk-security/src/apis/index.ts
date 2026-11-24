@@ -5,6 +5,7 @@ export * from './AuditApi';
 export * from './AuditExportsApi';
 export * from './AuthAPIApi';
 export * from './AuthorizationApi';
+export * from './CapabilityCatalogApi';
 export * from './JWTAPIApi';
 export * from './PermissionRegistryApi';
 export * from './PlatformAdministratorAPIApi';
