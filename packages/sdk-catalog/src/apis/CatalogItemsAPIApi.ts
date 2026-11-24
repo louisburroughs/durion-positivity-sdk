@@ -85,7 +85,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:catalog_item:create"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -112,7 +112,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event, and for a product or a service queues a catalog fact marking it inactive so event-fed replicas in other modules stop resolving it; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. Authorization: type=product requires catalog:product:delete; type=service or noninventory requires catalog:catalog_item:delete. 
+     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event, and for a product or a service queues a catalog fact marking it inactive so event-fed replicas in other modules stop resolving it; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. Authorization: type=product requires catalog:product:delete; type=service or noninventory requires the ADMIN role (unchanged pending a service_type delete permission). 
      * Delete a Catalog Item
      */
     async deleteCatalogItemRaw(requestParameters: DeleteCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -136,7 +136,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:delete", "catalog:catalog_item:delete"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:delete"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -153,7 +153,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event, and for a product or a service queues a catalog fact marking it inactive so event-fed replicas in other modules stop resolving it; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. Authorization: type=product requires catalog:product:delete; type=service or noninventory requires catalog:catalog_item:delete. 
+     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event, and for a product or a service queues a catalog fact marking it inactive so event-fed replicas in other modules stop resolving it; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. Authorization: type=product requires catalog:product:delete; type=service or noninventory requires the ADMIN role (unchanged pending a service_type delete permission). 
      * Delete a Catalog Item
      */
     async deleteCatalogItem(requestParameters: DeleteCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -183,7 +183,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:fact:replay"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:fact:replay"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -242,7 +242,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:catalog_item:edit"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

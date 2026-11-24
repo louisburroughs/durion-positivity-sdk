@@ -57,7 +57,7 @@ export class CatalogServiceBulkIngestAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:service:ingest"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service:ingest"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

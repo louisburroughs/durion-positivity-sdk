@@ -57,7 +57,7 @@ export class LaborRateAdjustmentBulkIngestAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["pricing:labor_rate:manage"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "pricing:labor_rate:manage"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
