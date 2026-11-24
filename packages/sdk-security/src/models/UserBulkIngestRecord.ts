@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface UserBulkIngestRecord {
     /**
-     * Existing role names to attach
+     * Keys of existing roles to attach
      * @type {Set<string>}
      * @memberof UserBulkIngestRecord
      */

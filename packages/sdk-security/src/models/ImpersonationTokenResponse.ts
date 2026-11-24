@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A 15-minute, read-only SUPPORT impersonation token for a tenant, returned once. Its permissions are the tenant's SUPPORT grants capped at the read-only ceiling, so a widened SUPPORT role never yields a write-capable token
+ * A 15-minute, read-only support impersonation token for a tenant, returned once. Its permissions are what the tenant's support role holds, cut down to the read-only ceiling, so the token is never write-capable
  * @export
  * @interface ImpersonationTokenResponse
  */
@@ -38,7 +38,7 @@ export interface ImpersonationTokenResponse {
      */
     tenantSlug: string;
     /**
-     * The signed access token; send it as the bearer token. It carries tid = tenantId, act = the operator and token_use = impersonation, and cannot be refreshed. Its perm_bits is the tenant's SUPPORT grants intersected with the read-only ceiling: only actions view and read, plus location:read; never a write, never platform:*, and never people:employee_pii:view, people:self:view, nlti:audit:read, nlti:request:read or the MCP administration surface (mcp:eval_trace:view, mcp:llm_api:view, mcp:system_prompt:view, mcp:tool:view). Anything the role grants beyond that is dropped and reported as droppedGrants on the audit events
+     * The signed access token; send it as the bearer token. It carries tid = tenantId, act = the operator and token_use = impersonation, and cannot be refreshed. Its perm_bits is what the tenant's support role holds, cut down to the read-only ceiling: only actions view and read, plus location:read; never a write, never platform:*, and never people:employee_pii:view, people:self:view, nlti:audit:read, nlti:request:read or the MCP administration surface (mcp:eval_trace:view, mcp:llm_api:view, mcp:system_prompt:view, mcp:tool:view). The support role holds every capability, so the rest is dropped at mint time and counted as droppedGrantCount on the audit events
      * @type {string}
      * @memberof ImpersonationTokenResponse
      */

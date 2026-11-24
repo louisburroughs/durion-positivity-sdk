@@ -13,49 +13,53 @@
  */
 
 import { mapValues } from '../runtime';
-import type { GrantAdded } from './GrantAdded';
+import type { CapabilityAdded } from './CapabilityAdded';
 import {
-    GrantAddedFromJSON,
-    GrantAddedFromJSONTyped,
-    GrantAddedToJSON,
-} from './GrantAdded';
+    CapabilityAddedFromJSON,
+    CapabilityAddedFromJSONTyped,
+    CapabilityAddedToJSON,
+} from './CapabilityAdded';
 
 /**
- * What reconciling the platform role template into a tenant changed; all lists empty when the tenant was already up to the template
+ * What reconciling the role template into a tenant changed; all lists empty when the tenant was already up to the template
  * @export
  * @interface RoleTemplateReconcileResponse
  */
 export interface RoleTemplateReconcileResponse {
     /**
-     * Grants the template carries that an existing role of the tenant lacked, now added
-     * @type {Array<GrantAdded>}
+     * Capabilities the template gives a starter role that the tenant's role lacked, now added. System roles are not listed here; see systemRolesRewritten
+     * @type {Array<CapabilityAdded>}
      * @memberof RoleTemplateReconcileResponse
      */
-    grantsAdded?: Array<GrantAdded>;
+    capabilitiesAdded: Array<CapabilityAdded>;
     /**
-     * Template roles the tenant lacked, created with the template's grants
+     * Keys of the template roles the tenant lacked, created with the template's capabilities
      * @type {Array<string>}
      * @memberof RoleTemplateReconcileResponse
      */
-    rolesCreated?: Array<string>;
+    rolesCreated: Array<string>;
     /**
-     * Existing roles of the tenant that carried no template key and now do
+     * Keys of the system roles that differed from their platform definition and were rewritten to it
      * @type {Array<string>}
      * @memberof RoleTemplateReconcileResponse
      */
-    templateKeysAssigned?: Array<string>;
+    systemRolesRewritten: Array<string>;
     /**
      * The reconciled tenant
      * @type {string}
      * @memberof RoleTemplateReconcileResponse
      */
-    tenantId?: string;
+    tenantId: string;
 }
 
 /**
  * Check if a given object implements the RoleTemplateReconcileResponse interface.
  */
 export function instanceOfRoleTemplateReconcileResponse(value: object): boolean {
+    if (!('capabilitiesAdded' in value)) return false;
+    if (!('rolesCreated' in value)) return false;
+    if (!('systemRolesRewritten' in value)) return false;
+    if (!('tenantId' in value)) return false;
     return true;
 }
 
@@ -69,10 +73,10 @@ export function RoleTemplateReconcileResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'grantsAdded': json['grantsAdded'] == null ? undefined : ((json['grantsAdded'] as Array<any>).map(GrantAddedFromJSON)),
-        'rolesCreated': json['rolesCreated'] == null ? undefined : json['rolesCreated'],
-        'templateKeysAssigned': json['templateKeysAssigned'] == null ? undefined : json['templateKeysAssigned'],
-        'tenantId': json['tenantId'] == null ? undefined : json['tenantId'],
+        'capabilitiesAdded': ((json['capabilitiesAdded'] as Array<any>).map(CapabilityAddedFromJSON)),
+        'rolesCreated': json['rolesCreated'],
+        'systemRolesRewritten': json['systemRolesRewritten'],
+        'tenantId': json['tenantId'],
     };
 }
 
@@ -82,9 +86,9 @@ export function RoleTemplateReconcileResponseToJSON(value?: RoleTemplateReconcil
     }
     return {
         
-        'grantsAdded': value['grantsAdded'] == null ? undefined : ((value['grantsAdded'] as Array<any>).map(GrantAddedToJSON)),
+        'capabilitiesAdded': ((value['capabilitiesAdded'] as Array<any>).map(CapabilityAddedToJSON)),
         'rolesCreated': value['rolesCreated'],
-        'templateKeysAssigned': value['templateKeysAssigned'],
+        'systemRolesRewritten': value['systemRolesRewritten'],
         'tenantId': value['tenantId'],
     };
 }

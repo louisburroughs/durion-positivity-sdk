@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Replacement description and MCP persona metadata for an existing role
+ * Replacement name, description and MCP persona metadata for an existing role
  * @export
  * @interface RoleUpdateRequest
  */
@@ -37,6 +37,12 @@ export interface RoleUpdateRequest {
      * @memberof RoleUpdateRequest
      */
     mcpPersonaRank?: number;
+    /**
+     * Display name of the role, stored as typed and trimmed. Changing it renames the role; the role's key stays the same. Unique within the tenant ignoring letter case and repeated spaces.
+     * @type {string}
+     * @memberof RoleUpdateRequest
+     */
+    name: string;
     /**
      * What the caller works on. Cleared, and therefore derived from the description, when omitted.
      * @type {string}
@@ -61,6 +67,7 @@ export interface RoleUpdateRequest {
  * Check if a given object implements the RoleUpdateRequest interface.
  */
 export function instanceOfRoleUpdateRequest(value: object): boolean {
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -77,6 +84,7 @@ export function RoleUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'description': json['description'] == null ? undefined : json['description'],
         'mcpPersonaEligible': json['mcpPersonaEligible'] == null ? undefined : json['mcpPersonaEligible'],
         'mcpPersonaRank': json['mcpPersonaRank'] == null ? undefined : json['mcpPersonaRank'],
+        'name': json['name'],
         'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
         'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
         'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
@@ -92,6 +100,7 @@ export function RoleUpdateRequestToJSON(value?: RoleUpdateRequest | null): any {
         'description': value['description'],
         'mcpPersonaEligible': value['mcpPersonaEligible'],
         'mcpPersonaRank': value['mcpPersonaRank'],
+        'name': value['name'],
         'personaFocus': value['personaFocus'],
         'personaTitle': value['personaTitle'],
         'personaTone': value['personaTone'],

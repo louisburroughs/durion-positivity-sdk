@@ -20,19 +20,25 @@ import { mapValues } from '../runtime';
  */
 export interface PermissionHolderRole {
     /**
+     * The role's immutable key within the tenant; the identifier to refer to the role by.
+     * @type {string}
+     * @memberof PermissionHolderRole
+     */
+    key: string;
+    /**
      * ALL when the role holds its permissions at every location; LOCATION when it holds them only at the locations its holder is assigned to (ADR-0061 §2).
      * @type {string}
      * @memberof PermissionHolderRole
      */
     locationScope: PermissionHolderRoleLocationScopeEnum;
     /**
-     * The role's name as the tenant stores it. For a custom role this is tenant-authored text; show it as typed.
+     * The role's display name as the tenant stores it: tenant-authored text, shown as typed and never compared on.
      * @type {string}
      * @memberof PermissionHolderRole
      */
     name: string;
     /**
-     * The canonical template name when the role was provisioned from the platform role template, for the client to translate; null for a tenant's custom role.
+     * The role's key when it is one of the platform's starter roles, for the client to translate the name of a role the tenant has not renamed; null for a role the tenant created.
      * @type {string}
      * @memberof PermissionHolderRole
      */
@@ -53,6 +59,7 @@ export enum PermissionHolderRoleLocationScopeEnum {
  * Check if a given object implements the PermissionHolderRole interface.
  */
 export function instanceOfPermissionHolderRole(value: object): boolean {
+    if (!('key' in value)) return false;
     if (!('locationScope' in value)) return false;
     if (!('name' in value)) return false;
     if (!('templateKey' in value)) return false;
@@ -69,6 +76,7 @@ export function PermissionHolderRoleFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'key': json['key'],
         'locationScope': json['locationScope'],
         'name': json['name'],
         'templateKey': json['templateKey'],
@@ -81,6 +89,7 @@ export function PermissionHolderRoleToJSON(value?: PermissionHolderRole | null):
     }
     return {
         
+        'key': value['key'],
         'locationScope': value['locationScope'],
         'name': value['name'],
         'templateKey': value['templateKey'],

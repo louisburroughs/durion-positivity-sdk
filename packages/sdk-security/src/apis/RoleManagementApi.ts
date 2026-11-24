@@ -20,11 +20,10 @@ import type {
   PermissionHoldersResponse,
   RoleAssignmentDto,
   RoleAssignmentRequest,
+  RoleCapabilitiesRequest,
   RoleCreateRequest,
   RoleDefaultPermissionsResponse,
   RoleDto,
-  RolePermissionGrantRequest,
-  RolePermissionsRequest,
   RolePersonasResponse,
   RoleUpdateRequest,
 } from '../models/index';
@@ -39,26 +38,19 @@ import {
     RoleAssignmentDtoToJSON,
     RoleAssignmentRequestFromJSON,
     RoleAssignmentRequestToJSON,
+    RoleCapabilitiesRequestFromJSON,
+    RoleCapabilitiesRequestToJSON,
     RoleCreateRequestFromJSON,
     RoleCreateRequestToJSON,
     RoleDefaultPermissionsResponseFromJSON,
     RoleDefaultPermissionsResponseToJSON,
     RoleDtoFromJSON,
     RoleDtoToJSON,
-    RolePermissionGrantRequestFromJSON,
-    RolePermissionGrantRequestToJSON,
-    RolePermissionsRequestFromJSON,
-    RolePermissionsRequestToJSON,
     RolePersonasResponseFromJSON,
     RolePersonasResponseToJSON,
     RoleUpdateRequestFromJSON,
     RoleUpdateRequestToJSON,
 } from '../models/index';
-
-export interface AssignRolePermissionByKeyRequest {
-    roleId: string;
-    permissionKey: string;
-}
 
 export interface CreateRoleRequest {
     roleCreateRequest: RoleCreateRequest;
@@ -76,6 +68,10 @@ export interface GetRoleByIdRequest {
     id: string;
 }
 
+export interface GetRoleByKeyRequest {
+    key: string;
+}
+
 export interface GetRoleByNameRequest {
     name: string;
 }
@@ -86,11 +82,6 @@ export interface GetRoleDefaultPermissionsRequest {
 
 export interface GetUserPermissionsLegacyRequest {
     userId: string;
-}
-
-export interface GrantRolePermissionRequest {
-    roleId: string;
-    rolePermissionGrantRequest: RolePermissionGrantRequest;
 }
 
 export interface ListPermissionHoldersRequest {
@@ -107,18 +98,14 @@ export interface RevokeRoleAssignmentRequest {
     endDate?: Date;
 }
 
-export interface RevokeRolePermissionRequest {
-    roleId: string;
-    permissionKey: string;
-}
-
 export interface UpdateRoleRequest {
     id: string;
     roleUpdateRequest: RoleUpdateRequest;
 }
 
-export interface UpdateRolePermissionsRequest {
-    rolePermissionsRequest: RolePermissionsRequest;
+export interface UpdateRoleCapabilitiesRequest {
+    id: string;
+    roleCapabilitiesRequest: RoleCapabilitiesRequest;
 }
 
 /**
@@ -127,56 +114,7 @@ export interface UpdateRolePermissionsRequest {
 export class RoleManagementApi extends runtime.BaseAPI {
 
     /**
-     * Adds an already-registered permission, identified by its key in the path, to a role\'s grant set. Use this tool when the permission is known to be registered; do not use grantRolePermission, which auto-registers unknown keys, and do not use updateRolePermissions, which replaces the whole set. Preconditions: the caller must hold security:role:edit, the role must exist, and the permission key must already be registered (modules register at startup via registerModulePermissions). Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_ASSIGN event. Returns 404 when the role does not exist or the permission key has not been registered. 
-     * Assign a Registered Permission to a Role
-     */
-    async assignRolePermissionByKeyRaw(requestParameters: AssignRolePermissionByKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['roleId'] == null) {
-            throw new runtime.RequiredError(
-                'roleId',
-                'Required parameter "roleId" was null or undefined when calling assignRolePermissionByKey().'
-            );
-        }
-
-        if (requestParameters['permissionKey'] == null) {
-            throw new runtime.RequiredError(
-                'permissionKey',
-                'Required parameter "permissionKey" was null or undefined when calling assignRolePermissionByKey().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles/{roleId}/permissions/{permissionKey}`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))).replace(`{${"permissionKey"}}`, encodeURIComponent(String(requestParameters['permissionKey']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Adds an already-registered permission, identified by its key in the path, to a role\'s grant set. Use this tool when the permission is known to be registered; do not use grantRolePermission, which auto-registers unknown keys, and do not use updateRolePermissions, which replaces the whole set. Preconditions: the caller must hold security:role:edit, the role must exist, and the permission key must already be registered (modules register at startup via registerModulePermissions). Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_ASSIGN event. Returns 404 when the role does not exist or the permission key has not been registered. 
-     * Assign a Registered Permission to a Role
-     */
-    async assignRolePermissionByKey(requestParameters: AssignRolePermissionByKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.assignRolePermissionByKeyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Creates a new role with the given name and optional description; the role starts with no permissions and no user assignments. Use this tool to define a new role; do not use createRoleAssignment, which links an existing role to a user, and do not use updateRolePermissions, which changes an existing role\'s grants. Preconditions: the caller must hold security:role:create and no role with the same name (compared case-insensitively) may already exist. Required inputs: name, non-blank; description is optional. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank, and 409 with DUPLICATE_ROLE_NAME when the name is already taken regardless of case. 
+     * Creates a role in the caller\'s tenant from a display name, an optional description, optional MCP persona metadata and an optional list of capability keys. A role is a named set of capabilities and holds no permission directly; without capabilities it grants nothing yet. The response carries the role\'s key, derived once from the name (lower-case, underscores, made unique within the tenant) and never changed afterwards. Use this tool to define a new role; do not use createRoleAssignment, which gives an existing role to a user, and do not use updateRoleCapabilities, which changes an existing role\'s set. Preconditions: the caller must hold security:role:create, and no role of the tenant may already carry the name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: name, non-blank; description, persona fields and capabilities are optional; capability keys come from listCapabilities. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank; 409 DUPLICATE_ROLE_NAME when the name is taken; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability, which only a role the platform defines may hold. 
      * Create a New Role
      */
     async createRoleRaw(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
@@ -213,7 +151,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new role with the given name and optional description; the role starts with no permissions and no user assignments. Use this tool to define a new role; do not use createRoleAssignment, which links an existing role to a user, and do not use updateRolePermissions, which changes an existing role\'s grants. Preconditions: the caller must hold security:role:create and no role with the same name (compared case-insensitively) may already exist. Required inputs: name, non-blank; description is optional. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank, and 409 with DUPLICATE_ROLE_NAME when the name is already taken regardless of case. 
+     * Creates a role in the caller\'s tenant from a display name, an optional description, optional MCP persona metadata and an optional list of capability keys. A role is a named set of capabilities and holds no permission directly; without capabilities it grants nothing yet. The response carries the role\'s key, derived once from the name (lower-case, underscores, made unique within the tenant) and never changed afterwards. Use this tool to define a new role; do not use createRoleAssignment, which gives an existing role to a user, and do not use updateRoleCapabilities, which changes an existing role\'s set. Preconditions: the caller must hold security:role:create, and no role of the tenant may already carry the name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: name, non-blank; description, persona fields and capabilities are optional; capability keys come from listCapabilities. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank; 409 DUPLICATE_ROLE_NAME when the name is taken; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability, which only a role the platform defines may hold. 
      * Create a New Role
      */
     async createRole(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
@@ -268,7 +206,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist and 409 with code ROLE_TEMPLATE_IMMUTABLE when the role was provisioned from the platform role template (templateKey set): canonical roles keep their name for the life of the tenant; change their grants instead. 
+     * Deletes a role by UUID, removing its capabilities and deleting all of its role assignments in the same transaction. Any role that is not a system role can be deleted, a starter role included. Use this tool to retire a role entirely; do not use updateRoleCapabilities or revokeRoleAssignment, which change what the role grants or end one assignment and keep the role. Preconditions: the caller must hold security:role:delete, the role must exist and must not be a system role; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist and 409 with code ROLE_SYSTEM_IMMUTABLE when the role is a system role, which the platform defines. 
      * Delete a Role and Its Associations
      */
     async deleteRoleRaw(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -302,7 +240,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist and 409 with code ROLE_TEMPLATE_IMMUTABLE when the role was provisioned from the platform role template (templateKey set): canonical roles keep their name for the life of the tenant; change their grants instead. 
+     * Deletes a role by UUID, removing its capabilities and deleting all of its role assignments in the same transaction. Any role that is not a system role can be deleted, a starter role included. Use this tool to retire a role entirely; do not use updateRoleCapabilities or revokeRoleAssignment, which change what the role grants or end one assignment and keep the role. Preconditions: the caller must hold security:role:delete, the role must exist and must not be a system role; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist and 409 with code ROLE_SYSTEM_IMMUTABLE when the role is a system role, which the platform defines. 
      * Delete a Role and Its Associations
      */
     async deleteRole(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -310,7 +248,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single role looked up by its UUID, including its permission set and audit metadata. Use this tool when the role id is known; use getRoleByName instead when only the name is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
+     * Returns a single role looked up by its UUID, including its key, capability keys and audit metadata. Use this tool when the role id is known; use getRoleByKey instead when only the key is, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
      * Get a Single Role by UUID
      */
     async getRoleByIdRaw(requestParameters: GetRoleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
@@ -344,7 +282,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single role looked up by its UUID, including its permission set and audit metadata. Use this tool when the role id is known; use getRoleByName instead when only the name is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
+     * Returns a single role looked up by its UUID, including its key, capability keys and audit metadata. Use this tool when the role id is known; use getRoleByKey instead when only the key is, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
      * Get a Single Role by UUID
      */
     async getRoleById(requestParameters: GetRoleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
@@ -353,7 +291,50 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single role looked up by its exact name, including its permission set. Use this tool when only the role name is known; use getRoleById instead when the UUID is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that exact (case-sensitive) name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied name. 
+     * Returns the role of the caller\'s tenant with the given key, including its capability keys. A key is the role\'s immutable identifier: it is what the access token\'s roles claim carries and it survives a rename. Use this tool to resolve a role named in a token, an event or a stored reference; use getRoleById when the UUID is known and listRoles to browse, and do not use getRoleByName, which is only for a name a person typed. Preconditions: the caller must hold security:role:view and a role with that key must exist. Required inputs: key as a path parameter, for example service_desk. A ROLE_ prefix and any letter case are accepted. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied key. 
+     * Get a Single Role by Key
+     */
+    async getRoleByKeyRaw(requestParameters: GetRoleByKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
+        if (requestParameters['key'] == null) {
+            throw new runtime.RequiredError(
+                'key',
+                'Required parameter "key" was null or undefined when calling getRoleByKey().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/roles/by-key/{key}`.replace(`{${"key"}}`, encodeURIComponent(String(requestParameters['key']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the role of the caller\'s tenant with the given key, including its capability keys. A key is the role\'s immutable identifier: it is what the access token\'s roles claim carries and it survives a rename. Use this tool to resolve a role named in a token, an event or a stored reference; use getRoleById when the UUID is known and listRoles to browse, and do not use getRoleByName, which is only for a name a person typed. Preconditions: the caller must hold security:role:view and a role with that key must exist. Required inputs: key as a path parameter, for example service_desk. A ROLE_ prefix and any letter case are accepted. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied key. 
+     * Get a Single Role by Key
+     */
+    async getRoleByKey(requestParameters: GetRoleByKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
+        const response = await this.getRoleByKeyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the role of the caller\'s tenant whose display name matches, including its capability keys. Names are compared after trimming, collapsing repeated spaces and ignoring letter case, the same comparison that keeps names unique. Use this tool when only what a person typed or reads on screen is known; a name is a label a tenant may change, so do not use it to refer to a role reliably: use getRoleByKey or getRoleById instead, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role carries the supplied name. 
      * Get a Single Role by Name
      */
     async getRoleByNameRaw(requestParameters: GetRoleByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
@@ -387,7 +368,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single role looked up by its exact name, including its permission set. Use this tool when only the role name is known; use getRoleById instead when the UUID is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that exact (case-sensitive) name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied name. 
+     * Returns the role of the caller\'s tenant whose display name matches, including its capability keys. Names are compared after trimming, collapsing repeated spaces and ignoring letter case, the same comparison that keeps names unique. Use this tool when only what a person typed or reads on screen is known; a name is a label a tenant may change, so do not use it to refer to a role reliably: use getRoleByKey or getRoleById instead, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role carries the supplied name. 
      * Get a Single Role by Name
      */
     async getRoleByName(requestParameters: GetRoleByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
@@ -396,7 +377,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s effective role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Returns the authority codes a role expands to: ROLE_ followed by the role\'s key, plus every permission code the role grants through its capabilities (every non-system capability when the role holds all of them). Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s effective role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role does not need to exist. Required inputs: the role\'s key as a path parameter, for example service_desk. A ROLE_ prefix and any letter case are accepted, so ROLE_SERVICE_DESK names the same role. A display name is not a key and resolves nothing. No events are emitted and no state changes; this is a read-only lookup. Returns 200 in all cases; an unrecognized key, or a role with no capabilities, yields only its ROLE_ authority with no permission codes rather than an error. 
      * Get a Role\'s Default Authority Expansion
      */
     async getRoleDefaultPermissionsRaw(requestParameters: GetRoleDefaultPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDefaultPermissionsResponse>> {
@@ -430,7 +411,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s effective role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Returns the authority codes a role expands to: ROLE_ followed by the role\'s key, plus every permission code the role grants through its capabilities (every non-system capability when the role holds all of them). Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s effective role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role does not need to exist. Required inputs: the role\'s key as a path parameter, for example service_desk. A ROLE_ prefix and any letter case are accepted, so ROLE_SERVICE_DESK names the same role. A display name is not a key and resolves nothing. No events are emitted and no state changes; this is a read-only lookup. Returns 200 in all cases; an unrecognized key, or a role with no capabilities, yields only its ROLE_ authority with no permission codes rather than an error. 
      * Get a Role\'s Default Authority Expansion
      */
     async getRoleDefaultPermissions(requestParameters: GetRoleDefaultPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDefaultPermissionsResponse> {
@@ -439,7 +420,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one row per role with its MCP persona slots, resolution rank, and eligibility flag, ordered by rank then name, plus the timestamp the snapshot was assembled. Use this tool to derive assistant personas and their priority order from role data, as pos-mcp-server does; do not use listRoles, which returns the full role graph including every permission grant and is far more expensive for this purpose. Preconditions: the caller must hold security:role:view. Required inputs: none. No events are emitted and no state changes; this is a read-only projection. Roles that are excluded from persona resolution are included and flagged rather than omitted, so a consumer can distinguish a role excluded by design from one it has never seen. Returns 200 with every role and never 404: an environment holding no roles yields an empty list rather than an error, so a consumer cannot mistake \"not provisioned yet\" for \"endpoint missing\". 
+     * Returns one row per role with its key, its display name, its MCP persona slots, resolution rank, and eligibility flag, ordered by rank then name, plus the timestamp the snapshot was assembled. Match a caller\'s roles on key: the access token carries role keys, and a name is a label a tenant may change. Use this tool to derive assistant personas and their priority order from role data, as pos-mcp-server does; do not use listRoles, which returns every role with its capabilities and is more expensive for this purpose. Preconditions: the caller must hold security:role:view. Required inputs: none. No events are emitted and no state changes; this is a read-only projection. Roles that are excluded from persona resolution are included and flagged rather than omitted, so a consumer can distinguish a role excluded by design from one it has never seen. Returns 200 with every role and never 404: an environment holding no roles yields an empty list rather than an error, so a consumer cannot mistake \"not provisioned yet\" for \"endpoint missing\". 
      * Get MCP Persona Metadata for Every Role
      */
     async getRolePersonasRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RolePersonasResponse>> {
@@ -466,7 +447,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one row per role with its MCP persona slots, resolution rank, and eligibility flag, ordered by rank then name, plus the timestamp the snapshot was assembled. Use this tool to derive assistant personas and their priority order from role data, as pos-mcp-server does; do not use listRoles, which returns the full role graph including every permission grant and is far more expensive for this purpose. Preconditions: the caller must hold security:role:view. Required inputs: none. No events are emitted and no state changes; this is a read-only projection. Roles that are excluded from persona resolution are included and flagged rather than omitted, so a consumer can distinguish a role excluded by design from one it has never seen. Returns 200 with every role and never 404: an environment holding no roles yields an empty list rather than an error, so a consumer cannot mistake \"not provisioned yet\" for \"endpoint missing\". 
+     * Returns one row per role with its key, its display name, its MCP persona slots, resolution rank, and eligibility flag, ordered by rank then name, plus the timestamp the snapshot was assembled. Match a caller\'s roles on key: the access token carries role keys, and a name is a label a tenant may change. Use this tool to derive assistant personas and their priority order from role data, as pos-mcp-server does; do not use listRoles, which returns every role with its capabilities and is more expensive for this purpose. Preconditions: the caller must hold security:role:view. Required inputs: none. No events are emitted and no state changes; this is a read-only projection. Roles that are excluded from persona resolution are included and flagged rather than omitted, so a consumer can distinguish a role excluded by design from one it has never seen. Returns 200 with every role and never 404: an environment holding no roles yields an empty list rather than an error, so a consumer cannot mistake \"not provisioned yet\" for \"endpoint missing\". 
      * Get MCP Persona Metadata for Every Role
      */
     async getRolePersonas(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RolePersonasResponse> {
@@ -518,60 +499,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Grants a single permission key to a role, auto-registering the key in the permission registry when it is not yet known. Use this tool for additive one-off grants; do not use updateRolePermissions, which replaces the role\'s entire permission set, and do not use assignRolePermissionByKey, which requires the permission to be registered already. Preconditions: the caller must hold security:role:edit and the role must exist; the permission key does not need to exist beforehand. Required inputs: roleId (UUID) as a path parameter and permission (domain:resource:action) in the body; permissionKey is accepted as a field alias. Emits a SECURITY_ROLE_PERMISSION_GRANT event and publishes an internal grant audit record, then returns the updated role. Returns 400 when permission is missing or blank, and 404 when the role does not exist. 
-     * Grant a Permission to a Role
-     */
-    async grantRolePermissionRaw(requestParameters: GrantRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
-        if (requestParameters['roleId'] == null) {
-            throw new runtime.RequiredError(
-                'roleId',
-                'Required parameter "roleId" was null or undefined when calling grantRolePermission().'
-            );
-        }
-
-        if (requestParameters['rolePermissionGrantRequest'] == null) {
-            throw new runtime.RequiredError(
-                'rolePermissionGrantRequest',
-                'Required parameter "rolePermissionGrantRequest" was null or undefined when calling grantRolePermission().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles/{roleId}/permissions/grant`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RolePermissionGrantRequestToJSON(requestParameters['rolePermissionGrantRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDtoFromJSON(jsonValue));
-    }
-
-    /**
-     * Grants a single permission key to a role, auto-registering the key in the permission registry when it is not yet known. Use this tool for additive one-off grants; do not use updateRolePermissions, which replaces the role\'s entire permission set, and do not use assignRolePermissionByKey, which requires the permission to be registered already. Preconditions: the caller must hold security:role:edit and the role must exist; the permission key does not need to exist beforehand. Required inputs: roleId (UUID) as a path parameter and permission (domain:resource:action) in the body; permissionKey is accepted as a field alias. Emits a SECURITY_ROLE_PERMISSION_GRANT event and publishes an internal grant audit record, then returns the updated role. Returns 400 when permission is missing or blank, and 404 when the role does not exist. 
-     * Grant a Permission to a Role
-     */
-    async grantRolePermission(requestParameters: GrantRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
-        const response = await this.grantRolePermissionRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns, for each requested permission code, the roles of the caller\'s tenant that currently hold it, each with its name, its templateKey (null for a custom role) and its locationScope; roles are sorted by name, and a code no role holds is answered with an empty roles list. Use this tool to state a tenant\'s real separation of duties, as the Approval limits page does; do not use listRoles or getRoleDefaultPermissions, which return every grant of every role or one role at a time, and do not use it to find users, because it returns no user ids, names or counts. Preconditions: the caller must hold security:role:view, which may ask about any registered code, or accounting:ap_approval_policy:manage, which may ask only about accounting:ap:approve, accounting:ap:approve_over_limit, accounting:ap:reject, accounting:ap:pay and accounting:ap_approval_policy:manage. Required inputs: permission, repeated once per code, 1 to 20 distinct domain:resource:action codes; codes are trimmed, matched case-insensitively and answered in the catalog\'s spelling, and duplicates are answered once in first-seen order. No events are emitted and no state changes; the grants are read live for the caller\'s tenant with no cache, so a token issued before a grant change keeps its old permissions until it is reissued. Returns 400 VALIDATION_ERROR when permission is missing, names more than 20 distinct codes or holds a malformed code, with fieldErrors on permission naming the bad values. Returns 403 when the caller holds neither permission, and 403 PERMISSION_HOLDER_SCOPE_DENIED, naming the codes, before anything is read when a scoped caller asks about a code outside its scope. Returns 422 PERMISSION_NOT_REGISTERED, with fieldErrors on permission, when a well-formed code is not in the permission catalog, rather than answering that nobody holds it. 
+     * Returns, for each requested permission code, the roles of the caller\'s tenant that currently hold it through one of their capabilities, each with its key, its display name, its templateKey (null for a role the tenant created) and its locationScope; roles are sorted by name, and a code no role holds is answered with an empty roles list. Use this tool to state a tenant\'s real separation of duties, as the Approval limits page does; do not use listRoles or getRoleDefaultPermissions, which return every role or one role at a time, and do not use it to find users, because it returns no user ids, names or counts. Preconditions: the caller must hold security:role:view, which may ask about any registered code, or accounting:ap_approval_policy:manage, which may ask only about accounting:ap:approve, accounting:ap:approve_over_limit, accounting:ap:reject, accounting:ap:pay and accounting:ap_approval_policy:manage. Required inputs: permission, repeated once per code, 1 to 20 distinct domain:resource:action codes; codes are trimmed, matched case-insensitively and answered in the catalog\'s spelling, and duplicates are answered once in first-seen order. No events are emitted and no state changes; roles and their capabilities are read live for the caller\'s tenant with no cache, so a token issued before a role changed keeps its old permissions until it is reissued. Returns 400 VALIDATION_ERROR when permission is missing, names more than 20 distinct codes or holds a malformed code, with fieldErrors on permission naming the bad values. Returns 403 when the caller holds neither permission, and 403 PERMISSION_HOLDER_SCOPE_DENIED, naming the codes, before anything is read when a scoped caller asks about a code outside its scope. Returns 422 PERMISSION_NOT_REGISTERED, with fieldErrors on permission, when a well-formed code is not in the permission catalog, rather than answering that nobody holds it. 
      * List the Roles That Hold Given Permissions
      */
     async listPermissionHoldersRaw(requestParameters: ListPermissionHoldersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PermissionHoldersResponse>> {
@@ -609,7 +537,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns, for each requested permission code, the roles of the caller\'s tenant that currently hold it, each with its name, its templateKey (null for a custom role) and its locationScope; roles are sorted by name, and a code no role holds is answered with an empty roles list. Use this tool to state a tenant\'s real separation of duties, as the Approval limits page does; do not use listRoles or getRoleDefaultPermissions, which return every grant of every role or one role at a time, and do not use it to find users, because it returns no user ids, names or counts. Preconditions: the caller must hold security:role:view, which may ask about any registered code, or accounting:ap_approval_policy:manage, which may ask only about accounting:ap:approve, accounting:ap:approve_over_limit, accounting:ap:reject, accounting:ap:pay and accounting:ap_approval_policy:manage. Required inputs: permission, repeated once per code, 1 to 20 distinct domain:resource:action codes; codes are trimmed, matched case-insensitively and answered in the catalog\'s spelling, and duplicates are answered once in first-seen order. No events are emitted and no state changes; the grants are read live for the caller\'s tenant with no cache, so a token issued before a grant change keeps its old permissions until it is reissued. Returns 400 VALIDATION_ERROR when permission is missing, names more than 20 distinct codes or holds a malformed code, with fieldErrors on permission naming the bad values. Returns 403 when the caller holds neither permission, and 403 PERMISSION_HOLDER_SCOPE_DENIED, naming the codes, before anything is read when a scoped caller asks about a code outside its scope. Returns 422 PERMISSION_NOT_REGISTERED, with fieldErrors on permission, when a well-formed code is not in the permission catalog, rather than answering that nobody holds it. 
+     * Returns, for each requested permission code, the roles of the caller\'s tenant that currently hold it through one of their capabilities, each with its key, its display name, its templateKey (null for a role the tenant created) and its locationScope; roles are sorted by name, and a code no role holds is answered with an empty roles list. Use this tool to state a tenant\'s real separation of duties, as the Approval limits page does; do not use listRoles or getRoleDefaultPermissions, which return every role or one role at a time, and do not use it to find users, because it returns no user ids, names or counts. Preconditions: the caller must hold security:role:view, which may ask about any registered code, or accounting:ap_approval_policy:manage, which may ask only about accounting:ap:approve, accounting:ap:approve_over_limit, accounting:ap:reject, accounting:ap:pay and accounting:ap_approval_policy:manage. Required inputs: permission, repeated once per code, 1 to 20 distinct domain:resource:action codes; codes are trimmed, matched case-insensitively and answered in the catalog\'s spelling, and duplicates are answered once in first-seen order. No events are emitted and no state changes; roles and their capabilities are read live for the caller\'s tenant with no cache, so a token issued before a role changed keeps its old permissions until it is reissued. Returns 400 VALIDATION_ERROR when permission is missing, names more than 20 distinct codes or holds a malformed code, with fieldErrors on permission naming the bad values. Returns 403 when the caller holds neither permission, and 403 PERMISSION_HOLDER_SCOPE_DENIED, naming the codes, before anything is read when a scoped caller asks about a code outside its scope. Returns 422 PERMISSION_NOT_REGISTERED, with fieldErrors on permission, when a well-formed code is not in the permission catalog, rather than answering that nobody holds it. 
      * List the Roles That Hold Given Permissions
      */
     async listPermissionHolders(requestParameters: ListPermissionHoldersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionHoldersResponse> {
@@ -618,7 +546,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every role in the system with its permission set and audit metadata. Use this tool to enumerate roles; use getRoleById or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
+     * Returns every role of the caller\'s tenant with its key, display name, capability keys, system and allCapabilities flags and audit metadata, sorted by name. Use this tool to enumerate roles; use getRoleById, getRoleByKey or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
      * List All Roles in the System
      */
     async listRolesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleDto>>> {
@@ -645,7 +573,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every role in the system with its permission set and audit metadata. Use this tool to enumerate roles; use getRoleById or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
+     * Returns every role of the caller\'s tenant with its key, display name, capability keys, system and allCapabilities flags and audit metadata, sorted by name. Use this tool to enumerate roles; use getRoleById, getRoleByKey or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
      * List All Roles in the System
      */
     async listRoles(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleDto>> {
@@ -747,57 +675,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes a permission key from a role\'s grant set. Use this tool to take one permission away from a role; do not use deleteRole, which removes the role entirely, and do not use revokeRoleAssignment, which ends a user\'s assignment instead. Preconditions: the caller must hold security:role:edit and the role must exist; revoking a key the role does not hold is a silent no-op. Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_REVOKE event. Returns 404 when the role does not exist; an unknown permission key still yields 204. 
-     * Revoke a Permission From a Role
-     */
-    async revokeRolePermissionRaw(requestParameters: RevokeRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['roleId'] == null) {
-            throw new runtime.RequiredError(
-                'roleId',
-                'Required parameter "roleId" was null or undefined when calling revokeRolePermission().'
-            );
-        }
-
-        if (requestParameters['permissionKey'] == null) {
-            throw new runtime.RequiredError(
-                'permissionKey',
-                'Required parameter "permissionKey" was null or undefined when calling revokeRolePermission().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles/{roleId}/permissions/{permissionKey}`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))).replace(`{${"permissionKey"}}`, encodeURIComponent(String(requestParameters['permissionKey']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Removes a permission key from a role\'s grant set. Use this tool to take one permission away from a role; do not use deleteRole, which removes the role entirely, and do not use revokeRoleAssignment, which ends a user\'s assignment instead. Preconditions: the caller must hold security:role:edit and the role must exist; revoking a key the role does not hold is a silent no-op. Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_REVOKE event. Returns 404 when the role does not exist; an unknown permission key still yields 204. 
-     * Revoke a Permission From a Role
-     */
-    async revokeRolePermission(requestParameters: RevokeRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.revokeRolePermissionRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Replaces a role\'s description and its MCP persona metadata: the persona title, focus, and tone slots, the persona rank, and whether the role participates in persona resolution at all. Use this tool to correct or rank a role\'s assistant persona; do not use updateRolePermissions, which changes the role\'s permission grants, and do not use it to rename a role — the name keys authority resolution and permission grants and is not updatable here. Preconditions: the caller must hold security:role:edit and the role id must exist. Required inputs: role id as a path parameter. Every body field is optional, but an omitted field clears the stored value rather than leaving it unchanged, which is how a persona slot is returned to its derived default. Persona slots must describe the role rather than instruct the assistant: single line, within the length cap, and free of imperative control verbs. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when a persona slot fails validation and 404 when no role has that id. 
-     * Update a Role\'s Description and Persona Metadata
+     * Replaces a role\'s display name, its description and its MCP persona metadata: the persona title, focus, and tone slots, the persona rank, and whether the role participates in persona resolution at all. A new name renames the role and changes nothing else: the role\'s key, its capabilities and its assignments stay as they are. Use this tool to rename a role or correct its description or assistant persona; do not use it to change what the role grants, which is updateRoleCapabilities. Preconditions: the caller must hold security:role:edit, the role id must exist, the role must not be a system role, and no other role of the tenant may carry the new name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: role id as a path parameter and name in the body; every other body field is optional, but an omitted field clears the stored value rather than leaving it unchanged, which is how a persona slot is returned to its derived default. Persona slots must describe the role rather than instruct the assistant: single line, within the length cap, and free of imperative control verbs. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when name is blank or a persona slot fails validation, 404 when no role has that id, 409 DUPLICATE_ROLE_NAME when another role carries the name, and 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role. 
+     * Update a Role\'s Name, Description and Persona Metadata
      */
     async updateRoleRaw(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['id'] == null) {
@@ -840,8 +719,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a role\'s description and its MCP persona metadata: the persona title, focus, and tone slots, the persona rank, and whether the role participates in persona resolution at all. Use this tool to correct or rank a role\'s assistant persona; do not use updateRolePermissions, which changes the role\'s permission grants, and do not use it to rename a role — the name keys authority resolution and permission grants and is not updatable here. Preconditions: the caller must hold security:role:edit and the role id must exist. Required inputs: role id as a path parameter. Every body field is optional, but an omitted field clears the stored value rather than leaving it unchanged, which is how a persona slot is returned to its derived default. Persona slots must describe the role rather than instruct the assistant: single line, within the length cap, and free of imperative control verbs. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when a persona slot fails validation and 404 when no role has that id. 
-     * Update a Role\'s Description and Persona Metadata
+     * Replaces a role\'s display name, its description and its MCP persona metadata: the persona title, focus, and tone slots, the persona rank, and whether the role participates in persona resolution at all. A new name renames the role and changes nothing else: the role\'s key, its capabilities and its assignments stay as they are. Use this tool to rename a role or correct its description or assistant persona; do not use it to change what the role grants, which is updateRoleCapabilities. Preconditions: the caller must hold security:role:edit, the role id must exist, the role must not be a system role, and no other role of the tenant may carry the new name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: role id as a path parameter and name in the body; every other body field is optional, but an omitted field clears the stored value rather than leaving it unchanged, which is how a persona slot is returned to its derived default. Persona slots must describe the role rather than instruct the assistant: single line, within the length cap, and free of imperative control verbs. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when name is blank or a persona slot fails validation, 404 when no role has that id, 409 DUPLICATE_ROLE_NAME when another role carries the name, and 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role. 
+     * Update a Role\'s Name, Description and Persona Metadata
      */
     async updateRole(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.updateRoleRaw(requestParameters, initOverrides);
@@ -849,14 +728,21 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a role\'s entire permission set with the supplied list of permission names. Use this tool for wholesale permission resets; do not use grantRolePermission or revokeRolePermission, which change one key at a time and preserve the rest. Preconditions: the caller must hold security:role:edit, the role must exist, and every named permission must already be registered. Required inputs: roleId (UUID) and permissionNames, a set of domain:resource:action strings; an empty set clears all grants. Emits a SECURITY_ROLE_PERMISSIONS_UPDATE event and returns the updated role with its new permission set. Returns 404 when the role or any named permission does not exist; nothing is applied on failure. 
-     * Replace a Role\'s Permission Set
+     * Replaces the complete set of capabilities a role holds with the keys supplied: a capability not listed leaves the role, a new one joins it, and an empty list leaves a role that grants nothing. What the role grants is the union of its capabilities\' permissions; nothing grants a permission to a role directly. Use this tool to change what a role can do; do not use updateRole, which renames a role and edits its description and persona, and do not use createRoleAssignment, which gives a role to a user. Preconditions: the caller must hold security:role:edit; the role must exist, must not be a system role and must not be a role that holds every capability; every key must name a capability from listCapabilities. Required inputs: role id as a path parameter and capabilities, the full list of keys, in the body; order and repeats do not matter. Emits a SECURITY_ROLE_CAPABILITIES_UPDATE event and records the modifying actor and timestamp; capabilities the role already held keep the record of who added them. A user who holds the role gets the changed permissions when their access token is next issued or refreshed. Returns 400 when capabilities is missing; 404 when no role has that id; 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role; 409 ROLE_CAPABILITIES_FIXED when the role holds every capability; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability. 
+     * Replace a Role\'s Capabilities
      */
-    async updateRolePermissionsRaw(requestParameters: UpdateRolePermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
-        if (requestParameters['rolePermissionsRequest'] == null) {
+    async updateRoleCapabilitiesRaw(requestParameters: UpdateRoleCapabilitiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
+        if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
-                'rolePermissionsRequest',
-                'Required parameter "rolePermissionsRequest" was null or undefined when calling updateRolePermissions().'
+                'id',
+                'Required parameter "id" was null or undefined when calling updateRoleCapabilities().'
+            );
+        }
+
+        if (requestParameters['roleCapabilitiesRequest'] == null) {
+            throw new runtime.RequiredError(
+                'roleCapabilitiesRequest',
+                'Required parameter "roleCapabilitiesRequest" was null or undefined when calling updateRoleCapabilities().'
             );
         }
 
@@ -875,22 +761,22 @@ export class RoleManagementApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/v1/roles/permissions`,
+            path: `/v1/roles/{id}/capabilities`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: RolePermissionsRequestToJSON(requestParameters['rolePermissionsRequest']),
+            body: RoleCapabilitiesRequestToJSON(requestParameters['roleCapabilitiesRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RoleDtoFromJSON(jsonValue));
     }
 
     /**
-     * Replaces a role\'s entire permission set with the supplied list of permission names. Use this tool for wholesale permission resets; do not use grantRolePermission or revokeRolePermission, which change one key at a time and preserve the rest. Preconditions: the caller must hold security:role:edit, the role must exist, and every named permission must already be registered. Required inputs: roleId (UUID) and permissionNames, a set of domain:resource:action strings; an empty set clears all grants. Emits a SECURITY_ROLE_PERMISSIONS_UPDATE event and returns the updated role with its new permission set. Returns 404 when the role or any named permission does not exist; nothing is applied on failure. 
-     * Replace a Role\'s Permission Set
+     * Replaces the complete set of capabilities a role holds with the keys supplied: a capability not listed leaves the role, a new one joins it, and an empty list leaves a role that grants nothing. What the role grants is the union of its capabilities\' permissions; nothing grants a permission to a role directly. Use this tool to change what a role can do; do not use updateRole, which renames a role and edits its description and persona, and do not use createRoleAssignment, which gives a role to a user. Preconditions: the caller must hold security:role:edit; the role must exist, must not be a system role and must not be a role that holds every capability; every key must name a capability from listCapabilities. Required inputs: role id as a path parameter and capabilities, the full list of keys, in the body; order and repeats do not matter. Emits a SECURITY_ROLE_CAPABILITIES_UPDATE event and records the modifying actor and timestamp; capabilities the role already held keep the record of who added them. A user who holds the role gets the changed permissions when their access token is next issued or refreshed. Returns 400 when capabilities is missing; 404 when no role has that id; 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role; 409 ROLE_CAPABILITIES_FIXED when the role holds every capability; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability. 
+     * Replace a Role\'s Capabilities
      */
-    async updateRolePermissions(requestParameters: UpdateRolePermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
-        const response = await this.updateRolePermissionsRaw(requestParameters, initOverrides);
+    async updateRoleCapabilities(requestParameters: UpdateRoleCapabilitiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
+        const response = await this.updateRoleCapabilitiesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

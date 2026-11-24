@@ -26,7 +26,7 @@ export interface CreateUserRequest {
      */
     password: string;
     /**
-     * Existing role names to attach directly
+     * Keys of existing roles to attach directly
      * @type {Set<string>}
      * @memberof CreateUserRequest
      */

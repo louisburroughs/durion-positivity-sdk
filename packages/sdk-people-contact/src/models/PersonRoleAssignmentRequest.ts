@@ -26,7 +26,7 @@ export interface PersonRoleAssignmentRequest {
      */
     endDate?: Date;
     /**
-     * Stable role code to assign
+     * Key of the role to assign, as listAssignableRoles returns it in key and code. A role's display name is not accepted
      * @type {string}
      * @memberof PersonRoleAssignmentRequest
      */
