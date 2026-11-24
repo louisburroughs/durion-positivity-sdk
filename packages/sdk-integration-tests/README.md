@@ -499,7 +499,7 @@ accelerated entry point adds:
 | `ALPHA_TENANT_SLUG` / `ALPHA_TENANT_ID` | — | **Yes** | The tenant every suite runs in. Every login sends the slug, the security bootstrap sends the id as `X-Tenant-Id`, and global setup refuses a login bound anywhere else |
 | `PLATFORM_TENANT_SLUG` / `PLATFORM_TENANT_ID` | — | With a platform login | The platform tenant (platform tables). Must differ from the alpha tenant |
 | `ITEST_PLATFORM_USERNAME` / `_PASSWORD` | — | No | Platform-tenant login, activated and checked in the platform tenant |
-| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. An account that cannot log in yet is activated to its configured password before anything else logs in (one-shot per account) |
+| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. An account that cannot log in yet is activated to its configured password before anything else logs in (one-shot per account). Every `ITEST_*_PASSWORD` must then meet the platform password policy (12 to 64 characters by default, three character classes when the deployment requires them, not a common password, not containing the username, its e-mail local part or the tenant slug); the run checks this first and logs nothing in until all pass |
 
 Persona credentials are **all-or-none per persona**: a username without its
 password fails configuration validation rather than silently falling back.
@@ -524,6 +524,31 @@ sets them to the
 `ITEST_*_PASSWORD` configured for them. `ALPHA_TENANT_SLUG` is passed to
 activation and to every login, and the tenant preflight then refuses any
 login bound to a tenant other than `ALPHA_TENANT_ID`.
+
+**Each `ITEST_*_PASSWORD` must meet the platform password policy**, because the
+exchange sets it as the account's password and refuses it otherwise (400
+`PASSWORD_POLICY_VIOLATION`). The policy is the backend's
+(`pos.security.password-policy.*`, published by `GET /v1/auth/capabilities` as
+`passwordPolicy`):
+
+- 12 to 64 characters by default (`minLength`, `maxLength`), counted in Unicode
+  code points, and at most 72 bytes in UTF-8;
+- at least three of lower-case letters, upper-case letters, digits and other
+  characters, when `requireMixedClasses` is on (off by default);
+- not a common password (a server-side denylist, never published);
+- not equal to, and not containing, the username, the e-mail local part of an
+  e-mail username, the tenant slug (`ALPHA_TENANT_SLUG`, or
+  `PLATFORM_TENANT_SLUG` for the platform login) or the person's name, compared
+  case-insensitively; a term under 4 characters is refused only when equal.
+
+The run checks this first: before any login it reads the published policy and
+checks every configured password against the length, class and context rules,
+then fails naming each persona, username and rule broken (never the password),
+without spending a failed login on any account. The denylist is checked only by
+the exchange, which the harness reports as a policy refusal with the server's
+message, apart from the 401 of a wrong starter password or a claimed account.
+If the policy cannot be read, the check is skipped with a warning and the run
+continues as before.
 
 Accounts bulk-loaded from `users.csv` are provisioned with one shared *starter*
 password rather than a usable credential of their own. Such an account is
@@ -567,7 +592,9 @@ The nested `ActivateWithStarterRequest`:
 `xTenantSlug` sits on the wrapper, not in the payload, and carries the same
 thing as `tenantSlug` via the `X-Tenant-Slug` header. The call is
 unauthenticated and binds no tenant of its own; it returns 204, 400 on a blank
-field, and 401 `ACTIVATION_TOKEN_INVALID` otherwise.
+field, 400 `VALIDATION_ERROR` with `fieldErrors[newPassword]` starting
+`PASSWORD_POLICY_VIOLATION` when the new password fails the policy, and 401
+`ACTIVATION_TOKEN_INVALID` otherwise.
 
 Consequences for the suite, all of which the harness has to learn:
 
