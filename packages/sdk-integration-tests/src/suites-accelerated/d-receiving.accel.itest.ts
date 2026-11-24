@@ -377,7 +377,7 @@ describe('Suite D — receiving', () => {
       expect(String(claimed.status).toUpperCase()).toBe('ASSIGNED');
       console.log(`[D5] claimed by ${claimed.assigneeId ?? '(unrecorded)'}`);
 
-      // INVENTORY_LEAD holds putaway view/generate/claim/execute but neither
+      // stockroom_operations holds putaway view/generate/claim/execute but neither
       // override, so this executes on the merits: the destination has to be
       // genuinely compatible and genuinely have room. Nothing here passes
       // overrideCapacity or overrideLocationCompatibility, and it should not

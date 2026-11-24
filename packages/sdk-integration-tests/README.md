@@ -483,14 +483,14 @@ accelerated entry point adds:
 | Variable | Default | Required | Description |
 | --- | --- | --- | --- |
 | `ITEST_BASE_URL` | `http://localhost:8080` | No | API gateway base URL |
-| `ITEST_USERNAME` | — | **Yes** | Admin login (SYSTEM_ADMINISTRATOR) |
+| `ITEST_USERNAME` | — | **Yes** | Admin login (`full_access`, or `users_and_security` plus the suites' grants) |
 | `ITEST_PASSWORD` | — | **Yes** | Admin password |
-| `ITEST_ADVISOR_USERNAME` / `_PASSWORD` | _(admin)_ | No | SERVICE_ADVISOR persona |
-| `ITEST_TECH_USERNAME` / `_PASSWORD` | _(admin)_ | No | TECHNICIAN persona |
-| `ITEST_MANAGER_USERNAME` / `_PASSWORD` | _(admin)_ | No | LOCATION_MANAGER persona |
-| `ITEST_PARTS_USERNAME` / `_PASSWORD` | _(admin)_ | No | INVENTORY_LEAD persona |
-| `ITEST_ACCT_USERNAME` / `_PASSWORD` | _(admin)_ | No | ACCOUNT_MANAGER persona |
-| `ITEST_CONTROLLER_USERNAME` / `_PASSWORD` | _(admin)_ | No | CONTROLLER persona; submits C9's accounting event |
+| `ITEST_ADVISOR_USERNAME` / `_PASSWORD` | _(admin)_ | No | `service_desk` persona |
+| `ITEST_TECH_USERNAME` / `_PASSWORD` | _(admin)_ | No | `shop_floor` persona |
+| `ITEST_MANAGER_USERNAME` / `_PASSWORD` | _(admin)_ | No | `location_management` persona |
+| `ITEST_PARTS_USERNAME` / `_PASSWORD` | _(admin)_ | No | `stockroom_operations` persona |
+| `ITEST_ACCT_USERNAME` / `_PASSWORD` | _(admin)_ | No | `customer_accounts` persona |
+| `ITEST_CONTROLLER_USERNAME` / `_PASSWORD` | _(admin)_ | No | `finance_books_and_close` persona; submits C9's accounting event |
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` interval |
@@ -645,36 +645,54 @@ the middle of a suite:
    decoded against the `perm_ver` it was minted with — not
    `GET /v1/users/{id}/permissions`, which reports only *directly attached*
    permissions and reads empty for an account whose access comes from its role.
-2. The parts persona is granted INVENTORY_LEAD if it lacks it, resolving the
-   role by name (on databases seeded before backend #1440 the roles keep their
-   original ids).
+2. The parts persona is granted `stockroom_operations` if it lacks it, resolving
+   the role by its key (`getRoleByKey`; ADR-0079 names a role by an immutable key,
+   never its display name, and ids differ between databases). Every assignment
+   names a scope (ADR-0079 phase 4): the grant is made at the suites' site,
+   `ATX-RIV-001`, the way the alpha users pack scopes every stockroom account at
+   its location; only when that site does not exist yet (a database the packs
+   never loaded, where the reference bootstrap creates it after this step) is it
+   made tenant-wide.
 3. Each persona is linked to its matching seeded employee, so labor attributes
    to a real person. Never fatal — a persona already linked elsewhere, or one
    with no matching employee, is logged as a limitation.
 
-### Persona → role → seeded account
+### Persona → role key → seeded account
 
-| Persona | Role | Alpha account |
+| Persona | Role key | Alpha account (scope in `users.csv`) |
 | --- | --- | --- |
-| `admin` | SYSTEM_ADMINISTRATOR | `marcus.webb`, `admin.alpha` |
-| `advisor` | SERVICE_ADVISOR | `rachel.kim`, `tyrone.williams` |
-| `tech` | TECHNICIAN | `kyle.brennan` (+6 others) |
-| `manager` | LOCATION_MANAGER | `diana.rowe` |
-| `parts` | INVENTORY_LEAD | `gloria.mendez` |
-| `acct` | ACCOUNT_MANAGER | `irene.torres` |
-| `controller` | CONTROLLER | `margaret.olsen` |
+| `admin` | `full_access` / `users_and_security` | `admin.alpha` (TENANT), `marcus.webb` (TENANT) |
+| `advisor` | `service_desk` | `rachel.kim` (CLT-MAIN-001), `tyrone.williams` (CLT-SOUTH-001) |
+| `tech` | `shop_floor` | `kyle.brennan` (CLT-MAIN-001) and others |
+| `manager` | `location_management` | `diana.rowe` (CLT-MAIN-001) |
+| `parts` | `stockroom_operations` | `gloria.mendez` (CLT-MAIN-001) |
+| `acct` | `customer_accounts` | `irene.torres` (CORP-HQ-001) |
+| `controller` | `finance_books_and_close` | `margaret.olsen` (TENANT) |
 
-All are seeded by the backend's `R__seed_security_operational_data.sql` and
-share one operational password.
+Role keys are the backend's starter roles
+(`pos-security-service/src/main/resources/capabilities/_starter-roles.yaml`);
+the gateway authority is `ROLE_<KEY>` upper-cased (`ROLE_SHOP_FLOOR`). The
+accounts come from the alpha users pack
+(`scripts/fixtures/seed/alpha/security/users.csv`) and share one operational
+password.
+
+Every role is held at a scope, and the access token's `grants` claim carries
+it: a persona reaches only the locations its assignment names (and those
+beneath them), and a persona with no assignment reaches none. The suites work
+at `ATX-RIV-001`, so a located persona must be held there (or above it) for its
+location-checked calls to pass; `users.csv` has `ATX-RIV-001` accounts for
+`service_desk`, `shop_floor`, `location_management` and
+`stockroom_operations`.
 
 `acct` and `controller` have no matching employee record — PeopleBootstrap
 seeds technicians, service writers, a manager and a parts clerk, and no
 accounting employee — so labor attributed to either has no person behind it.
 Reported at startup, not silently.
 
-`controller` exists because backend V25 (#1499/#1512) rescoped ACCOUNT_MANAGER
-to customer accounts (AR) and moved accounting management — including
-`accounting:events:submit` — to the new CONTROLLER role. C9's
+`controller` exists because backend V25 (#1499/#1512) rescoped the account
+manager role (today `customer_accounts`) to customer accounts (AR) and moved
+accounting management — including `accounting:events:submit` — to the
+controller role (today `finance_books_and_close`). C9's
 `submitAccountingEvent` therefore acts as `controller`; `acct` keeps the
 payment, credit-memo and invoice authorities V25 left it. Leave
 `ITEST_CONTROLLER_*` unset and that call falls back to admin, which still
@@ -787,15 +805,14 @@ personas in itself.
   files a VIN against the party and returns no id; vehicles are registered
   through pos-vehicle-inventory.
 - Purchase orders live in pos-order, not pos-inventory.
-- **The parts clerk plans cycle counts.** The alpha data load
-  (`scripts/fixtures/seed/alpha/security/role-permissions.csv`) grants
-  INVENTORY_LEAD — the parts clerk who counts stock in the building —
-  `inventory:cycle_count:initiate`, `:view` and `:complete` alongside
+- **The parts clerk plans cycle counts.** `stockroom_operations` (the role the
+  alpha users pack gives the parts clerk who counts stock in the building)
+  holds `inventory:cycle_count:initiate`, `:view` and `:complete` alongside
   `inventory:adjustment:create` and `:view`. Suite E creates the plan as the
   clerk and E2 asserts it; generating and recording the count still run as the
   admin, and the clerk raises the adjustment.
-  `inventory:adjustment:approve` is separate again: INVENTORY_CONTROLLER,
-  INVENTORY_MANAGER and ADMIN, not the clerk who raised it.
+  `inventory:adjustment:approve` is separate again: `stockroom_supervision`,
+  `location_management` and `full_access`, not the clerk who raised it.
 - **Putting stock on hand takes two calls, not one.** Bulk ingest
   (`POST /v1/inventory/bulk-ingest/adjustments`) only raises an adjustment
   *request* per row; the ledger entry is written when that request is approved
@@ -811,16 +828,17 @@ personas in itself.
   end to end and asserts the approval half's authorization and documented error
   contract, which stay true once the bridge lands.
 - Time approval is split across two services and two permission families:
-  `workorder:timeEntry:approve|reject` (MANAGER, LOCATION_MANAGER,
-  GENERAL_MANAGER, SERVICE_ADVISOR, ADMIN) decides workorder hours;
-  `people:timeEntry:approve|reject` (LOCATION_MANAGER, ADMIN) and
-  `people:timekeeping:view|approve|reject` (MANAGER, LOCATION_MANAGER,
-  GENERAL_MANAGER, ADMIN) decide payroll time. `workorder:labor:add` — which
-  covers starting, stopping and *adjusting* a labor entry — is TECHNICIAN and
-  ADMIN only, so a manager reads labor but never rewrites it.
+  `workorder:timeEntry:approve|reject` decides workorder hours (no starter role
+  holds it today); `people:timeEntry:approve|reject` and
+  `people:timekeeping:view|approve|reject` (`location_management`,
+  `multi_location_management`, `full_access`) decide payroll time.
+  `workorder:labor:add` starts and stops a labor entry (`shop_floor`,
+  `location_management`, `full_access`); rewriting one is
+  `workorder:labor:adjust`, which only the two management roles and
+  `full_access` hold, so a technician records labor but never rewrites it.
 - Stock reads act as the parts clerk. A technician *used* to be unable to read
   availability at all - `getAvailabilityBySku` required
-  `inventory:on_hand:view`/`:search` while TECHNICIAN held only
+  `inventory:on_hand:view`/`:search` while the technician role held only
   `inventory:availability:read`, which no endpoint asked for. Backend #1494
   fixed that by making the endpoint require the permission the role already
   had.

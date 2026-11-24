@@ -57,8 +57,8 @@ const jwtClaim = (token: string, name: string): string => {
  *
  * **Time on task is record-keeping, not an approval workflow** (backend #2282).
  * pos-workorder has no per-entry approve or reject and none is wanted. What it
- * has is a supervisor-only correction with an audit trail: only SHOP_MANAGER,
- * LOCATION_MANAGER, MANAGER, GENERAL_MANAGER and ADMIN hold
+ * has is a supervisor-only correction with an audit trail: only location_management,
+ * multi_location_management and full_access hold
  * `workorder:labor:adjust`; an entry can be adjusted only once it is stopped,
  * which is when its `workorder.job-time.recorded.v1` is sent; every adjustment
  * writes an immutable record and sends `workorder.labor-adjustment.recorded.v1`
@@ -340,7 +340,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
   }, 120_000);
 
   // Adjusting labor is a supervisor's act (backend #2282, #2293): only
-  // SHOP_MANAGER, LOCATION_MANAGER, MANAGER, GENERAL_MANAGER and ADMIN hold
+  // location_management, multi_location_management and full_access hold
   // workorder:labor:adjust. The technician starts and stops the clock
   // (workorder:labor:add) and reads it back, but never rewrites it - not even
   // their own entry.
@@ -358,7 +358,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
       401,
       403,
     );
-    console.log(`[F5] TECHNICIAN refused workorder:labor:adjust with HTTP ${status}`);
+    console.log(`[F5] shop_floor refused workorder:labor:adjust with HTTP ${status}`);
   }, 120_000);
 
   it('F6 — the manager adjusts the technician\'s hours, and the record names the manager and the reason', async () => {
@@ -683,14 +683,14 @@ describe('Suite F — attendance approval and workorder time on task', () => {
       tech.people.workSessionsAPIApi.startWorkSession({ idempotencyKey: crypto.randomUUID(), workSessionRequest: { personId: technicianId } }),
       403,
     );
-    console.log(`[F8b] TECHNICIAN refused another person's work session with HTTP ${status}`);
+    console.log(`[F8b] shop_floor refused another person's work session with HTTP ${status}`);
   }, 120_000);
 
   itInRoleMode('F10 — timekeeping is the manager\'s to see, not the technician\'s', async () => {
     const periods = await call('listTimePeriods', () =>
       manager.people.timekeepingApprovalAPIApi.listTimePeriods({ tenantId: TENANT_ID }),
     );
-    console.log(`[F10] ${periods.length} pay period(s) visible to LOCATION_MANAGER`);
+    console.log(`[F10] ${periods.length} pay period(s) visible to location_management`);
     expect(Array.isArray(periods)).toBe(true);
 
     // Pay periods are opened by the scheduled rollover, not by this suite, so
@@ -728,7 +728,7 @@ describe('Suite F — attendance approval and workorder time on task', () => {
       401,
       403,
     );
-    console.log(`[F10] TECHNICIAN refused people:timekeeping:view with HTTP ${status}`);
+    console.log(`[F10] shop_floor refused people:timekeeping:view with HTTP ${status}`);
   }, 180_000);
 
   it('F11 — an unknown pay period is a 404, not an empty timesheet', async () => {

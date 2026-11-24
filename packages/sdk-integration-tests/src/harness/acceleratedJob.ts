@@ -860,7 +860,7 @@ export class AcceleratedJob {
    *
    * The total is the one generate-invoice returned with the id: the backend's own figure,
    * and nothing re-prices the draft between the two steps. Not a `getInvoice` read, which
-   * needs `invoice:invoice:view` — a grant SERVICE_ADVISOR does not hold.
+   * needs `invoice:invoice:view` — a grant the advisor role has not always held.
    */
   private async finalizeInvoice(): Promise<void> {
     const invoiceId = requireField(this.invoiceId, 'invoiceId');

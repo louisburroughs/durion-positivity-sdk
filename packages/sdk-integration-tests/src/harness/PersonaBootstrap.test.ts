@@ -1,8 +1,12 @@
 import { ItestConfig } from './ItestConfig';
 import {
+  normalizeRoleKey,
   PersonaBootstrap,
+  PERSONA_ROLE,
   REQUIRED_AUTHORITIES,
+  SUITE_SITE_CODE,
   type LinkOutcome,
+  type RoleAssignmentScope,
   type PersonaPeoplePort,
   type PersonaSecurityPort,
   type UserSummary,
@@ -25,8 +29,9 @@ const ROLE_ENV = {
 const PARTS_AUTHORITIES = [...REQUIRED_AUTHORITIES.parts];
 
 interface SecurityCalls {
-  getRoleIdByName: string[];
-  assignUserRole: Array<{ userId: string; roleId: string }>;
+  getRoleIdByKey: string[];
+  assignUserRole: Array<{ userId: string; roleId: string; scope: RoleAssignmentScope }>;
+  findLocationIdByCode: string[];
   /** Usernames the preflight logged in as to read enforced authorities. */
   getEnforcedAuthorities: string[];
 }
@@ -38,9 +43,16 @@ function fakeSecurity(
     roleIds?: Record<string, string>;
     failRoleLookup?: boolean;
     failPermissions?: boolean;
+    /** Location ids by code; a code absent here has no location yet. */
+    locationIds?: Record<string, string>;
   } = {},
 ): PersonaSecurityPort & { calls: SecurityCalls } {
-  const calls: SecurityCalls = { getRoleIdByName: [], assignUserRole: [], getEnforcedAuthorities: [] };
+  const calls: SecurityCalls = {
+    getRoleIdByKey: [],
+    assignUserRole: [],
+    findLocationIdByCode: [],
+    getEnforcedAuthorities: [],
+  };
   return {
     calls,
     listUsers: () => Promise.resolve(users),
@@ -53,16 +65,20 @@ function fakeSecurity(
       // what the gateway enforces lives in the persona's own token.
       return Promise.resolve(options.permissions?.[credentials.username] ?? []);
     },
-    getRoleIdByName: (name) => {
-      calls.getRoleIdByName.push(name);
+    getRoleIdByKey: (key) => {
+      calls.getRoleIdByKey.push(key);
       if (options.failRoleLookup) {
         return Promise.reject(new Error('404 role not found'));
       }
-      return Promise.resolve(options.roleIds?.[name] ?? `role-${name}`);
+      return Promise.resolve(options.roleIds?.[key] ?? `role-${key}`);
     },
-    assignUserRole: (userId, roleId) => {
-      calls.assignUserRole.push({ userId, roleId });
+    assignUserRole: (userId, roleId, scope) => {
+      calls.assignUserRole.push({ userId, roleId, scope });
       return Promise.resolve();
+    },
+    findLocationIdByCode: (code) => {
+      calls.findLocationIdByCode.push(code);
+      return Promise.resolve(options.locationIds?.[code]);
     },
   };
 }
@@ -105,7 +121,7 @@ describe('PersonaBootstrap: applies only in role mode', () => {
 describe('PersonaBootstrap.verifyAndProvision', () => {
   it('verifies a persona that already holds its role and authorities', async () => {
     const security = fakeSecurity(
-      [{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }],
+      [{ id: 'u-1', username: 'gloria.mendez', roles: ['stockroom_operations'] }],
       { permissions: { 'gloria.mendez': PARTS_AUTHORITIES } },
     );
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
@@ -117,23 +133,58 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     // even attempted.
     expect(result.assignments).toEqual([]);
     expect(security.calls.assignUserRole).toEqual([]);
-    expect(security.calls.getRoleIdByName).toEqual([]);
+    expect(security.calls.getRoleIdByKey).toEqual([]);
   });
 
-  it('grants INVENTORY_LEAD when the parts account lacks it', async () => {
+  it('reads a held role as the backend does: ROLE_ prefix and letter case ignored', async () => {
+    const security = fakeSecurity(
+      [{ id: 'u-1', username: 'gloria.mendez', roles: ['ROLE_STOCKROOM_OPERATIONS'] }],
+      { permissions: { 'gloria.mendez': PARTS_AUTHORITIES } },
+    );
+    const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
+
+    await bootstrap.verifyAndProvision();
+
+    expect(security.calls.assignUserRole).toEqual([]);
+  });
+
+  it('grants stockroom_operations at the suite site when the parts account lacks it', async () => {
     const security = fakeSecurity([{ id: 'u-1', username: 'gloria.mendez', roles: [] }], {
       permissions: { 'gloria.mendez': PARTS_AUTHORITIES },
-      roleIds: { INVENTORY_LEAD: 'role-uuid-77' },
+      roleIds: { stockroom_operations: 'role-uuid-77' },
+      locationIds: { [SUITE_SITE_CODE]: 'site-uuid-1' },
     });
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
 
     const result = await bootstrap.verifyAndProvision();
 
-    expect(security.calls.getRoleIdByName).toEqual(['INVENTORY_LEAD']);
-    // Resolved by name, never a hardcoded UUID, and assigned additively by id.
-    expect(security.calls.assignUserRole).toEqual([{ userId: 'u-1', roleId: 'role-uuid-77' }]);
-    expect(result.assignments).toEqual(['gloria.mendez granted INVENTORY_LEAD']);
+    // Resolved by key, never by display name or a hardcoded UUID.
+    expect(security.calls.getRoleIdByKey).toEqual(['stockroom_operations']);
+    expect(security.calls.findLocationIdByCode).toEqual(['ATX-RIV-001']);
+    // Assigned additively by id, at the one site the suites work at - the
+    // seed scopes stockroom accounts at their location, never tenant-wide.
+    expect(security.calls.assignUserRole).toEqual([
+      { userId: 'u-1', roleId: 'role-uuid-77', scope: { kind: 'LOCATIONS', locationIds: ['site-uuid-1'] } },
+    ]);
+    expect(result.assignments).toEqual(['gloria.mendez granted stockroom_operations at LOCATIONS site-uuid-1']);
     expect(result.verified).toEqual(['parts=gloria.mendez']);
+  });
+
+  it('grants tenant-wide when the suite site does not exist yet', async () => {
+    // A database the alpha packs never loaded: the reference bootstrap creates
+    // the site, after this preflight, so there is no location to name.
+    const security = fakeSecurity([{ id: 'u-1', username: 'gloria.mendez', roles: [] }], {
+      permissions: { 'gloria.mendez': PARTS_AUTHORITIES },
+      roleIds: { stockroom_operations: 'role-uuid-77' },
+    });
+    const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
+
+    const result = await bootstrap.verifyAndProvision();
+
+    expect(security.calls.assignUserRole).toEqual([
+      { userId: 'u-1', roleId: 'role-uuid-77', scope: { kind: 'TENANT' } },
+    ]);
+    expect(result.assignments).toEqual(['gloria.mendez granted stockroom_operations at TENANT']);
   });
 
   it('fails with the username when no such user exists', async () => {
@@ -147,7 +198,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
 
   it('names every missing authority rather than the first', async () => {
     const security = fakeSecurity(
-      [{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }],
+      [{ id: 'u-1', username: 'gloria.mendez', roles: ['stockroom_operations'] }],
       { permissions: { 'gloria.mendez': ['order:purchase_order:create'] } },
     );
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
@@ -159,7 +210,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     expect((error as Error).message).toContain('inventory:goods_receipt:create');
     expect((error as Error).message).toContain('inventory:receiving:create');
     // And says what it does hold, so the fix is obvious.
-    expect((error as Error).message).toContain('holds: INVENTORY_LEAD');
+    expect((error as Error).message).toContain('holds: stockroom_operations');
   });
 
   it('collects problems across personas into one error', async () => {
@@ -169,7 +220,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
       ITEST_TECH_PASSWORD: 'tech-pw',
     };
     const security = fakeSecurity(
-      [{ id: 'u-2', username: 'kyle.brennan', roles: ['TECHNICIAN'] }],
+      [{ id: 'u-2', username: 'kyle.brennan', roles: ['shop_floor'] }],
       { permissions: { 'kyle.brennan': [] } },
     );
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(env), security, fakePeople());
@@ -189,7 +240,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
 
     await expect(bootstrap.verifyAndProvision()).rejects.toThrow(
-      /lacks INVENTORY_LEAD and it could not be granted \(404 role not found\)/,
+      /lacks stockroom_operations and it could not be granted \(404 role not found\)/,
     );
     // The permission read is skipped once the grant failed - no cascade.
     expect(security.calls.getEnforcedAuthorities).toEqual([]);
@@ -204,10 +255,11 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     });
     const security: PersonaSecurityPort = {
       listUsers: () =>
-        Promise.resolve([{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }]),
+        Promise.resolve([{ id: 'u-1', username: 'gloria.mendez', roles: ['stockroom_operations'] }]),
       getEnforcedAuthorities: () => Promise.reject(responseError),
-      getRoleIdByName: () => Promise.resolve('role-1'),
+      getRoleIdByKey: () => Promise.resolve('role-1'),
       assignUserRole: () => Promise.resolve(),
+      findLocationIdByCode: () => Promise.resolve(undefined),
     };
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
 
@@ -219,7 +271,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
 
   it('reports an unreadable permission set against the persona', async () => {
     const security = fakeSecurity(
-      [{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }],
+      [{ id: 'u-1', username: 'gloria.mendez', roles: ['stockroom_operations'] }],
       { failPermissions: true },
     );
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
@@ -311,5 +363,14 @@ describe('PersonaBootstrap.linkPersons', () => {
 
     expect(people.calls).toEqual([]);
     expect(result.limitations[0]).toContain('produced no employee to link');
+  });
+});
+
+describe('PERSONA_ROLE', () => {
+  it('names every persona by a role key, never a display name or an authority', () => {
+    for (const key of Object.values(PERSONA_ROLE)) {
+      expect(key).toMatch(/^[a-z][a-z0-9_]*$/);
+      expect(normalizeRoleKey(`ROLE_${key.toUpperCase()}`)).toBe(key);
+    }
   });
 });

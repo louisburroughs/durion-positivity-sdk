@@ -2,8 +2,9 @@
 // out: Jest applies moduleNameMapper to the suites but NOT to globalSetup, and
 // this module is reached from there. By package name these would resolve
 // through node_modules to whatever was last built into dist.
+import { createLocationClient } from '../../../sdk-location/src';
 import { createPeopleContactClient } from '../../../sdk-people-contact/src';
-import { createSecurityClient } from '../../../sdk-security/src';
+import { AssignmentScopeRequestKindEnum, createSecurityClient } from '../../../sdk-security/src';
 import type { EmployeeRefs, SeederAuth } from '../../../sdk-seeder/src/lib';
 import type {
   CredentialedPersona,
@@ -25,15 +26,39 @@ import type {
  * which the reference bootstrap has already exercised.
  */
 
-/** The persona's role, for messages. Verification is by permission, not role. */
+/**
+ * The persona's role key (ADR-0079: a role is identified by its immutable key,
+ * never its display name). Keys are what `UserDto.roles` and the token's
+ * `roles` claim carry, and what `getRoleByKey` resolves. They are the starter
+ * roles of the backend's `capabilities/_starter-roles.yaml`, and the seeded
+ * accounts below hold them in `scripts/fixtures/seed/alpha/security/users.csv`.
+ * Verification is still by permission, not role; the key is for the parts grant
+ * and for messages.
+ */
 const PERSONA_ROLE: Record<CredentialedPersona, string> = {
-  advisor: 'SERVICE_ADVISOR',
-  tech: 'TECHNICIAN',
-  manager: 'LOCATION_MANAGER',
-  parts: 'INVENTORY_LEAD',
-  acct: 'ACCOUNT_MANAGER',
-  controller: 'CONTROLLER',
+  advisor: 'service_desk',
+  tech: 'shop_floor',
+  manager: 'location_management',
+  parts: 'stockroom_operations',
+  acct: 'customer_accounts',
+  controller: 'finance_books_and_close',
 };
+
+/**
+ * The site every suite works at: the SDK seeder's reference location, which
+ * `LocationBootstrap` (sdk-seeder) finds or creates by this code and hands to
+ * the suites as `referenceCache.locationId`. Kept in step with that constant.
+ */
+const SUITE_SITE_CODE = 'ATX-RIV-001';
+
+/**
+ * Where a role assignment applies (ADR-0079 phase 4): every assignment names a
+ * scope, either the whole tenant or up to 32 locations (each covering every
+ * location beneath it).
+ */
+export type RoleAssignmentScope =
+  | { kind: 'TENANT' }
+  | { kind: 'LOCATIONS'; locationIds: string[] };
 
 /**
  * The authorities each persona's suite steps actually exercise, taken verbatim
@@ -46,7 +71,7 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
   // workorder:workorder:start, not workorder:start: backend V26 (#1499/#1512)
   // retired the latter after finding the start endpoint and the detail-response
   // capability flag enforced different codes, and granted the conformant name to
-  // TECHNICIAN. The generated OperationalContextApi asks for it by that name.
+  // the technician role (today's shop_floor). The generated OperationalContextApi asks for it by that name.
   tech: ['workorder:workorder:start', 'workorder:labor:add', 'workorder:parts:consume'],
   manager: [
     'workorder:workorder:approve',
@@ -63,7 +88,7 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     // the authority named.
     'workorder:position:assign',
     'order:purchase_order:approve',
-    // C6 raises the pick list as the manager precisely because TECHNICIAN
+    // C6 raises the pick list as the manager precisely because shop_floor
     // cannot; checking it here is what stops that regressing silently.
     'inventory:pick_list:create',
   ],
@@ -77,14 +102,15 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'inventory:cycle_count:initiate',
     'inventory:cycle_count:view',
   ],
-  // Backend V25 (#1499/#1512) rescoped ACCOUNT_MANAGER to customer accounts
-  // (AR) and moved accounting management - accounting:events:submit included -
-  // to the new CONTROLLER role. These three are what V25 deliberately left
+  // Backend V25 (#1499/#1512) rescoped the account manager role (today's
+  // customer_accounts) to customer accounts (AR) and moved accounting
+  // management - accounting:events:submit included - to the controller role
+  // (today's finance_books_and_close). These three are what V25 deliberately left
   // behind, so they are what proves irene.torres is still wired to the
   // rescoped role rather than a hollowed-out one.
   acct: ['accounting:payment:apply', 'accounting:credit-memo:create', 'invoice:manage'],
   // C9's submitAccountingEvent moved here with the permission. margaret.olsen
-  // is the seeded CONTROLLER and shares the operational password.
+  // holds the seeded finance_books_and_close and shares the operational password.
   // The accelerated year closes each month as the controller (harness/monthEnd.ts).
   controller: ['accounting:events:submit', 'accounting:period:close'],
 };
@@ -137,8 +163,12 @@ export interface PersonaSecurityPort {
    * credentials at the same time, which asking about a user id never did.
    */
   getEnforcedAuthorities(credentials: PersonaCredentials): Promise<string[]>;
-  getRoleIdByName(name: string): Promise<string>;
-  assignUserRole(userId: string, roleId: string): Promise<void>;
+  /** Resolves a role by its key (`getRoleByKey`), never by display name. */
+  getRoleIdByKey(key: string): Promise<string>;
+  /** Assigns the role at the given scope; the backend requires one on every assignment. */
+  assignUserRole(userId: string, roleId: string, scope: RoleAssignmentScope): Promise<void>;
+  /** The id of the location with this code, or undefined when there is none yet. */
+  findLocationIdByCode(code: string): Promise<string | undefined>;
 }
 
 export interface PersonaPeoplePort {
@@ -171,7 +201,7 @@ export class PersonaBootstrap {
   /**
    * Steps 1 and 2: confirm every configured persona resolves to a user that
    * carries the authorities its suite steps need, granting the parts persona
-   * INVENTORY_LEAD if it is the one thing missing.
+   * its role (stockroom_operations) if it is the one thing missing.
    *
    * Runs before the reference bootstrap so a misconfigured run fails in
    * seconds rather than after minutes of seeding.
@@ -197,14 +227,15 @@ export class PersonaBootstrap {
       }
 
       // The parts persona is the one the spec expects to need provisioning:
-      // on a database seeded before the operational seed grew an INVENTORY_LEAD
+      // on a database seeded before the operational seed grew a stockroom
       // user, no account holds the role. Additive assignment by id - never
       // assignUserRolesByUsername, which REPLACES the user's whole direct set.
-      if (persona === 'parts' && !user.roles.includes(PERSONA_ROLE.parts)) {
+      if (persona === 'parts' && !user.roles.map(normalizeRoleKey).includes(PERSONA_ROLE.parts)) {
         try {
-          const roleId = await this.security.getRoleIdByName(PERSONA_ROLE.parts);
-          await this.security.assignUserRole(user.id, roleId);
-          assignments.push(`${username} granted ${PERSONA_ROLE.parts}`);
+          const roleId = await this.security.getRoleIdByKey(PERSONA_ROLE.parts);
+          const scope = await this.partsScope();
+          await this.security.assignUserRole(user.id, roleId, scope);
+          assignments.push(`${username} granted ${PERSONA_ROLE.parts} at ${describeScope(scope)}`);
         } catch (error) {
           problems.push(
             `parts: "${username}" lacks ${PERSONA_ROLE.parts} and it could not be granted (${describe(error)})`,
@@ -248,6 +279,25 @@ export class PersonaBootstrap {
     }
 
     return { verified, assignments };
+  }
+
+  /**
+   * The scope the parts persona's role is granted at.
+   *
+   * The alpha seed scopes every stockroom account at its staffing location
+   * (`users.csv`: scopeKind LOCATIONS), never tenant-wide, so the grant follows
+   * suit and names the one site the suites work at. The token's `grants` claim
+   * then reaches that site and no other, which is what the suites exercise.
+   *
+   * TENANT only when that site does not exist yet: on a database the alpha packs
+   * never loaded, the reference bootstrap creates it, and that runs after this
+   * preflight (it needs the verified personas first). There is no location to
+   * name then, and a role held nowhere would reach nothing, so the grant goes
+   * tenant-wide - which still covers the site once it is created.
+   */
+  private async partsScope(): Promise<RoleAssignmentScope> {
+    const siteId = await this.security.findLocationIdByCode(SUITE_SITE_CODE);
+    return siteId ? { kind: 'LOCATIONS', locationIds: [siteId] } : { kind: 'TENANT' };
   }
 
   /**
@@ -334,6 +384,18 @@ function readPermissionClaims(accessToken: string): { permBits: string; permVer:
   return { permBits, permVer };
 }
 
+/**
+ * A role reference as the backend reads it (`RoleKeys.normalize`): trimmed, an
+ * optional `ROLE_` prefix dropped in any letter case, lower-cased.
+ */
+export function normalizeRoleKey(reference: string): string {
+  return reference.trim().replace(/^role_/i, '').toLowerCase();
+}
+
+function describeScope(scope: RoleAssignmentScope): string {
+  return scope.kind === 'TENANT' ? 'TENANT' : `LOCATIONS ${scope.locationIds.join(', ')}`;
+}
+
 function describe(error: unknown): string {
   const response = (error as { response?: Response } | undefined)?.response;
   const status = typeof response?.status === 'number' ? response.status : undefined;
@@ -355,6 +417,7 @@ export function createPersonaPorts(adminAuth: SeederAuth, tenantSlug?: string): 
   people: PersonaPeoplePort;
 } {
   const securityClient = createSecurityClient(adminAuth.buildSdkConfig('security-service'));
+  const locationClient = createLocationClient(adminAuth.buildSdkConfig('location'));
   const peopleContact = createPeopleContactClient(adminAuth.buildSdkConfig('people-contact'));
 
   return {
@@ -383,15 +446,26 @@ export function createPersonaPorts(adminAuth: SeederAuth, tenantSlug?: string): 
         });
         return decoded.permissions;
       },
-      async getRoleIdByName(name: string): Promise<string> {
-        const role = await securityClient.roleManagementApi.getRoleByName({ name });
+      async getRoleIdByKey(key: string): Promise<string> {
+        const role = await securityClient.roleManagementApi.getRoleByKey({ key });
         if (!role.id) {
-          throw new Error(`role "${name}" resolved without an id`);
+          throw new Error(`role "${key}" resolved without an id`);
         }
         return role.id;
       },
-      async assignUserRole(userId: string, roleId: string): Promise<void> {
-        await securityClient.userRoleManagementApi.assignUserRole({ userId, roleId });
+      async assignUserRole(userId: string, roleId: string, scope: RoleAssignmentScope): Promise<void> {
+        await securityClient.userRoleManagementApi.assignUserRole({
+          userId,
+          roleId,
+          assignmentScopeRequest:
+            scope.kind === 'TENANT'
+              ? { kind: AssignmentScopeRequestKindEnum.Tenant }
+              : { kind: AssignmentScopeRequestKindEnum.Locations, locationIds: new Set(scope.locationIds) },
+        });
+      },
+      async findLocationIdByCode(code: string): Promise<string | undefined> {
+        const locations = await locationClient.locationApi.listLocations();
+        return locations.find((location) => location.code === code)?.id;
       },
     },
     people: {
@@ -417,4 +491,4 @@ export function createPersonaPorts(adminAuth: SeederAuth, tenantSlug?: string): 
 }
 
 export type { CredentialedPersona, PersonaName };
-export { PERSONA_ROLE, REQUIRED_AUTHORITIES };
+export { PERSONA_ROLE, REQUIRED_AUTHORITIES, SUITE_SITE_CODE };

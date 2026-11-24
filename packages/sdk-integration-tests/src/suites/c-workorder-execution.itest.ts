@@ -120,8 +120,8 @@ describe('Suite C — workorder execution', () => {
     // part never gets a pick list, so C6 would wait for something that cannot
     // arrive.
     // Read stock as the parts clerk. getAvailabilityBySku used to require
-    // inventory:on_hand:view / :search - which INVENTORY_LEAD holds and
-    // TECHNICIAN does not - while TECHNICIAN carried inventory:availability:read
+    // inventory:on_hand:view / :search - which stockroom_operations holds and
+    // shop_floor does not - while shop_floor carried inventory:availability:read
     // that no endpoint asked for (backend #1494). That is fixed: the endpoint
     // now requires inventory:availability:read and a technician can read
     // availability. The parts clerk is kept here because stock is the parts
@@ -406,7 +406,7 @@ describe('Suite C — workorder execution', () => {
     expect(partTask?.remainingQty).toBe(PART_QUANTITY);
 
     // The manager raises the list, not the technician: createPickList requires
-    // inventory:pick_list:create, which the seeded TECHNICIAN role does not
+    // inventory:pick_list:create, which the seeded shop_floor role does not
     // carry - it holds pick_list:execute and pick_list:view. In
     // single-credential mode every persona is the admin login and this passed
     // either way; in role mode a technician here is a 403.

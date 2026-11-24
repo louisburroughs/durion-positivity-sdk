@@ -2,6 +2,7 @@
 // gives: globalSetup does not get the suites' moduleNameMapper.
 import { createSecurityClient } from '../../../sdk-security/src';
 import type { ItestConfig } from './ItestConfig';
+import type { RoleAssignmentScope } from './PersonaBootstrap';
 
 /**
  * Back-dates the credentialed personas' role windows so they cover the
@@ -36,7 +37,10 @@ const FLOOR_MARGIN_MS = 86_400_000;
  */
 export interface AssignmentWindow {
   roleId: string;
+  /** The role's key (ADR-0079), e.g. `shop_floor`. */
   roleCode: string;
+  /** Where the assignment applies (ADR-0079 phase 4). */
+  scope: RoleAssignmentScope;
   start: Date;
   end: Date | null;
 }
@@ -44,6 +48,13 @@ export interface AssignmentWindow {
 export interface RoleBridge {
   roleId: string;
   roleCode: string;
+  /**
+   * The scope of the assignment the bridge leads into. Every assignment names
+   * one, and the bridge must reach exactly what the persona holds afterwards:
+   * a tenant-wide bridge in front of a located grant would widen the persona's
+   * reach for the whole bridged span.
+   */
+  scope: RoleAssignmentScope;
   start: Date;
   end: Date;
 }
@@ -85,7 +96,13 @@ export function planRoleBridges(assignments: AssignmentWindow[], virtualStart: D
       .filter((a) => a.end !== null && a.end.getTime() <= anchor)
       .map((a) => (a.end as Date).getTime());
     const start = Math.max(anchor - FLOOR_MARGIN_MS, ...endedBefore);
-    bridges.push({ roleId, roleCode: earliest.roleCode, start: new Date(start), end: earliest.start });
+    bridges.push({
+      roleId,
+      roleCode: earliest.roleCode,
+      scope: earliest.scope,
+      start: new Date(start),
+      end: earliest.start,
+    });
   }
   return bridges;
 }
@@ -144,8 +161,17 @@ export function formatLocalDateTime(value: Date): string {
 interface RawAssignment {
   roleId: string;
   roleCode: string;
+  scope: { kind: 'TENANT' | 'LOCATIONS'; nodes?: Array<{ id: string }> };
   effectiveStartDate: string;
   effectiveEndDate?: string | null;
+}
+
+/** An assignment's scope as listed (`AssignmentScopeDto`) in the shape it is written back. */
+export function scopeFromListing(scope: RawAssignment['scope']): RoleAssignmentScope {
+  if (scope.kind === 'TENANT') {
+    return { kind: 'TENANT' };
+  }
+  return { kind: 'LOCATIONS', locationIds: (scope.nodes ?? []).map((node) => node.id) };
 }
 
 /**
@@ -154,7 +180,7 @@ interface RawAssignment {
  * (ADR-0073), so the old direct header-auth path answers 401.
  *
  * This runs before starter activation, so the admin must already log in: its
- * role is seeded back-dated (admin.alpha holds ADMIN from 2024-01-01), which is
+ * role is seeded back-dated (admin.alpha holds full_access from 2024-01-01), which is
  * what keeps it usable on a backend anchored a year back. The token is minted
  * here, used for this stage only, and dropped - activation revokes an
  * activated account's tokens anyway.
@@ -210,6 +236,7 @@ export function createRoleWindowPort(config: ItestConfig): RoleWindowPort {
       return rows.map((row) => ({
         roleId: row.roleId,
         roleCode: row.roleCode,
+        scope: scopeFromListing(row.scope),
         start: parseLocalDateTime(row.effectiveStartDate),
         end: row.effectiveEndDate ? parseLocalDateTime(row.effectiveEndDate) : null,
       }));
@@ -222,6 +249,7 @@ export function createRoleWindowPort(config: ItestConfig): RoleWindowPort {
         body: JSON.stringify({
           userId,
           roleId: bridge.roleId,
+          scope: bridge.scope,
           effectiveStartDate: formatLocalDateTime(bridge.start),
           effectiveEndDate: formatLocalDateTime(bridge.end),
         }),

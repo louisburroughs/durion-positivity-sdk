@@ -216,8 +216,8 @@ describe('Suite A — appointments', () => {
       refs: context.referenceCache,
     };
 
-    // The advisor owns the customer (crm:party:create); vehicle registration is
-    // still ADMIN-only, so the fixture is split across two personas.
+    // The advisor owns the customer (crm:party:create); vehicle registration stays
+    // with the admin (full_access) login, so the fixture is split across two personas.
     customer = await createPersonAccount(advisor, ctx);
     vehicleId = await createVehicle(admin, ctx, customer.partyId);
     serviceRequestIds = context.referenceCache.serviceEntityIds.slice(0, 2);

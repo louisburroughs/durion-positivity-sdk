@@ -324,7 +324,7 @@ describe('Suite H — service position and technician assignment', () => {
       401,
       403,
     );
-    console.log(`[H9] TECHNICIAN refused workorder:position:assign with HTTP ${status}`);
+    console.log(`[H9] shop_floor refused workorder:position:assign with HTTP ${status}`);
   }, 120_000);
 
   it('H10 — W1 is left open with a technician and the run\'s bay', async () => {

@@ -172,7 +172,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     leadDaysMax: accel.appointmentLeadDaysMax,
     customerFor: async () => {
       const customer = await createPersonAccount(as.advisor, ctx);
-      // Vehicle registration is still ADMIN-only, so the fixture is split across
+      // Vehicle registration stays with the admin (full_access) login, so the fixture is split across
       // two personas — the same split Suite A makes.
       const vehicleId = await createVehicle(as.admin, ctx, customer.partyId);
       return { partyId: customer.partyId, fullName: customer.fullName, vehicleId };

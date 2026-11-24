@@ -22,7 +22,7 @@
  * into a PERIOD_CLOSE_BANKREC_EXCEPTION audit row, and the policy itself stays the
  * backend's default instead of a tenant setting that a reset loses. The exception is
  * ignored under ADVISORY and refused under REQUIRED. It needs accounting:period:close
- * and accounting:period:override, which the CONTROLLER role holds; without the second
+ * and accounting:period:override, which the finance_books_and_close role holds; without the second
  * the close answers 403 PERIOD_CLOSE_EXCEPTION_NOT_PERMITTED, and the run stops on it.
  */
 import { formatError, httpStatusOf } from './http';
