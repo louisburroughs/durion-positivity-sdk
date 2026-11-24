@@ -77,7 +77,7 @@ export class TreadDesignEnrichmentApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:tread_design:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:tread_design:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -120,7 +120,7 @@ export class TreadDesignEnrichmentApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:tread_design:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:tread_design:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -172,7 +172,7 @@ export class TreadDesignEnrichmentApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:tread_design:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:tread_design:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -224,7 +224,7 @@ export class TreadDesignEnrichmentApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:tread_design:resolve"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:tread_design:resolve"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

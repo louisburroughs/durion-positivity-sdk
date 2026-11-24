@@ -250,7 +250,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:edit", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -303,7 +303,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["pricing:override:approve"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "pricing:override:approve"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -349,7 +349,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:location_price_override:write"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:location_price_override:write"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -395,7 +395,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:create"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:create"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -454,7 +454,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -504,7 +504,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:location_price_override:read"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:location_price_override:read"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -547,7 +547,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:non_inventory:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:non_inventory:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -590,7 +590,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -633,7 +633,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -687,7 +687,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -730,7 +730,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -773,7 +773,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:service_type:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -825,7 +825,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:service_type:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -868,7 +868,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:non_inventory:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:non_inventory:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -936,7 +936,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -979,7 +979,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1022,7 +1022,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1065,7 +1065,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:service_type:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1117,7 +1117,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["pricing:override:approve"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "pricing:override:approve"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1166,7 +1166,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:fact:replay"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:fact:replay"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1234,7 +1234,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1278,7 +1278,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:service_type:view"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1330,7 +1330,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:edit"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1383,7 +1383,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:edit", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1436,7 +1436,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:product:edit"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1482,7 +1482,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:guardrail_policy:write"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:guardrail_policy:write"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

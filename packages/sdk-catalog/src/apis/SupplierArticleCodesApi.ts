@@ -59,7 +59,7 @@ export class SupplierArticleCodesApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["catalog:fact:replay"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:fact:replay"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
