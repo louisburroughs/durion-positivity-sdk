@@ -38,6 +38,18 @@ export interface UserRoleDto {
      */
     roleCode?: string;
     /**
+     * Where the role is held: TENANT (at every location) or LOCATIONS (at scopeLocationIds and the locations beneath each)
+     * @type {string}
+     * @memberof UserRoleDto
+     */
+    scopeKind?: UserRoleDtoScopeKindEnum;
+    /**
+     * Ids of the locations the role is held at, as assigned. Empty when scopeKind is TENANT
+     * @type {Array<string>}
+     * @memberof UserRoleDto
+     */
+    scopeLocationIds?: Array<string>;
+    /**
      * Inclusive start of the effective window
      * @type {Date}
      * @memberof UserRoleDto
@@ -50,6 +62,16 @@ export interface UserRoleDto {
      */
     userId?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum UserRoleDtoScopeKindEnum {
+    Tenant = 'TENANT',
+    Locations = 'LOCATIONS'
+}
+
 
 /**
  * Check if a given object implements the UserRoleDto interface.
@@ -71,6 +93,8 @@ export function UserRoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'active': json['active'] == null ? undefined : json['active'],
         'endDate': json['endDate'] == null ? undefined : (new Date(json['endDate'])),
         'roleCode': json['roleCode'] == null ? undefined : json['roleCode'],
+        'scopeKind': json['scopeKind'] == null ? undefined : json['scopeKind'],
+        'scopeLocationIds': json['scopeLocationIds'] == null ? undefined : json['scopeLocationIds'],
         'startDate': json['startDate'] == null ? undefined : (new Date(json['startDate'])),
         'userId': json['userId'] == null ? undefined : json['userId'],
     };
@@ -85,6 +109,8 @@ export function UserRoleDtoToJSON(value?: UserRoleDto | null): any {
         'active': value['active'],
         'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString()),
         'roleCode': value['roleCode'],
+        'scopeKind': value['scopeKind'],
+        'scopeLocationIds': value['scopeLocationIds'],
         'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString()),
         'userId': value['userId'],
     };

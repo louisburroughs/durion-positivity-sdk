@@ -4,23 +4,27 @@ import {
   formatLocalDateTime,
   parseLocalDateTime,
   planRoleBridges,
+  scopeFromListing,
   type AssignmentWindow,
   type RoleBridge,
   type RoleWindowPort,
 } from './acceleratedRoleWindows';
+import type { RoleAssignmentScope } from './PersonaBootstrap';
 
 const VIRTUAL_START = new Date('2025-09-18T21:26:58Z');
 const FLOOR = new Date('2025-09-17T21:26:58Z');
 const GRANTED = new Date('2026-09-14T11:49:28.591Z');
 
-function window(roleId: string, start: string, end: string | null = null): AssignmentWindow {
-  return { roleId, roleCode: roleId.toUpperCase(), start: new Date(start), end: end === null ? null : new Date(end) };
+const AT_SITE: RoleAssignmentScope = { kind: 'LOCATIONS', locationIds: ['site-1'] };
+
+function window(roleId: string, start: string, end: string | null = null, scope: RoleAssignmentScope = AT_SITE): AssignmentWindow {
+  return { roleId, roleCode: roleId, scope, start: new Date(start), end: end === null ? null : new Date(end) };
 }
 
 describe('planRoleBridges', () => {
   it('bridges a role granted after the anchor, from a day below it to the grant', () => {
     expect(planRoleBridges([window('tech', GRANTED.toISOString())], VIRTUAL_START)).toEqual([
-      { roleId: 'tech', roleCode: 'TECH', start: FLOOR, end: GRANTED },
+      { roleId: 'tech', roleCode: 'tech', scope: AT_SITE, start: FLOOR, end: GRANTED },
     ]);
   });
 
@@ -55,12 +59,36 @@ describe('planRoleBridges', () => {
     expect(bridge.start).toEqual(new Date(endedAt));
   });
 
+  it('bridges at the scope of the assignment it leads into, never wider', () => {
+    const tenantWide = { kind: 'TENANT' as const };
+    const [bridge] = planRoleBridges(
+      [
+        window('tech', '2025-01-01T00:00:00Z', '2025-06-01T00:00:00Z', tenantWide),
+        window('tech', GRANTED.toISOString(), null, { kind: 'LOCATIONS', locationIds: ['site-2'] }),
+      ],
+      VIRTUAL_START,
+    );
+    expect(bridge.scope).toEqual({ kind: 'LOCATIONS', locationIds: ['site-2'] });
+  });
+
   it('plans each role on its own', () => {
     const bridges = planRoleBridges(
       [window('tech', GRANTED.toISOString()), window('lead', '2025-01-01T00:00:00Z')],
       VIRTUAL_START,
     );
     expect(bridges.map((b) => b.roleId)).toEqual(['tech']);
+  });
+});
+
+describe('scopeFromListing', () => {
+  it('reads a tenant-wide assignment', () => {
+    expect(scopeFromListing({ kind: 'TENANT', nodes: [] })).toEqual({ kind: 'TENANT' });
+  });
+
+  it('reads a located assignment as the ids of its nodes, the shape a write takes', () => {
+    expect(
+      scopeFromListing({ kind: 'LOCATIONS', nodes: [{ id: 'loc-1' }, { id: 'loc-2' }] }),
+    ).toEqual({ kind: 'LOCATIONS', locationIds: ['loc-1', 'loc-2'] });
   });
 });
 
@@ -117,18 +145,19 @@ describe('AcceleratedRoleWindows', () => {
 
   it('bridges only the configured accounts whose roles start after the anchor', async () => {
     const port = fakePort({
-      'u-admin': [window('sysadmin', '2025-01-01T00:00:00Z')],
-      'u-tech': [window('technician', GRANTED.toISOString())],
-      'u-parts': [window('inventory_lead', GRANTED.toISOString())],
-      'u-other': [window('technician', GRANTED.toISOString())],
+      'u-admin': [window('full_access', '2025-01-01T00:00:00Z', null, { kind: 'TENANT' })],
+      'u-tech': [window('shop_floor', GRANTED.toISOString())],
+      'u-parts': [window('stockroom_operations', GRANTED.toISOString())],
+      'u-other': [window('shop_floor', GRANTED.toISOString())],
     });
 
     const { bridged } = await new AcceleratedRoleWindows(config, port).run(VIRTUAL_START);
 
     expect(port.created.map((c) => c.userId)).toEqual(['u-tech', 'u-parts']);
+    expect(port.created.map((c) => c.bridge.scope)).toEqual([AT_SITE, AT_SITE]);
     expect(bridged).toEqual([
-      `kyle.brennan TECHNICIAN from ${FLOOR.toISOString()} to ${GRANTED.toISOString()}`,
-      `gloria.mendez INVENTORY_LEAD from ${FLOOR.toISOString()} to ${GRANTED.toISOString()}`,
+      `kyle.brennan shop_floor from ${FLOOR.toISOString()} to ${GRANTED.toISOString()}`,
+      `gloria.mendez stockroom_operations from ${FLOOR.toISOString()} to ${GRANTED.toISOString()}`,
     ]);
   });
 

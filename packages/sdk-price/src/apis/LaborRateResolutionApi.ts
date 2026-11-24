@@ -54,7 +54,7 @@ export class LaborRateResolutionApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "pricing:labor_rate:quote"]);
+            const tokenString = await token("bearerAuth", ["pricing:labor_rate:quote"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

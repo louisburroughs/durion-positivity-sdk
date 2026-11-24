@@ -287,7 +287,7 @@ describe('AcceleratedJob — who finalizes', () => {
       invoice: {
         invoiceApi: {
           async getInvoice() {
-            // SERVICE_ADVISOR holds no invoice:invoice:view; a read here would 403.
+            // The advisor role has not always held invoice:invoice:view; a read here could 403.
             throw new Error(`${name} read the invoice`);
           },
           async finalizeInvoice() {

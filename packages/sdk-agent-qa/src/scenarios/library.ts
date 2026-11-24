@@ -33,7 +33,7 @@ const daily: ScenarioInput[] = [
     persona: 'manager',
     kind: 'operations',
     prepare: 'self',
-    // The register is the advisor's (open-register, close-shop): LOCATION_MANAGER holds no order:session:* grant.
+    // The register is the advisor's (open-register, close-shop): location_management holds no order:session:* grant.
     goal:
       'It is opening time. Review the dispatch board and the shop dashboard for this location. Then make sure you are ' +
       'clocked in: check your current work session and start one if none is open.',

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AssignmentScopeRequest } from './AssignmentScopeRequest';
+import {
+    AssignmentScopeRequestFromJSON,
+    AssignmentScopeRequestFromJSONTyped,
+    AssignmentScopeRequestToJSON,
+} from './AssignmentScopeRequest';
+
 /**
  * 
  * @export
@@ -32,6 +39,12 @@ export interface CreateUserRequest {
      */
     roles: Set<string>;
     /**
+     * 
+     * @type {AssignmentScopeRequest}
+     * @memberof CreateUserRequest
+     */
+    scope: AssignmentScopeRequest;
+    /**
      * Unique login name for the new account
      * @type {string}
      * @memberof CreateUserRequest
@@ -44,6 +57,7 @@ export interface CreateUserRequest {
  */
 export function instanceOfCreateUserRequest(value: object): boolean {
     if (!('roles' in value)) return false;
+    if (!('scope' in value)) return false;
     if (!('username' in value)) return false;
     return true;
 }
@@ -60,6 +74,7 @@ export function CreateUserRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'email': json['email'] == null ? undefined : json['email'],
         'roles': json['roles'],
+        'scope': AssignmentScopeRequestFromJSON(json['scope']),
         'username': json['username'],
     };
 }
@@ -72,6 +87,7 @@ export function CreateUserRequestToJSON(value?: CreateUserRequest | null): any {
         
         'email': value['email'],
         'roles': Array.from(value['roles'] as Set<any>),
+        'scope': AssignmentScopeRequestToJSON(value['scope']),
         'username': value['username'],
     };
 }

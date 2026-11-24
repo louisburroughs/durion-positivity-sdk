@@ -346,7 +346,7 @@ async function book(
     let customer = spareCustomers.get(siteId);
     if (!customer) {
       const created = await createPersonAccount(crew.advisor, ctx);
-      // Vehicle registration is ADMIN-only, the same split Suite A makes.
+      // Vehicle registration stays with the admin (full_access) login, the same split Suite A makes.
       customer = { partyId: created.partyId, vehicleId: await createVehicle(crew.admin, ctx, created.partyId) };
       spareCustomers.set(siteId, customer);
     }

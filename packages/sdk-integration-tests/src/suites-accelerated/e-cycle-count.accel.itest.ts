@@ -79,7 +79,7 @@ const itWithPartsPersona = PARTS_CONFIGURED ? it : it.skip;
  * a Flyway-seeded row.
  *
  * The personas follow the seeded grants. The alpha data load grants
- * `inventory:cycle_count:initiate|view|complete` to INVENTORY_LEAD, so the parts
+ * `inventory:cycle_count:initiate|view|complete` to stockroom_operations, so the parts
  * clerk who does the physical counting plans the count (E1, pinned by E2); the
  * rest of the count still runs as the admin. See the RBAC note in the README.
  */
@@ -192,7 +192,7 @@ describe('Suite E — cycle counting', () => {
   }, 120_000);
 
   // The alpha data load (scripts/fixtures/seed/alpha/security/role-permissions.csv)
-  // grants INVENTORY_LEAD inventory:cycle_count:initiate, :view and :complete, so
+  // grants stockroom_operations inventory:cycle_count:initiate, :view and :complete, so
   // the parts clerk who counts stock in the building plans the count: E1 creates
   // the plan as the clerk. This pins down that the clerk's own grant is what let
   // it, rather than the admin fallback a single-credential run would use. A
@@ -205,7 +205,7 @@ describe('Suite E — cycle counting', () => {
     const tasks = await call('listCycleCountPlanTasks', () =>
       parts.inventory.cycleCountPlansApi.listCycleCountPlanTasks({ planId }),
     );
-    console.log(`[E2] INVENTORY_LEAD planned ${planId} and reads its ${tasks.length} task(s)`);
+    console.log(`[E2] stockroom_operations planned ${planId} and reads its ${tasks.length} task(s)`);
     expect(Array.isArray(tasks)).toBe(true);
   }, 120_000);
 
@@ -361,7 +361,7 @@ describe('Suite E — cycle counting', () => {
       401,
       403,
     );
-    console.log(`[E9] INVENTORY_LEAD refused adjustment:approve with HTTP ${status}`);
+    console.log(`[E9] stockroom_operations refused adjustment:approve with HTTP ${status}`);
   }, 120_000);
 
   it('E10 — approving the adjustment posts it to the ledger', async () => {
@@ -471,9 +471,9 @@ describe('Suite E — cycle counting', () => {
       401,
       403,
     );
-    console.log(`[E13] TECHNICIAN refused cycle_count:view with ${read} and :complete with ${write}`);
+    console.log(`[E13] shop_floor refused cycle_count:view with ${read} and :complete with ${write}`);
 
-    // The clerk who raised the adjustment can read it back: INVENTORY_LEAD holds
+    // The clerk who raised the adjustment can read it back: stockroom_operations holds
     // inventory:adjustment:view alongside its cycle_count grants.
     const seen = await call('getCycleCountAdjustment', () =>
       parts.inventory.cycleCountAdjustmentsApi.getCycleCountAdjustment({ adjustmentId }),
@@ -768,7 +768,7 @@ describe('Suite E — cycle counting', () => {
         401,
         403,
       );
-      console.log(`[E18] TECHNICIAN refused createScrap with ${refused}`);
+      console.log(`[E18] shop_floor refused createScrap with ${refused}`);
     }, 120_000);
   });
 

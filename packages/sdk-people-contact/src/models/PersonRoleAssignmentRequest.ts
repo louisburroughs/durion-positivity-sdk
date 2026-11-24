@@ -26,11 +26,23 @@ export interface PersonRoleAssignmentRequest {
      */
     endDate?: Date;
     /**
+     * Ids of the locations the role is held at. Required and non-empty when scopeKind is LOCATIONS; omitted or empty when it is TENANT. At most 32: a role held at a location is held at everything beneath it, so name the parent instead
+     * @type {Set<string>}
+     * @memberof PersonRoleAssignmentRequest
+     */
+    locationIds?: Set<string>;
+    /**
      * Key of the role to assign, as listAssignableRoles returns it in key and code. A role's display name is not accepted
      * @type {string}
      * @memberof PersonRoleAssignmentRequest
      */
     roleCode: string;
+    /**
+     * Where the role is held: TENANT (at every location) or LOCATIONS (at locationIds and the locations beneath each)
+     * @type {string}
+     * @memberof PersonRoleAssignmentRequest
+     */
+    scopeKind: PersonRoleAssignmentRequestScopeKindEnum;
     /**
      * Date and time the assignment becomes effective
      * @type {Date}
@@ -40,10 +52,21 @@ export interface PersonRoleAssignmentRequest {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum PersonRoleAssignmentRequestScopeKindEnum {
+    Tenant = 'TENANT',
+    Locations = 'LOCATIONS'
+}
+
+
+/**
  * Check if a given object implements the PersonRoleAssignmentRequest interface.
  */
 export function instanceOfPersonRoleAssignmentRequest(value: object): boolean {
     if (!('roleCode' in value)) return false;
+    if (!('scopeKind' in value)) return false;
     return true;
 }
 
@@ -58,7 +81,9 @@ export function PersonRoleAssignmentRequestFromJSONTyped(json: any, ignoreDiscri
     return {
         
         'endDate': json['endDate'] == null ? undefined : (new Date(json['endDate'])),
+        'locationIds': json['locationIds'] == null ? undefined : json['locationIds'],
         'roleCode': json['roleCode'],
+        'scopeKind': json['scopeKind'],
         'startDate': json['startDate'] == null ? undefined : (new Date(json['startDate'])),
     };
 }
@@ -70,7 +95,9 @@ export function PersonRoleAssignmentRequestToJSON(value?: PersonRoleAssignmentRe
     return {
         
         'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString()),
+        'locationIds': value['locationIds'] == null ? undefined : Array.from(value['locationIds'] as Set<any>),
         'roleCode': value['roleCode'],
+        'scopeKind': value['scopeKind'],
         'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString()),
     };
 }
