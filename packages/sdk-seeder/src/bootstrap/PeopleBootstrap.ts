@@ -18,9 +18,9 @@ interface EmployeeSeedDefinition {
   preferredName?: string;
   hireDate: Date;
   /**
-   * The code of the job title the seed is staffed in. The seeder used to send it
-   * as a free-text staffing role; staffing now names a title by id (ADR-0079
-   * section 7), so the title is found by this code or created under it.
+   * The free-text staffing role the seed used to send. Staffing now names a job
+   * title by id (ADR-0079 section 7); `starterTitleFor` says which of the
+   * backend's starter titles the role is staffed in.
    */
   role: string;
   bucket: 'technicians' | 'serviceWriters' | 'manager' | 'partsClerk';
@@ -94,32 +94,36 @@ const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
   },
 ];
 
-/**
- * The position a seed's title fills when the seeder has to create it, from the
- * role string the seed used to send: the mapping pos-people applied to the free
- * text roles it held before staffing named a job title.
- */
-export function positionTypeFor(role: string): CreateJobRoleRequestPositionTypeEnum {
-  switch (role) {
-    case 'TECHNICIAN':
-    case 'LEAD':
-    case 'SHOP_FOREMAN':
-      return CreateJobRoleRequestPositionTypeEnum.Technician;
-    case 'SERVICE_ADVISOR':
-    case 'RECEPTIONIST':
-      return CreateJobRoleRequestPositionTypeEnum.ServiceAdvisor;
-    case 'MANAGER':
-    case 'SHOP_MANAGER':
-      return CreateJobRoleRequestPositionTypeEnum.Management;
-    default:
-      return CreateJobRoleRequestPositionTypeEnum.Other;
-  }
+/** A job title the backend seeds on tenant creation (pos-people `StarterJobTitles`). */
+export interface StarterJobTitle {
+  code: string;
+  name: string;
+  positionType: CreateJobRoleRequestPositionTypeEnum;
 }
 
-/** `SERVICE_WRITER` -> `Service writer`, the name a created title is given. */
-function titleNameFor(code: string): string {
-  const words = code.toLowerCase().split('_').filter(Boolean).join(' ');
-  return words.charAt(0).toUpperCase() + words.slice(1);
+/** The starter title each seed role is staffed in. */
+const STARTER_TITLE_BY_ROLE: Readonly<Record<string, StarterJobTitle>> = {
+  TECHNICIAN: { code: 'TECHNICIAN', name: 'Technician', positionType: CreateJobRoleRequestPositionTypeEnum.Technician },
+  SERVICE_WRITER: {
+    code: 'SERVICE_ADVISOR',
+    name: 'Service advisor',
+    positionType: CreateJobRoleRequestPositionTypeEnum.ServiceAdvisor,
+  },
+  PARTS_CLERK: { code: 'PARTS_COUNTER', name: 'Parts counter', positionType: CreateJobRoleRequestPositionTypeEnum.Parts },
+  MANAGER: {
+    code: 'LOCATION_MANAGER',
+    name: 'Location manager',
+    positionType: CreateJobRoleRequestPositionTypeEnum.Management,
+  },
+};
+
+/** The starter job title a seed role is staffed in. */
+export function starterTitleFor(role: string): StarterJobTitle {
+  const title = STARTER_TITLE_BY_ROLE[role];
+  if (!title) {
+    throw new Error(`PeopleBootstrap: no starter job title for seed role ${role}`);
+  }
+  return title;
 }
 
 /**
@@ -178,10 +182,7 @@ export class PeopleBootstrap {
     const employeeIndex = await this.buildEmployeeIndex();
     const jobRoleIds = await this.ensureJobTitles(
       () => jobRoleApi.listJobRoles(),
-      (code) =>
-        jobRoleApi.createJobRole({
-          createJobRoleRequest: { code, name: titleNameFor(code), positionType: positionTypeFor(code) },
-        }),
+      (title) => jobRoleApi.createJobRole({ createJobRoleRequest: { ...title } }),
     );
 
     const employees: EmployeeRefs = {
@@ -263,22 +264,27 @@ export class PeopleBootstrap {
   }
 
   /**
-   * The id of each seed's job title, by code. The tenant's own title is used
-   * when it has one with the code (the backend seeds its starter titles, among
-   * them TECHNICIAN, on tenant creation); otherwise the seeder creates it.
+   * The id of each seed role's job title, by seed role. The backend seeds the
+   * starter titles on tenant creation, so the tenant's own title is used when it
+   * holds the code, in any case; the seeder creates it, with the starter name
+   * and position, only when the tenant has none.
    */
   private async ensureJobTitles(
     listTitles: () => Promise<JobRoleDto[]>,
-    createTitle: (code: string) => Promise<JobRoleDto>,
+    createTitle: (title: StarterJobTitle) => Promise<JobRoleDto>,
   ): Promise<Map<string, string>> {
-    const byCode = new Map((await listTitles()).map((title) => [title.code, title.id]));
-    for (const code of new Set(EMPLOYEE_SEEDS.map((seed) => seed.role))) {
-      if (!byCode.has(code)) {
-        const created = await createTitle(code);
-        byCode.set(code, created.id);
+    const idByCode = new Map((await listTitles()).map((title) => [title.code.toUpperCase(), title.id]));
+    const idByRole = new Map<string, string>();
+    for (const role of new Set(EMPLOYEE_SEEDS.map((seed) => seed.role))) {
+      const title = starterTitleFor(role);
+      let id = idByCode.get(title.code);
+      if (!id) {
+        id = (await createTitle(title)).id;
+        idByCode.set(title.code, id);
       }
+      idByRole.set(role, id);
     }
-    return byCode;
+    return idByRole;
   }
 
   private async buildEmployeeIndex(): Promise<Map<string, string>> {

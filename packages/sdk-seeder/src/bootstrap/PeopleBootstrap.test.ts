@@ -1,6 +1,6 @@
 import { createPeopleClient, type JobRoleRefDto, type StaffingAssignmentResponse } from '@durion-sdk/people';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
-import { calendarDateIn, isEffectiveFrom, PeopleBootstrap, positionTypeFor } from './PeopleBootstrap';
+import { calendarDateIn, isEffectiveFrom, PeopleBootstrap, starterTitleFor } from './PeopleBootstrap';
 
 jest.mock('@durion-sdk/people', () => ({
   ...jest.requireActual('@durion-sdk/people'),
@@ -37,12 +37,18 @@ describe('calendarDateIn', () => {
   });
 });
 
-describe('positionTypeFor', () => {
-  it('maps the old staffing role strings to a position', () => {
-    expect(['TECHNICIAN', 'LEAD', 'SHOP_FOREMAN'].map(positionTypeFor)).toEqual(['TECHNICIAN', 'TECHNICIAN', 'TECHNICIAN']);
-    expect(['SERVICE_ADVISOR', 'RECEPTIONIST'].map(positionTypeFor)).toEqual(['SERVICE_ADVISOR', 'SERVICE_ADVISOR']);
-    expect(['MANAGER', 'SHOP_MANAGER'].map(positionTypeFor)).toEqual(['MANAGEMENT', 'MANAGEMENT']);
-    expect(['SERVICE_WRITER', 'PARTS_CLERK', 'ANYTHING'].map(positionTypeFor)).toEqual(['OTHER', 'OTHER', 'OTHER']);
+describe('starterTitleFor', () => {
+  it('staffs each seed role in one of the backend\'s starter titles', () => {
+    expect(['TECHNICIAN', 'SERVICE_WRITER', 'PARTS_CLERK', 'MANAGER'].map((role) => starterTitleFor(role))).toEqual([
+      { code: 'TECHNICIAN', name: 'Technician', positionType: 'TECHNICIAN' },
+      { code: 'SERVICE_ADVISOR', name: 'Service advisor', positionType: 'SERVICE_ADVISOR' },
+      { code: 'PARTS_COUNTER', name: 'Parts counter', positionType: 'PARTS' },
+      { code: 'LOCATION_MANAGER', name: 'Location manager', positionType: 'MANAGEMENT' },
+    ]);
+  });
+
+  it('refuses a role it has no title for', () => {
+    expect(() => starterTitleFor('JANITOR')).toThrow(/no starter job title for seed role JANITOR/);
   });
 });
 
@@ -85,9 +91,13 @@ describe('PeopleBootstrap staffing', () => {
       listStaffingAssignments: jest.fn(async ({ personId }: { personId: string }) => assignments(personId)),
       createStaffingAssignment: jest.fn().mockResolvedValue(assignment()),
     };
-    // The tenant holds only the starter TECHNICIAN title; the others are created.
+    // The tenant holds the starter TECHNICIAN and SERVICE_ADVISOR titles, the
+    // latter in another case; the other two are created.
     const jobRoleApi = {
-      listJobRoles: jest.fn().mockResolvedValue([{ id: 'title-TECHNICIAN', code: 'TECHNICIAN' }]),
+      listJobRoles: jest.fn().mockResolvedValue([
+        { id: 'title-TECHNICIAN', code: 'TECHNICIAN' },
+        { id: 'title-SERVICE_ADVISOR', code: 'service_advisor' },
+      ]),
       createJobRole: jest.fn(async ({ createJobRoleRequest }: { createJobRoleRequest: { code: string } }) => ({
         id: `title-${createJobRoleRequest.code}`,
         code: createJobRoleRequest.code,
@@ -112,11 +122,11 @@ describe('PeopleBootstrap staffing', () => {
       'person-EMP-M001': 'MANAGER',
       'person-EMP-P001': 'PARTS_CLERK',
     };
-    const code = roles[personId];
+    const starter = starterTitleFor(roles[personId]);
     return [
       assignment({
         personId,
-        jobRole: title(code, positionTypeFor(code)),
+        jobRole: title(starter.code, starter.positionType),
         effectiveFrom: new Date(from),
       }),
     ];
@@ -133,21 +143,35 @@ describe('PeopleBootstrap staffing', () => {
     expect(result.employees.technicians).toHaveLength(3);
   });
 
-  it('uses the tenant\'s title when it has the code and creates the ones it lacks', async () => {
+  it('uses the tenant\'s title when it has the code, in any case, and creates only the ones it lacks', async () => {
     const api = mockPeople(holding('2024-01-01'));
 
     await run();
 
-    expect(api.createJobRole).toHaveBeenCalledTimes(3);
+    expect(api.createJobRole).toHaveBeenCalledTimes(2);
     expect(api.createJobRole).toHaveBeenCalledWith({
-      createJobRoleRequest: { code: 'SERVICE_WRITER', name: 'Service writer', positionType: 'OTHER' },
+      createJobRoleRequest: { code: 'PARTS_COUNTER', name: 'Parts counter', positionType: 'PARTS' },
     });
     expect(api.createJobRole).toHaveBeenCalledWith({
-      createJobRoleRequest: { code: 'MANAGER', name: 'Manager', positionType: 'MANAGEMENT' },
+      createJobRoleRequest: { code: 'LOCATION_MANAGER', name: 'Location manager', positionType: 'MANAGEMENT' },
     });
-    expect(api.createJobRole).not.toHaveBeenCalledWith({
-      createJobRoleRequest: expect.objectContaining({ code: 'TECHNICIAN' }),
-    });
+    expect(api.createStaffingAssignment).not.toHaveBeenCalled();
+  });
+
+  it('staffs a service writer in the tenant\'s service advisor title', async () => {
+    const api = mockPeople(() => []);
+
+    await run();
+
+    expect(api.createStaffingAssignment).toHaveBeenCalledWith(
+      {
+        createStaffingAssignmentRequest: expect.objectContaining({
+          personId: 'person-EMP-SW001',
+          jobRoleId: 'title-SERVICE_ADVISOR',
+        }),
+      },
+      expect.anything(),
+    );
   });
 
   it('does not count an assignment in another title as the seed\'s staffing', async () => {
