@@ -78,7 +78,6 @@ export * from './RoleUpdateRequest';
 export * from './SelfRegistrationRequest';
 export * from './SelfRegistrationResponse';
 export * from './SelfRegistrationReviewCaseResponse';
-export * from './SendActivationMessageRequest';
 export * from './SortObject';
 export * from './SuggestedAlternative';
 export * from './TenantMeResponse';
