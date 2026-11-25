@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A tenant-defined job role, e.g. 'Lead Technician' or 'Parts Counter'
+ * A tenant-defined job title, e.g. 'Lead Technician' or 'Parts Counter': the position it fills and the chatbot persona of the person who holds it. HR master data; it grants no access.
  * @export
  * @interface JobRoleDto
  */
@@ -56,12 +56,50 @@ export interface JobRoleDto {
      */
     name: string;
     /**
+     * Chatbot persona: what the holder works on; absent means derived from the description
+     * @type {string}
+     * @memberof JobRoleDto
+     */
+    personaFocus?: string;
+    /**
+     * Chatbot persona: who the holder is, in the second person; absent means derived from the name
+     * @type {string}
+     * @memberof JobRoleDto
+     */
+    personaTitle?: string;
+    /**
+     * Chatbot persona: how to speak to the holder; absent means a neutral default
+     * @type {string}
+     * @memberof JobRoleDto
+     */
+    personaTone?: string;
+    /**
+     * The position this title fills; dispatch, staffing targets and shift rules key on it, never on the code or name
+     * @type {string}
+     * @memberof JobRoleDto
+     */
+    positionType: JobRoleDtoPositionTypeEnum;
+    /**
      * 
      * @type {Date}
      * @memberof JobRoleDto
      */
     updatedAt: Date;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum JobRoleDtoPositionTypeEnum {
+    Technician = 'TECHNICIAN',
+    ServiceAdvisor = 'SERVICE_ADVISOR',
+    Parts = 'PARTS',
+    Management = 'MANAGEMENT',
+    Accounting = 'ACCOUNTING',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the JobRoleDto interface.
@@ -72,6 +110,7 @@ export function instanceOfJobRoleDto(value: object): boolean {
     if (!('createdAt' in value)) return false;
     if (!('id' in value)) return false;
     if (!('name' in value)) return false;
+    if (!('positionType' in value)) return false;
     if (!('updatedAt' in value)) return false;
     return true;
 }
@@ -92,6 +131,10 @@ export function JobRoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'description': json['description'] == null ? undefined : json['description'],
         'id': json['id'],
         'name': json['name'],
+        'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
+        'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
+        'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
+        'positionType': json['positionType'],
         'updatedAt': (new Date(json['updatedAt'])),
     };
 }
@@ -108,6 +151,10 @@ export function JobRoleDtoToJSON(value?: JobRoleDto | null): any {
         'description': value['description'],
         'id': value['id'],
         'name': value['name'],
+        'personaFocus': value['personaFocus'],
+        'personaTitle': value['personaTitle'],
+        'personaTone': value['personaTone'],
+        'positionType': value['positionType'],
         'updatedAt': ((value['updatedAt']).toISOString()),
     };
 }

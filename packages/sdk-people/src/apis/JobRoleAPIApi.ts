@@ -18,6 +18,7 @@ import type {
   ApiError,
   CreateJobRoleRequest,
   JobRoleDto,
+  UpdateJobRoleRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -26,10 +27,17 @@ import {
     CreateJobRoleRequestToJSON,
     JobRoleDtoFromJSON,
     JobRoleDtoToJSON,
+    UpdateJobRoleRequestFromJSON,
+    UpdateJobRoleRequestToJSON,
 } from '../models/index';
 
 export interface CreateJobRoleOperationRequest {
     createJobRoleRequest: CreateJobRoleRequest;
+}
+
+export interface UpdateJobRoleOperationRequest {
+    id: string;
+    updateJobRoleRequest: UpdateJobRoleRequest;
 }
 
 /**
@@ -38,7 +46,7 @@ export interface CreateJobRoleOperationRequest {
 export class JobRoleAPIApi extends runtime.BaseAPI {
 
     /**
-     * Adds a job role to the calling tenant\'s own list: a code, a display name and an optional description. HR master data only -- it carries no permissions and is never evaluated by security decisions. Use this tool to set up the tenant\'s job titles before assigning them to employees; do not use it to create an application role or a permission, which are pos-security-service concepts. Preconditions: the caller holds people:jobRole:manage; the code must not already be used by another job role in this tenant (another tenant may reuse the same code freely). Required inputs: code and name; description is optional. Emits a PEOPLE_JOB_ROLE_CREATE event; no other state changes. Returns 422 when the code is already in use within this tenant. 
+     * Adds a job title to the calling tenant\'s own list: a code, a display name, the position it fills, an optional description and an optional chatbot persona. HR master data only -- it carries no permissions and is never evaluated by security decisions. Use this tool to set up the tenant\'s job titles before assigning them to employees; do not use it to create an application role or a permission, which are pos-security-service concepts. Preconditions: the caller holds people:jobRole:manage; the code must not already be used by another job role in this tenant (another tenant may reuse the same code freely). Required inputs: code, name and positionType (TECHNICIAN, SERVICE_ADVISOR, PARTS, MANAGEMENT, ACCOUNTING or OTHER); description and the persona slots personaTitle, personaFocus and personaTone are optional. The code can never be changed afterwards. Emits a PEOPLE_JOB_ROLE_CREATE event and publishes people.job-role.updated; no other state changes. Returns 400 when a required field is missing or a persona slot is not a single descriptive line, and 422 when the code is already in use within this tenant. 
      * Add A Job Role To The Tenant\'s List
      */
     async createJobRoleRaw(requestParameters: CreateJobRoleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JobRoleDto>> {
@@ -75,7 +83,7 @@ export class JobRoleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a job role to the calling tenant\'s own list: a code, a display name and an optional description. HR master data only -- it carries no permissions and is never evaluated by security decisions. Use this tool to set up the tenant\'s job titles before assigning them to employees; do not use it to create an application role or a permission, which are pos-security-service concepts. Preconditions: the caller holds people:jobRole:manage; the code must not already be used by another job role in this tenant (another tenant may reuse the same code freely). Required inputs: code and name; description is optional. Emits a PEOPLE_JOB_ROLE_CREATE event; no other state changes. Returns 422 when the code is already in use within this tenant. 
+     * Adds a job title to the calling tenant\'s own list: a code, a display name, the position it fills, an optional description and an optional chatbot persona. HR master data only -- it carries no permissions and is never evaluated by security decisions. Use this tool to set up the tenant\'s job titles before assigning them to employees; do not use it to create an application role or a permission, which are pos-security-service concepts. Preconditions: the caller holds people:jobRole:manage; the code must not already be used by another job role in this tenant (another tenant may reuse the same code freely). Required inputs: code, name and positionType (TECHNICIAN, SERVICE_ADVISOR, PARTS, MANAGEMENT, ACCOUNTING or OTHER); description and the persona slots personaTitle, personaFocus and personaTone are optional. The code can never be changed afterwards. Emits a PEOPLE_JOB_ROLE_CREATE event and publishes people.job-role.updated; no other state changes. Returns 400 when a required field is missing or a persona slot is not a single descriptive line, and 422 when the code is already in use within this tenant. 
      * Add A Job Role To The Tenant\'s List
      */
     async createJobRole(requestParameters: CreateJobRoleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JobRoleDto> {
@@ -116,6 +124,59 @@ export class JobRoleAPIApi extends runtime.BaseAPI {
      */
     async listJobRoles(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<JobRoleDto>> {
         const response = await this.listJobRolesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Changes one job title on the calling tenant\'s own list: its name, description, active flag, position type or chatbot persona. A field left out of the body is left unchanged; an explicit JSON null clears description or a persona slot. HR master data only -- a title grants no access. Use this tool to rename a title, correct the position it fills (which dispatch, staffing targets and shift rules key on), retire it with active=false, or set the persona the chatbot uses for the people who hold it; do not use it to change an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:manage; the title is on this tenant\'s list. Required inputs: the title id in the path and at least one field in the body; the code is immutable, so a body that sends code is refused. Emits a PEOPLE_JOB_ROLE_UPDATE event and publishes people.job-role.updated; no other state changes. Returns 200 with the title, 400 when the body sends code, a blank name, an unknown positionType or a persona slot that is not a single descriptive line, 404 when the tenant has no title with this id, and 409 when another edit changed the title at the same time. 
+     * Change A Job Title On The Tenant\'s List
+     */
+    async updateJobRoleRaw(requestParameters: UpdateJobRoleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JobRoleDto>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling updateJobRole().'
+            );
+        }
+
+        if (requestParameters['updateJobRoleRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateJobRoleRequest',
+                'Required parameter "updateJobRoleRequest" was null or undefined when calling updateJobRole().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:jobRole:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/job-roles/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateJobRoleRequestToJSON(requestParameters['updateJobRoleRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => JobRoleDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Changes one job title on the calling tenant\'s own list: its name, description, active flag, position type or chatbot persona. A field left out of the body is left unchanged; an explicit JSON null clears description or a persona slot. HR master data only -- a title grants no access. Use this tool to rename a title, correct the position it fills (which dispatch, staffing targets and shift rules key on), retire it with active=false, or set the persona the chatbot uses for the people who hold it; do not use it to change an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:manage; the title is on this tenant\'s list. Required inputs: the title id in the path and at least one field in the body; the code is immutable, so a body that sends code is refused. Emits a PEOPLE_JOB_ROLE_UPDATE event and publishes people.job-role.updated; no other state changes. Returns 200 with the title, 400 when the body sends code, a blank name, an unknown positionType or a persona slot that is not a single descriptive line, 404 when the tenant has no title with this id, and 409 when another edit changed the title at the same time. 
+     * Change A Job Title On The Tenant\'s List
+     */
+    async updateJobRole(requestParameters: UpdateJobRoleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JobRoleDto> {
+        const response = await this.updateJobRoleRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
