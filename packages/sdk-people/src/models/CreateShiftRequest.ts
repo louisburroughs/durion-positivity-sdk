@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A shift to schedule for one person at one location in one staffing-assignment role
+ * A shift to schedule for one person at one location in one of their job titles there
  * @export
  * @interface CreateShiftRequest
  */
@@ -26,23 +26,23 @@ export interface CreateShiftRequest {
      */
     endAt: Date;
     /**
+     * Job title the shift is worked in, from GET /v1/people/job-roles; an active title the person holds an ACTIVE staffing assignment in at locationId
+     * @type {string}
+     * @memberof CreateShiftRequest
+     */
+    jobRoleId: string;
+    /**
      * Location the shift is worked at; its replicated time zone decides the shift's local date
      * @type {string}
      * @memberof CreateShiftRequest
      */
     locationId: string;
     /**
-     * Person the shift is for; they must hold an ACTIVE staffing assignment at locationId in role covering the shift's local date
+     * Person the shift is for; they must hold an ACTIVE staffing assignment at locationId in jobRoleId covering the shift's local date
      * @type {string}
      * @memberof CreateShiftRequest
      */
     personId: string;
-    /**
-     * Staffing-assignment role the shift is worked in, e.g. TECHNICIAN; trimmed and upper-cased before it is matched and stored
-     * @type {string}
-     * @memberof CreateShiftRequest
-     */
-    role: string;
     /**
      * Shift start, an ISO-8601 date-time with offset
      * @type {Date}
@@ -56,9 +56,9 @@ export interface CreateShiftRequest {
  */
 export function instanceOfCreateShiftRequest(value: object): boolean {
     if (!('endAt' in value)) return false;
+    if (!('jobRoleId' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('personId' in value)) return false;
-    if (!('role' in value)) return false;
     if (!('startAt' in value)) return false;
     return true;
 }
@@ -74,9 +74,9 @@ export function CreateShiftRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'endAt': (new Date(json['endAt'])),
+        'jobRoleId': json['jobRoleId'],
         'locationId': json['locationId'],
         'personId': json['personId'],
-        'role': json['role'],
         'startAt': (new Date(json['startAt'])),
     };
 }
@@ -88,9 +88,9 @@ export function CreateShiftRequestToJSON(value?: CreateShiftRequest | null): any
     return {
         
         'endAt': ((value['endAt']).toISOString()),
+        'jobRoleId': value['jobRoleId'],
         'locationId': value['locationId'],
         'personId': value['personId'],
-        'role': value['role'],
         'startAt': ((value['startAt']).toISOString()),
     };
 }

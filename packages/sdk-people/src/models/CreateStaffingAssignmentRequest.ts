@@ -44,6 +44,12 @@ export interface CreateStaffingAssignmentRequest {
      */
     isPrimary: boolean;
     /**
+     * Job title the person is staffed in, from GET /v1/people/job-roles; it must exist in the tenant and be active (an update may keep a title deactivated since)
+     * @type {string}
+     * @memberof CreateStaffingAssignmentRequest
+     */
+    jobRoleId: string;
+    /**
      * Location identifier
      * @type {string}
      * @memberof CreateStaffingAssignmentRequest
@@ -55,12 +61,6 @@ export interface CreateStaffingAssignmentRequest {
      * @memberof CreateStaffingAssignmentRequest
      */
     personId: string;
-    /**
-     * Assignment role
-     * @type {string}
-     * @memberof CreateStaffingAssignmentRequest
-     */
-    role: string;
 }
 
 /**
@@ -69,9 +69,9 @@ export interface CreateStaffingAssignmentRequest {
 export function instanceOfCreateStaffingAssignmentRequest(value: object): boolean {
     if (!('effectiveFrom' in value)) return false;
     if (!('isPrimary' in value)) return false;
+    if (!('jobRoleId' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('personId' in value)) return false;
-    if (!('role' in value)) return false;
     return true;
 }
 
@@ -89,9 +89,9 @@ export function CreateStaffingAssignmentRequestFromJSONTyped(json: any, ignoreDi
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'isPrimary': json['isPrimary'],
+        'jobRoleId': json['jobRoleId'],
         'locationId': json['locationId'],
         'personId': json['personId'],
-        'role': json['role'],
     };
 }
 
@@ -105,9 +105,9 @@ export function CreateStaffingAssignmentRequestToJSON(value?: CreateStaffingAssi
         'effectiveFrom': ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'isPrimary': value['isPrimary'],
+        'jobRoleId': value['jobRoleId'],
         'locationId': value['locationId'],
         'personId': value['personId'],
-        'role': value['role'],
     };
 }
 

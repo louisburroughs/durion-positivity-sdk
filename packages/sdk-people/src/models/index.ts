@@ -45,6 +45,7 @@ export * from './EnableEmployeeRequestDto';
 export * from './FieldError';
 export * from './InactivePersonActiveUserResponse';
 export * from './JobRoleDto';
+export * from './JobRoleRefDto';
 export * from './LocationReachItem';
 export * from './LocationReachResponse';
 export * from './PagedResponseApprovalPersonDto';

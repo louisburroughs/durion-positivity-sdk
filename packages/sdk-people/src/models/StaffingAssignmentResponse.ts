@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { JobRoleRefDto } from './JobRoleRefDto';
+import {
+    JobRoleRefDtoFromJSON,
+    JobRoleRefDtoFromJSONTyped,
+    JobRoleRefDtoToJSON,
+} from './JobRoleRefDto';
+
 /**
  * Staffing assignment response
  * @export
@@ -56,6 +63,12 @@ export interface StaffingAssignmentResponse {
      */
     isPrimary: boolean;
     /**
+     * 
+     * @type {JobRoleRefDto}
+     * @memberof StaffingAssignmentResponse
+     */
+    jobRole: JobRoleRefDto;
+    /**
      * Location identifier
      * @type {string}
      * @memberof StaffingAssignmentResponse
@@ -67,12 +80,6 @@ export interface StaffingAssignmentResponse {
      * @memberof StaffingAssignmentResponse
      */
     personId: string;
-    /**
-     * Assignment role
-     * @type {string}
-     * @memberof StaffingAssignmentResponse
-     */
-    role: string;
     /**
      * Assignment lifecycle status
      * @type {string}
@@ -104,9 +111,9 @@ export function instanceOfStaffingAssignmentResponse(value: object): boolean {
     if (!('assignmentId' in value)) return false;
     if (!('effectiveFrom' in value)) return false;
     if (!('isPrimary' in value)) return false;
+    if (!('jobRole' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('personId' in value)) return false;
-    if (!('role' in value)) return false;
     if (!('status' in value)) return false;
     return true;
 }
@@ -127,9 +134,9 @@ export function StaffingAssignmentResponseFromJSONTyped(json: any, ignoreDiscrim
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'isPrimary': json['isPrimary'],
+        'jobRole': JobRoleRefDtoFromJSON(json['jobRole']),
         'locationId': json['locationId'],
         'personId': json['personId'],
-        'role': json['role'],
         'status': json['status'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
@@ -147,9 +154,9 @@ export function StaffingAssignmentResponseToJSON(value?: StaffingAssignmentRespo
         'effectiveFrom': ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'isPrimary': value['isPrimary'],
+        'jobRole': JobRoleRefDtoToJSON(value['jobRole']),
         'locationId': value['locationId'],
         'personId': value['personId'],
-        'role': value['role'],
         'status': value['status'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };

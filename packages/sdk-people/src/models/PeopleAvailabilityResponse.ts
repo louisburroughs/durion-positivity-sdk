@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { JobRoleRefDto } from './JobRoleRefDto';
+import {
+    JobRoleRefDtoFromJSON,
+    JobRoleRefDtoFromJSONTyped,
+    JobRoleRefDtoToJSON,
+} from './JobRoleRefDto';
+
 /**
  * Availability of a person at a location for a given date based on staffing assignments
  * @export
@@ -68,6 +75,12 @@ export interface PeopleAvailabilityResponse {
      */
     firstName?: string;
     /**
+     * 
+     * @type {JobRoleRefDto}
+     * @memberof PeopleAvailabilityResponse
+     */
+    jobRole: JobRoleRefDto;
+    /**
      * Last name of the person
      * @type {string}
      * @memberof PeopleAvailabilityResponse
@@ -91,12 +104,6 @@ export interface PeopleAvailabilityResponse {
      * @memberof PeopleAvailabilityResponse
      */
     primary: boolean;
-    /**
-     * Assignment role at the location
-     * @type {string}
-     * @memberof PeopleAvailabilityResponse
-     */
-    role?: string;
     /**
      * The open work session; non-null exactly when clockState is CLOCKED_IN or ON_BREAK. The break endpoints are keyed by this id.
      * @type {string}
@@ -129,6 +136,7 @@ export enum PeopleAvailabilityResponseClockStateEnum {
  */
 export function instanceOfPeopleAvailabilityResponse(value: object): boolean {
     if (!('assignmentStatus' in value)) return false;
+    if (!('jobRole' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('personId' in value)) return false;
     if (!('primary' in value)) return false;
@@ -153,11 +161,11 @@ export function PeopleAvailabilityResponseFromJSONTyped(json: any, ignoreDiscrim
         'effectiveFrom': json['effectiveFrom'] == null ? undefined : (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'jobRole': JobRoleRefDtoFromJSON(json['jobRole']),
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
         'locationId': json['locationId'],
         'personId': json['personId'],
         'primary': json['primary'],
-        'role': json['role'] == null ? undefined : json['role'],
         'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
     };
 }
@@ -176,11 +184,11 @@ export function PeopleAvailabilityResponseToJSON(value?: PeopleAvailabilityRespo
         'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'firstName': value['firstName'],
+        'jobRole': JobRoleRefDtoToJSON(value['jobRole']),
         'lastName': value['lastName'],
         'locationId': value['locationId'],
         'personId': value['personId'],
         'primary': value['primary'],
-        'role': value['role'],
         'workSessionId': value['workSessionId'],
     };
 }
