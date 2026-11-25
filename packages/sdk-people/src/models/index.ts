@@ -100,6 +100,7 @@ export * from './TimePeriodApprovalDto';
 export * from './TimePeriodDto';
 export * from './TransitionTimePeriodRequest';
 export * from './UpdateEmployeeRequest';
+export * from './UpdateJobRoleRequest';
 export * from './UpdateShiftRequest';
 export * from './UpdateStaffingAssignmentRequest';
 export * from './WorkSessionBreakStartRequest';

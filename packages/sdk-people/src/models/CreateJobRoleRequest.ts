@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to add a job role to the calling tenant's own list
+ * Request to add a job title to the calling tenant's own list
  * @export
  * @interface CreateJobRoleRequest
  */
@@ -37,7 +37,45 @@ export interface CreateJobRoleRequest {
      * @memberof CreateJobRoleRequest
      */
     name: string;
+    /**
+     * Chatbot persona: what the holder works on; a single descriptive line of at most 200 characters. Omit to derive it from the description.
+     * @type {string}
+     * @memberof CreateJobRoleRequest
+     */
+    personaFocus?: string;
+    /**
+     * Chatbot persona: who the holder is, in the second person; a single descriptive line of at most 60 characters. Omit to derive it from the name.
+     * @type {string}
+     * @memberof CreateJobRoleRequest
+     */
+    personaTitle?: string;
+    /**
+     * Chatbot persona: how to speak to the holder; a single descriptive line of at most 120 characters. Omit for a neutral default.
+     * @type {string}
+     * @memberof CreateJobRoleRequest
+     */
+    personaTone?: string;
+    /**
+     * The position this title fills; dispatch, staffing targets and shift rules key on it
+     * @type {string}
+     * @memberof CreateJobRoleRequest
+     */
+    positionType: CreateJobRoleRequestPositionTypeEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CreateJobRoleRequestPositionTypeEnum {
+    Technician = 'TECHNICIAN',
+    ServiceAdvisor = 'SERVICE_ADVISOR',
+    Parts = 'PARTS',
+    Management = 'MANAGEMENT',
+    Accounting = 'ACCOUNTING',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the CreateJobRoleRequest interface.
@@ -45,6 +83,7 @@ export interface CreateJobRoleRequest {
 export function instanceOfCreateJobRoleRequest(value: object): boolean {
     if (!('code' in value)) return false;
     if (!('name' in value)) return false;
+    if (!('positionType' in value)) return false;
     return true;
 }
 
@@ -61,6 +100,10 @@ export function CreateJobRoleRequestFromJSONTyped(json: any, ignoreDiscriminator
         'code': json['code'],
         'description': json['description'] == null ? undefined : json['description'],
         'name': json['name'],
+        'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
+        'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
+        'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
+        'positionType': json['positionType'],
     };
 }
 
@@ -73,6 +116,10 @@ export function CreateJobRoleRequestToJSON(value?: CreateJobRoleRequest | null):
         'code': value['code'],
         'description': value['description'],
         'name': value['name'],
+        'personaFocus': value['personaFocus'],
+        'personaTitle': value['personaTitle'],
+        'personaTone': value['personaTone'],
+        'positionType': value['positionType'],
     };
 }
 
