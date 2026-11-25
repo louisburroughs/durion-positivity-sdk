@@ -15,7 +15,7 @@ const unit = (id: string, over: Partial<{ available: boolean; assignedWorkorderI
   available: true,
   ...over,
 });
-const tech = (personId: string): StaffingView => ({ personId, role: 'TECHNICIAN', assignmentStatus: 'ACTIVE' });
+const tech = (personId: string): StaffingView => ({ personId, jobRole: { positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE' });
 
 const rosterOf = (board: BoardView, staffing: readonly StaffingView[] = []) => {
   const outcome = buildRoster(SITE, board, staffing, ON);
@@ -75,8 +75,8 @@ describe('buildRoster', () => {
   it('counts only ACTIVE TECHNICIAN assignments as technicians', () => {
     const roster = rosterOf({ bays: [bay('1')] }, [
       tech('t1'),
-      { personId: 'advisor', role: 'SERVICE_ADVISOR', assignmentStatus: 'ACTIVE' },
-      { personId: 'ended', role: 'TECHNICIAN', assignmentStatus: 'ENDED' },
+      { personId: 'advisor', jobRole: { positionType: 'SERVICE_ADVISOR' }, assignmentStatus: 'ACTIVE' },
+      { personId: 'ended', jobRole: { positionType: 'TECHNICIAN' }, assignmentStatus: 'ENDED' },
       { personId: 'no-role', assignmentStatus: 'ACTIVE' },
     ]);
 

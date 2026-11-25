@@ -20,7 +20,7 @@ const assignment = (overrides: Partial<StaffingWindow> = {}): StaffingWindow => 
   assignmentId: 'sa-1',
   personId: 'person-1',
   locationId: 'loc-1',
-  role: 'TECHNICIAN',
+  jobRoleId: 'title-technician',
   isPrimary: true,
   status: 'ACTIVE',
   // Written in wall time: ten months after the instant the run judges.
@@ -39,7 +39,7 @@ describe('planStaffingBackdates', () => {
     // Everything the update has to round-trip comes back untouched.
     expect(plan.personId).toBe('person-1');
     expect(plan.locationId).toBe('loc-1');
-    expect(plan.role).toBe('TECHNICIAN');
+    expect(plan.jobRoleId).toBe('title-technician');
     expect(plan.isPrimary).toBe(true);
     expect(plan.effectiveTo).toBeNull();
   });
@@ -87,7 +87,7 @@ describe('planStaffingBackdates', () => {
 
   it('walks a key in order: the first row reaches back, the last reaches forward', () => {
     // The backend refuses an update whose window overlaps another ACTIVE
-    // assignment of the same person, location and role
+    // assignment of the same person, location and job title
     // (AssignmentOverlapSearch). Landing on the floor would collide here.
     const earlier = assignment({
       assignmentId: 'sa-earlier',
@@ -170,7 +170,7 @@ describe('planStaffingBackdates', () => {
 
   it('writes nothing when two ACTIVE rows of one key already overlap, and says so', () => {
     // A state the backend's own guard should have refused: two open-ended ACTIVE
-    // assignments for the same person, location and role. Neither can move while
+    // assignments for the same person, location and job title. Neither can move while
     // the other stands, so both are reported and nothing is written.
     const across = assignment({
       assignmentId: 'sa-across',
@@ -186,7 +186,7 @@ describe('planStaffingBackdates', () => {
     expect(blocked[0]).toContain('sa-1');
   });
 
-  it('keys siblings on person, location and role, so another location is not a conflict', () => {
+  it('keys siblings on person, location and job title, so another location is not a conflict', () => {
     const elsewhere = assignment({
       assignmentId: 'sa-other-site',
       locationId: 'loc-2',
@@ -257,7 +257,7 @@ describe('AcceleratedStaffingWindows', () => {
 
     expect(written.map((plan) => plan.assignmentId)).toEqual(['sa-1', 'sa-2']);
     expect(backdated).toHaveLength(2);
-    expect(backdated[0]).toContain('person-1 TECHNICIAN at loc-1: 2026-09-20–open → 2025-08-15–open');
+    expect(backdated[0]).toContain('person-1 title-technician at loc-1: 2026-09-20–open → 2025-08-15–open');
     expect(unreadable).toEqual([]);
   });
 

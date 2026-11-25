@@ -46,7 +46,8 @@ export interface StaffingWindow {
   assignmentId: string;
   personId: string;
   locationId: string;
-  role: string;
+  /** The job title the person is staffed in. */
+  jobRoleId: string;
   isPrimary: boolean;
   status: string;
   /** LocalDate at UTC midnight — the wire format is `YYYY-MM-DD`. */
@@ -59,7 +60,7 @@ export interface StaffingBackdate {
   assignmentId: string;
   personId: string;
   locationId: string;
-  role: string;
+  jobRoleId: string;
   isPrimary: boolean;
   effectiveTo: Date | null;
   /** Where it will now start. */
@@ -83,9 +84,9 @@ export function floorFor(virtualStart: Date, days = FLOOR_MARGIN_DAYS): Date {
 
 const DAY_MS = 86_400_000;
 
-/** `{person, location, role}` — the triple the backend's overlap guard keys on. */
+/** `{person, location, job title}` — the triple the backend's overlap guard keys on. */
 const keyOf = (assignment: StaffingWindow): string =>
-  `${assignment.personId}|${assignment.locationId}|${assignment.role}`;
+  `${assignment.personId}|${assignment.locationId}|${assignment.jobRoleId}`;
 
 /** What the planner decided, including the rows it refused to touch and why. */
 export interface StaffingPlan {
@@ -113,12 +114,12 @@ export function ceilingFor(virtualEnd: Date, days = FLOOR_MARGIN_DAYS): Date {
  *     window that closed before the run began — still no coverage, and a lie
  *     about when that person worked;
  *   - one whose person is already covered at the floor by another ACTIVE
- *     assignment of the same role at the same location: presence is satisfied,
+ *     assignment of the same job title at the same location: presence is satisfied,
  *     and moving this one could only collide with that one.
  *
  * **The start is clamped, not simply floored.** `StaffingAssignmentServiceImpl`
  * refuses an update whose window overlaps another assignment of the same
- * `{person, location, role}` with `409 CONFLICT`, and `AssignmentOverlapSearch`
+ * `{person, location, job title}` with `409 CONFLICT`, and `AssignmentOverlapSearch`
  * keys that check on `status = ACTIVE` — an ENDED row is listed by
  * `listStaffingAssignments` but cannot collide. So a row is moved back to the
  * floor or to the day after the latest ACTIVE sibling that closes before it,
@@ -137,7 +138,7 @@ export function planStaffingBackdates(
   const blocked: string[] = [];
 
   // Grouped and walked in order, not judged row by row. The backend refuses an
-  // update that overlaps another ACTIVE row of the same {person, location, role}
+  // update that overlaps another ACTIVE row of the same {person, location, job title}
   // (AssignmentOverlapSearch), and two rows planned independently can each look
   // safe against the *stored* windows while colliding with each other once both
   // are applied — which is what a first attempt at this did.
@@ -186,7 +187,7 @@ export function planStaffingBackdates(
       // guard should have refused. Nothing here can widen either safely.
       if (from <= previousEnd) {
         blocked.push(
-          `${row.personId} ${row.role} at ${row.locationId}: assignment ${row.assignmentId} starts ` +
+          `${row.personId} ${row.jobRoleId} at ${row.locationId}: assignment ${row.assignmentId} starts ` +
             `${iso(row.effectiveFrom)}, on or before ${previousId} ends — they already overlap`,
         );
         raiseTo(endOf(to), row.assignmentId);
@@ -225,7 +226,7 @@ export function planStaffingBackdates(
         assignmentId: row.assignmentId,
         personId: row.personId,
         locationId: row.locationId,
-        role: row.role,
+        jobRoleId: row.jobRoleId,
         isPrimary: row.isPrimary,
         effectiveFrom,
         effectiveTo,
@@ -292,11 +293,11 @@ export class AcceleratedStaffingWindows {
           // A 409 here is the overlap guard on a shape the planner did not
           // foresee; a 403 or a 5xx is the environment. Either way it is one
           // row, and the next one may still move.
-          failed.push(`${plan.personId} ${plan.role} assignment ${plan.assignmentId}: ${describe(error)}`);
+          failed.push(`${plan.personId} ${plan.jobRoleId} assignment ${plan.assignmentId}: ${describe(error)}`);
           continue;
         }
         backdated.push(
-          `${plan.personId} ${plan.role} at ${plan.locationId}: ` +
+          `${plan.personId} ${plan.jobRoleId} at ${plan.locationId}: ` +
             `${iso(plan.was)}–${plan.wasTo ? iso(plan.wasTo) : 'open'} → ` +
             `${iso(plan.effectiveFrom)}–${plan.effectiveTo ? iso(plan.effectiveTo) : 'open'}`,
         );
@@ -334,7 +335,7 @@ export function createStaffingWindowPort(client: {
         assignmentId: string;
         personId: string;
         locationId: string;
-        role: string;
+        jobRole: { id: string };
         isPrimary: boolean;
         status: string;
         effectiveFrom: Date;
@@ -346,7 +347,7 @@ export function createStaffingWindowPort(client: {
       updateStaffingAssignmentRequest: {
         personId: string;
         locationId: string;
-        role: string;
+        jobRoleId: string;
         isPrimary: boolean;
         effectiveFrom: Date;
         effectiveTo?: Date;
@@ -361,7 +362,7 @@ export function createStaffingWindowPort(client: {
         assignmentId: assignment.assignmentId,
         personId: assignment.personId,
         locationId: assignment.locationId,
-        role: assignment.role,
+        jobRoleId: assignment.jobRole.id,
         isPrimary: assignment.isPrimary,
         status: assignment.status,
         effectiveFrom: assignment.effectiveFrom,
@@ -377,7 +378,7 @@ export function createStaffingWindowPort(client: {
         updateStaffingAssignmentRequest: {
           personId: plan.personId,
           locationId: plan.locationId,
-          role: plan.role,
+          jobRoleId: plan.jobRoleId,
           isPrimary: plan.isPrimary,
           effectiveFrom: plan.effectiveFrom,
           ...(plan.effectiveTo === null ? {} : { effectiveTo: plan.effectiveTo }),

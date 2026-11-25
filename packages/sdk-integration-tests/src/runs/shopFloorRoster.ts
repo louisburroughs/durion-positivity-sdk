@@ -24,7 +24,8 @@ export interface BoardView {
 /** The fields of `PeopleAvailabilityResponse` this mapping reads. */
 export interface StaffingView {
   personId: string;
-  role?: string;
+  /** The job title the person is staffed in; a technician is one whose title fills the TECHNICIAN position. */
+  jobRole?: { positionType?: string };
   assignmentStatus: string;
 }
 
@@ -99,7 +100,7 @@ export const buildRoster = (
   }
 
   const technicianIds = staffing
-    .filter((person) => person.assignmentStatus === 'ACTIVE' && person.role === 'TECHNICIAN')
+    .filter((person) => person.assignmentStatus === 'ACTIVE' && person.jobRole?.positionType === 'TECHNICIAN')
     .map((person) => person.personId);
   const busy = busyTechnicianIds(board, on);
 

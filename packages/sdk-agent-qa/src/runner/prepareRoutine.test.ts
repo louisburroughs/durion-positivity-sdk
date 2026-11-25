@@ -24,10 +24,10 @@ const CONTEXT: RoutineContext = { site: SITE, persona: 'manager', roleMode: true
 
 describe('prepareRoutine: crew', () => {
   const ROLL = [
-    { personId: 'p-2', firstName: 'Zed', lastName: 'Young', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE', clockState: 'CLOCKED_OUT' },
-    { personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE', clockState: 'CLOCKED_OUT' },
-    { personId: 'p-3', firstName: 'Mia', lastName: 'Lopez', role: 'SHOP_MANAGER', assignmentStatus: 'ACTIVE' },
-    { personId: 'p-9', firstName: 'Gone', lastName: 'Away', role: 'TECHNICIAN', assignmentStatus: 'INACTIVE' },
+    { personId: 'p-2', firstName: 'Zed', lastName: 'Young', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE', clockState: 'CLOCKED_OUT' },
+    { personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE', clockState: 'CLOCKED_OUT' },
+    { personId: 'p-3', firstName: 'Mia', lastName: 'Lopez', jobRole: { name: 'Shop manager', positionType: 'MANAGEMENT' }, assignmentStatus: 'ACTIVE' },
+    { personId: 'p-9', firstName: 'Gone', lastName: 'Away', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'INACTIVE' },
   ];
   const SESSIONS: Record<string, unknown> = {
     'p-1': { personId: 'p-1', clockState: 'CLOCKED_IN', clockedInAt: new Date('2026-03-10T12:02:00Z'), workSessionId: 'ws-1' },
@@ -50,10 +50,10 @@ describe('prepareRoutine: crew', () => {
     const { lookup, calls } = fakeLookup(answers);
     const [facts] = await prepareRoutine('crew', lookup, CONTEXT);
     const lines = facts.split('\n');
-    expect(lines[1]).toBe('  Amber Nguyen — TECHNICIAN, personId p-1, CLOCKED_IN, since 08:02, workSessionId ws-1');
-    expect(lines[2]).toBe('  Mia Lopez — SHOP_MANAGER, personId p-3, CLOCKED_OUT, this is you');
+    expect(lines[1]).toBe('  Amber Nguyen — Technician, personId p-1, CLOCKED_IN, since 08:02, workSessionId ws-1');
+    expect(lines[2]).toBe('  Mia Lopez — Shop manager, personId p-3, CLOCKED_OUT, this is you');
     expect(lines[3]).toMatch(
-      /^ {2}Zed Young — TECHNICIAN, personId p-2, ON_BREAK, since 2026-03-09 08:00 — a session left open from a previous day \(missed clock-out\), on break since 12:00, workSessionId ws-2$/,
+      /^ {2}Zed Young — Technician, personId p-2, ON_BREAK, since 2026-03-09 08:00 — a session left open from a previous day \(missed clock-out\), on break since 12:00, workSessionId ws-2$/,
     );
     expect(lines[4]).toBe('In all: 1 CLOCKED_IN, 1 CLOCKED_OUT, 1 ON_BREAK; 2 with an open work session.');
     expect(facts).not.toContain('Gone Away');
@@ -300,7 +300,7 @@ describe('routine preparation in the library', () => {
 
   it('says outright when nobody has an open session, so there is nothing to clock out', async () => {
     const { lookup } = fakeLookup({
-      'people.PeopleAvailabilityAPIApi.listPeopleAvailability': () => [{ personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE' }],
+      'people.PeopleAvailabilityAPIApi.listPeopleAvailability': () => [{ personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE' }],
       'people.WorkSessionsAPIApi.getCurrentWorkSession': () => ({ personId: 'p-1', clockState: 'CLOCKED_OUT' }),
     });
     const [facts] = await prepareRoutine('crew', lookup, CONTEXT);

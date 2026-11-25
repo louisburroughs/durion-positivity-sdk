@@ -492,8 +492,8 @@ describe('a tenant with several sites', () => {
     const crewRoute: Route = (request) => {
       if (request.path.includes('/v1/people/availability')) {
         const crew = request.path.includes('loc-main')
-          ? [{ personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE' }]
-          : [{ personId: 'p-2', firstName: 'Ray', lastName: 'Ortiz', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE' }];
+          ? [{ personId: 'p-1', firstName: 'Amber', lastName: 'Nguyen', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE' }]
+          : [{ personId: 'p-2', firstName: 'Ray', lastName: 'Ortiz', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE' }];
         return { status: 200, body: crew };
       }
       if (request.path.includes('/v1/people/workSessions/current')) {
@@ -524,7 +524,7 @@ describe('a tenant with several sites', () => {
     const briefs = model.requests.map((request) => (request.messages[0] as { content: string }).content);
     const main = briefs.find((brief) => brief.includes('location id loc-main')) ?? '';
     expect(main).toContain('The reading this task starts with has been done for you');
-    expect(main).toContain('Amber Nguyen — TECHNICIAN, personId p-1, CLOCKED_OUT');
+    expect(main).toContain('Amber Nguyen — Technician, personId p-1, CLOCKED_OUT');
     expect(main).not.toContain('Ray Ortiz');
     expect(briefs.find((brief) => brief.includes('location id loc-north'))).toContain('Ray Ortiz');
     const offered = model.requests[0].tools.map((tool) => tool.name);
