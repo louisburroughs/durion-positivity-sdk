@@ -27,12 +27,6 @@ import {
  */
 export interface CreateUserRequest {
     /**
-     * Address to send the activation message to, for a username that is not itself an email address. Never stored; when absent the username is used if it is an address
-     * @type {string}
-     * @memberof CreateUserRequest
-     */
-    email?: string;
-    /**
      * Keys of existing roles to attach directly
      * @type {Set<string>}
      * @memberof CreateUserRequest
@@ -72,7 +66,6 @@ export function CreateUserRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'email': json['email'] == null ? undefined : json['email'],
         'roles': json['roles'],
         'scope': AssignmentScopeRequestFromJSON(json['scope']),
         'username': json['username'],
@@ -85,7 +78,6 @@ export function CreateUserRequestToJSON(value?: CreateUserRequest | null): any {
     }
     return {
         
-        'email': value['email'],
         'roles': Array.from(value['roles'] as Set<any>),
         'scope': AssignmentScopeRequestToJSON(value['scope']),
         'username': value['username'],
