@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Full replacement of a shift's location, role and window, guarded by the version last read
+ * Full replacement of a shift's location, job title and window, guarded by the version last read
  * @export
  * @interface UpdateShiftRequest
  */
@@ -26,17 +26,17 @@ export interface UpdateShiftRequest {
      */
     endAt: Date;
     /**
+     * Job title the shift is worked in; one the person holds an ACTIVE staffing assignment in at locationId. A title deactivated since may be kept, not newly chosen
+     * @type {string}
+     * @memberof UpdateShiftRequest
+     */
+    jobRoleId: string;
+    /**
      * Location the shift is worked at; may differ from the current one
      * @type {string}
      * @memberof UpdateShiftRequest
      */
     locationId: string;
-    /**
-     * Staffing-assignment role the shift is worked in; trimmed and upper-cased
-     * @type {string}
-     * @memberof UpdateShiftRequest
-     */
-    role: string;
     /**
      * Shift start, an ISO-8601 date-time with offset
      * @type {Date}
@@ -56,8 +56,8 @@ export interface UpdateShiftRequest {
  */
 export function instanceOfUpdateShiftRequest(value: object): boolean {
     if (!('endAt' in value)) return false;
+    if (!('jobRoleId' in value)) return false;
     if (!('locationId' in value)) return false;
-    if (!('role' in value)) return false;
     if (!('startAt' in value)) return false;
     if (!('version' in value)) return false;
     return true;
@@ -74,8 +74,8 @@ export function UpdateShiftRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'endAt': (new Date(json['endAt'])),
+        'jobRoleId': json['jobRoleId'],
         'locationId': json['locationId'],
-        'role': json['role'],
         'startAt': (new Date(json['startAt'])),
         'version': json['version'],
     };
@@ -88,8 +88,8 @@ export function UpdateShiftRequestToJSON(value?: UpdateShiftRequest | null): any
     return {
         
         'endAt': ((value['endAt']).toISOString()),
+        'jobRoleId': value['jobRoleId'],
         'locationId': value['locationId'],
-        'role': value['role'],
         'startAt': ((value['startAt']).toISOString()),
         'version': value['version'],
     };

@@ -172,7 +172,7 @@ async function crew(lookup: Lookup, context: RoutineContext): Promise<string[]> 
     .map((person) => ({
       personId: String(person['personId']),
       name: [text(person['firstName']), text(person['lastName'])].filter(Boolean).join(' ') || String(person['personId']),
-      role: text(person['role']) ?? 'staff',
+      role: text(asRecord(person['jobRole'])['name']) ?? 'staff',
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, 30);

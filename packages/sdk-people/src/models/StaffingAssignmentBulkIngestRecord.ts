@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * One person's assignment to a location for a role
+ * One person's assignment to a location in a job title
  * @export
  * @interface StaffingAssignmentBulkIngestRecord
  */
@@ -38,6 +38,12 @@ export interface StaffingAssignmentBulkIngestRecord {
      */
     employeeNumber: string;
     /**
+     * Code of the job title at that location, from the tenant's list (GET /v1/people/job-roles), compared ignoring case. Resolved to the title here, as the employee number is resolved to a person, so a file names titles by their stable code.
+     * @type {string}
+     * @memberof StaffingAssignmentBulkIngestRecord
+     */
+    jobRoleCode: string;
+    /**
      * Location the person is assigned to. Defaults to the request's locationId when omitted.
      * @type {string}
      * @memberof StaffingAssignmentBulkIngestRecord
@@ -49,12 +55,6 @@ export interface StaffingAssignmentBulkIngestRecord {
      * @memberof StaffingAssignmentBulkIngestRecord
      */
     primary?: boolean;
-    /**
-     * Role at that location
-     * @type {string}
-     * @memberof StaffingAssignmentBulkIngestRecord
-     */
-    role: string;
 }
 
 /**
@@ -62,7 +62,7 @@ export interface StaffingAssignmentBulkIngestRecord {
  */
 export function instanceOfStaffingAssignmentBulkIngestRecord(value: object): boolean {
     if (!('employeeNumber' in value)) return false;
-    if (!('role' in value)) return false;
+    if (!('jobRoleCode' in value)) return false;
     return true;
 }
 
@@ -79,9 +79,9 @@ export function StaffingAssignmentBulkIngestRecordFromJSONTyped(json: any, ignor
         'effectiveFrom': json['effectiveFrom'] == null ? undefined : (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'employeeNumber': json['employeeNumber'],
+        'jobRoleCode': json['jobRoleCode'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'primary': json['primary'] == null ? undefined : json['primary'],
-        'role': json['role'],
     };
 }
 
@@ -94,9 +94,9 @@ export function StaffingAssignmentBulkIngestRecordToJSON(value?: StaffingAssignm
         'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'employeeNumber': value['employeeNumber'],
+        'jobRoleCode': value['jobRoleCode'],
         'locationId': value['locationId'],
         'primary': value['primary'],
-        'role': value['role'],
     };
 }
 

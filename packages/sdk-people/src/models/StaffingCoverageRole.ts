@@ -14,37 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * One role's target, scheduled and live counts for the coverage date at the location; a role has a row when it has a target for the date's weekday, a shift on the date, or someone on the clock under it (live only)
+ * One position type's target, scheduled and live counts for the coverage date at the location; a position has a row when it has a target for the date's weekday, a shift on the date, or someone on the clock under it (live only)
  * @export
  * @interface StaffingCoverageRole
  */
 export interface StaffingCoverageRole {
     /**
-     * People in this role at the location with an open work session and an open break now; 0 unless live is true
+     * People in this position at the location with an open work session and an open break now; 0 unless live is true
      * @type {number}
      * @memberof StaffingCoverageRole
      */
     onBreak: number;
     /**
-     * People in this role at the location with an open work session and no open break now; 0 unless live is true
+     * People in this position at the location with an open work session and no open break now; 0 unless live is true
      * @type {number}
      * @memberof StaffingCoverageRole
      */
     onClock: number;
     /**
-     * Canonical staffing-assignment role
+     * Position type; every job title of this position counts here
      * @type {string}
      * @memberof StaffingCoverageRole
      */
-    role: string;
+    positionType: StaffingCoverageRolePositionTypeEnum;
     /**
-     * SCHEDULED shifts in this role whose shift date is the coverage date and whose person still holds the matching ACTIVE staffing assignment, excluding shifts covered by the person's APPROVED time off (status TIME_OFF)
+     * People with a SCHEDULED shift in a job title of this position whose shift date is the coverage date and who still hold the matching ACTIVE staffing assignment, excluding shifts covered by the person's APPROVED time off (status TIME_OFF)
      * @type {number}
      * @memberof StaffingCoverageRole
      */
     scheduled: number;
     /**
-     * Head count wanted on the date's weekday; null when no target is set for this role and weekday
+     * Head count wanted on the date's weekday; null when no target is set for this position and weekday
      * @type {number}
      * @memberof StaffingCoverageRole
      */
@@ -52,12 +52,26 @@ export interface StaffingCoverageRole {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum StaffingCoverageRolePositionTypeEnum {
+    Technician = 'TECHNICIAN',
+    ServiceAdvisor = 'SERVICE_ADVISOR',
+    Parts = 'PARTS',
+    Management = 'MANAGEMENT',
+    Accounting = 'ACCOUNTING',
+    Other = 'OTHER'
+}
+
+
+/**
  * Check if a given object implements the StaffingCoverageRole interface.
  */
 export function instanceOfStaffingCoverageRole(value: object): boolean {
     if (!('onBreak' in value)) return false;
     if (!('onClock' in value)) return false;
-    if (!('role' in value)) return false;
+    if (!('positionType' in value)) return false;
     if (!('scheduled' in value)) return false;
     return true;
 }
@@ -74,7 +88,7 @@ export function StaffingCoverageRoleFromJSONTyped(json: any, ignoreDiscriminator
         
         'onBreak': json['onBreak'],
         'onClock': json['onClock'],
-        'role': json['role'],
+        'positionType': json['positionType'],
         'scheduled': json['scheduled'],
         'target': json['target'] == null ? undefined : json['target'],
     };
@@ -88,7 +102,7 @@ export function StaffingCoverageRoleToJSON(value?: StaffingCoverageRole | null):
         
         'onBreak': value['onBreak'],
         'onClock': value['onClock'],
-        'role': value['role'],
+        'positionType': value['positionType'],
         'scheduled': value['scheduled'],
         'target': value['target'],
     };

@@ -37,7 +37,27 @@ export interface EmployeeJobRoleDto {
      * @memberof EmployeeJobRoleDto
      */
     name: string;
+    /**
+     * The position the title fills (ADR-0079 section 7); null only when the title could not be read alongside the id
+     * @type {string}
+     * @memberof EmployeeJobRoleDto
+     */
+    positionType?: EmployeeJobRoleDtoPositionTypeEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum EmployeeJobRoleDtoPositionTypeEnum {
+    Technician = 'TECHNICIAN',
+    ServiceAdvisor = 'SERVICE_ADVISOR',
+    Parts = 'PARTS',
+    Management = 'MANAGEMENT',
+    Accounting = 'ACCOUNTING',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the EmployeeJobRoleDto interface.
@@ -62,6 +82,7 @@ export function EmployeeJobRoleDtoFromJSONTyped(json: any, ignoreDiscriminator: 
         'code': json['code'],
         'id': json['id'],
         'name': json['name'],
+        'positionType': json['positionType'] == null ? undefined : json['positionType'],
     };
 }
 
@@ -74,6 +95,7 @@ export function EmployeeJobRoleDtoToJSON(value?: EmployeeJobRoleDto | null): any
         'code': value['code'],
         'id': value['id'],
         'name': value['name'],
+        'positionType': value['positionType'],
     };
 }
 

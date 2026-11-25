@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * A staffing role below its target on the day, with this request counted as approved
+ * A position type below its target on the day, with this request counted as approved
  * @export
  * @interface TimeOffCoverageRole
  */
 export interface TimeOffCoverageRole {
     /**
-     * Canonical staffing-assignment role
+     * Position type
      * @type {string}
      * @memberof TimeOffCoverageRole
      */
-    role: string;
+    positionType: TimeOffCoverageRolePositionTypeEnum;
     /**
-     * SCHEDULED shifts in the role on the day, excluding people on approved time off and this request's person
+     * People with a SCHEDULED shift in a job title of the position on the day, excluding people on approved time off and this request's person
      * @type {number}
      * @memberof TimeOffCoverageRole
      */
@@ -40,10 +40,24 @@ export interface TimeOffCoverageRole {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum TimeOffCoverageRolePositionTypeEnum {
+    Technician = 'TECHNICIAN',
+    ServiceAdvisor = 'SERVICE_ADVISOR',
+    Parts = 'PARTS',
+    Management = 'MANAGEMENT',
+    Accounting = 'ACCOUNTING',
+    Other = 'OTHER'
+}
+
+
+/**
  * Check if a given object implements the TimeOffCoverageRole interface.
  */
 export function instanceOfTimeOffCoverageRole(value: object): boolean {
-    if (!('role' in value)) return false;
+    if (!('positionType' in value)) return false;
     if (!('scheduled' in value)) return false;
     if (!('target' in value)) return false;
     return true;
@@ -59,7 +73,7 @@ export function TimeOffCoverageRoleFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'role': json['role'],
+        'positionType': json['positionType'],
         'scheduled': json['scheduled'],
         'target': json['target'],
     };
@@ -71,7 +85,7 @@ export function TimeOffCoverageRoleToJSON(value?: TimeOffCoverageRole | null): a
     }
     return {
         
-        'role': value['role'],
+        'positionType': value['positionType'],
         'scheduled': value['scheduled'],
         'target': value['target'],
     };

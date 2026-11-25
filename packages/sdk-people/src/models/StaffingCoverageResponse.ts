@@ -51,7 +51,7 @@ export interface StaffingCoverageResponse {
      */
     date: Date;
     /**
-     * True only when date is today in the location's time zone (timezoneStatus KNOWN): the live counts and unscheduled are computed only then; when false every role's onClock and onBreak are 0 and unscheduled is empty
+     * True only when date is today in the location's time zone (timezoneStatus KNOWN): the live counts and unscheduled are computed only then; when false every position's onClock and onBreak are 0 and unscheduled is empty
      * @type {boolean}
      * @memberof StaffingCoverageResponse
      */
@@ -63,7 +63,7 @@ export interface StaffingCoverageResponse {
      */
     locationId: string;
     /**
-     * One row per role with a target for the date's weekday, a shift on the date, or someone on the clock under it (live only), ordered by role
+     * One row per position type with a target for the date's weekday, a shift on the date, or someone on the clock under it (live only), ordered TECHNICIAN, SERVICE_ADVISOR, PARTS, MANAGEMENT, ACCOUNTING, OTHER
      * @type {Array<StaffingCoverageRole>}
      * @memberof StaffingCoverageResponse
      */

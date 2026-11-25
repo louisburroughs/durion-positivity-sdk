@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { JobRoleRefDto } from './JobRoleRefDto';
+import {
+    JobRoleRefDtoFromJSON,
+    JobRoleRefDtoFromJSONTyped,
+    JobRoleRefDtoToJSON,
+} from './JobRoleRefDto';
+
 /**
  * A person clocked in at the location without a shift on the coverage date or one running now
  * @export
@@ -32,17 +39,17 @@ export interface StaffingCoverageUnscheduled {
      */
     displayName?: string;
     /**
+     * 
+     * @type {JobRoleRefDto}
+     * @memberof StaffingCoverageUnscheduled
+     */
+    jobRole: JobRoleRefDto;
+    /**
      * Person id
      * @type {string}
      * @memberof StaffingCoverageUnscheduled
      */
     personId: string;
-    /**
-     * ACTIVE staffing-assignment role at the location the person is counted under
-     * @type {string}
-     * @memberof StaffingCoverageUnscheduled
-     */
-    role: string;
 }
 
 /**
@@ -61,8 +68,8 @@ export enum StaffingCoverageUnscheduledClockStateEnum {
  */
 export function instanceOfStaffingCoverageUnscheduled(value: object): boolean {
     if (!('clockState' in value)) return false;
+    if (!('jobRole' in value)) return false;
     if (!('personId' in value)) return false;
-    if (!('role' in value)) return false;
     return true;
 }
 
@@ -78,8 +85,8 @@ export function StaffingCoverageUnscheduledFromJSONTyped(json: any, ignoreDiscri
         
         'clockState': json['clockState'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'jobRole': JobRoleRefDtoFromJSON(json['jobRole']),
         'personId': json['personId'],
-        'role': json['role'],
     };
 }
 
@@ -91,8 +98,8 @@ export function StaffingCoverageUnscheduledToJSON(value?: StaffingCoverageUnsche
         
         'clockState': value['clockState'],
         'displayName': value['displayName'],
+        'jobRole': JobRoleRefDtoToJSON(value['jobRole']),
         'personId': value['personId'],
-        'role': value['role'],
     };
 }
 

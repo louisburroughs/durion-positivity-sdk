@@ -45,7 +45,7 @@ export interface TimeOffCoverageDay {
      */
     othersOff: Array<TimeOffCoverageOtherOff>;
     /**
-     * Roles with a target on the day whose scheduled count, with this request counted as approved, is below the target; empty when none
+     * Position types with a target on the day whose scheduled count, with this request counted as approved, is below the target; empty when none
      * @type {Array<TimeOffCoverageRole>}
      * @memberof TimeOffCoverageDay
      */

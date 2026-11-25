@@ -202,9 +202,9 @@ describe('prepareStage for the work stage', () => {
     mechanics: [{ personId: 'tech-busy', assignedWorkorderId: 'wo-other' }],
   };
   const STAFF = [
-    { personId: 'tech-busy', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE', firstName: 'Busy', lastName: 'Bee' },
-    { personId: 'tech-free', role: 'TECHNICIAN', assignmentStatus: 'ACTIVE', firstName: 'Amber', lastName: 'Nguyen' },
-    { personId: 'disp-1', role: 'DISPATCHER', assignmentStatus: 'ACTIVE', firstName: 'Sandra', lastName: 'Cruz' },
+    { personId: 'tech-busy', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE', firstName: 'Busy', lastName: 'Bee' },
+    { personId: 'tech-free', jobRole: { name: 'Technician', positionType: 'TECHNICIAN' }, assignmentStatus: 'ACTIVE', firstName: 'Amber', lastName: 'Nguyen' },
+    { personId: 'disp-1', jobRole: { name: 'Dispatcher', positionType: 'OTHER' }, assignmentStatus: 'ACTIVE', firstName: 'Sandra', lastName: 'Cruz' },
   ];
   const floor = (board: unknown, staff: unknown) =>
     fakeLookup({

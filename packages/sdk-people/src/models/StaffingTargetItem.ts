@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Head count wanted on the floor for one staffing-assignment role on one ISO day of the week; advisory only
+ * Head count wanted on the floor for one position type on one ISO day of the week; advisory only
  * @export
  * @interface StaffingTargetItem
  */
@@ -32,12 +32,26 @@ export interface StaffingTargetItem {
      */
     headCount: number;
     /**
-     * Staffing-assignment role, e.g. TECHNICIAN; trimmed and upper-cased
+     * Position the head count is wanted for; every job title of that position counts
      * @type {string}
      * @memberof StaffingTargetItem
      */
-    role: string;
+    positionType: StaffingTargetItemPositionTypeEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum StaffingTargetItemPositionTypeEnum {
+    Technician = 'TECHNICIAN',
+    ServiceAdvisor = 'SERVICE_ADVISOR',
+    Parts = 'PARTS',
+    Management = 'MANAGEMENT',
+    Accounting = 'ACCOUNTING',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the StaffingTargetItem interface.
@@ -45,7 +59,7 @@ export interface StaffingTargetItem {
 export function instanceOfStaffingTargetItem(value: object): boolean {
     if (!('dayOfWeek' in value)) return false;
     if (!('headCount' in value)) return false;
-    if (!('role' in value)) return false;
+    if (!('positionType' in value)) return false;
     return true;
 }
 
@@ -61,7 +75,7 @@ export function StaffingTargetItemFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'dayOfWeek': json['dayOfWeek'],
         'headCount': json['headCount'],
-        'role': json['role'],
+        'positionType': json['positionType'],
     };
 }
 
@@ -73,7 +87,7 @@ export function StaffingTargetItemToJSON(value?: StaffingTargetItem | null): any
         
         'dayOfWeek': value['dayOfWeek'],
         'headCount': value['headCount'],
-        'role': value['role'],
+        'positionType': value['positionType'],
     };
 }
 

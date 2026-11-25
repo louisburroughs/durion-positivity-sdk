@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { JobRoleRefDto } from './JobRoleRefDto';
+import {
+    JobRoleRefDtoFromJSON,
+    JobRoleRefDtoFromJSONTyped,
+    JobRoleRefDtoToJSON,
+} from './JobRoleRefDto';
+
 /**
  * One shift of the coverage date with the person's live clock state and derived status
  * @export
@@ -38,17 +45,17 @@ export interface StaffingCoverageShift {
      */
     endAt: Date;
     /**
+     * 
+     * @type {JobRoleRefDto}
+     * @memberof StaffingCoverageShift
+     */
+    jobRole: JobRoleRefDto;
+    /**
      * Person on the shift
      * @type {string}
      * @memberof StaffingCoverageShift
      */
     personId: string;
-    /**
-     * Canonical staffing-assignment role of the shift
-     * @type {string}
-     * @memberof StaffingCoverageShift
-     */
-    role: string;
     /**
      * Shift id
      * @type {string}
@@ -97,8 +104,8 @@ export enum StaffingCoverageShiftStatusEnum {
  */
 export function instanceOfStaffingCoverageShift(value: object): boolean {
     if (!('endAt' in value)) return false;
+    if (!('jobRole' in value)) return false;
     if (!('personId' in value)) return false;
-    if (!('role' in value)) return false;
     if (!('shiftId' in value)) return false;
     if (!('startAt' in value)) return false;
     return true;
@@ -117,8 +124,8 @@ export function StaffingCoverageShiftFromJSONTyped(json: any, ignoreDiscriminato
         'clockState': json['clockState'] == null ? undefined : json['clockState'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'endAt': (new Date(json['endAt'])),
+        'jobRole': JobRoleRefDtoFromJSON(json['jobRole']),
         'personId': json['personId'],
-        'role': json['role'],
         'shiftId': json['shiftId'],
         'startAt': (new Date(json['startAt'])),
         'status': json['status'] == null ? undefined : json['status'],
@@ -134,8 +141,8 @@ export function StaffingCoverageShiftToJSON(value?: StaffingCoverageShift | null
         'clockState': value['clockState'],
         'displayName': value['displayName'],
         'endAt': ((value['endAt']).toISOString()),
+        'jobRole': JobRoleRefDtoToJSON(value['jobRole']),
         'personId': value['personId'],
-        'role': value['role'],
         'shiftId': value['shiftId'],
         'startAt': ((value['startAt']).toISOString()),
         'status': value['status'],

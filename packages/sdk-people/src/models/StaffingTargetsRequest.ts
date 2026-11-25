@@ -27,7 +27,7 @@ import {
  */
 export interface StaffingTargetsRequest {
     /**
-     * Every target the location should have; each role and dayOfWeek pair at most once
+     * Every target the location should have; each positionType and dayOfWeek pair at most once
      * @type {Array<StaffingTargetItem>}
      * @memberof StaffingTargetsRequest
      */

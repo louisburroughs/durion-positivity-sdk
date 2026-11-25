@@ -13,8 +13,15 @@
  */
 
 import { mapValues } from '../runtime';
+import type { JobRoleRefDto } from './JobRoleRefDto';
+import {
+    JobRoleRefDtoFromJSON,
+    JobRoleRefDtoFromJSONTyped,
+    JobRoleRefDtoToJSON,
+} from './JobRoleRefDto';
+
 /**
- * A scheduled shift: one person at one location in one role over a window of at most 24 hours, owned by the local date it starts on
+ * A scheduled shift: one person at one location in one job title over a window of at most 24 hours, owned by the local date it starts on
  * @export
  * @interface ShiftResponse
  */
@@ -25,6 +32,12 @@ export interface ShiftResponse {
      * @memberof ShiftResponse
      */
     endAt: Date;
+    /**
+     * 
+     * @type {JobRoleRefDto}
+     * @memberof ShiftResponse
+     */
+    jobRole: JobRoleRefDto;
     /**
      * Location the shift is worked at
      * @type {string}
@@ -37,12 +50,6 @@ export interface ShiftResponse {
      * @memberof ShiftResponse
      */
     personId: string;
-    /**
-     * Canonical (upper-case) staffing-assignment role
-     * @type {string}
-     * @memberof ShiftResponse
-     */
-    role: string;
     /**
      * Local business date the shift belongs to: the date of startAt in timezone
      * @type {Date}
@@ -96,9 +103,9 @@ export enum ShiftResponseStatusEnum {
  */
 export function instanceOfShiftResponse(value: object): boolean {
     if (!('endAt' in value)) return false;
+    if (!('jobRole' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('personId' in value)) return false;
-    if (!('role' in value)) return false;
     if (!('shiftDate' in value)) return false;
     if (!('shiftId' in value)) return false;
     if (!('startAt' in value)) return false;
@@ -119,9 +126,9 @@ export function ShiftResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
     return {
         
         'endAt': (new Date(json['endAt'])),
+        'jobRole': JobRoleRefDtoFromJSON(json['jobRole']),
         'locationId': json['locationId'],
         'personId': json['personId'],
-        'role': json['role'],
         'shiftDate': (new Date(json['shiftDate'])),
         'shiftId': json['shiftId'],
         'startAt': (new Date(json['startAt'])),
@@ -138,9 +145,9 @@ export function ShiftResponseToJSON(value?: ShiftResponse | null): any {
     return {
         
         'endAt': ((value['endAt']).toISOString()),
+        'jobRole': JobRoleRefDtoToJSON(value['jobRole']),
         'locationId': value['locationId'],
         'personId': value['personId'],
-        'role': value['role'],
         'shiftDate': ((value['shiftDate']).toISOString().substring(0,10)),
         'shiftId': value['shiftId'],
         'startAt': ((value['startAt']).toISOString()),
