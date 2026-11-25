@@ -13,6 +13,7 @@ export * from './PlatformAdministratorAPIApi';
 export * from './PlatformRoleTemplateAPIApi';
 export * from './PlatformSupportAPIApi';
 export * from './RoleManagementApi';
+export * from './RoleSuggestionsApi';
 export * from './SelfRegistrationReviewAPIApi';
 export * from './TenantAPIApi';
 export * from './UserAPIApi';

@@ -99,6 +99,12 @@ export interface RoleAssignmentDto {
      */
     scope: AssignmentScopeDto;
     /**
+     * The pos-people staffing assignment this assignment was confirmed from; it ends with that record and its end date follows the record's. Null for an assignment made directly
+     * @type {string}
+     * @memberof RoleAssignmentDto
+     */
+    readonly sourceStaffingAssignmentId?: string;
+    /**
      * Identifier of the user the role is assigned to
      * @type {string}
      * @memberof RoleAssignmentDto
@@ -141,11 +147,12 @@ export function RoleAssignmentDtoFromJSONTyped(json: any, ignoreDiscriminator: b
         'roleId': json['roleId'],
         'roleName': json['roleName'],
         'scope': AssignmentScopeDtoFromJSON(json['scope']),
+        'sourceStaffingAssignmentId': json['sourceStaffingAssignmentId'] == null ? undefined : json['sourceStaffingAssignmentId'],
         'userId': json['userId'],
     };
 }
 
-export function RoleAssignmentDtoToJSON(value?: RoleAssignmentDto | null): any {
+export function RoleAssignmentDtoToJSON(value?: Omit<RoleAssignmentDto, 'sourceStaffingAssignmentId'> | null): any {
     if (value == null) {
         return value;
     }
