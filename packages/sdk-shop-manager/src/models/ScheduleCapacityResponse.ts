@@ -45,7 +45,7 @@ export interface ScheduleCapacityResponse {
      */
     locationId: string;
     /**
-     * Whether the staffing-assignment replica holds any ACTIVE assignment at this location (#2527). AVAILABLE: each OK day's technicians list is that date's real roster, and an empty list means nobody in a technician role is rostered. UNAVAILABLE: rostering is unknown, every technicians list is empty, and that must not be read as nobody on duty. Always present; optional in the schema only so the addition stays non-breaking for existing typed clients.
+     * Whether the staffing-assignment replica holds any ACTIVE assignment at this location (#2527). AVAILABLE: each OK day's technicians list is that date's real roster, and an empty list means nobody holding a job title whose position type is TECHNICIAN is rostered. UNAVAILABLE: rostering is unknown, every technicians list is empty, and that must not be read as nobody on duty. Always present; optional in the schema only so the addition stays non-breaking for existing typed clients.
      * @type {string}
      * @memberof ScheduleCapacityResponse
      */

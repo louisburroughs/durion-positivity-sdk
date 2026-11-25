@@ -69,7 +69,7 @@ export interface DayCapacityView {
      */
     status: DayCapacityViewStatusEnum;
     /**
-     * Every person with an ACTIVE technician-role staffing assignment at the location covering this date, including those with nothing assigned (assignedMinutes 0) and those not available at all that date (every onDuty slot 0), ordered by mechanicPersonId (#2527). Empty unless status is OK and staffingStatus is AVAILABLE. Publishes who is on duty and who is busy, not who is competent for a given job: certification stays with the client (technician roster credentials) and with GET /v1/schedules/openings.
+     * Every person with an ACTIVE staffing assignment at the location, in a job title whose position type is TECHNICIAN, covering this date (the title's own code or name is never matched), including those with nothing assigned (assignedMinutes 0) and those not available at all that date (every onDuty slot 0), ordered by mechanicPersonId (#2527). Empty unless status is OK and staffingStatus is AVAILABLE. Publishes who is on duty and who is busy, not who is competent for a given job: certification stays with the client (technician roster credentials) and with GET /v1/schedules/openings.
      * @type {Array<TechnicianCapacityView>}
      * @memberof DayCapacityView
      */

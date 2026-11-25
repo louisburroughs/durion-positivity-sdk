@@ -68,7 +68,7 @@ export interface Opening {
      */
     technicianId: string;
     /**
-     * Grain of the roster check. DAY: the technician holds an ACTIVE technician staffing assignment that day and their available time is read from People shifts and approved time off (the whole day minus time off when the location publishes no shift that date); busy is minute-grain from appointments
+     * Grain of the roster check. DAY: the technician holds an ACTIVE staffing assignment that day in a job title whose position type is TECHNICIAN, and their available time is read from People shifts and approved time off (the whole day minus time off when the location publishes no shift that date); busy is minute-grain from appointments
      * @type {string}
      * @memberof Opening
      */
