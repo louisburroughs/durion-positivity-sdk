@@ -33,6 +33,8 @@ export * from './MessageFeedbackRequest';
 export * from './NltiRequestDTO';
 export * from './NltiResponseV1';
 export * from './PageAuditEventResponse';
+export * from './PageContext';
+export * from './PageContextEntityRef';
 export * from './PageableObject';
 export * from './PolicyBlocker';
 export * from './SortObject';

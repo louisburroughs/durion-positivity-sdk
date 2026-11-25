@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PageContext } from './PageContext';
+import {
+    PageContextFromJSON,
+    PageContextFromJSONTyped,
+    PageContextToJSON,
+} from './PageContext';
+
 /**
  * Chat request payload
  * @export
@@ -31,6 +38,12 @@ export interface ChatRequest {
      * @memberof ChatRequest
      */
     message: string;
+    /**
+     * 
+     * @type {PageContext}
+     * @memberof ChatRequest
+     */
+    pageContext?: PageContext;
 }
 
 /**
@@ -53,6 +66,7 @@ export function ChatRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean
         
         'conversationId': json['conversationId'] == null ? undefined : json['conversationId'],
         'message': json['message'],
+        'pageContext': json['pageContext'] == null ? undefined : PageContextFromJSON(json['pageContext']),
     };
 }
 
@@ -64,6 +78,7 @@ export function ChatRequestToJSON(value?: ChatRequest | null): any {
         
         'conversationId': value['conversationId'],
         'message': value['message'],
+        'pageContext': PageContextToJSON(value['pageContext']),
     };
 }
 

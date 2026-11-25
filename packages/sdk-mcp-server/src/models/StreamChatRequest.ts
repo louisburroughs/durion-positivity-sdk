@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PageContext } from './PageContext';
+import {
+    PageContextFromJSON,
+    PageContextFromJSONTyped,
+    PageContextToJSON,
+} from './PageContext';
+
 /**
  * Streaming chat request payload
  * @export
@@ -25,6 +32,12 @@ export interface StreamChatRequest {
      * @memberof StreamChatRequest
      */
     message: string;
+    /**
+     * 
+     * @type {PageContext}
+     * @memberof StreamChatRequest
+     */
+    pageContext?: PageContext;
 }
 
 /**
@@ -46,6 +59,7 @@ export function StreamChatRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'message': json['message'],
+        'pageContext': json['pageContext'] == null ? undefined : PageContextFromJSON(json['pageContext']),
     };
 }
 
@@ -56,6 +70,7 @@ export function StreamChatRequestToJSON(value?: StreamChatRequest | null): any {
     return {
         
         'message': value['message'],
+        'pageContext': PageContextToJSON(value['pageContext']),
     };
 }
 
