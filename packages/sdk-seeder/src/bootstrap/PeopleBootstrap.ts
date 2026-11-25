@@ -1,7 +1,9 @@
 import {
   createPeopleClient,
   CreateEmployeeRequestStatusEnum,
+  CreateJobRoleRequestPositionTypeEnum,
   type CreateEmployeeRequest,
+  type JobRoleDto,
   type EmployeeProfileDto,
   type StaffingAssignmentResponse,
   type CreateStaffingAssignmentRequest,
@@ -15,6 +17,11 @@ interface EmployeeSeedDefinition {
   employeeNumber: string;
   preferredName?: string;
   hireDate: Date;
+  /**
+   * The code of the job title the seed is staffed in. The seeder used to send it
+   * as a free-text staffing role; staffing now names a title by id (ADR-0079
+   * section 7), so the title is found by this code or created under it.
+   */
   role: string;
   bucket: 'technicians' | 'serviceWriters' | 'manager' | 'partsClerk';
 }
@@ -88,6 +95,34 @@ const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
 ];
 
 /**
+ * The position a seed's title fills when the seeder has to create it, from the
+ * role string the seed used to send: the mapping pos-people applied to the free
+ * text roles it held before staffing named a job title.
+ */
+export function positionTypeFor(role: string): CreateJobRoleRequestPositionTypeEnum {
+  switch (role) {
+    case 'TECHNICIAN':
+    case 'LEAD':
+    case 'SHOP_FOREMAN':
+      return CreateJobRoleRequestPositionTypeEnum.Technician;
+    case 'SERVICE_ADVISOR':
+    case 'RECEPTIONIST':
+      return CreateJobRoleRequestPositionTypeEnum.ServiceAdvisor;
+    case 'MANAGER':
+    case 'SHOP_MANAGER':
+      return CreateJobRoleRequestPositionTypeEnum.Management;
+    default:
+      return CreateJobRoleRequestPositionTypeEnum.Other;
+  }
+}
+
+/** `SERVICE_WRITER` -> `Service writer`, the name a created title is given. */
+function titleNameFor(code: string): string {
+  const words = code.toLowerCase().split('_').filter(Boolean).join(' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
  * The calendar date (yyyy-MM-dd) of an instant in a time zone - the zone the
  * backend's clock reports, or this machine's when there is none.
  */
@@ -132,7 +167,7 @@ export class PeopleBootstrap {
    *   staffed: today on a normal backend, the virtual today on an accelerated one.
    */
   async run(locationId: string, staffedOn: string): Promise<PeopleBootstrapResult> {
-    const { employeeApi, peopleStaffingAssignmentsApi } = createPeopleClient(this.sdkConfig);
+    const { employeeApi, jobRoleApi, peopleStaffingAssignmentsApi } = createPeopleClient(this.sdkConfig);
 
     let createdCount = 0;
     let skippedCount = 0;
@@ -141,6 +176,13 @@ export class PeopleBootstrap {
     const employeeNameById = new Map<string, string>();
 
     const employeeIndex = await this.buildEmployeeIndex();
+    const jobRoleIds = await this.ensureJobTitles(
+      () => jobRoleApi.listJobRoles(),
+      (code) =>
+        jobRoleApi.createJobRole({
+          createJobRoleRequest: { code, name: titleNameFor(code), positionType: positionTypeFor(code) },
+        }),
+    );
 
     const employees: EmployeeRefs = {
       technicians: [],
@@ -182,6 +224,7 @@ export class PeopleBootstrap {
       await this.ensureAssignment(
         employeeId,
         seed,
+        jobRoleIds.get(seed.role) as string,
         locationId,
         staffedOn,
         async (personId: string, initOverrides?: RequestInit) =>
@@ -217,6 +260,25 @@ export class PeopleBootstrap {
       created,
       skipped,
     };
+  }
+
+  /**
+   * The id of each seed's job title, by code. The tenant's own title is used
+   * when it has one with the code (the backend seeds its starter titles, among
+   * them TECHNICIAN, on tenant creation); otherwise the seeder creates it.
+   */
+  private async ensureJobTitles(
+    listTitles: () => Promise<JobRoleDto[]>,
+    createTitle: (code: string) => Promise<JobRoleDto>,
+  ): Promise<Map<string, string>> {
+    const byCode = new Map((await listTitles()).map((title) => [title.code, title.id]));
+    for (const code of new Set(EMPLOYEE_SEEDS.map((seed) => seed.role))) {
+      if (!byCode.has(code)) {
+        const created = await createTitle(code);
+        byCode.set(code, created.id);
+      }
+    }
+    return byCode;
   }
 
   private async buildEmployeeIndex(): Promise<Map<string, string>> {
@@ -262,6 +324,7 @@ export class PeopleBootstrap {
   private async ensureAssignment(
     personId: string,
     seed: EmployeeSeedDefinition,
+    jobRoleId: string,
     locationId: string,
     staffedOn: string,
     getAssignments: (
@@ -286,7 +349,7 @@ export class PeopleBootstrap {
     const existing = assignments.filter(
       (assignment) =>
         assignment.locationId === locationId &&
-        assignment.role === role &&
+        assignment.jobRole?.id === jobRoleId &&
         assignment.isPrimary &&
         assignment.status === 'ACTIVE',
     );
@@ -332,7 +395,7 @@ export class PeopleBootstrap {
         {
           personId,
           locationId,
-          role,
+          jobRoleId,
           effectiveFrom: new Date('2024-01-01'),
           isPrimary: true,
         },

@@ -28,6 +28,7 @@ export function createPeopleClient(config: DurionSdkConfig) {
   });
   return {
     employeeApi: new GeneratedApis.EmployeeAPIApi(configuration),
+    jobRoleApi: new GeneratedApis.JobRoleAPIApi(configuration),
     peopleAvailabilityApi: new GeneratedApis.PeopleAvailabilityAPIApi(configuration),
     peopleBulkIngestAPIApi: new GeneratedApis.PeopleBulkIngestAPIApi(configuration),
     peopleComplianceAPIApi: new GeneratedApis.PeopleComplianceAPIApi(configuration),

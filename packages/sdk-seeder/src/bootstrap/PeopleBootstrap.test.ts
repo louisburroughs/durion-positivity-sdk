@@ -1,6 +1,6 @@
-import { createPeopleClient, type StaffingAssignmentResponse } from '@durion-sdk/people';
+import { createPeopleClient, type JobRoleRefDto, type StaffingAssignmentResponse } from '@durion-sdk/people';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
-import { calendarDateIn, isEffectiveFrom, PeopleBootstrap } from './PeopleBootstrap';
+import { calendarDateIn, isEffectiveFrom, PeopleBootstrap, positionTypeFor } from './PeopleBootstrap';
 
 jest.mock('@durion-sdk/people', () => ({
   ...jest.requireActual('@durion-sdk/people'),
@@ -11,12 +11,17 @@ const LOCATION_ID = 'location-1';
 /** The virtual today of an accelerated run, a year behind wall time. */
 const STAFFED_ON = '2025-12-02';
 
+/** A staffing record's job title; the position is the wire string. */
+function title(code: string, positionType: string): JobRoleRefDto {
+  return { id: `title-${code}`, code, name: code, positionType } as JobRoleRefDto;
+}
+
 function assignment(overrides: Partial<StaffingAssignmentResponse> = {}): StaffingAssignmentResponse {
   return {
     assignmentId: 'assignment-1',
     personId: 'person-1',
     locationId: LOCATION_ID,
-    role: 'TECHNICIAN',
+    jobRole: title('TECHNICIAN', 'TECHNICIAN'),
     isPrimary: true,
     status: 'ACTIVE',
     effectiveFrom: new Date('2024-01-01'),
@@ -29,6 +34,15 @@ describe('calendarDateIn', () => {
     // 03:00 UTC is still the previous evening in New York.
     expect(calendarDateIn(new Date('2025-12-02T03:00:00Z'), 'America/New_York')).toBe('2025-12-01');
     expect(calendarDateIn(new Date('2025-12-02T03:00:00Z'), 'UTC')).toBe('2025-12-02');
+  });
+});
+
+describe('positionTypeFor', () => {
+  it('maps the old staffing role strings to a position', () => {
+    expect(['TECHNICIAN', 'LEAD', 'SHOP_FOREMAN'].map(positionTypeFor)).toEqual(['TECHNICIAN', 'TECHNICIAN', 'TECHNICIAN']);
+    expect(['SERVICE_ADVISOR', 'RECEPTIONIST'].map(positionTypeFor)).toEqual(['SERVICE_ADVISOR', 'SERVICE_ADVISOR']);
+    expect(['MANAGER', 'SHOP_MANAGER'].map(positionTypeFor)).toEqual(['MANAGEMENT', 'MANAGEMENT']);
+    expect(['SERVICE_WRITER', 'PARTS_CLERK', 'ANYTHING'].map(positionTypeFor)).toEqual(['OTHER', 'OTHER', 'OTHER']);
   });
 });
 
@@ -71,11 +85,20 @@ describe('PeopleBootstrap staffing', () => {
       listStaffingAssignments: jest.fn(async ({ personId }: { personId: string }) => assignments(personId)),
       createStaffingAssignment: jest.fn().mockResolvedValue(assignment()),
     };
+    // The tenant holds only the starter TECHNICIAN title; the others are created.
+    const jobRoleApi = {
+      listJobRoles: jest.fn().mockResolvedValue([{ id: 'title-TECHNICIAN', code: 'TECHNICIAN' }]),
+      createJobRole: jest.fn(async ({ createJobRoleRequest }: { createJobRoleRequest: { code: string } }) => ({
+        id: `title-${createJobRoleRequest.code}`,
+        code: createJobRoleRequest.code,
+      })),
+    };
     (createPeopleClient as jest.Mock).mockReturnValue({
       employeeApi: { createEmployee: jest.fn() },
+      jobRoleApi,
       peopleStaffingAssignmentsApi,
     });
-    return peopleStaffingAssignmentsApi;
+    return Object.assign(peopleStaffingAssignmentsApi, jobRoleApi);
   }
 
   /** A primary, ACTIVE assignment matching each seed's own role, starting on `from`. */
@@ -89,7 +112,14 @@ describe('PeopleBootstrap staffing', () => {
       'person-EMP-M001': 'MANAGER',
       'person-EMP-P001': 'PARTS_CLERK',
     };
-    return [assignment({ personId, role: roles[personId], effectiveFrom: new Date(from) })];
+    const code = roles[personId];
+    return [
+      assignment({
+        personId,
+        jobRole: title(code, positionTypeFor(code)),
+        effectiveFrom: new Date(from),
+      }),
+    ];
   };
 
   const run = () => new PeopleBootstrap({ baseUrl: 'http://people' } as DurionSdkConfig).run(LOCATION_ID, STAFFED_ON);
@@ -101,6 +131,36 @@ describe('PeopleBootstrap staffing', () => {
 
     expect(api.createStaffingAssignment).not.toHaveBeenCalled();
     expect(result.employees.technicians).toHaveLength(3);
+  });
+
+  it('uses the tenant\'s title when it has the code and creates the ones it lacks', async () => {
+    const api = mockPeople(holding('2024-01-01'));
+
+    await run();
+
+    expect(api.createJobRole).toHaveBeenCalledTimes(3);
+    expect(api.createJobRole).toHaveBeenCalledWith({
+      createJobRoleRequest: { code: 'SERVICE_WRITER', name: 'Service writer', positionType: 'OTHER' },
+    });
+    expect(api.createJobRole).toHaveBeenCalledWith({
+      createJobRoleRequest: { code: 'MANAGER', name: 'Manager', positionType: 'MANAGEMENT' },
+    });
+    expect(api.createJobRole).not.toHaveBeenCalledWith({
+      createJobRoleRequest: expect.objectContaining({ code: 'TECHNICIAN' }),
+    });
+  });
+
+  it('does not count an assignment in another title as the seed\'s staffing', async () => {
+    const api = mockPeople((personId) => [
+      assignment({
+        personId,
+        jobRole: title('OTHER', 'OTHER'),
+      }),
+    ]);
+
+    await run();
+
+    expect(api.createStaffingAssignment).toHaveBeenCalledTimes(7);
   });
 
   it('refuses to report a shop staffed by assignments that start after the staffing date', async () => {
@@ -121,6 +181,8 @@ describe('PeopleBootstrap staffing', () => {
     expect(api.createStaffingAssignment).toHaveBeenCalledWith(
       {
         createStaffingAssignmentRequest: expect.objectContaining({
+          personId: 'person-EMP-T001',
+          jobRoleId: 'title-TECHNICIAN',
           effectiveFrom: new Date('2024-01-01'),
           isPrimary: true,
         }),
