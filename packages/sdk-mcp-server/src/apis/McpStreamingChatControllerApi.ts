@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   StreamChatRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     StreamChatRequestFromJSON,
     StreamChatRequestToJSON,
 } from '../models/index';
@@ -32,7 +35,7 @@ export interface StreamMcpChatRequest {
 export class McpStreamingChatControllerApi extends runtime.BaseAPI {
 
     /**
-     * Executes a chat message against the caller\'s permission-scoped assistant agent and streams the response as Server-Sent Events, one token per event with event type chat. Use this tool when the client renders tokens incrementally as they are generated; do not use executeMcpChat, which blocks until the full response is complete. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the client must accept the text/event-stream media type. Emits a MCP_CHAT_STREAM_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while streaming. Returns 200 with an SSE token stream, and 429 when the caller\'s chat rate limit is exceeded. 
+     * Executes a chat message against the caller\'s permission-scoped assistant agent and streams the response as Server-Sent Events, one token per event with event type chat. Use this tool when the client renders tokens incrementally as they are generated; do not use executeMcpChat, which blocks until the full response is complete. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the client must accept the text/event-stream media type. Optional pageContext describes the screen the user is on and is rendered ahead of the message as the same fenced block of untrusted data the blocking endpoint uses, so its ids are hints resolved with the caller\'s own token, nothing in it widens access, streamed turns are never persisted, and an oversized or malformed one answers 400 VALIDATION_ERROR with a pageContext.* field error. Emits a MCP_CHAT_STREAM_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while streaming. Returns 200 with an SSE token stream, and 429 when the caller\'s chat rate limit is exceeded. 
      * Stream an MCP Chat Turn Over SSE
      */
     async streamMcpChatRaw(requestParameters: StreamMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -61,7 +64,7 @@ export class McpStreamingChatControllerApi extends runtime.BaseAPI {
     }
 
     /**
-     * Executes a chat message against the caller\'s permission-scoped assistant agent and streams the response as Server-Sent Events, one token per event with event type chat. Use this tool when the client renders tokens incrementally as they are generated; do not use executeMcpChat, which blocks until the full response is complete. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the client must accept the text/event-stream media type. Emits a MCP_CHAT_STREAM_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while streaming. Returns 200 with an SSE token stream, and 429 when the caller\'s chat rate limit is exceeded. 
+     * Executes a chat message against the caller\'s permission-scoped assistant agent and streams the response as Server-Sent Events, one token per event with event type chat. Use this tool when the client renders tokens incrementally as they are generated; do not use executeMcpChat, which blocks until the full response is complete. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the client must accept the text/event-stream media type. Optional pageContext describes the screen the user is on and is rendered ahead of the message as the same fenced block of untrusted data the blocking endpoint uses, so its ids are hints resolved with the caller\'s own token, nothing in it widens access, streamed turns are never persisted, and an oversized or malformed one answers 400 VALIDATION_ERROR with a pageContext.* field error. Emits a MCP_CHAT_STREAM_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while streaming. Returns 200 with an SSE token stream, and 429 when the caller\'s chat rate limit is exceeded. 
      * Stream an MCP Chat Turn Over SSE
      */
     async streamMcpChat(requestParameters: StreamMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
