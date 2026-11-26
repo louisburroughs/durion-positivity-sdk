@@ -56,11 +56,11 @@ export interface PurchaseOrderLineRequest {
      */
     quantity?: number;
     /**
-     * Identifier of the SKU being ordered on this line
+     * Identifier of the SKU being ordered on this line. Required: a purchase-order line names a SKU, and the published order fact (PurchaseOrderLine) keys every consumer on it (#4124)
      * @type {string}
      * @memberof PurchaseOrderLineRequest
      */
-    skuId?: string;
+    skuId: string;
     /**
      * Identifier of the tax code applied to this line
      * @type {string}
@@ -87,6 +87,7 @@ export interface PurchaseOrderLineRequest {
 export function instanceOfPurchaseOrderLineRequest(value: object): boolean {
     if (!('description' in value)) return false;
     if (!('lineNumber' in value)) return false;
+    if (!('skuId' in value)) return false;
     if (!('unitCostMinor' in value)) return false;
     return true;
 }
@@ -107,7 +108,7 @@ export function PurchaseOrderLineRequestFromJSONTyped(json: any, ignoreDiscrimin
         'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
         'lineNumber': json['lineNumber'],
         'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'skuId': json['skuId'] == null ? undefined : json['skuId'],
+        'skuId': json['skuId'],
         'taxCodeId': json['taxCodeId'] == null ? undefined : json['taxCodeId'],
         'unitCostMinor': json['unitCostMinor'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],

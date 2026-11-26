@@ -20,18 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface CancellationRequest {
     /**
-     * Legacy client-provided actor identifier; service resolves authoritative actor from security context
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    actorId?: string;
-    /**
-     * Role of the actor performing the cancellation
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    actorRole: string;
-    /**
      * Snapshot of state after the cancellation (JSON)
      * @type {string}
      * @memberof CancellationRequest
@@ -90,7 +78,6 @@ export enum CancellationRequestCancellationTypeEnum {
  * Check if a given object implements the CancellationRequest interface.
  */
 export function instanceOfCancellationRequest(value: object): boolean {
-    if (!('actorRole' in value)) return false;
     if (!('afterSnapshot' in value)) return false;
     if (!('beforeSnapshot' in value)) return false;
     if (!('cancellationType' in value)) return false;
@@ -108,8 +95,6 @@ export function CancellationRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'actorId': json['actorId'] == null ? undefined : json['actorId'],
-        'actorRole': json['actorRole'],
         'afterSnapshot': json['afterSnapshot'],
         'beforeSnapshot': json['beforeSnapshot'],
         'cancellationType': json['cancellationType'],
@@ -126,8 +111,6 @@ export function CancellationRequestToJSON(value?: CancellationRequest | null): a
     }
     return {
         
-        'actorId': value['actorId'],
-        'actorRole': value['actorRole'],
         'afterSnapshot': value['afterSnapshot'],
         'beforeSnapshot': value['beforeSnapshot'],
         'cancellationType': value['cancellationType'],

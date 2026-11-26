@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface PriceOverrideRequest {
     /**
-     * Role of the actor performing the override
-     * @type {string}
-     * @memberof PriceOverrideRequest
-     */
-    actorRole: string;
-    /**
      * Adjusted price after the override
      * @type {number}
      * @memberof PriceOverrideRequest
@@ -67,7 +61,6 @@ export interface PriceOverrideRequest {
  * Check if a given object implements the PriceOverrideRequest interface.
  */
 export function instanceOfPriceOverrideRequest(value: object): boolean {
-    if (!('actorRole' in value)) return false;
     if (!('adjustedPrice' in value)) return false;
     if (!('lineItemId' in value)) return false;
     if (!('orderId' in value)) return false;
@@ -86,7 +79,6 @@ export function PriceOverrideRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'actorRole': json['actorRole'],
         'adjustedPrice': json['adjustedPrice'],
         'categoryCode': json['categoryCode'] == null ? undefined : json['categoryCode'],
         'lineItemId': json['lineItemId'],
@@ -102,7 +94,6 @@ export function PriceOverrideRequestToJSON(value?: PriceOverrideRequest | null):
     }
     return {
         
-        'actorRole': value['actorRole'],
         'adjustedPrice': value['adjustedPrice'],
         'categoryCode': value['categoryCode'],
         'lineItemId': value['lineItemId'],

@@ -20,18 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface RefundRequest {
     /**
-     * Legacy client-provided actor identifier; service resolves authoritative actor from security context
-     * @type {string}
-     * @memberof RefundRequest
-     */
-    actorId?: string;
-    /**
-     * Role of the actor performing the refund
-     * @type {string}
-     * @memberof RefundRequest
-     */
-    actorRole: string;
-    /**
      * Identifier of the invoice being refunded
      * @type {string}
      * @memberof RefundRequest
@@ -94,7 +82,6 @@ export enum RefundRequestRefundTypeEnum {
  * Check if a given object implements the RefundRequest interface.
  */
 export function instanceOfRefundRequest(value: object): boolean {
-    if (!('actorRole' in value)) return false;
     if (!('invoiceId' in value)) return false;
     if (!('originalPaymentStatus' in value)) return false;
     if (!('paymentId' in value)) return false;
@@ -114,8 +101,6 @@ export function RefundRequestFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'actorId': json['actorId'] == null ? undefined : json['actorId'],
-        'actorRole': json['actorRole'],
         'invoiceId': json['invoiceId'],
         'originalPaymentStatus': json['originalPaymentStatus'],
         'paymentId': json['paymentId'],
@@ -131,8 +116,6 @@ export function RefundRequestToJSON(value?: RefundRequest | null): any {
     }
     return {
         
-        'actorId': value['actorId'],
-        'actorRole': value['actorRole'],
         'invoiceId': value['invoiceId'],
         'originalPaymentStatus': value['originalPaymentStatus'],
         'paymentId': value['paymentId'],
