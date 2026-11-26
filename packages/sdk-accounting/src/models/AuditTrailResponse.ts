@@ -38,12 +38,6 @@ export interface AuditTrailResponse {
      */
     actorId?: string;
     /**
-     * Role of the actor who performed the action
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    actorRole?: string;
-    /**
      * Adjusted price after override
      * @type {number}
      * @memberof AuditTrailResponse
@@ -62,7 +56,7 @@ export interface AuditTrailResponse {
      */
     auditId: string;
     /**
-     * Authorization level applied to the action
+     * The permission that authorized the action: the price-override tier permission for a price override, accounting:events:submit for a refund or cancellation
      * @type {string}
      * @memberof AuditTrailResponse
      */
@@ -320,7 +314,6 @@ export function AuditTrailResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'accountingIntent': json['accountingIntent'] == null ? undefined : json['accountingIntent'],
         'accountingStatus': json['accountingStatus'] == null ? undefined : json['accountingStatus'],
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
-        'actorRole': json['actorRole'] == null ? undefined : json['actorRole'],
         'adjustedPrice': json['adjustedPrice'] == null ? undefined : json['adjustedPrice'],
         'afterSnapshot': json['afterSnapshot'] == null ? undefined : json['afterSnapshot'],
         'auditId': json['auditId'],
@@ -361,7 +354,6 @@ export function AuditTrailResponseToJSON(value?: AuditTrailResponse | null): any
         'accountingIntent': value['accountingIntent'],
         'accountingStatus': value['accountingStatus'],
         'actorId': value['actorId'],
-        'actorRole': value['actorRole'],
         'adjustedPrice': value['adjustedPrice'],
         'afterSnapshot': value['afterSnapshot'],
         'auditId': value['auditId'],
