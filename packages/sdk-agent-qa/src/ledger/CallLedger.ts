@@ -24,6 +24,8 @@ export interface CallRecord {
   requestPath?: string;
   correlationId?: string;
   durationMs: number;
+  /** Repeats after the backend was unreachable; absent when the first send was answered. */
+  retries?: number;
   /** True when the call was sent without client-side validation, to provoke an error. */
   unvalidated?: boolean;
   /** Who made the call: the model, the deterministic coverage backstop, or the harness preparing a visit stage. */

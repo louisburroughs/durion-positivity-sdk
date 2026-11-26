@@ -412,7 +412,7 @@ Every call is written to a ledger as it returns. `scenarios/oracle.ts` judges th
 | `passed` | The agent finished and every expectation is visible in the ledger. |
 | `failed` | A call answered **5xx**, or answered 2xx with a body the SDK could not decode (contract drift). The only verdict that means "there is a defect". The backend's documented "still replicating, retry" 503s after a record was just created are not counted; the agent is told to wait and retry. |
 | `inconclusive` | The agent did not get there: out of steps, model error, or an expected call never happened. A harness or model matter until shown otherwise. |
-| `infra` | Nothing answered: no network, or the stack is down. The slot is left due and retried when the backend is back. |
+| `infra` | Nothing answered: no network, or the stack is down; or every server error came during a backend deploy (`QA_DEPLOY_REPO`). The slot is left due and retried when the backend is back. |
 | `skipped` | The scenario needs per-persona logins that are not configured, or a visit stage's prerequisite never came to exist (the customer declined; the job was never finished). |
 
 A 4xx is never a failure by itself: a 409 on a workorder that is already complete is the system working. What the
