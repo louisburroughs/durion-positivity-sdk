@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AdminAccountStateAPIApi';
+export * from './AssistantPersonaApi';
 export * from './AuditApi';
 export * from './AuditExportsApi';
 export * from './AuthAPIApi';

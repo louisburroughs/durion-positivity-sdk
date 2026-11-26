@@ -74,37 +74,25 @@ export interface RoleDto {
      */
     lastModifiedBy?: string;
     /**
-     * Whether the role participates in MCP persona resolution
-     * @type {boolean}
-     * @memberof RoleDto
-     */
-    mcpPersonaEligible?: boolean;
-    /**
-     * MCP persona resolution priority, lowest first; null leaves the role unranked
-     * @type {number}
-     * @memberof RoleDto
-     */
-    mcpPersonaRank?: number;
-    /**
      * Display name, as the tenant typed it. Free text: show it, never compare on it
      * @type {string}
      * @memberof RoleDto
      */
     name: string;
     /**
-     * MCP persona slot: what the caller works on
+     * Default assistant persona for a user with no job title: what the user works on. Set by the platform on system roles only; null on every other role; read-only
      * @type {string}
      * @memberof RoleDto
      */
     personaFocus?: string;
     /**
-     * MCP persona slot: who the caller is, in the second person (#1613)
+     * Default assistant persona for a user with no job title: who the user is. Set by the platform on system roles only; null on every other role; read-only
      * @type {string}
      * @memberof RoleDto
      */
     personaTitle?: string;
     /**
-     * MCP persona slot: how to speak to the caller
+     * Default assistant persona for a user with no job title: how to speak to the user. Set by the platform on system roles only; null on every other role; read-only
      * @type {string}
      * @memberof RoleDto
      */
@@ -156,8 +144,6 @@ export function RoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): R
         'key': json['key'],
         'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
-        'mcpPersonaEligible': json['mcpPersonaEligible'] == null ? undefined : json['mcpPersonaEligible'],
-        'mcpPersonaRank': json['mcpPersonaRank'] == null ? undefined : json['mcpPersonaRank'],
         'name': json['name'],
         'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
         'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
@@ -182,8 +168,6 @@ export function RoleDtoToJSON(value?: RoleDto | null): any {
         'key': value['key'],
         'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'lastModifiedBy': value['lastModifiedBy'],
-        'mcpPersonaEligible': value['mcpPersonaEligible'],
-        'mcpPersonaRank': value['mcpPersonaRank'],
         'name': value['name'],
         'personaFocus': value['personaFocus'],
         'personaTitle': value['personaTitle'],

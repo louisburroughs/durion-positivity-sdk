@@ -14,53 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * Replacement name, description and MCP persona metadata for an existing role
+ * Replacement name and description for an existing role
  * @export
  * @interface RoleUpdateRequest
  */
 export interface RoleUpdateRequest {
     /**
-     * Human-readable description of the role. Doubles as the derived persona focus when personaFocus is omitted.
+     * Human-readable description of the role.
      * @type {string}
      * @memberof RoleUpdateRequest
      */
     description?: string;
-    /**
-     * Whether the role participates in MCP persona resolution. Defaults to true when omitted.
-     * @type {boolean}
-     * @memberof RoleUpdateRequest
-     */
-    mcpPersonaEligible?: boolean;
-    /**
-     * MCP persona resolution priority, lowest first. Null leaves the role unranked.
-     * @type {number}
-     * @memberof RoleUpdateRequest
-     */
-    mcpPersonaRank?: number;
     /**
      * Display name of the role, stored as typed and trimmed. Changing it renames the role; the role's key stays the same. Unique within the tenant ignoring letter case and repeated spaces.
      * @type {string}
      * @memberof RoleUpdateRequest
      */
     name: string;
-    /**
-     * What the caller works on. Cleared, and therefore derived from the description, when omitted.
-     * @type {string}
-     * @memberof RoleUpdateRequest
-     */
-    personaFocus?: string;
-    /**
-     * Who the caller is, in the second person. Cleared, and therefore derived from the role name, when omitted.
-     * @type {string}
-     * @memberof RoleUpdateRequest
-     */
-    personaTitle?: string;
-    /**
-     * How to speak to the caller. Cleared, and therefore defaulted to a neutral tone, when omitted.
-     * @type {string}
-     * @memberof RoleUpdateRequest
-     */
-    personaTone?: string;
 }
 
 /**
@@ -82,12 +52,7 @@ export function RoleUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'description': json['description'] == null ? undefined : json['description'],
-        'mcpPersonaEligible': json['mcpPersonaEligible'] == null ? undefined : json['mcpPersonaEligible'],
-        'mcpPersonaRank': json['mcpPersonaRank'] == null ? undefined : json['mcpPersonaRank'],
         'name': json['name'],
-        'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
-        'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
-        'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
     };
 }
 
@@ -98,12 +63,7 @@ export function RoleUpdateRequestToJSON(value?: RoleUpdateRequest | null): any {
     return {
         
         'description': value['description'],
-        'mcpPersonaEligible': value['mcpPersonaEligible'],
-        'mcpPersonaRank': value['mcpPersonaRank'],
         'name': value['name'],
-        'personaFocus': value['personaFocus'],
-        'personaTitle': value['personaTitle'],
-        'personaTone': value['personaTone'],
     };
 }
 
