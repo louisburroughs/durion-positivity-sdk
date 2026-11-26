@@ -85,6 +85,12 @@ export interface JobRoleDto {
      * @memberof JobRoleDto
      */
     updatedAt: Date;
+    /**
+     * Optimistic-lock version; send it back on updateJobRole, which refuses a stale one with 409 OPTIMISTIC_LOCK_FAILED
+     * @type {number}
+     * @memberof JobRoleDto
+     */
+    version: number;
 }
 
 /**
@@ -112,6 +118,7 @@ export function instanceOfJobRoleDto(value: object): boolean {
     if (!('name' in value)) return false;
     if (!('positionType' in value)) return false;
     if (!('updatedAt' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -136,6 +143,7 @@ export function JobRoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
         'positionType': json['positionType'],
         'updatedAt': (new Date(json['updatedAt'])),
+        'version': json['version'],
     };
 }
 
@@ -156,6 +164,7 @@ export function JobRoleDtoToJSON(value?: JobRoleDto | null): any {
         'personaTone': value['personaTone'],
         'positionType': value['positionType'],
         'updatedAt': ((value['updatedAt']).toISOString()),
+        'version': value['version'],
     };
 }
 

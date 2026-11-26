@@ -33,6 +33,12 @@ export interface CreateUserResponse {
      */
     activation: ActivationMessageResponse;
     /**
+     * True while the account has never been activated: no password of its own and no sign-in. resendUserActivation accepts exactly these accounts. True on creation.
+     * @type {boolean}
+     * @memberof CreateUserResponse
+     */
+    readonly awaitingActivation: boolean;
+    /**
      * User identifier
      * @type {string}
      * @memberof CreateUserResponse
@@ -63,6 +69,7 @@ export interface CreateUserResponse {
  */
 export function instanceOfCreateUserResponse(value: object): boolean {
     if (!('activation' in value)) return false;
+    if (!('awaitingActivation' in value)) return false;
     if (!('id' in value)) return false;
     if (!('roles' in value)) return false;
     if (!('username' in value)) return false;
@@ -80,6 +87,7 @@ export function CreateUserResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'activation': ActivationMessageResponseFromJSON(json['activation']),
+        'awaitingActivation': json['awaitingActivation'],
         'id': json['id'],
         'personId': json['personId'] == null ? undefined : json['personId'],
         'roles': json['roles'],
@@ -87,7 +95,7 @@ export function CreateUserResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     };
 }
 
-export function CreateUserResponseToJSON(value?: CreateUserResponse | null): any {
+export function CreateUserResponseToJSON(value?: Omit<CreateUserResponse, 'awaitingActivation'> | null): any {
     if (value == null) {
         return value;
     }

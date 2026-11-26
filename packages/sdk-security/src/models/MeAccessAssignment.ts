@@ -27,6 +27,12 @@ import {
  */
 export interface MeAccessAssignment {
     /**
+     * The role assignment's identifier; what locations[].assignmentIds refer to
+     * @type {string}
+     * @memberof MeAccessAssignment
+     */
+    assignmentId: string;
+    /**
      * Exclusive end of the assignment's effective window; null when it has no end
      * @type {Date}
      * @memberof MeAccessAssignment
@@ -56,6 +62,7 @@ export interface MeAccessAssignment {
  * Check if a given object implements the MeAccessAssignment interface.
  */
 export function instanceOfMeAccessAssignment(value: object): boolean {
+    if (!('assignmentId' in value)) return false;
     if (!('roleKey' in value)) return false;
     if (!('roleName' in value)) return false;
     if (!('scope' in value)) return false;
@@ -72,6 +79,7 @@ export function MeAccessAssignmentFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'assignmentId': json['assignmentId'],
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
         'roleKey': json['roleKey'],
         'roleName': json['roleName'],
@@ -85,6 +93,7 @@ export function MeAccessAssignmentToJSON(value?: MeAccessAssignment | null): any
     }
     return {
         
+        'assignmentId': value['assignmentId'],
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate'] as any).toISOString()),
         'roleKey': value['roleKey'],
         'roleName': value['roleName'],

@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface UserDto {
     /**
+     * True while the account has never been activated: no password of its own and no sign-in. resendUserActivation accepts exactly these accounts.
+     * @type {boolean}
+     * @memberof UserDto
+     */
+    readonly awaitingActivation: boolean;
+    /**
      * User identifier
      * @type {string}
      * @memberof UserDto
@@ -49,6 +55,7 @@ export interface UserDto {
  * Check if a given object implements the UserDto interface.
  */
 export function instanceOfUserDto(value: object): boolean {
+    if (!('awaitingActivation' in value)) return false;
     if (!('id' in value)) return false;
     if (!('roles' in value)) return false;
     if (!('username' in value)) return false;
@@ -65,6 +72,7 @@ export function UserDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): U
     }
     return {
         
+        'awaitingActivation': json['awaitingActivation'],
         'id': json['id'],
         'personId': json['personId'] == null ? undefined : json['personId'],
         'roles': json['roles'],
@@ -72,7 +80,7 @@ export function UserDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): U
     };
 }
 
-export function UserDtoToJSON(value?: UserDto | null): any {
+export function UserDtoToJSON(value?: Omit<UserDto, 'awaitingActivation'> | null): any {
     if (value == null) {
         return value;
     }

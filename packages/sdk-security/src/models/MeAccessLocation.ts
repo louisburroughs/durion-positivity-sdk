@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface MeAccessLocation {
     /**
+     * The assignments that cover this location: every tenant-wide one, and each located one at this location or above it, in assignments order
+     * @type {Array<string>}
+     * @memberof MeAccessLocation
+     */
+    assignmentIds: Array<string>;
+    /**
      * Location identifier
      * @type {string}
      * @memberof MeAccessLocation
@@ -43,6 +49,7 @@ export interface MeAccessLocation {
  * Check if a given object implements the MeAccessLocation interface.
  */
 export function instanceOfMeAccessLocation(value: object): boolean {
+    if (!('assignmentIds' in value)) return false;
     if (!('id' in value)) return false;
     if (!('name' in value)) return false;
     if (!('primary' in value)) return false;
@@ -59,6 +66,7 @@ export function MeAccessLocationFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'assignmentIds': json['assignmentIds'],
         'id': json['id'],
         'name': json['name'],
         'primary': json['primary'],
@@ -71,6 +79,7 @@ export function MeAccessLocationToJSON(value?: MeAccessLocation | null): any {
     }
     return {
         
+        'assignmentIds': value['assignmentIds'],
         'id': value['id'],
         'name': value['name'],
         'primary': value['primary'],
