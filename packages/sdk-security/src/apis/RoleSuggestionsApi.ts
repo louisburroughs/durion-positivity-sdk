@@ -56,7 +56,7 @@ export interface ListJobTitleRoleSuggestionsRequest {
 }
 
 export interface ListPendingRoleSuggestionsRequest {
-    personId: string;
+    personId?: string;
     status?: ListPendingRoleSuggestionsStatusEnum;
 }
 
@@ -284,17 +284,10 @@ export class RoleSuggestionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the role suggestions raised for one pos-people person because of the job titles they are staffed in, newest first, at most 200. Each carries the staffing record, title and location it was raised from, the role, the scope confirming would grant (TENANT, or the staffing location), its status, and whether a user account is linked to the person (userLinked, and linkedUserId when exactly one is): confirming needs exactly one. Use this tool to see what is waiting for a decision for one employee; use listJobTitleRoleSuggestions instead for the title-to-role table itself. Preconditions: the caller must hold security:role:view. Required inputs: personId (UUID). status (PENDING, CONFIRMED, DISMISSED or EXPIRED) is optional and defaults to PENDING. No events are emitted; this is a read. Nothing listed is granted until it is confirmed. Returns 200 with an empty list for a person with no suggestions (an unknown person included); 400 INVALID_REQUEST when personId is missing or malformed or status is unknown. 
-     * List the Roles Suggested for a Person
+     * Returns role suggestions raised because of the job titles pos-people people are staffed in, newest first, at most 200 (the newest 200; there is no paging): with personId that person\'s, and without it the tenant\'s queue of every person\'s, which a caller who holds security:role:view at locations only sees narrowed to the suggestions whose scope is inside their reach (a LOCATIONS suggestion at a location they hold it at, never a TENANT one), while the per-person list is not narrowed. Each row carries the person, the staffing record, title and location it was raised from, the role, the scope confirming would grant (TENANT, or the staffing location), its status, and whether a user account is linked to the person (userLinked, and linkedUserId when exactly one is), since confirming needs exactly one. Use this tool to see what is waiting for a decision, for one employee or across the tenant; use listJobTitleRoleSuggestions instead for the title-to-role table itself. Preconditions: the caller must hold security:role:view. Required inputs: none; personId (UUID) narrows the list to one person, and status (PENDING, CONFIRMED, DISMISSED or EXPIRED) defaults to PENDING. No events are emitted; this is a read, and nothing listed is granted until it is confirmed. Returns 200 with an empty list when nothing matches (an unknown person included); 400 INVALID_REQUEST when personId is malformed or status is unknown. 
+     * List Role Suggestions, for a Person or the Tenant
      */
     async listPendingRoleSuggestionsRaw(requestParameters: ListPendingRoleSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PendingRoleSuggestionDto>>> {
-        if (requestParameters['personId'] == null) {
-            throw new runtime.RequiredError(
-                'personId',
-                'Required parameter "personId" was null or undefined when calling listPendingRoleSuggestions().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['personId'] != null) {
@@ -326,10 +319,10 @@ export class RoleSuggestionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the role suggestions raised for one pos-people person because of the job titles they are staffed in, newest first, at most 200. Each carries the staffing record, title and location it was raised from, the role, the scope confirming would grant (TENANT, or the staffing location), its status, and whether a user account is linked to the person (userLinked, and linkedUserId when exactly one is): confirming needs exactly one. Use this tool to see what is waiting for a decision for one employee; use listJobTitleRoleSuggestions instead for the title-to-role table itself. Preconditions: the caller must hold security:role:view. Required inputs: personId (UUID). status (PENDING, CONFIRMED, DISMISSED or EXPIRED) is optional and defaults to PENDING. No events are emitted; this is a read. Nothing listed is granted until it is confirmed. Returns 200 with an empty list for a person with no suggestions (an unknown person included); 400 INVALID_REQUEST when personId is missing or malformed or status is unknown. 
-     * List the Roles Suggested for a Person
+     * Returns role suggestions raised because of the job titles pos-people people are staffed in, newest first, at most 200 (the newest 200; there is no paging): with personId that person\'s, and without it the tenant\'s queue of every person\'s, which a caller who holds security:role:view at locations only sees narrowed to the suggestions whose scope is inside their reach (a LOCATIONS suggestion at a location they hold it at, never a TENANT one), while the per-person list is not narrowed. Each row carries the person, the staffing record, title and location it was raised from, the role, the scope confirming would grant (TENANT, or the staffing location), its status, and whether a user account is linked to the person (userLinked, and linkedUserId when exactly one is), since confirming needs exactly one. Use this tool to see what is waiting for a decision, for one employee or across the tenant; use listJobTitleRoleSuggestions instead for the title-to-role table itself. Preconditions: the caller must hold security:role:view. Required inputs: none; personId (UUID) narrows the list to one person, and status (PENDING, CONFIRMED, DISMISSED or EXPIRED) defaults to PENDING. No events are emitted; this is a read, and nothing listed is granted until it is confirmed. Returns 200 with an empty list when nothing matches (an unknown person included); 400 INVALID_REQUEST when personId is malformed or status is unknown. 
+     * List Role Suggestions, for a Person or the Tenant
      */
-    async listPendingRoleSuggestions(requestParameters: ListPendingRoleSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PendingRoleSuggestionDto>> {
+    async listPendingRoleSuggestions(requestParameters: ListPendingRoleSuggestionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PendingRoleSuggestionDto>> {
         const response = await this.listPendingRoleSuggestionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
