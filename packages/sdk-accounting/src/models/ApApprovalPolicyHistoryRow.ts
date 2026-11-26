@@ -38,12 +38,6 @@ export interface ApApprovalPolicyHistoryRow {
      */
     changedByName?: string;
     /**
-     * The caller's roles at the time of the change
-     * @type {Array<string>}
-     * @memberof ApApprovalPolicyHistoryRow
-     */
-    changedByRoles: Array<string>;
-    /**
      * Why it changed
      * @type {string}
      * @memberof ApApprovalPolicyHistoryRow
@@ -75,7 +69,6 @@ export interface ApApprovalPolicyHistoryRow {
 export function instanceOfApApprovalPolicyHistoryRow(value: object): boolean {
     if (!('changedAt' in value)) return false;
     if (!('changedBy' in value)) return false;
-    if (!('changedByRoles' in value)) return false;
     if (!('justification' in value)) return false;
     if (!('newValue' in value)) return false;
     if (!('setting' in value)) return false;
@@ -95,7 +88,6 @@ export function ApApprovalPolicyHistoryRowFromJSONTyped(json: any, ignoreDiscrim
         'changedAt': (new Date(json['changedAt'])),
         'changedBy': json['changedBy'],
         'changedByName': json['changedByName'] == null ? undefined : json['changedByName'],
-        'changedByRoles': json['changedByRoles'],
         'justification': json['justification'],
         'newValue': json['newValue'],
         'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
@@ -112,7 +104,6 @@ export function ApApprovalPolicyHistoryRowToJSON(value?: ApApprovalPolicyHistory
         'changedAt': ((value['changedAt']).toISOString()),
         'changedBy': value['changedBy'],
         'changedByName': value['changedByName'],
-        'changedByRoles': value['changedByRoles'],
         'justification': value['justification'],
         'newValue': value['newValue'],
         'oldValue': value['oldValue'],

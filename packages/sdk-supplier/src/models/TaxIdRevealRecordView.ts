@@ -62,12 +62,6 @@ export interface TaxIdRevealRecordView {
      */
     revealedBy: string;
     /**
-     * Roles the person held at the time.
-     * @type {Array<string>}
-     * @memberof TaxIdRevealRecordView
-     */
-    revealedByRoles: Array<string>;
-    /**
      * Its scheme at the time.
      * @type {string}
      * @memberof TaxIdRevealRecordView
@@ -95,7 +89,6 @@ export function instanceOfTaxIdRevealRecordView(value: object): boolean {
     if (!('revealId' in value)) return false;
     if (!('revealedAt' in value)) return false;
     if (!('revealedBy' in value)) return false;
-    if (!('revealedByRoles' in value)) return false;
     if (!('scheme' in value)) return false;
     return true;
 }
@@ -117,7 +110,6 @@ export function TaxIdRevealRecordViewFromJSONTyped(json: any, ignoreDiscriminato
         'revealId': json['revealId'],
         'revealedAt': (new Date(json['revealedAt'])),
         'revealedBy': json['revealedBy'],
-        'revealedByRoles': json['revealedByRoles'],
         'scheme': json['scheme'],
     };
 }
@@ -135,7 +127,6 @@ export function TaxIdRevealRecordViewToJSON(value?: TaxIdRevealRecordView | null
         'revealId': value['revealId'],
         'revealedAt': ((value['revealedAt']).toISOString()),
         'revealedBy': value['revealedBy'],
-        'revealedByRoles': value['revealedByRoles'],
         'scheme': value['scheme'],
     };
 }
