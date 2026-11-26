@@ -37,7 +37,7 @@ export interface InputTaxRecoveryRegime {
      * @type {InputTaxRecoveryAccount}
      * @memberof InputTaxRecoveryRegime
      */
-    account: InputTaxRecoveryAccount;
+    account: InputTaxRecoveryAccount | null;
     /**
      * ISO 3166-1 alpha-2 country
      * @type {string}
@@ -67,7 +67,7 @@ export interface InputTaxRecoveryRegime {
      * @type {InputTaxRecoveryRegistration}
      * @memberof InputTaxRecoveryRegime
      */
-    registration: InputTaxRecoveryRegistration;
+    registration: InputTaxRecoveryRegistration | null;
 }
 
 /**
