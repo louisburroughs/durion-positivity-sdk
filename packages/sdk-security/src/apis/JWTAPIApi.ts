@@ -40,10 +40,6 @@ import {
     ValidateResponseToJSON,
 } from '../models/index';
 
-export interface GetTokenRolesRequest {
-    token: string;
-}
-
 export interface GetTokenSubjectRequest {
     token: string;
 }
@@ -78,54 +74,7 @@ export interface ValidateTokenRequest {
 export class JWTAPIApi extends runtime.BaseAPI {
 
     /**
-     * Extracts the roles claim from a valid JWT token and returns the normalized role names. Use this tool when a caller holds a token and needs its roles; use getTokenSubject instead for the username, and decodePermissionBits instead to expand the token\'s perm_bits claim into permission codes. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
-     * Extract Roles From JWT Token
-     */
-    async getTokenRolesRaw(requestParameters: GetTokenRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<string>>> {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError(
-                'token',
-                'Required parameter "token" was null or undefined when calling getTokenRoles().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/auth/roles`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse<any>(response);
-    }
-
-    /**
-     * Extracts the roles claim from a valid JWT token and returns the normalized role names. Use this tool when a caller holds a token and needs its roles; use getTokenSubject instead for the username, and decodePermissionBits instead to expand the token\'s perm_bits claim into permission codes. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
-     * Extract Roles From JWT Token
-     */
-    async getTokenRoles(requestParameters: GetTokenRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<string>> {
-        const response = await this.getTokenRolesRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Extracts the subject claim, the username, from a valid JWT token and returns it as a plain string body. Use this tool to resolve which user a token belongs to; use getTokenUserId instead for the stable UUID identifier, and getTokenRoles for the role claim. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extracts the subject claim, the username, from a valid JWT token and returns it as a plain string body. Use this tool to resolve which user a token belongs to; use getTokenUserId instead for the stable UUID identifier. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
      * Extract Subject From JWT Token
      */
     async getTokenSubjectRaw(requestParameters: GetTokenSubjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
@@ -167,7 +116,7 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Extracts the subject claim, the username, from a valid JWT token and returns it as a plain string body. Use this tool to resolve which user a token belongs to; use getTokenUserId instead for the stable UUID identifier, and getTokenRoles for the role claim. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extracts the subject claim, the username, from a valid JWT token and returns it as a plain string body. Use this tool to resolve which user a token belongs to; use getTokenUserId instead for the stable UUID identifier. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
      * Extract Subject From JWT Token
      */
     async getTokenSubject(requestParameters: GetTokenSubjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {

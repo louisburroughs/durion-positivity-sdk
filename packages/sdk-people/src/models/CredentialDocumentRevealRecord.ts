@@ -73,12 +73,6 @@ export interface CredentialDocumentRevealRecord {
      * @memberof CredentialDocumentRevealRecord
      */
     revealedBy: string;
-    /**
-     * Roles the person held at the time
-     * @type {Array<string>}
-     * @memberof CredentialDocumentRevealRecord
-     */
-    revealedByRoles: Array<string>;
 }
 
 /**
@@ -103,7 +97,6 @@ export function instanceOfCredentialDocumentRevealRecord(value: object): boolean
     if (!('revealId' in value)) return false;
     if (!('revealedAt' in value)) return false;
     if (!('revealedBy' in value)) return false;
-    if (!('revealedByRoles' in value)) return false;
     return true;
 }
 
@@ -126,7 +119,6 @@ export function CredentialDocumentRevealRecordFromJSONTyped(json: any, ignoreDis
         'revealId': json['revealId'],
         'revealedAt': (new Date(json['revealedAt'])),
         'revealedBy': json['revealedBy'],
-        'revealedByRoles': json['revealedByRoles'],
     };
 }
 
@@ -145,7 +137,6 @@ export function CredentialDocumentRevealRecordToJSON(value?: CredentialDocumentR
         'revealId': value['revealId'],
         'revealedAt': ((value['revealedAt']).toISOString()),
         'revealedBy': value['revealedBy'],
-        'revealedByRoles': value['revealedByRoles'],
     };
 }
 

@@ -26,12 +26,6 @@ export interface InputTaxRecoveryHistoryItem {
      */
     actor: string;
     /**
-     * Role the actor acted in, when known
-     * @type {string}
-     * @memberof InputTaxRecoveryHistoryItem
-     */
-    actorRole?: string;
-    /**
      * Category code
      * @type {string}
      * @memberof InputTaxRecoveryHistoryItem
@@ -98,7 +92,6 @@ export function InputTaxRecoveryHistoryItemFromJSONTyped(json: any, ignoreDiscri
     return {
         
         'actor': json['actor'],
-        'actorRole': json['actorRole'] == null ? undefined : json['actorRole'],
         'code': json['code'],
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'newRecoverablePercent': json['newRecoverablePercent'] == null ? undefined : json['newRecoverablePercent'],
@@ -116,7 +109,6 @@ export function InputTaxRecoveryHistoryItemToJSON(value?: InputTaxRecoveryHistor
     return {
         
         'actor': value['actor'],
-        'actorRole': value['actorRole'],
         'code': value['code'],
         'effectiveFrom': ((value['effectiveFrom']).toISOString()),
         'newRecoverablePercent': value['newRecoverablePercent'],
