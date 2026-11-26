@@ -129,6 +129,12 @@ export interface PendingRoleSuggestionDto {
      */
     staffingAssignmentId: string;
     /**
+     * The start date of the staffing assignment the suggestion was raised from; null when the staffing record is no longer known here or its start date is unknown
+     * @type {Date}
+     * @memberof PendingRoleSuggestionDto
+     */
+    readonly staffingEffectiveFrom?: Date;
+    /**
      * PENDING until decided; CONFIRMED, DISMISSED, or EXPIRED when the staffing record ended or changed or the title-to-role suggestion was removed
      * @type {string}
      * @memberof PendingRoleSuggestionDto
@@ -209,12 +215,13 @@ export function PendingRoleSuggestionDtoFromJSONTyped(json: any, ignoreDiscrimin
         'roleName': json['roleName'],
         'scope': AssignmentScopeDtoFromJSON(json['scope']),
         'staffingAssignmentId': json['staffingAssignmentId'],
+        'staffingEffectiveFrom': json['staffingEffectiveFrom'] == null ? undefined : (new Date(json['staffingEffectiveFrom'])),
         'status': json['status'],
         'userLinked': json['userLinked'],
     };
 }
 
-export function PendingRoleSuggestionDtoToJSON(value?: PendingRoleSuggestionDto | null): any {
+export function PendingRoleSuggestionDtoToJSON(value?: Omit<PendingRoleSuggestionDto, 'staffingEffectiveFrom'> | null): any {
     if (value == null) {
         return value;
     }
