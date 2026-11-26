@@ -35,6 +35,14 @@ export interface CreateJobRoleOperationRequest {
     createJobRoleRequest: CreateJobRoleRequest;
 }
 
+export interface GetJobRoleRequest {
+    id: string;
+}
+
+export interface ListJobRolesRequest {
+    includeInactive?: boolean;
+}
+
 export interface UpdateJobRoleOperationRequest {
     id: string;
     updateJobRoleRequest: UpdateJobRoleRequest;
@@ -92,11 +100,58 @@ export class JobRoleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every active job role on the calling tenant\'s own list, ordered by name. Use this tool to populate a job-role picker when creating or editing an employee, or to look up the id createJobRole needs; do not use it to look up application roles or permissions, which live in pos-security-service and are a different concept entirely. Preconditions: the caller holds people:jobRole:view. Required inputs: none; there are no parameters and no request body. No events are emitted beyond the audit read and no state changes; this is a read-only projection scoped to the caller\'s tenant. Returns 200 with the list, empty when the tenant has defined none, and 403 without the authority. 
+     * Returns one job title on the calling tenant\'s own list, active or not, with its current version. Use this tool to open a title for editing (updateJobRole needs the version it returns) or to show a title an employee or staffing record names; do not use it to look up an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:view. Required inputs: the title id in the path; there is no request body. No events are emitted beyond the audit read and no state changes; this is a read-only projection scoped to the caller\'s tenant. Returns 200 with the title, 403 without the authority, and 404 NOT_FOUND when the tenant has no title with this id (an id of another tenant\'s title included). 
+     * Get One Job Title On The Tenant\'s List
+     */
+    async getJobRoleRaw(requestParameters: GetJobRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JobRoleDto>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling getJobRole().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:jobRole:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/job-roles/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => JobRoleDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one job title on the calling tenant\'s own list, active or not, with its current version. Use this tool to open a title for editing (updateJobRole needs the version it returns) or to show a title an employee or staffing record names; do not use it to look up an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:view. Required inputs: the title id in the path; there is no request body. No events are emitted beyond the audit read and no state changes; this is a read-only projection scoped to the caller\'s tenant. Returns 200 with the title, 403 without the authority, and 404 NOT_FOUND when the tenant has no title with this id (an id of another tenant\'s title included). 
+     * Get One Job Title On The Tenant\'s List
+     */
+    async getJobRole(requestParameters: GetJobRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JobRoleDto> {
+        const response = await this.getJobRoleRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the job titles on the calling tenant\'s own list, ordered by name: the active ones only, or every title, active or not, with includeInactive=true. Use this tool to populate a job-role picker when creating or editing an employee (active titles only), to show the whole list for editing including retired titles (includeInactive=true), or to look up a title\'s id; do not use it to look up application roles or permissions, which live in pos-security-service and are a different concept entirely. Preconditions: the caller holds people:jobRole:view. Required inputs: none; includeInactive is optional and defaults to false, and there is no request body. No events are emitted beyond the audit read and no state changes; this is a read-only projection scoped to the caller\'s tenant. Returns 200 with the list, empty when the tenant has defined none, and 403 without the authority. 
      * List The Tenant\'s Job Roles
      */
-    async listJobRolesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<JobRoleDto>>> {
+    async listJobRolesRaw(requestParameters: ListJobRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<JobRoleDto>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['includeInactive'] != null) {
+            queryParameters['includeInactive'] = requestParameters['includeInactive'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -119,16 +174,16 @@ export class JobRoleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every active job role on the calling tenant\'s own list, ordered by name. Use this tool to populate a job-role picker when creating or editing an employee, or to look up the id createJobRole needs; do not use it to look up application roles or permissions, which live in pos-security-service and are a different concept entirely. Preconditions: the caller holds people:jobRole:view. Required inputs: none; there are no parameters and no request body. No events are emitted beyond the audit read and no state changes; this is a read-only projection scoped to the caller\'s tenant. Returns 200 with the list, empty when the tenant has defined none, and 403 without the authority. 
+     * Returns the job titles on the calling tenant\'s own list, ordered by name: the active ones only, or every title, active or not, with includeInactive=true. Use this tool to populate a job-role picker when creating or editing an employee (active titles only), to show the whole list for editing including retired titles (includeInactive=true), or to look up a title\'s id; do not use it to look up application roles or permissions, which live in pos-security-service and are a different concept entirely. Preconditions: the caller holds people:jobRole:view. Required inputs: none; includeInactive is optional and defaults to false, and there is no request body. No events are emitted beyond the audit read and no state changes; this is a read-only projection scoped to the caller\'s tenant. Returns 200 with the list, empty when the tenant has defined none, and 403 without the authority. 
      * List The Tenant\'s Job Roles
      */
-    async listJobRoles(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<JobRoleDto>> {
-        const response = await this.listJobRolesRaw(initOverrides);
+    async listJobRoles(requestParameters: ListJobRolesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<JobRoleDto>> {
+        const response = await this.listJobRolesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Changes one job title on the calling tenant\'s own list: its name, description, active flag, position type or chatbot persona. A field left out of the body is left unchanged; an explicit JSON null clears description or a persona slot. HR master data only -- a title grants no access. Use this tool to rename a title, correct the position it fills (which dispatch, staffing targets and shift rules key on), retire it with active=false, or set the persona the chatbot uses for the people who hold it; do not use it to change an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:manage; the title is on this tenant\'s list. Required inputs: the title id in the path and at least one field in the body; the code is immutable, so a body that sends code is refused. Emits a PEOPLE_JOB_ROLE_UPDATE event and publishes people.job-role.updated; no other state changes. Returns 200 with the title, 400 when the body sends code, a blank name, an unknown positionType or a persona slot that is not a single descriptive line, 404 when the tenant has no title with this id, and 409 when another edit changed the title at the same time. 
+     * Changes one job title on the calling tenant\'s own list: its name, description, active flag, position type or chatbot persona. A field left out of the body is left unchanged; an explicit JSON null clears description or a persona slot. HR master data only -- a title grants no access. Use this tool to rename a title, correct the position it fills (which dispatch, staffing targets and shift rules key on), retire it with active=false, or set the persona the chatbot uses for the people who hold it; do not use it to change an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:manage; the title is on this tenant\'s list. Required inputs: the title id in the path, the title\'s version as last read (from getJobRole or listJobRoles) and at least one field to change in the body; the code is immutable, so a body that sends code is refused. Emits a PEOPLE_JOB_ROLE_UPDATE event and publishes people.job-role.updated; no other state changes. Returns 200 with the title and its new version, 400 when the body omits version or sends code, a blank name, an unknown positionType or a persona slot that is not a single descriptive line, 404 when the tenant has no title with this id, and 409 OPTIMISTIC_LOCK_FAILED when the version sent is not the title\'s current one (another edit changed it); read the title again and retry. 
      * Change A Job Title On The Tenant\'s List
      */
     async updateJobRoleRaw(requestParameters: UpdateJobRoleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JobRoleDto>> {
@@ -172,7 +227,7 @@ export class JobRoleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Changes one job title on the calling tenant\'s own list: its name, description, active flag, position type or chatbot persona. A field left out of the body is left unchanged; an explicit JSON null clears description or a persona slot. HR master data only -- a title grants no access. Use this tool to rename a title, correct the position it fills (which dispatch, staffing targets and shift rules key on), retire it with active=false, or set the persona the chatbot uses for the people who hold it; do not use it to change an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:manage; the title is on this tenant\'s list. Required inputs: the title id in the path and at least one field in the body; the code is immutable, so a body that sends code is refused. Emits a PEOPLE_JOB_ROLE_UPDATE event and publishes people.job-role.updated; no other state changes. Returns 200 with the title, 400 when the body sends code, a blank name, an unknown positionType or a persona slot that is not a single descriptive line, 404 when the tenant has no title with this id, and 409 when another edit changed the title at the same time. 
+     * Changes one job title on the calling tenant\'s own list: its name, description, active flag, position type or chatbot persona. A field left out of the body is left unchanged; an explicit JSON null clears description or a persona slot. HR master data only -- a title grants no access. Use this tool to rename a title, correct the position it fills (which dispatch, staffing targets and shift rules key on), retire it with active=false, or set the persona the chatbot uses for the people who hold it; do not use it to change an application role, which is a pos-security-service concept. Preconditions: the caller holds people:jobRole:manage; the title is on this tenant\'s list. Required inputs: the title id in the path, the title\'s version as last read (from getJobRole or listJobRoles) and at least one field to change in the body; the code is immutable, so a body that sends code is refused. Emits a PEOPLE_JOB_ROLE_UPDATE event and publishes people.job-role.updated; no other state changes. Returns 200 with the title and its new version, 400 when the body omits version or sends code, a blank name, an unknown positionType or a persona slot that is not a single descriptive line, 404 when the tenant has no title with this id, and 409 OPTIMISTIC_LOCK_FAILED when the version sent is not the title\'s current one (another edit changed it); read the title again and retry. 
      * Change A Job Title On The Tenant\'s List
      */
     async updateJobRole(requestParameters: UpdateJobRoleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JobRoleDto> {
