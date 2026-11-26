@@ -56,7 +56,7 @@ export interface RoleDto {
      */
     id: string;
     /**
-     * The role's immutable key within the tenant: lower-case letters, digits and underscores. A starter role's key is fixed by the platform; a role a tenant creates gets a key derived from its first name. It never changes on rename, and it is what the access token's roles claim and every reference by key carry
+     * The role's immutable key within the tenant: lower-case letters, digits and underscores. A starter role's key is fixed by the platform; a role a tenant creates gets a key derived from its first name. It never changes on rename, and it is what every reference by key carries
      * @type {string}
      * @memberof RoleDto
      */
