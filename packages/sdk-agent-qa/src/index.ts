@@ -15,6 +15,7 @@
  * Exit codes: 0 ok · 1 a scenario found a server error · 2 the backend did not
  * answer · 64 usage or configuration error.
  */
+import { githubDeployWatch } from './backend/DeployWatch';
 import { AiSdkModel, modelChainProblems, parseModelChain } from './agent/aiSdkModel';
 import type { ModelPort } from './agent/loop';
 import { BackendSession } from './backend/BackendSession';
@@ -59,8 +60,18 @@ function build(options: { modelRequired: boolean }): { harness: Harness; config:
     baseUrlFor: (pkg) => config.baseUrlFor(pkg),
     tokenFor: (persona) => backend.tokenFor(persona),
     requestTimeoutMs: config.requestTimeoutMs,
+    retryDelaysMs: config.retryDelaysMs,
   });
-  const harness = new Harness({ config, catalog, invoker, backend, model: buildModel(config, options.modelRequired), log });
+  const deployWatch = config.deploy ? githubDeployWatch({ ...config.deploy, log }) : undefined;
+  const harness = new Harness({
+    config,
+    catalog,
+    invoker,
+    backend,
+    model: buildModel(config, options.modelRequired),
+    log,
+    deployWatch,
+  });
   return { harness, config, backend };
 }
 

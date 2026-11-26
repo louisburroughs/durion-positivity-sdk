@@ -46,6 +46,8 @@ export interface CallOutcome {
   requestPath?: string;
   correlationId?: string;
   durationMs: number;
+  /** How many times the request was sent again after the backend was unreachable (see {@link isUnavailable}). */
+  retries?: number;
 }
 
 export interface SdkModule {
@@ -63,6 +65,12 @@ export interface SdkInvokerOptions {
   fetchImpl?: typeof fetch;
   /** Abort a single request after this long. */
   requestTimeoutMs?: number;
+  /**
+   * Waits before each repeat of a request the backend could not take (a deploy restarting the
+   * service, the gateway finding no instance). Empty or omitted sends every request once.
+   */
+  retryDelaysMs?: readonly number[];
+  sleep?(ms: number): Promise<void>;
 }
 
 const ERROR_CODE_KEYS = ['code', 'errorCode', 'error_code', 'error'] as const;
@@ -78,6 +86,38 @@ export function extractErrorCode(body: unknown): string | undefined {
     }
   }
   return undefined;
+}
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * True when an error response says the service could not take the request at all, so sending it
+ * again is the right answer rather than a finding: a 502 or 503 with no machine-readable error
+ * code (the gateway's own answer when no instance is up), or a code-less 500 or 504 when the
+ * request is safe to repeat. A response carrying a backend error code is the service speaking,
+ * including its documented "still replicating" 503s, and is returned as it is.
+ */
+export function isUnavailable(status: number, body: unknown, safeToRepeat: boolean): boolean {
+  if (extractErrorCode(body) !== undefined) {
+    return false;
+  }
+  if (status === 502 || status === 503) {
+    return true;
+  }
+  return (status === 500 || status === 504) && safeToRepeat;
+}
+
+async function peekBody(response: Response): Promise<unknown> {
+  try {
+    const text = await response.clone().text();
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      return text;
+    }
+  } catch {
+    return undefined;
+  }
 }
 
 function defaultLoadModule(pkg: string): SdkModule {
@@ -118,11 +158,13 @@ export class SdkInvoker {
    */
   async invoke(operation: Operation, input: Record<string, unknown>, persona: string): Promise<CallOutcome> {
     const started = Date.now();
+    let retries = 0;
     const base: Pick<CallOutcome, 'httpMethod'> = { httpMethod: operation.http };
     const finish = (outcome: Omit<CallOutcome, 'durationMs' | 'httpMethod'>): CallOutcome => ({
       ...base,
       ...outcome,
       durationMs: Date.now() - started,
+      ...(retries > 0 ? { retries } : {}),
     });
 
     const baseUrl = this.options.baseUrlFor(operation.pkg);
@@ -138,6 +180,8 @@ export class SdkInvoker {
     let requestPath: string | undefined;
     let responseStatus: number | undefined;
     let correlationId: string | undefined;
+    const retryDelays = this.options.retryDelaysMs ?? [];
+    const sleep = this.options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
     const fetchImpl = this.options.fetchImpl ?? fetch;
     const sdkConfig: DurionSdkConfig = { baseUrl, token: () => this.options.tokenFor(persona) };
     const httpClient = new SdkHttpClient(sdkConfig);
@@ -156,10 +200,35 @@ export class SdkInvoker {
       requestPath = urlText.startsWith(baseUrl) ? urlText.slice(baseUrl.length) : urlText;
       correlationId = headers.get('X-Correlation-Id') ?? undefined;
       const timeout = this.options.requestTimeoutMs;
-      const signal = timeout ? AbortSignal.timeout(timeout) : undefined;
-      const response = await fetchImpl(url, { ...init, headers, signal: init?.signal ?? signal });
-      responseStatus = response.status;
-      return response;
+      // A request is safe to send twice when it reads, or when the server deduplicates it by key.
+      const safeToRepeat = SAFE_METHODS.has(method) || headers.has('Idempotency-Key');
+      for (;;) {
+        const signal = timeout ? AbortSignal.timeout(timeout) : undefined;
+        let response: Response | undefined;
+        let failure: unknown;
+        try {
+          response = await fetchImpl(url, { ...init, headers, signal: init?.signal ?? signal });
+        } catch (error) {
+          failure = error;
+        }
+        const delay = retryDelays[retries];
+        const retry =
+          delay !== undefined &&
+          init?.signal?.aborted !== true &&
+          (response === undefined
+            ? safeToRepeat
+            : response.status >= 500 && isUnavailable(response.status, await peekBody(response), safeToRepeat));
+        if (retry) {
+          retries += 1;
+          await sleep(delay);
+          continue;
+        }
+        if (response === undefined) {
+          throw failure;
+        }
+        responseStatus = response.status;
+        return response;
+      }
     };
 
     let api: Record<string, unknown>;

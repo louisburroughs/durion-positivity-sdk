@@ -1,5 +1,5 @@
 import type { CallRecord } from '../ledger/CallLedger';
-import { judge } from './oracle';
+import { deployDuring, judge } from './oracle';
 import { expectationSchema, type ExpectationInput } from './types';
 
 const record = (operationId: string, status: number | undefined, kind?: CallRecord['kind']): CallRecord => ({
@@ -95,5 +95,35 @@ describe('judge', () => {
   it('keeps the verdict from the ledger when the agent itself is unsure, and records its reservation', () => {
     const judgement = judge(scenario({ kind: 'calls', min: 1 }), [record('a.Api.list', 200)], FINISHED, { verdict: 'blocked', summary: 'no open session', findings: [] });
     expect(judgement).toMatchObject({ verdict: 'passed', reasons: ['agent reported "blocked": no open session'] });
+  });
+
+  describe('during a backend deploy', () => {
+    const deploy = { start: '2026-03-10T14:50:00Z', end: '2026-03-10T15:10:00Z', label: 'build-push-ecr.yml run 7' };
+    const at = (call: CallRecord, when: string): CallRecord => ({ ...call, at: when });
+
+    it('reports infra, not failed, when every server error fell inside the deploy', () => {
+      const judgement = judge(scenario(), [record('a.Api.get', 503), at(record('b.Api.get', 500), '2026-03-10T15:12:00Z')], FINISHED, COMPLETED, [deploy]);
+      expect(judgement.verdict).toBe('infra');
+      expect(judgement.reasons[0]).toMatch(/2 server error\(s\) during a backend deploy \(build-push-ecr\.yml run 7\)/);
+      expect(judgement.reasons).toContain('a.Api.get answered 503');
+    });
+
+    it('still fails on a server error outside the deploy, and says how many were inside it', () => {
+      const judgement = judge(scenario(), [record('a.Api.get', 503), at(record('b.Api.get', 500), '2026-03-10T16:00:00Z')], FINISHED, COMPLETED, [deploy]);
+      expect(judgement.verdict).toBe('failed');
+      expect(judgement.reasons).toEqual(['b.Api.get answered 500', '(and 1 more during a backend deploy)']);
+    });
+
+    it('still fails on a decode error, which no restart explains', () => {
+      expect(judge(scenario(), [record('a.Api.get', 200, 'decode-error')], FINISHED, COMPLETED, [deploy]).verdict).toBe('failed');
+    });
+
+    it('covers a deploy still running, and a few minutes after one ends', () => {
+      expect(deployDuring({ at: '2026-03-10T15:12:59Z' }, [deploy])).toBe(deploy);
+      expect(deployDuring({ at: '2026-03-10T15:13:01Z' }, [deploy])).toBeUndefined();
+      expect(deployDuring({ at: '2026-03-10T14:49:59Z' }, [deploy])).toBeUndefined();
+      const running = { start: '2026-03-10T14:50:00Z', label: 'in progress' };
+      expect(deployDuring({ at: '2026-03-10T23:00:00Z' }, [running])).toBe(running);
+    });
   });
 });

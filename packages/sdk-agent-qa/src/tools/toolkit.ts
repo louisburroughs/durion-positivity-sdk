@@ -332,6 +332,7 @@ export class ToolRuntime {
       requestPath: outcome.requestPath,
       correlationId: outcome.correlationId,
       durationMs: outcome.durationMs,
+      retries: outcome.retries,
       unvalidated: validate ? undefined : true,
       source: call.source ?? ('agent' as const),
     };

@@ -12,7 +12,8 @@
  *   steps, the model errored, or an expected call was never made or never
  *   answered as expected. This is a harness or model problem until shown
  *   otherwise, and must not page anyone as a backend failure.
- * - `infra` — nothing answered: no route to the backend, or the stack is stopped.
+ * - `infra` — nothing answered: no route to the backend, or the stack is stopped;
+ *   or every server error fell inside a backend deploy, which restarts services.
  *
  * A scenario of kind `error` treats 4xx as the goal, and both kinds treat 4xx
  * as information: a 409 on a workorder that is already complete is the system
@@ -21,7 +22,19 @@
 import type { LoopResult } from '../agent/loop';
 import { reachedBackend, type CallRecord } from '../ledger/CallLedger';
 import type { FinishReport } from '../tools/toolkit';
+import type { DeployWindow } from '../backend/DeployWatch';
 import type { Expectation, Scenario } from './types';
+
+/** After a deploy run ends, services it recreated can still be warming up for this long. */
+const DEPLOY_SETTLE_MS = 3 * 60_000;
+
+/** The deploy a call was made during, if any. */
+export function deployDuring(call: Pick<CallRecord, 'at'>, deploys: readonly DeployWindow[]): DeployWindow | undefined {
+  const at = Date.parse(call.at);
+  return deploys.find(
+    (deploy) => at >= Date.parse(deploy.start) && (deploy.end === undefined || at <= Date.parse(deploy.end) + DEPLOY_SETTLE_MS),
+  );
+}
 
 /**
  * 503s the backend uses to say "not yet", not "broken": a read model that has
@@ -92,6 +105,7 @@ export function judge(
   calls: readonly CallRecord[],
   loop: Pick<LoopResult, 'status' | 'detail'>,
   finish: FinishReport | undefined,
+  deploys: readonly DeployWindow[] = [],
 ): Judgement {
   const expectations = scenario.expect.map((expectation) => checkExpectation(expectation, calls));
   const serverErrors = calls.filter(
@@ -100,14 +114,28 @@ export function judge(
   );
   const reasons: string[] = [];
 
+  const describe = (call: CallRecord): string =>
+    (call.kind === 'decode-error'
+      ? `${call.operationId} answered ${call.status} with a body the SDK could not decode`
+      : `${call.operationId} answered ${call.status}${call.errorCode ? ` ${call.errorCode}` : ''}`) +
+    (call.correlationId ? ` (correlation ${call.correlationId})` : '');
+  // A decode error is a contract mismatch whenever it happens; only status errors can be a restart.
+  const duringDeploy = serverErrors.filter((call) => call.kind !== 'decode-error' && deployDuring(call, deploys));
+  if (serverErrors.length > 0 && duringDeploy.length === serverErrors.length) {
+    const labels = [...new Set(duringDeploy.map((call) => deployDuring(call, deploys)?.label))].join(', ');
+    reasons.push(`${duringDeploy.length} server error(s) during a backend deploy (${labels}):`);
+    for (const call of duringDeploy.slice(0, 10)) {
+      reasons.push(describe(call));
+    }
+    return { verdict: 'infra', reasons, expectations, serverErrors };
+  }
+
   if (serverErrors.length > 0) {
-    for (const call of serverErrors.slice(0, 10)) {
-      reasons.push(
-        (call.kind === 'decode-error'
-          ? `${call.operationId} answered ${call.status} with a body the SDK could not decode`
-          : `${call.operationId} answered ${call.status}${call.errorCode ? ` ${call.errorCode}` : ''}`) +
-          (call.correlationId ? ` (correlation ${call.correlationId})` : ''),
-      );
+    for (const call of serverErrors.filter((entry) => !duringDeploy.includes(entry)).slice(0, 10)) {
+      reasons.push(describe(call));
+    }
+    if (duringDeploy.length > 0) {
+      reasons.push(`(and ${duringDeploy.length} more during a backend deploy)`);
     }
     return { verdict: 'failed', reasons, expectations, serverErrors };
   }

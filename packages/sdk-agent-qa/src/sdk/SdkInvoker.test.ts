@@ -1,6 +1,6 @@
 import { buildCatalog } from '../catalog/buildCatalog';
 import { fakeBackend, GATEWAY, invokerFor } from '../testing/fakes';
-import { extractErrorCode, SdkInvoker } from './SdkInvoker';
+import { extractErrorCode, isUnavailable, SdkInvoker } from './SdkInvoker';
 
 const catalog = buildCatalog();
 const op = (id: string) => {
@@ -118,5 +118,112 @@ describe('extractErrorCode', () => {
     expect(extractErrorCode({ errorCode: 'LOCATION_SCOPE_DENIED' })).toBe('LOCATION_SCOPE_DENIED');
     expect(extractErrorCode({ error: 'Not Found' })).toBeUndefined();
     expect(extractErrorCode('nope')).toBeUndefined();
+  });
+
+  describe('when the backend cannot take a request (a deploy restarting a service)', () => {
+    const retrying = (backend: ReturnType<typeof fakeBackend>, delays = [10, 20]) => {
+      const waits: number[] = [];
+      const invoker = new SdkInvoker({
+        baseUrlFor: (pkg) => `${GATEWAY}/${pkg}`,
+        tokenFor: async (persona) => `token-${persona}`,
+        fetchImpl: backend.fetchImpl,
+        retryDelaysMs: delays,
+        sleep: async (ms) => {
+          waits.push(ms);
+        },
+      });
+      return { invoker, waits };
+    };
+    const answers = (...statuses: Array<{ status: number; body?: unknown }>) => {
+      let index = 0;
+      return fakeBackend(() => statuses[Math.min(index++, statuses.length - 1)]);
+    };
+    const getOrder = op('order.SalesOrdersApi.getOrder');
+    const closeInput = { sessionId: 's-1', beginCloseRequest: { countedCash: 1 } };
+    const movement = { sessionId: 's-1', cashMovementRequest: { amount: 5, currencyCode: 'USD', reason: 'BANK_DROP' } };
+
+    it('sends a code-less 503 again after each wait, and reports how many repeats it took', async () => {
+      const backend = answers({ status: 503, body: { status: 503, error: 'Service Unavailable' } }, { status: 503 }, { status: 200, body: {} });
+      const { invoker, waits } = retrying(backend);
+      const outcome = await invoker.invoke(op('order.RegisterSessionsApi.beginSessionClose'), closeInput, 'manager');
+      expect(outcome).toMatchObject({ kind: 'success', status: 200, retries: 2 });
+      expect(waits).toEqual([10, 20]);
+      expect(backend.requests).toHaveLength(3);
+      // The same correlation id goes with every send, so the backend logs tie them together.
+      expect(new Set(backend.requests.map((request) => request.headers.get('X-Correlation-Id'))).size).toBe(1);
+    });
+
+    it('returns the last answer once the waits run out', async () => {
+      const backend = answers({ status: 502 });
+      const { invoker } = retrying(backend);
+      const outcome = await invoker.invoke(getOrder, { orderId: 'o-1' }, 'manager');
+      expect(outcome).toMatchObject({ kind: 'http-error', status: 502, retries: 2 });
+      expect(backend.requests).toHaveLength(3);
+    });
+
+    it('never repeats a 503 that carries a backend error code: the service answered', async () => {
+      const backend = answers({ status: 503, body: { code: 'WORKORDER_REPLICATION_PENDING' } }, { status: 200, body: {} });
+      const { invoker } = retrying(backend);
+      const outcome = await invoker.invoke(getOrder, { orderId: 'o-1' }, 'manager');
+      expect(outcome).toMatchObject({ kind: 'http-error', status: 503, errorCode: 'WORKORDER_REPLICATION_PENDING' });
+      expect(outcome.retries).toBeUndefined();
+      expect(backend.requests).toHaveLength(1);
+    });
+
+    it('repeats a code-less 500 or 504 only when the request is safe to send twice', async () => {
+      const unkeyed = answers({ status: 504 }, { status: 200, body: {} });
+      expect(await retrying(unkeyed).invoker.invoke(op('order.RegisterSessionsApi.beginSessionClose'), closeInput, 'manager')).toMatchObject({
+        status: 504,
+      });
+      expect(unkeyed.requests).toHaveLength(1);
+
+      const keyed = answers({ status: 500 }, { status: 201, body: {} });
+      const outcome = await retrying(keyed).invoker.invoke(op('order.RegisterSessionsApi.recordCashMovement'), { ...movement, idempotencyKey: 'k-1' }, 'advisor');
+      expect(outcome).toMatchObject({ kind: 'success', status: 201, retries: 1 });
+      expect(keyed.requests.map((request) => request.headers.get('Idempotency-Key'))).toEqual(['k-1', 'k-1']);
+
+      const read = answers({ status: 504 }, { status: 200, body: {} });
+      expect(await retrying(read).invoker.invoke(getOrder, { orderId: 'o-1' }, 'manager')).toMatchObject({ status: 200, retries: 1 });
+    });
+
+    it('does not repeat a coded 500: that is a defect to report', async () => {
+      const backend = answers({ status: 500, body: { code: 'INTERNAL_ERROR' } }, { status: 200, body: {} });
+      const outcome = await retrying(backend).invoker.invoke(getOrder, { orderId: 'o-1' }, 'manager');
+      expect(outcome).toMatchObject({ status: 500, errorCode: 'INTERNAL_ERROR' });
+      expect(backend.requests).toHaveLength(1);
+    });
+
+    it('repeats a read whose connection failed, and not an unkeyed write', async () => {
+      let calls = 0;
+      const flaky = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        calls += 1;
+        if (calls === 1) {
+          throw new TypeError('fetch failed');
+        }
+        return fakeBackend(() => ({ status: 200, body: {} })).fetchImpl(input, init);
+      }) as typeof fetch;
+      const read = new SdkInvoker({ baseUrlFor: (pkg) => `${GATEWAY}/${pkg}`, tokenFor: async () => 't', fetchImpl: flaky, retryDelaysMs: [1], sleep: async () => undefined });
+      expect(await read.invoke(getOrder, { orderId: 'o-1' }, 'manager')).toMatchObject({ kind: 'success', retries: 1 });
+
+      calls = 0;
+      const write = await read.invoke(op('order.RegisterSessionsApi.beginSessionClose'), closeInput, 'manager');
+      expect(write.kind).toBe('transport-error');
+      expect(calls).toBe(1);
+    });
+
+    it('sends once when no waits are configured', async () => {
+      const backend = answers({ status: 503 }, { status: 200, body: {} });
+      expect(await invokerFor(backend).invoke(getOrder, { orderId: 'o-1' }, 'manager')).toMatchObject({ status: 503 });
+      expect(backend.requests).toHaveLength(1);
+    });
+
+    it('classifies statuses by code and repeat-safety', () => {
+      expect(isUnavailable(503, undefined, false)).toBe(true);
+      expect(isUnavailable(502, 'Bad Gateway', false)).toBe(true);
+      expect(isUnavailable(503, { code: 'X_REPLICATION_PENDING' }, true)).toBe(false);
+      expect(isUnavailable(500, {}, false)).toBe(false);
+      expect(isUnavailable(500, {}, true)).toBe(true);
+      expect(isUnavailable(501, {}, true)).toBe(false);
+    });
   });
 });

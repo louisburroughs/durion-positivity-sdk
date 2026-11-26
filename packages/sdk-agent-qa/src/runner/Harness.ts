@@ -3,6 +3,7 @@
  * what is planned ({@link Harness.plan}), run what is due ({@link Harness.tick})
  * and run something now ({@link Harness.runNow}).
  */
+import type { DeployWatch } from '../backend/DeployWatch';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { ModelPort } from '../agent/loop';
@@ -47,6 +48,7 @@ export interface HarnessOptions {
   now?: () => Date;
   /** Pause used by the agent's `wait` tool; tests replace it. */
   sleep?(ms: number): Promise<void>;
+  deployWatch?: DeployWatch;
 }
 
 const SWEEP_SCHEDULE: Schedulable = {
@@ -372,6 +374,7 @@ export class Harness {
           memory,
           skipReason,
           sleep: this.options.sleep,
+          deployWatch: this.options.deployWatch,
           // Ids are taken from the responses that create them, and saved at once: a stage that
           // dies halfway must still leave the next one what it had established.
           onCall: memory

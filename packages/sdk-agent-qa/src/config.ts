@@ -69,6 +69,14 @@ const schema = z.object({
   QA_SCENARIO_TIMEOUT_MS: intIn(10_000, 3_600_000).default(600_000),
   QA_MAX_TOKENS: intIn(1_000, 50_000_000).default(400_000),
   QA_REQUEST_TIMEOUT_MS: intIn(1_000, 600_000).default(30_000),
+  /** Comma-separated waits (ms) before repeating a request the backend could not take; empty sends once. */
+  QA_RETRY_DELAYS_MS: z
+    .string()
+    .default('5000,15000,30000,60000')
+    .refine((value) => value.trim() === '' || value.split(',').every((part) => /^\s*\d{1,6}\s*$/.test(part)), 'comma-separated milliseconds'),
+  /** owner/repo whose deploy workflow runs mark backend deploys (read with `gh`); unset turns the check off. */
+  QA_DEPLOY_REPO: z.string().regex(/^[\w.-]+\/[\w.-]+$/).optional(),
+  QA_DEPLOY_WORKFLOW: z.string().default('build-push-ecr.yml'),
   QA_TEMPERATURE: z.coerce.number().min(0).max(2).optional(),
   /** OpenRouter provider routing as JSON, e.g. {"ignore":["Wafer"]} or {"order":["z-ai"],"allow_fallbacks":true}. */
   QA_OPENROUTER_PROVIDER: z.string().optional(),
@@ -111,6 +119,9 @@ export interface QaConfig {
   backstopDays: number;
   limits: { maxSteps: number; maxCalls: number; timeoutMs: number; maxTokens: number };
   requestTimeoutMs: number;
+  retryDelaysMs: number[];
+  /** Where backend deploys are read from, or undefined when none are watched. */
+  deploy: { repo: string; workflow: string } | undefined;
   temperature: number | undefined;
   openrouterProvider: Record<string, unknown> | undefined;
   maxOutputTokens: number | undefined;
@@ -198,6 +209,8 @@ export function loadQaConfig(env: Env, gatewayBaseUrl: string): QaConfig {
       maxTokens: data.QA_MAX_TOKENS,
     },
     requestTimeoutMs: data.QA_REQUEST_TIMEOUT_MS,
+    retryDelaysMs: data.QA_RETRY_DELAYS_MS.trim() === '' ? [] : data.QA_RETRY_DELAYS_MS.split(',').map((part) => Number(part.trim())),
+    deploy: data.QA_DEPLOY_REPO ? { repo: data.QA_DEPLOY_REPO, workflow: data.QA_DEPLOY_WORKFLOW } : undefined,
     temperature: data.QA_TEMPERATURE,
     openrouterProvider,
     maxOutputTokens: data.QA_MAX_OUTPUT_TOKENS,

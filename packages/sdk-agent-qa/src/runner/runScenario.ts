@@ -8,6 +8,7 @@ import { runLoop, type LoopEvent, type LoopLimits, type LoopResult, type ModelPo
 import type { Catalog, Operation } from '../catalog/types';
 import type { CoverageStore } from '../sdk-coverage/CoverageStore';
 import type { CallLedger, CallRecord } from '../ledger/CallLedger';
+import type { DeployWatch } from '../backend/DeployWatch';
 import { judge, type ExpectationResult, type Verdict } from '../scenarios/oracle';
 import type { Scenario } from '../scenarios/types';
 import type { CallOutcome, SdkInvoker } from '../sdk/SdkInvoker';
@@ -59,6 +60,8 @@ export interface ScenarioDeps {
   sleep?(ms: number): Promise<void>;
   /** Runs after the agent, with the same tool runtime — the coverage backstop hooks in here. */
   afterAgent?(runtime: ToolRuntime): Promise<void>;
+  /** Backend deploys, so server errors during one are judged `infra`. Read only when a call answered 5xx. */
+  deployWatch?: DeployWatch;
 }
 
 function summarize(calls: readonly CallRecord[]): Pick<ScenarioResult, 'callsByStatus' | 'packages'> {
@@ -161,7 +164,11 @@ export async function runScenario(scenario: Scenario, deps: ScenarioDeps): Promi
   }
 
   const calls = deps.ledger.forScenario(scenario.id).filter((call) => call.runId === deps.runId);
-  const judgement = judge(scenario, calls, loop, runtime.finishReport);
+  const deploys =
+    deps.deployWatch && calls.some((call) => call.status !== undefined && call.status >= 500)
+      ? await deps.deployWatch.windows(startedAt, now())
+      : [];
+  const judgement = judge(scenario, calls, loop, runtime.finishReport, deploys);
   const result: ScenarioResult = {
     ...base,
     finishedAt: now().toISOString(),
