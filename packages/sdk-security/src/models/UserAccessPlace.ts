@@ -49,7 +49,7 @@ export interface UserAccessPlace {
      * @type {LocationRefDto}
      * @memberof UserAccessPlace
      */
-    location: LocationRefDto;
+    location: LocationRefDto | null;
 }
 
 /**
