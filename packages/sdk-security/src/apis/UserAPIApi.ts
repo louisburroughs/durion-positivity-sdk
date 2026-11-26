@@ -65,6 +65,11 @@ export interface LinkUserPersonOperationRequest {
     linkUserPersonRequest: LinkUserPersonRequest;
 }
 
+export interface ListUsersRequest {
+    personId?: string;
+    awaitingActivation?: boolean;
+}
+
 export interface ResendUserActivationRequest {
     userId: string;
 }
@@ -316,11 +321,19 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every user account with its id, username, effective role names, and linked personId. Use this tool to enumerate accounts; use getUserById instead for one known user. Preconditions: the caller must hold security:user:view. Required inputs: none; there are no filters or paging parameters, so the full user table is returned. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no users exist; there are no business error conditions. 
-     * List All User Accounts
+     * Returns the tenant\'s user accounts, each with its id, username, effective role keys, linked personId and awaitingActivation. Use this tool to enumerate accounts, to find the account(s) linked to one person, or to list the accounts still awaiting activation; use getUserById instead for one known user. Preconditions: the caller must hold security:user:view. Optional inputs: personId (UUID) keeps the accounts linked to that person; awaitingActivation (boolean) keeps the accounts whose awaitingActivation equals it, so true lists exactly the accounts resendUserActivation accepts. Absent filters keep everything; there is no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no account matches; 400 INVALID_REQUEST for a malformed personId or awaitingActivation. 
+     * List User Accounts
      */
-    async listUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserDto>>> {
+    async listUsersRaw(requestParameters: ListUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserDto>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['personId'] != null) {
+            queryParameters['personId'] = requestParameters['personId'];
+        }
+
+        if (requestParameters['awaitingActivation'] != null) {
+            queryParameters['awaitingActivation'] = requestParameters['awaitingActivation'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -343,11 +356,11 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every user account with its id, username, effective role names, and linked personId. Use this tool to enumerate accounts; use getUserById instead for one known user. Preconditions: the caller must hold security:user:view. Required inputs: none; there are no filters or paging parameters, so the full user table is returned. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no users exist; there are no business error conditions. 
-     * List All User Accounts
+     * Returns the tenant\'s user accounts, each with its id, username, effective role keys, linked personId and awaitingActivation. Use this tool to enumerate accounts, to find the account(s) linked to one person, or to list the accounts still awaiting activation; use getUserById instead for one known user. Preconditions: the caller must hold security:user:view. Optional inputs: personId (UUID) keeps the accounts linked to that person; awaitingActivation (boolean) keeps the accounts whose awaitingActivation equals it, so true lists exactly the accounts resendUserActivation accepts. Absent filters keep everything; there is no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no account matches; 400 INVALID_REQUEST for a malformed personId or awaitingActivation. 
+     * List User Accounts
      */
-    async listUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserDto>> {
-        const response = await this.listUsersRaw(initOverrides);
+    async listUsers(requestParameters: ListUsersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserDto>> {
+        const response = await this.listUsersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

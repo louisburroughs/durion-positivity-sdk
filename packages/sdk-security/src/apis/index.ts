@@ -18,6 +18,7 @@ export * from './RoleSuggestionsApi';
 export * from './SelfRegistrationReviewAPIApi';
 export * from './TenantAPIApi';
 export * from './UserAPIApi';
+export * from './UserAccessApi';
 export * from './UserBulkIngestAPIApi';
 export * from './UserPersonLinkBulkIngestAPIApi';
 export * from './UserRoleManagementApi';
