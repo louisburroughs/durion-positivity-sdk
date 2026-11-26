@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Partial update of a job title, guarded by the version last read. Absent fields are left unchanged; an explicit JSON null clears description or a persona slot. The code is immutable and a body that sends it is refused.
+ * Partial update of a job title. Absent fields are left unchanged; an explicit JSON null clears description or a persona slot. The code is immutable and a body that sends it is refused.
  * @export
  * @interface UpdateJobRoleRequest
  */
@@ -61,12 +61,6 @@ export interface UpdateJobRoleRequest {
      * @memberof UpdateJobRoleRequest
      */
     positionType?: UpdateJobRoleRequestPositionTypeEnum;
-    /**
-     * The title's version as last read; a different current version is refused with 409 OPTIMISTIC_LOCK_FAILED
-     * @type {number}
-     * @memberof UpdateJobRoleRequest
-     */
-    version: number;
 }
 
 /**
@@ -87,7 +81,6 @@ export enum UpdateJobRoleRequestPositionTypeEnum {
  * Check if a given object implements the UpdateJobRoleRequest interface.
  */
 export function instanceOfUpdateJobRoleRequest(value: object): boolean {
-    if (!('version' in value)) return false;
     return true;
 }
 
@@ -108,7 +101,6 @@ export function UpdateJobRoleRequestFromJSONTyped(json: any, ignoreDiscriminator
         'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
         'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
         'positionType': json['positionType'] == null ? undefined : json['positionType'],
-        'version': json['version'],
     };
 }
 
@@ -125,7 +117,6 @@ export function UpdateJobRoleRequestToJSON(value?: UpdateJobRoleRequest | null):
         'personaTitle': value['personaTitle'],
         'personaTone': value['personaTone'],
         'positionType': value['positionType'],
-        'version': value['version'],
     };
 }
 
