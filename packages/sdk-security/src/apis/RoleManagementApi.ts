@@ -24,7 +24,6 @@ import type {
   RoleCreateRequest,
   RoleDefaultPermissionsResponse,
   RoleDto,
-  RolePersonasResponse,
   RoleUpdateRequest,
 } from '../models/index';
 import {
@@ -46,8 +45,6 @@ import {
     RoleDefaultPermissionsResponseToJSON,
     RoleDtoFromJSON,
     RoleDtoToJSON,
-    RolePersonasResponseFromJSON,
-    RolePersonasResponseToJSON,
     RoleUpdateRequestFromJSON,
     RoleUpdateRequestToJSON,
 } from '../models/index';
@@ -114,7 +111,7 @@ export interface UpdateRoleCapabilitiesRequest {
 export class RoleManagementApi extends runtime.BaseAPI {
 
     /**
-     * Creates a role in the caller\'s tenant from a display name, an optional description, optional MCP persona metadata and an optional list of capability keys. A role is a named set of capabilities and holds no permission directly; without capabilities it grants nothing yet. The response carries the role\'s key, derived once from the name (lower-case, underscores, made unique within the tenant) and never changed afterwards. Use this tool to define a new role; do not use createRoleAssignment, which gives an existing role to a user, and do not use updateRoleCapabilities, which changes an existing role\'s set. Preconditions: the caller must hold security:role:create, and no role of the tenant may already carry the name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: name, non-blank; description, persona fields and capabilities are optional; capability keys come from listCapabilities. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank; 409 DUPLICATE_ROLE_NAME when the name is taken; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability, which only a role the platform defines may hold. 
+     * Creates a role in the caller\'s tenant from a display name, an optional description and an optional list of capability keys. A role is a named set of capabilities and holds no permission directly; without capabilities it grants nothing yet. The response carries the role\'s key, derived once from the name (lower-case, underscores, made unique within the tenant) and never changed afterwards. Use this tool to define a new role; do not use createRoleAssignment, which gives an existing role to a user, and do not use updateRoleCapabilities, which changes an existing role\'s set. Preconditions: the caller must hold security:role:create, and no role of the tenant may already carry the name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: name, non-blank; description and capabilities are optional; capability keys come from listCapabilities; a role carries no assistant persona, so persona properties left in a body are ignored. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank; 409 DUPLICATE_ROLE_NAME when the name is taken; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability, which only a role the platform defines may hold. 
      * Create a New Role
      */
     async createRoleRaw(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
@@ -151,7 +148,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a role in the caller\'s tenant from a display name, an optional description, optional MCP persona metadata and an optional list of capability keys. A role is a named set of capabilities and holds no permission directly; without capabilities it grants nothing yet. The response carries the role\'s key, derived once from the name (lower-case, underscores, made unique within the tenant) and never changed afterwards. Use this tool to define a new role; do not use createRoleAssignment, which gives an existing role to a user, and do not use updateRoleCapabilities, which changes an existing role\'s set. Preconditions: the caller must hold security:role:create, and no role of the tenant may already carry the name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: name, non-blank; description, persona fields and capabilities are optional; capability keys come from listCapabilities. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank; 409 DUPLICATE_ROLE_NAME when the name is taken; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability, which only a role the platform defines may hold. 
+     * Creates a role in the caller\'s tenant from a display name, an optional description and an optional list of capability keys. A role is a named set of capabilities and holds no permission directly; without capabilities it grants nothing yet. The response carries the role\'s key, derived once from the name (lower-case, underscores, made unique within the tenant) and never changed afterwards. Use this tool to define a new role; do not use createRoleAssignment, which gives an existing role to a user, and do not use updateRoleCapabilities, which changes an existing role\'s set. Preconditions: the caller must hold security:role:create, and no role of the tenant may already carry the name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: name, non-blank; description and capabilities are optional; capability keys come from listCapabilities; a role carries no assistant persona, so persona properties left in a body are ignored. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank; 409 DUPLICATE_ROLE_NAME when the name is taken; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability, which only a role the platform defines may hold. 
      * Create a New Role
      */
     async createRole(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
@@ -420,42 +417,6 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one row per role with its key, its display name, its MCP persona slots, resolution rank, and eligibility flag, ordered by rank then name, plus the timestamp the snapshot was assembled. Match a caller\'s roles on key: the access token carries role keys, and a name is a label a tenant may change. Use this tool to derive assistant personas and their priority order from role data, as pos-mcp-server does; do not use listRoles, which returns every role with its capabilities and is more expensive for this purpose. Preconditions: the caller must hold security:role:view. Required inputs: none. No events are emitted and no state changes; this is a read-only projection. Roles that are excluded from persona resolution are included and flagged rather than omitted, so a consumer can distinguish a role excluded by design from one it has never seen. Returns 200 with every role and never 404: an environment holding no roles yields an empty list rather than an error, so a consumer cannot mistake \"not provisioned yet\" for \"endpoint missing\". 
-     * Get MCP Persona Metadata for Every Role
-     */
-    async getRolePersonasRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RolePersonasResponse>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles/personas`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RolePersonasResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Returns one row per role with its key, its display name, its MCP persona slots, resolution rank, and eligibility flag, ordered by rank then name, plus the timestamp the snapshot was assembled. Match a caller\'s roles on key: the access token carries role keys, and a name is a label a tenant may change. Use this tool to derive assistant personas and their priority order from role data, as pos-mcp-server does; do not use listRoles, which returns every role with its capabilities and is more expensive for this purpose. Preconditions: the caller must hold security:role:view. Required inputs: none. No events are emitted and no state changes; this is a read-only projection. Roles that are excluded from persona resolution are included and flagged rather than omitted, so a consumer can distinguish a role excluded by design from one it has never seen. Returns 200 with every role and never 404: an environment holding no roles yields an empty list rather than an error, so a consumer cannot mistake \"not provisioned yet\" for \"endpoint missing\". 
-     * Get MCP Persona Metadata for Every Role
-     */
-    async getRolePersonas(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RolePersonasResponse> {
-        const response = await this.getRolePersonasRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the user must exist, and the caller must either hold security:permission:view or be asking about themselves. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 403 when the caller is asking about another user without security:permission:view, and 404 when the user does not exist. 
      * Get User Permissions at Legacy Path
      */
@@ -675,8 +636,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a role\'s display name, its description and its MCP persona metadata: the persona title, focus, and tone slots, the persona rank, and whether the role participates in persona resolution at all. A new name renames the role and changes nothing else: the role\'s key, its capabilities and its assignments stay as they are. Use this tool to rename a role or correct its description or assistant persona; do not use it to change what the role grants, which is updateRoleCapabilities. Preconditions: the caller must hold security:role:edit, the role id must exist, the role must not be a system role, and no other role of the tenant may carry the new name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: role id as a path parameter and name in the body; every other body field is optional, but an omitted field clears the stored value rather than leaving it unchanged, which is how a persona slot is returned to its derived default. Persona slots must describe the role rather than instruct the assistant: single line, within the length cap, and free of imperative control verbs. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when name is blank or a persona slot fails validation, 404 when no role has that id, 409 DUPLICATE_ROLE_NAME when another role carries the name, and 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role. 
-     * Update a Role\'s Name, Description and Persona Metadata
+     * Replaces a role\'s display name and its description. A new name renames the role and changes nothing else: the role\'s key, its capabilities and its assignments stay as they are. A role carries no assistant persona: the persona comes from the person\'s job title, and persona properties left in a body are ignored. Use this tool to rename a role or correct its description; do not use it to change what the role grants, which is updateRoleCapabilities. Preconditions: the caller must hold security:role:edit, the role id must exist, the role must not be a system role, and no other role of the tenant may carry the new name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: role id as a path parameter and name in the body; description is optional, but an omitted description clears the stored value rather than leaving it unchanged. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when name is blank, 404 when no role has that id, 409 DUPLICATE_ROLE_NAME when another role carries the name, and 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role. 
+     * Update a Role\'s Name and Description
      */
     async updateRoleRaw(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['id'] == null) {
@@ -719,8 +680,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces a role\'s display name, its description and its MCP persona metadata: the persona title, focus, and tone slots, the persona rank, and whether the role participates in persona resolution at all. A new name renames the role and changes nothing else: the role\'s key, its capabilities and its assignments stay as they are. Use this tool to rename a role or correct its description or assistant persona; do not use it to change what the role grants, which is updateRoleCapabilities. Preconditions: the caller must hold security:role:edit, the role id must exist, the role must not be a system role, and no other role of the tenant may carry the new name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: role id as a path parameter and name in the body; every other body field is optional, but an omitted field clears the stored value rather than leaving it unchanged, which is how a persona slot is returned to its derived default. Persona slots must describe the role rather than instruct the assistant: single line, within the length cap, and free of imperative control verbs. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when name is blank or a persona slot fails validation, 404 when no role has that id, 409 DUPLICATE_ROLE_NAME when another role carries the name, and 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role. 
-     * Update a Role\'s Name, Description and Persona Metadata
+     * Replaces a role\'s display name and its description. A new name renames the role and changes nothing else: the role\'s key, its capabilities and its assignments stay as they are. A role carries no assistant persona: the persona comes from the person\'s job title, and persona properties left in a body are ignored. Use this tool to rename a role or correct its description; do not use it to change what the role grants, which is updateRoleCapabilities. Preconditions: the caller must hold security:role:edit, the role id must exist, the role must not be a system role, and no other role of the tenant may carry the new name, compared after trimming, collapsing repeated spaces and ignoring letter case. Required inputs: role id as a path parameter and name in the body; description is optional, but an omitted description clears the stored value rather than leaving it unchanged. Emits a SECURITY_ROLE_UPDATE event and records the modifying actor and timestamp. Returns 400 when name is blank, 404 when no role has that id, 409 DUPLICATE_ROLE_NAME when another role carries the name, and 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role. 
+     * Update a Role\'s Name and Description
      */
     async updateRole(requestParameters: UpdateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.updateRoleRaw(requestParameters, initOverrides);
@@ -728,7 +689,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the complete set of capabilities a role holds with the keys supplied: a capability not listed leaves the role, a new one joins it, and an empty list leaves a role that grants nothing. What the role grants is the union of its capabilities\' permissions; nothing grants a permission to a role directly. Use this tool to change what a role can do; do not use updateRole, which renames a role and edits its description and persona, and do not use createRoleAssignment, which gives a role to a user. Preconditions: the caller must hold security:role:edit; the role must exist, must not be a system role and must not be a role that holds every capability; every key must name a capability from listCapabilities. Required inputs: role id as a path parameter and capabilities, the full list of keys, in the body; order and repeats do not matter. Emits a SECURITY_ROLE_CAPABILITIES_UPDATE event and records the modifying actor and timestamp; capabilities the role already held keep the record of who added them. A user who holds the role gets the changed permissions when their access token is next issued or refreshed. Returns 400 when capabilities is missing; 404 when no role has that id; 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role; 409 ROLE_CAPABILITIES_FIXED when the role holds every capability; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability. 
+     * Replaces the complete set of capabilities a role holds with the keys supplied: a capability not listed leaves the role, a new one joins it, and an empty list leaves a role that grants nothing. What the role grants is the union of its capabilities\' permissions; nothing grants a permission to a role directly. Use this tool to change what a role can do; do not use updateRole, which renames a role and edits its description, and do not use createRoleAssignment, which gives a role to a user. Preconditions: the caller must hold security:role:edit; the role must exist, must not be a system role and must not be a role that holds every capability; every key must name a capability from listCapabilities. Required inputs: role id as a path parameter and capabilities, the full list of keys, in the body; order and repeats do not matter. Emits a SECURITY_ROLE_CAPABILITIES_UPDATE event and records the modifying actor and timestamp; capabilities the role already held keep the record of who added them. A user who holds the role gets the changed permissions when their access token is next issued or refreshed. Returns 400 when capabilities is missing; 404 when no role has that id; 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role; 409 ROLE_CAPABILITIES_FIXED when the role holds every capability; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability. 
      * Replace a Role\'s Capabilities
      */
     async updateRoleCapabilitiesRaw(requestParameters: UpdateRoleCapabilitiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
@@ -772,7 +733,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the complete set of capabilities a role holds with the keys supplied: a capability not listed leaves the role, a new one joins it, and an empty list leaves a role that grants nothing. What the role grants is the union of its capabilities\' permissions; nothing grants a permission to a role directly. Use this tool to change what a role can do; do not use updateRole, which renames a role and edits its description and persona, and do not use createRoleAssignment, which gives a role to a user. Preconditions: the caller must hold security:role:edit; the role must exist, must not be a system role and must not be a role that holds every capability; every key must name a capability from listCapabilities. Required inputs: role id as a path parameter and capabilities, the full list of keys, in the body; order and repeats do not matter. Emits a SECURITY_ROLE_CAPABILITIES_UPDATE event and records the modifying actor and timestamp; capabilities the role already held keep the record of who added them. A user who holds the role gets the changed permissions when their access token is next issued or refreshed. Returns 400 when capabilities is missing; 404 when no role has that id; 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role; 409 ROLE_CAPABILITIES_FIXED when the role holds every capability; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability. 
+     * Replaces the complete set of capabilities a role holds with the keys supplied: a capability not listed leaves the role, a new one joins it, and an empty list leaves a role that grants nothing. What the role grants is the union of its capabilities\' permissions; nothing grants a permission to a role directly. Use this tool to change what a role can do; do not use updateRole, which renames a role and edits its description, and do not use createRoleAssignment, which gives a role to a user. Preconditions: the caller must hold security:role:edit; the role must exist, must not be a system role and must not be a role that holds every capability; every key must name a capability from listCapabilities. Required inputs: role id as a path parameter and capabilities, the full list of keys, in the body; order and repeats do not matter. Emits a SECURITY_ROLE_CAPABILITIES_UPDATE event and records the modifying actor and timestamp; capabilities the role already held keep the record of who added them. A user who holds the role gets the changed permissions when their access token is next issued or refreshed. Returns 400 when capabilities is missing; 404 when no role has that id; 409 ROLE_SYSTEM_IMMUTABLE when the role is a system role; 409 ROLE_CAPABILITIES_FIXED when the role holds every capability; 422 CAPABILITY_UNKNOWN, with fieldErrors on capabilities, when a key names no capability; and 422 CAPABILITY_NOT_ASSIGNABLE when a key names a system capability. 
      * Replace a Role\'s Capabilities
      */
     async updateRoleCapabilities(requestParameters: UpdateRoleCapabilitiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {

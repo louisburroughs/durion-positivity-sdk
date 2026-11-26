@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Name, description, capabilities and optional MCP persona metadata for a new role
+ * Name, description and capabilities for a new role
  * @export
  * @interface RoleCreateRequest
  */
@@ -26,47 +26,17 @@ export interface RoleCreateRequest {
      */
     capabilities?: Array<string>;
     /**
-     * Human-readable description of the role. Doubles as the derived persona focus when personaFocus is omitted.
+     * Human-readable description of the role.
      * @type {string}
      * @memberof RoleCreateRequest
      */
     description?: string;
-    /**
-     * Whether the role participates in MCP persona resolution. Defaults to true; set false for roles with no MCP access so their callers land on the fallback by design.
-     * @type {boolean}
-     * @memberof RoleCreateRequest
-     */
-    mcpPersonaEligible?: boolean;
-    /**
-     * MCP persona resolution priority, lowest first. Null leaves the role unranked, which sorts after every ranked role but still ahead of the ROLE_USER fallback.
-     * @type {number}
-     * @memberof RoleCreateRequest
-     */
-    mcpPersonaRank?: number;
     /**
      * Display name of the role, stored as typed and trimmed. Name it for the access it gives, not for a job title. Unique within the tenant ignoring letter case and repeated spaces. The role's immutable key is derived from this name once, at creation.
      * @type {string}
      * @memberof RoleCreateRequest
      */
     name: string;
-    /**
-     * What the caller works on. Derived from the description when omitted.
-     * @type {string}
-     * @memberof RoleCreateRequest
-     */
-    personaFocus?: string;
-    /**
-     * Who the caller is, in the second person. Derived from the role name when omitted.
-     * @type {string}
-     * @memberof RoleCreateRequest
-     */
-    personaTitle?: string;
-    /**
-     * How to speak to the caller. Defaults to a neutral tone when omitted.
-     * @type {string}
-     * @memberof RoleCreateRequest
-     */
-    personaTone?: string;
 }
 
 /**
@@ -89,12 +59,7 @@ export function RoleCreateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'capabilities': json['capabilities'] == null ? undefined : json['capabilities'],
         'description': json['description'] == null ? undefined : json['description'],
-        'mcpPersonaEligible': json['mcpPersonaEligible'] == null ? undefined : json['mcpPersonaEligible'],
-        'mcpPersonaRank': json['mcpPersonaRank'] == null ? undefined : json['mcpPersonaRank'],
         'name': json['name'],
-        'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
-        'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
-        'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
     };
 }
 
@@ -106,12 +71,7 @@ export function RoleCreateRequestToJSON(value?: RoleCreateRequest | null): any {
         
         'capabilities': value['capabilities'],
         'description': value['description'],
-        'mcpPersonaEligible': value['mcpPersonaEligible'],
-        'mcpPersonaRank': value['mcpPersonaRank'],
         'name': value['name'],
-        'personaFocus': value['personaFocus'],
-        'personaTitle': value['personaTitle'],
-        'personaTone': value['personaTone'],
     };
 }
 
